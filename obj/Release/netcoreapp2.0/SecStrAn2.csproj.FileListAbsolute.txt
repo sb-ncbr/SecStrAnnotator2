@@ -1,0 +1,11 @@
+/home/adam/Workspace/VSCode/SecStrAn2/bin/Release/netcoreapp2.0/SecStrAn2.deps.json
+/home/adam/Workspace/VSCode/SecStrAn2/bin/Release/netcoreapp2.0/SecStrAn2.runtimeconfig.json
+/home/adam/Workspace/VSCode/SecStrAn2/bin/Release/netcoreapp2.0/SecStrAn2.runtimeconfig.dev.json
+/home/adam/Workspace/VSCode/SecStrAn2/bin/Release/netcoreapp2.0/SecStrAn2.dll
+/home/adam/Workspace/VSCode/SecStrAn2/bin/Release/netcoreapp2.0/SecStrAn2.pdb
+/home/adam/Workspace/VSCode/SecStrAn2/obj/Release/netcoreapp2.0/SecStrAn2.csprojAssemblyReference.cache
+/home/adam/Workspace/VSCode/SecStrAn2/obj/Release/netcoreapp2.0/SecStrAn2.csproj.CoreCompileInputs.cache
+/home/adam/Workspace/VSCode/SecStrAn2/obj/Release/netcoreapp2.0/SecStrAn2.AssemblyInfoInputs.cache
+/home/adam/Workspace/VSCode/SecStrAn2/obj/Release/netcoreapp2.0/SecStrAn2.AssemblyInfo.cs
+/home/adam/Workspace/VSCode/SecStrAn2/obj/Release/netcoreapp2.0/SecStrAn2.dll
+/home/adam/Workspace/VSCode/SecStrAn2/obj/Release/netcoreapp2.0/SecStrAn2.pdb
