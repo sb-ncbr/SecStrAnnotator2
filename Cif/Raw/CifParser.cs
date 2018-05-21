@@ -823,6 +823,7 @@ namespace SecStrAnnot2.Cif.Raw
             return array;
         }
 
+        //TODO make faster by replacing cycle variable checking by checking if character is white-space ?
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal int ParseInteger(int iToken){
             bool negative = false;

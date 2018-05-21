@@ -6,17 +6,13 @@ namespace SecStrAnnot2.Cif.Tables
 {
     public class Table
     {
-        public int RowCount { get; private set; }
-        public int ColumnCount { get; private set; }
-        public string[] ColumnNames { get; private set; }
-        private object[] columnArray;
+        public int RowCount { get; protected set; }
+        public int ColumnCount { get; protected set; }
+        public string[] ColumnNames { get; protected set; }
+        protected object[] columnArray;
         private CifValueType[] cifTypeArray;
         private Type[] backtypeArray;
-        private Dictionary<string, int> columnIndex;
-
-        /*private Dictionary<string, CifValueType> cifValueTypes;
-        private Dictionary<string, Type> backingTypes;
-        private Dictionary<string, object> columns;*/
+        protected Dictionary<string, int> columnIndex;
 
         private static Dictionary<CifValueType,Type> typeDictionary = new Dictionary<CifValueType,Type>{ 
             { CifValueType.String, "".GetType() },

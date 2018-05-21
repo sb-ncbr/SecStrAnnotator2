@@ -7,6 +7,8 @@ namespace SecStrAnnot2.Cif.Tables
     // Based on http://mmcif.wwpdb.org/dictionaries/mmcif_pdbx_v50.dic/Categories/atom_site.html
     public class AtomTable
     {
+        //TODO implement lazy initialization for all properties ?
+
         private const string CATEGORY_NAME = "_atom_site";
         public const int DEFAULT_RES_SEQ = 0; // assign label_seq_id 0 to residues without label_seq_id (mmCIF allows only positive values of label_seq_id)
         public const int DEFAULT_CHARGE = 0;
