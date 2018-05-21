@@ -8,10 +8,14 @@ namespace SecStrAnnot2
 {
     class Program
     {
+        public static DateTime SetTextDone;
+        public static DateTime LexicalDone;
+        public static DateTime ExtractNamesDone;
+        public static DateTime SyntacticDone;
         static void Main(string[] args)
         {
             foreach (string filename in args){
-                Console.Error.WriteLine("\n" + filename);
+                // Console.Error.WriteLine("\n" + filename);
                     try {
                         string text = "";
                         DateTime t0 = DateTime.Now;
@@ -19,19 +23,61 @@ namespace SecStrAnnot2
                             text = r.ReadToEnd();
                         }
                         DateTime t1 = DateTime.Now;
-                        //MyCifPack pack = MyCifPack.FromFile(filename);
+
                         CifPackage pack = CifPackage.FromString(text);
                         string blockName = pack.BlockNames[0];
                         CifBlock block = pack[blockName];
-                        CifCategory category = block["_atom_site"];
-                        //Console.WriteLine(category.Name + "[" + category.ItemKeywordNames.Length + "]\n\t" + category.ItemKeywordNames.Enumerate("\n\t"));
+                        
                         DateTime t2 = DateTime.Now;
-                        AtomTable atoms = new AtomTable(block);
-                        DateTime t3 = DateTime.Now;
 
-                        Lib.WriteLineDebug("Read:    " + (t1-t0));
-                        Lib.WriteLineDebug("Parse:   " + (t2-t1));
-                        Lib.WriteLineDebug("Extract: " + (t3-t2));
+                        CifCategory category = block["_atom_site"];
+                        CifItem item = category["label_atom_id"];
+                        int[] cAlphas = block.GetItem("_atom_site.label_atom_id").GetRowsWith("CA"); // or item.GetRowsWith("CA");
+                        AtomTable atoms = new AtomTable(block, cAlphas); // or new AtomTable(category, cAlphas);                        
+
+                        CifCategory sheetCategory = block["_pdbx_struct_sheet_hbond"];
+                        CifItem sheetId = sheetCategory["sheet_id"];
+                        int[] sheetIdB = sheetId.GetRowsWith("B");
+                        Table table = sheetCategory.MakeTable(sheetIdB, ("sheet_id", CifValueType.Char), ("range_1_label_comp_id", CifValueType.String), ("range_1_label_seq_id", CifValueType.Integer));
+                       
+                        Lib.WriteLineDebug(table.GetColumn<char>("sheet_id").Enumerate());
+                        Lib.WriteLineDebug(table.GetColumn<string>("range_1_label_comp_id").Enumerate());
+                        Lib.WriteLineDebug(table.GetColumn<int>("range_1_label_seq_id").Enumerate());
+                        
+                        //int[] cAlphas = block.GetItem("_atom_site.label_atom_id").GetIndicesWhere(name => name == "CA");
+                        //int[] cAlphas = block.GetItem("_atom_site.label_atom_id").GetIndicesWhere((txt,i,j) => j-i == 2 && txt[i] == 'C' && txt[i+1] == 'A');
+                        //int[] cAlphas = block.GetItem("_atom_site.label_atom_id").GetIndicesWith("CA");
+                        /*double[] xs =  block.GetItem("_atom_site.Cartn_x").GetDoubles(cAlphas);
+                        double[] ys =  block.GetItem("_atom_site.Cartn_y").GetDoubles(cAlphas);
+                        double[] zs =  block.GetItem("_atom_site.Cartn_z").GetDoubles(cAlphas);
+                        string[] names =  block.GetItem("_atom_site.auth_atom_id").GetStrings(cAlphas);*/
+                        /*for (int i = 0; i < 10; i++)
+                        {
+                            int[] cAlphas = block.GetItem("_atom_site.label_atom_id").GetIndicesWith("CA");
+                            // double[] xs =  block.GetItem("_atom_site.Cartn_x").GetDoubles();
+                            // double[] ys =  block.GetItem("_atom_site.Cartn_y").GetDoubles();
+                            // double[] zs =  block.GetItem("_atom_site.Cartn_z").GetDoubles();
+                            // int[] resis =  block.GetItem("_atom_site.auth_seq_id").GetIntegers();
+                            // Lib.WriteLineDebug(xs.Length + " xs: " + xs.Enumerate());
+                            // Lib.WriteLineDebug(resis.Length + " resis: " + resis.Enumerate());
+                        }*/
+                        
+                        DateTime t3 = DateTime.Now;
+                        //Lib.WriteLineDebug(cAlphas.Length + " CAs: " + cAlphas.Enumerate());
+                        //Lib.WriteLineDebug(" resis: " + atoms.labelResSeq.Enumerate());
+                        //Lib.WriteLineDebug(" Xs: " + atoms.X.Enumerate());
+
+
+                        Func<TimeSpan,string> Format = span => span.TotalSeconds.ToString("0.000");
+
+                        Lib.WriteLineDebug("Read:    " + Format(t1-t0));
+                        Lib.WriteLineDebug("Parse:   " + Format(t2-t1));
+                        Lib.WriteLineDebug("    Set text:   " + Format(SetTextDone-t1));
+                        Lib.WriteLineDebug("    Lexical:    " + Format(LexicalDone-SetTextDone));
+                        Lib.WriteLineDebug("    Names:      " + Format(ExtractNamesDone-LexicalDone));
+                        Lib.WriteLineDebug("    Syntactic:  " + Format(SyntacticDone-ExtractNamesDone));
+                        Lib.WriteLineDebug("    ?:          " + Format(t2-SyntacticDone));
+                        Lib.WriteLineDebug("Extract: " + Format(t3-t2));
                     } catch (CifException e) {
                         Lib.WriteErrorAndExit(e.Message);
                     }

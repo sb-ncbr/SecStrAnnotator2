@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace SecStrAnnot2.Cif.Raw
 {
@@ -14,6 +15,8 @@ namespace SecStrAnnot2.Cif.Raw
         // Constants
         private const bool PRINT_TEXT_IN_COLOR = false; //true;
         private const bool PRINT_TOKENS = false; //true;
+        private static int MAX_DIGITS_INT = (int)Math.Floor(Math.Log10(int.MaxValue));
+        private static int MAX_DIGITS_LONG = (int)Math.Floor(Math.Log10(long.MaxValue));
 
         private static char[] ordinaryChars = "!%&()*+,-./0123456789:<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\\^`abcdefghijklmnopqrstuvwxyz{|}~".ToCharArray();
         private static char[] nonBlankChars = ordinaryChars.Concat("\"#$'_;[]").ToArray();
@@ -27,6 +30,8 @@ namespace SecStrAnnot2.Cif.Raw
         private static bool[] isAnyPrintChar = Enumerable.Range(0, 256).Select(c => anyPrintChars.Contains<char>((char)c)).ToArray();
         private static bool[] isWhiteSpaceChar = Enumerable.Range(0, 256).Select(c => whiteSpaceChars.Contains<char>((char)c)).ToArray();
 
+
+        // Enum types
         private enum TokenType { 
             Data, // DATA_ directive (e.g. data_1tqn)
             Save, // SAVE_ directive (e.g. save_nice_frame, save_)
@@ -38,7 +43,6 @@ namespace SecStrAnnot2.Cif.Raw
             Semicolon  // semicolon-quoted string (e.g. ;something followed by a newline;)
         };
         
-        // Enum types
         private enum LexicalState { 
             Out, // out of token (in white-space)
             Comment, // in a comment (e.g. # This is a comment)
@@ -54,6 +58,7 @@ namespace SecStrAnnot2.Cif.Raw
             Data, // in data_ (possibly in save_)
             Loop // in a loop_, collecting tags
         }
+
 
         // Attributes
         public string Text; // full text of the CIF
@@ -75,20 +80,18 @@ namespace SecStrAnnot2.Cif.Raw
         public string[] SaveNames { get; private set; }
         public string[] TagNames { get; private set; }
 
-        public CifParser(string text){
-            //Lib.WriteLineDebug(ordinaryChars.Length.ToString());
-            //Lib.WriteLineDebug(nonBlankChars.Length.ToString());
-            //Lib.WriteLineDebug(textLeadChars.Length.ToString());
-            //Lib.WriteLineDebug(anyPrintChars.Length.ToString());
+
+        internal CifParser(string text){
             SetText(text);
-            LexicalAnalysis();
+            Program.SetTextDone = DateTime.Now;
+            LexicalAnalysis_Goto(); // Lexical analysis is ~ 20% faster with Goto version (1.05 s vs. 1.26 s on 3j3q)
+            Program.LexicalDone = DateTime.Now;
             ExtractControlTokenNames();
-            /*Lib.WriteLineDebug(BlockNames.Length + " BLOCKS: " + BlockNames.Enumerate());
-            Lib.WriteLineDebug(SaveNames.Length + " SAVES: " + SaveNames.Enumerate());
-            Lib.WriteLineDebug(loops.Length + " LOOPS");
-            Lib.WriteLineDebug(TagNames.Length + " TAGS: " +TagNames.Enumerate());*/
+            Program.ExtractNamesDone = DateTime.Now;
             SyntacticAnalysis();
+            Program.SyntacticDone = DateTime.Now;
         }
+
         private void SetText(string text){
             if (Text != null) {
                 throw new InvalidOperationException("Attempting to set text into already initialized " + this.GetType());
@@ -104,7 +107,7 @@ namespace SecStrAnnot2.Cif.Raw
             }
         }
 
-        private void LexicalAnalysis(){
+        private void LexicalAnalysis_NoGoto(){
             List<int> startList = new List<int>(textLength / 4); // guessed number of tokens based on the length of text
             List<int> stopList = new List<int>(textLength / 4); 
             List<TokenType> typeList = new List<TokenType>(textLength / 4);
@@ -359,6 +362,236 @@ namespace SecStrAnnot2.Cif.Raw
             tags = tagIndexList.ToArray();
         }
 
+        private void LexicalAnalysis_Goto(){
+            List<int> startList = new List<int>(textLength / 4); // guessed number of tokens based on the length of text
+            List<int> stopList = new List<int>(textLength / 4); 
+            List<TokenType> typeList = new List<TokenType>(textLength / 4);
+            List<int> blockIndexList = new List<int>();
+            List<int> saveIndexList = new List<int>();
+            List<int> loopIndexList = new List<int>(100); // guessed typical number of loops
+            List<int> tagIndexList = new List<int>(1000); // guessed typical number of tags
+            
+            int i = -1;
+            char c;
+
+            // implicit goto STATE_OUT;
+            
+            STATE_OUT: 
+                if (++i >= textLength) goto STATE_FINISH;
+                c = Text[i];
+                switch (c){
+                    case '#': 
+                        startList.Add(i);
+                        goto STATE_COMMENT;
+                    case '\'':
+                        startList.Add(i);
+                        goto STATE_SINGLE;
+                    case '"':
+                        startList.Add(i);
+                        goto STATE_DOUBLE;
+                    case ';':
+                        if (i == 0 || Text[i-1] == '\n' || Text[i-1] =='\r'){
+                            startList.Add(i);
+                            goto STATE_SEMICOLON;
+                        } else {
+                            startList.Add(i);
+                            goto STATE_TOKEN;
+                        }
+                    default:
+                        if (isWhiteSpaceChar[c]){
+                            goto STATE_OUT;
+                        } else if (isOrdinaryChar[c]){
+                            startList.Add(i);
+                            goto STATE_TOKEN;
+                        } else if (c == '_'){
+                            startList.Add(i);
+                            goto STATE_TAG;
+                        } else {
+                            throw NewLexicalCifException(i, LexicalState.Out);
+                        }
+                }
+
+            STATE_COMMENT:
+                if (++i >= textLength) throw new CifException("Unexpected end of file");
+                c = Text[i];
+                if (c == '\n' || c == '\r'){
+                    startList.RemoveAt(stopList.Count); // remove from tokens
+                    goto STATE_OUT;
+                } else {
+                    goto STATE_COMMENT;
+                }
+
+            STATE_TAG:
+                if (++i >= textLength) throw new CifException("Unexpected end of file");
+                c = Text[i];
+                if (isNonBlankChar[c]){
+                    goto STATE_TAG;
+                } else {
+                    tagIndexList.Add(stopList.Count);
+                    typeList.Add(TokenType.Tag);
+                    stopList.Add(i);
+                    goto STATE_OUT;
+                }
+
+            STATE_TOKEN:
+                if (++i >= textLength) throw new CifException("Unexpected end of file");
+                c = Text[i];
+                if (isNonBlankChar[c]){
+                    goto STATE_TOKEN; 
+                } else {
+                    int s = startList[stopList.Count];
+                    if (i - s >= 5 // is this a DATA_ token?
+                        && (Text[ s ]=='d' || Text[ s ]=='D') 
+                        && (Text[s+1]=='a' || Text[s+1]=='A') 
+                        && (Text[s+2]=='t' || Text[s+2]=='T') 
+                        && (Text[s+3]=='a' || Text[s+3]=='A') 
+                        &&  Text[s+4]=='_') {
+                        blockIndexList.Add(stopList.Count);
+                        typeList.Add(TokenType.Data);
+                        stopList.Add(i);
+                    } else if (i - s >= 5  // is this a SAVE_ token?
+                        && (Text[ s ]=='s' || Text[ s ]=='S') 
+                        && (Text[s+1]=='a' || Text[s+1]=='A') 
+                        && (Text[s+2]=='v' || Text[s+2]=='V') 
+                        && (Text[s+3]=='e' || Text[s+3]=='E') 
+                        &&  Text[s+4]=='_') {
+                        saveIndexList.Add(stopList.Count);
+                        typeList.Add(TokenType.Save);
+                        stopList.Add(i);
+                    } else if (i - s == 5  // is this a LOOP_ token?
+                        && (Text[ s ]=='l' || Text[ s ]=='L') 
+                        && (Text[s+1]=='o' || Text[s+1]=='O') 
+                        && (Text[s+2]=='o' || Text[s+2]=='O') 
+                        && (Text[s+3]=='p' || Text[s+3]=='P') 
+                        &&  Text[s+4]=='_') {
+                        loopIndexList.Add(stopList.Count);
+                        typeList.Add(TokenType.Loop);
+                        stopList.Add(i);
+                    } else if (i - s >= 5  // is this a STOP_ token?
+                        && (Text[ s ]=='s' || Text[ s ]=='S') 
+                        && (Text[s+1]=='t' || Text[s+1]=='T') 
+                        && (Text[s+2]=='o' || Text[s+2]=='O') 
+                        && (Text[s+3]=='p' || Text[s+3]=='P') 
+                        &&  Text[s+4]=='_') {
+                        startList.RemoveAt(stopList.Count); // remove from tokens
+                    } else if (i - s >= 7  // is this a GLOBAL_ token?
+                        && (Text[ s ]=='g' || Text[ s ]=='G') 
+                        && (Text[s+1]=='l' || Text[s+1]=='L') 
+                        && (Text[s+2]=='o' || Text[s+2]=='O') 
+                        && (Text[s+3]=='b' || Text[s+3]=='B') 
+                        && (Text[s+4]=='a' || Text[s+4]=='A') 
+                        && (Text[s+5]=='l' || Text[s+5]=='L') 
+                        &&  Text[s+6]=='_') {
+                        startList.RemoveAt(stopList.Count); // remove from tokens
+                    } else { // this is a normal value token
+                        typeList.Add(TokenType.Value);
+                        stopList.Add(i);
+                    }
+                    goto STATE_OUT;
+                }
+
+            STATE_SINGLE:
+                if (++i >= textLength) throw new CifException("Unexpected end of file");
+                c = Text[i];
+                if (c == '\'' && isWhiteSpaceChar[Text[i+1]]){
+                    typeList.Add(TokenType.Single);
+                    stopList.Add(i+1);
+                    goto STATE_OUT;
+                } else if (isAnyPrintChar[c]){
+                    goto STATE_SINGLE;
+                } else {
+                    throw NewLexicalCifException(i, LexicalState.Single);
+                }
+
+            STATE_DOUBLE:
+                if (++i >= textLength) throw new CifException("Unexpected end of file");
+                c = Text[i];
+                if (c == '"' && isWhiteSpaceChar[Text[i+1]]){
+                    typeList.Add(TokenType.Double);
+                    stopList.Add(i+1);
+                    goto STATE_OUT;
+                } else if (isAnyPrintChar[c]){
+                    goto STATE_DOUBLE;
+                } else {
+                    throw NewLexicalCifException(i, LexicalState.Double);
+                }
+
+            STATE_SEMICOLON:
+                if (++i >= textLength) throw new CifException("Unexpected end of file");
+                c = Text[i];
+                if (c == ';' &&  (Text[i-1] == '\n' || Text[i-1] =='\r')){
+                    typeList.Add(TokenType.Semicolon);
+                    stopList.Add(i+1);
+                    goto STATE_OUT;
+                } else {
+                    goto STATE_SEMICOLON;
+                }
+            
+            STATE_FINISH:
+                // Has processed the whole text, continue in normal execution
+            
+            // Print out extracted tokens in color
+            if (PRINT_TOKENS){
+                ConsoleColor origFg = Console.ForegroundColor;
+                ConsoleColor origBg = Console.BackgroundColor;
+                for (int t = 0; t < startList.Count; t++)
+                {
+                    if (typeList[t] == TokenType.Tag){
+                        Console.WriteLine(" ");
+                        Console.BackgroundColor = ConsoleColor.Gray;
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write(Text.Substring(startList[t], stopList[t]-startList[t]));
+                        Console.BackgroundColor = ConsoleColor.Yellow;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.Write(" ");
+                    } else if (typeList[t] == TokenType.Single || typeList[t] == TokenType.Double){
+                        Console.BackgroundColor = ConsoleColor.Gray;
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.Write(Text.Substring(startList[t], stopList[t]-startList[t]));
+                        Console.BackgroundColor = ConsoleColor.Yellow;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.Write(" ");
+                    } else if (typeList[t] == TokenType.Semicolon){
+                        Console.WriteLine(" ");
+                        Console.BackgroundColor = ConsoleColor.Gray;
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.Write(Text.Substring(startList[t], stopList[t]-startList[t]));
+                        Console.BackgroundColor = ConsoleColor.Yellow;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.Write(" ");
+                    } else if (typeList[t] == TokenType.Value){
+                        if (typeList[t] == TokenType.Data || typeList[t] == TokenType.Save || typeList[t] == TokenType.Loop) {
+                            Console.WriteLine(" ");
+                            Console.BackgroundColor = ConsoleColor.Cyan;
+                            Console.ForegroundColor = ConsoleColor.Black;
+                            Console.Write(Text.Substring(startList[t], stopList[t]-startList[t]));
+                            Console.BackgroundColor = ConsoleColor.Yellow;
+                            Console.ForegroundColor = ConsoleColor.Black;
+                            Console.Write(" ");
+                        } else {
+                            Console.BackgroundColor = ConsoleColor.Gray;
+                            Console.ForegroundColor = ConsoleColor.Black;
+                            Console.Write(Text.Substring(startList[t], stopList[t]-startList[t]));
+                            Console.BackgroundColor = ConsoleColor.Yellow;
+                            Console.ForegroundColor = ConsoleColor.Black;
+                            Console.Write(" ");
+                        }
+                    }
+                }
+                Console.BackgroundColor = origBg;
+                Console.ForegroundColor = origFg;
+                Console.WriteLine(" ");
+            }
+
+            start = startList.ToArray();
+            stop = stopList.ToArray();
+            type = typeList.ToArray();
+            blocks = blockIndexList.ToArray();
+            saves = saveIndexList.ToArray();
+            loops = loopIndexList.ToArray();
+            tags = tagIndexList.ToArray();
+        }
+
         private string GetTokenString(int iToken){
             return Text.Substring(start[iToken], stop[iToken] - start[iToken]);
         }
@@ -445,7 +678,6 @@ namespace SecStrAnnot2.Cif.Raw
             for (int iControl = 0; iControl < nControls; iControl++)
             {
                 int iToken = controlTokens[iControl];
-                //Lib.WriteLineDebug(iToken + ": " + GetTokenString(iToken));
                 TokenType foo = type[iToken]; // rename to tokenType
                 switch(state){
                     case SyntacticState.Out:
@@ -461,7 +693,6 @@ namespace SecStrAnnot2.Cif.Raw
                             case TokenType.Data:
                                 // stay in Data, move to the next block
                                 firstSaveInBlock[iData] = iSave;
-                                //firstLoopInBlock[iData] = iLoop;
                                 firstTagInBlock[iData] = iTag;
                                 iData++;
                                 break;
@@ -505,10 +736,6 @@ namespace SecStrAnnot2.Cif.Raw
                                 int nTagsInLoop = iTag - firstTag + 1;
                                 int firstValue = iToken + 1;
                                 int nValuesInLoop = controlTokens[iControl+1] - firstValue;
-                                /*Lib.WriteLineDebug("Values: " + nValuesInLoop + ", tags: " + nTagsInLoop);
-                                Lib.WriteLineDebug("Current token: " + GetTokenString(iToken) + GetTokenString(iToken+1));
-                                Lib.WriteLineDebug("First tag: " + GetTokenString(tags[firstTag]));
-                                Lib.WriteLineDebug("Last tag: " + GetTokenString(tags[iTag-1]));*/
                                 if (nValuesInLoop % nTagsInLoop != 0){
                                     throw NewSyntacticCifException(loops[iLoop-1], SyntacticState.Loop, "Number of values in a loop must be a multiple of the number of tags");
                                 }
@@ -530,83 +757,97 @@ namespace SecStrAnnot2.Cif.Raw
                         throw new NotImplementedException();
                 }
             }
-
-            /*for (iLoop = 0; iLoop < nLoops; iLoop++)
-            {
-                Lib.WriteLineDebug("LOOP:");
-                for (iTag = firstTagInLoop[iLoop]; iTag < firstTagAfterLoop[iLoop]; iTag++)
-                {
-                    Lib.WriteLineDebug("    " + tagNames[iTag]);
-                }
-            }*/
-            /*for (iTag = 0; iTag < nTags; iTag++){
-                Lib.WriteLineDebug("\n" + tagNames[iTag] + " [" + nValuesForTag[iTag] + "]:");
-                for (int i = 0; i < nValuesForTag[iTag]; i++)
-                {
-                    Lib.WriteDebug(GetTokenString(firstValueForTag[iTag] + i * stepForTag[iTag]) + ", ");
-                }
-            }*/
         }
 
-        public ValueTuple<int,int> GetValuePosition(int iTag, int iValue){
+
+        internal ValueTuple<int,int> GetValuePosition(int iTag, int iValue){
             int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
             return new ValueTuple<int,int>(start[iToken], stop[iToken]); 
         }
-
-        public string GetValueAsString(int iTag, int iValue){
-            int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
-            return Text.Substring(start[iToken], stop[iToken] - start[iToken]);
-        }
-        public string[] GetValuesAsStrings(int iTag){
+        
+        internal string[] GetValuesAsStrings(int iTag){
             int count = nValuesForTag[iTag];
             string[] array = new string[count];
+            int iToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
             for (int iValue = 0; iValue < count; iValue++)
             {
-                int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
                 array[iValue] = Text.Substring(start[iToken], stop[iToken] - start[iToken]);
+                iToken += step;
+            }
+            return array;
+        }
+        internal string[] GetValuesAsStrings(int iTag, int[] indices){
+            int count = indices.Length;
+            string[] array = new string[count];
+            int first = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int i = 0; i < count; i++)
+            {
+                int iValue = indices[i];
+                int iToken = first + iValue * step;
+                array[i] = Text.Substring(start[iToken], stop[iToken] - start[iToken]);
             }
             return array;
         }
 
-        public char GetValueAsChars(int iTag, int iValue){
-            int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
-            if (stop[iToken] != start[iToken] + 1){
-                throw NewValueParsingCifException(iToken, "Cannot parse as character");
-            }
-            return Text[start[iToken]];
-        }
-        public char[] GetValuesAsChars(int iTag){
+        internal char[] GetValuesAsChars(int iTag){
             int count = nValuesForTag[iTag];
             char[] array = new char[count];
+            int iToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
             for (int iValue = 0; iValue < count; iValue++)
             {
-                int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
                 if (stop[iToken] != start[iToken] + 1){
                     throw NewValueParsingCifException(iToken, "Cannot parse as character");
                 }
                 array[iValue] = Text[start[iToken]];
+                iToken += step;
+            }
+            return array;
+        }
+        internal char[] GetValuesAsChars(int iTag, int[] indices){
+            int count = indices.Length;
+            char[] array = new char[count];
+            int first = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int i = 0; i < count; i++)
+            {
+                int iValue = indices[i];
+                int iToken = first + iValue * step;
+                if (stop[iToken] != start[iToken] + 1){
+                    throw NewValueParsingCifException(iToken, "Cannot parse as character");
+                }
+                array[i] = Text[start[iToken]];
             }
             return array;
         }
 
-        /// <summary>
-        /// If reading the whole array, GetValuesAsIntegers() is faster.
-        /// </summary>
-        public int GetValueAsInteger(int iTag, int iValue){
-            int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
-            // parsing manually instead of Int32 for efficiency
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal int ParseInteger(int iToken){
             bool negative = false;
-            int st = start[iToken];
-            if (Text[st] == '-'){
-                negative = true;
-                st++;
-            } else if (Text[st] == '+'){
-                st++;
-            }
             int value = 0;
-            for (int i = st; i < stop[iToken]; i++)
+            int j = start[iToken];
+            int stp = stop[iToken];
+            // check length
+            if (stp - j > MAX_DIGITS_INT){
+                try {
+                    return int.Parse(Text.Substring(j, stp - j));
+                } catch (System.OverflowException e) {
+                    throw NewValueParsingCifException(iToken, "Cannot parse as integer (" + e.Message + ")");
+                }
+            }
+            // get sign
+            if (Text[j] == '-'){
+                negative = true;
+                j++;
+            } else if (Text[j] == '+'){
+                j++;
+            }
+            // get value
+            for ( ; j < stp; j++)
             {
-                char c = Text[i];
+                char c = Text[j];
                 if (c < '0' || c > '9'){
                     throw NewValueParsingCifException(iToken, "Cannot parse as integer");
                 }
@@ -618,126 +859,428 @@ namespace SecStrAnnot2.Cif.Raw
             }
             return value;
         }
-        public int[] GetValuesAsIntegers(int iTag){
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal int ParseInteger(int iToken, int defaultValue){
+            bool negative = false;
+            int value = 0;
+            int j = start[iToken];
+            int stp = stop[iToken];
+            // check if is not . or ?
+            if (j + 1 == stp && (Text[j] == '.' || Text[j] == '?')){
+                return defaultValue;
+            }
+            // check length
+            if (stp - j > MAX_DIGITS_INT){
+                try {
+                    return int.Parse(Text.Substring(j, stp - j));
+                } catch (System.OverflowException e) {
+                    throw NewValueParsingCifException(iToken, "Cannot parse as integer (" + e.Message + ")");
+                }
+            }
+            // get sign
+            if (Text[j] == '-'){
+                negative = true;
+                j++;
+            } else if (Text[j] == '+'){
+                j++;
+            }
+            // get value
+            for ( ; j <stp; j++)
+            {
+                char c = Text[j];
+                if (c < '0' || c > '9'){
+                    throw NewValueParsingCifException(iToken, "Cannot parse as integer");
+                }
+                value *= 10;
+                value += (c - '0');
+            }
+            if (negative){
+                value *= -1;
+            }
+            return value;
+        }
+        internal int[] GetValuesAsIntegers(int iTag){
             int count = nValuesForTag[iTag];
             int[] array = new int[count];
+            int iToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
             for (int iValue = 0; iValue < count; iValue++)
             {
-                int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
-                // parsing manually instead of Int32.Parse() for efficiency
-                bool negative = false;
-                int i = start[iToken];
-                if (Text[i] == '-'){
-                    negative = true;
-                    i++;
-                } else if (Text[i] == '+'){
-                    i++;
-                }
-                int value = 0;
-                for ( ; i < stop[iToken]; i++)
-                {
-                    char c = Text[i];
-                    if (c < '0' || c > '9'){
-                        throw NewValueParsingCifException(iToken, "Cannot parse as integer");
-                    }
-                    value *= 10;
-                    value += (c - '0');
-                }
-                if (negative){
-                    value *= -1;
-                }
-                array[iValue] = value;
+                array[iValue] = ParseInteger(iToken); // parsing manually instead of Int32.Parse() for efficiency
+                iToken += step;
+            }
+            return array;
+        }
+        internal int[] GetValuesAsIntegers(int iTag, int[] indices){
+            int count = indices.Length;
+            int[] array = new int[count];
+            int first = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int i = 0; i < count; i++)
+            {
+                int iValue = indices[i];
+                int iToken = first + iValue * step;
+                array[i] = ParseInteger(iToken); // parsing manually instead of Int32.Parse() for efficiency
+            }
+            return array;
+        }
+        internal int[] GetValuesAsIntegers(int iTag, int defaultValue){
+            int count = nValuesForTag[iTag];
+            int[] array = new int[count];
+            int iToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int iValue = 0; iValue < count; iValue++)
+            {
+                array[iValue] = ParseInteger(iToken, defaultValue); // parsing manually instead of Int32.Parse() for efficiency
+                iToken += step;
+            }
+            return array;
+        }
+        internal int[] GetValuesAsIntegers(int iTag, int[] indices, int defaultValue){
+            int count = indices.Length;
+            int[] array = new int[count];
+            int first = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int i = 0; i < count; i++)
+            {
+                int iValue = indices[i];
+                int iToken = first + iValue * step;
+                array[i] = ParseInteger(iToken, defaultValue); // parsing manually instead of Int32.Parse() for efficiency
             }
             return array;
         }
 
-        public double[] GetValuesAsDoubles(int iTag){
-            int count = nValuesForTag[iTag];
-            double[] array = new double[count];
-            for (int iValue = 0; iValue < count; iValue++)
-            {
-                int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
-                // parsing manually instead of Double.Parse() for efficiency
-                bool negative = false;
-                int i = start[iToken];
-                if (Text[i] == '-'){
-                    negative = true;
-                    i++;
-                } else if (Text[i] == '+'){
-                    i++;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] // does not work in Debug, but in Release is even faster than manual inlining
+        private double ParseDouble(int iToken){
+            bool negative = false;
+            long whole = 0;
+            bool hasFractional = false; // no decimal point
+            long fractional = 0;
+            long fractionalScale = 1;
+            bool hasExponent = false;
+            bool negativeExponent = false;
+            int exponent = 0;
+            double value;
+            int j = start[iToken];
+            int stp = stop[iToken];
+            // check length
+            if (stp - j > MAX_DIGITS_LONG){
+                try {
+                    return double.Parse(Text.Substring(j, stp - j));
+                } catch (System.OverflowException e) {
+                    throw NewValueParsingCifException(iToken, "Cannot parse as real number (" + e.Message + ")");
                 }
-                int whole = 0;
-                bool hasFractional = false; // no decimal point
-                int fractional = 0;
-                int fractionalScale = 1;
-                bool hasExponent = false;
-                bool negativeExponent = false;
-                int exponent = 0;
-                double value;
-                // parse the whole part of the real number             
-                for ( ; i < stop[iToken]; i++)
+            }
+            // parse sign
+            if (Text[j] == '-'){
+                negative = true;
+                j++;
+            } else if (Text[j] == '+'){
+                j++;
+            }
+            // parse the whole part of the real number             
+            for ( ; j < stp; j++)
+            {
+                char c = Text[j];
+                if (c == '.'){
+                    hasFractional = true;
+                    j++;
+                    break;
+                }
+                if (c < '0' || c > '9'){
+                    throw NewValueParsingCifException(iToken, "Cannot parse as real number");
+                }
+                whole *= 10;
+                whole += (c - '0');
+            }
+            // parse the fractional part of the real number (if any)
+            if (hasFractional){
+                for ( ; j < stp; j++)
                 {
-                    char c = Text[i];
-                    if (c == '.'){
-                        hasFractional = true;
-                        i++;
+                    char c = Text[j];
+                    if (c == 'e' || c == 'E'){
+                        hasExponent = true;
+                        j++;
                         break;
                     }
                     if (c < '0' || c > '9'){
                         throw NewValueParsingCifException(iToken, "Cannot parse as real number");
                     }
-                    whole *= 10;
-                    whole += (c - '0');
+                    fractionalScale *= 10;
+                    fractional *= 10;
+                    fractional += (c - '0');
                 }
-                // parse the fractional part of the real number (if any)
-                if (hasFractional){
-                    for ( ; i < stop[iToken]; i++)
-                    {
-                        char c = Text[i];
-                        if (c == 'e' || c == 'E'){
-                            hasExponent = true;
-                            i++;
-                            break;
-                        }
-                        if (c < '0' || c > '9'){
-                            throw NewValueParsingCifException(iToken, "Cannot parse as real number");
-                        }
-                        fractionalScale *= 10;
-                        fractional *= 10;
-                        fractional += (c - '0');
-                    }
-                    value = whole + (double)fractional / fractionalScale;
-                } else {
-                    value = whole;
+                value = whole + (double)fractional / fractionalScale;
+            } else {
+                value = whole;
+            }
+            if (negative){
+                value *= -1;
+            }
+            if (hasExponent){
+                if (Text[j] == '-'){
+                    negativeExponent = true;
+                    j++;
+                } else if (Text[j] == '+'){
+                    j++;
                 }
-                if (negative){
-                    value *= -1;
+                for ( ; j < stp; j++)
+                {
+                    char c = Text[j];
+                    if (c < '0' || c > '9'){
+                        throw NewValueParsingCifException(iToken, "Cannot parse as real number");
+                    }
+                    exponent *= 10;
+                    exponent += (c - '0');
                 }
-                if (hasExponent){
-                    if (Text[i] == '-'){
-                        negativeExponent = true;
-                        i++;
-                    } else if (Text[i] == '+'){
-                        i++;
-                    }
-                    for ( ; i < stop[iToken]; i++)
-                    {
-                        char c = Text[i];
-                        if (c < '0' || c > '9'){
-                            throw NewValueParsingCifException(iToken, "Cannot parse as real number");
-                        }
-                        exponent *= 10;
-                        exponent += (c - '0');
-                    }
-                    if (negativeExponent){
-                        exponent *= -1;
-                    }
-                    value *= Math.Pow(10, exponent);
+                if (negativeExponent){
+                    exponent *= -1;
                 }
-                array[iValue] = value;
+                value *= Math.Pow(10, exponent);
+            }
+            return value;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] // does not work in Debug, but in Release is even faster than manual inlining
+        private double ParseDouble(int iToken, double defaultValue){
+            bool negative = false;
+            long whole = 0;
+            bool hasFractional = false; // no decimal point
+            long fractional = 0;
+            long fractionalScale = 1;
+            bool hasExponent = false;
+            bool negativeExponent = false;
+            int exponent = 0;
+            double value;
+            int j = start[iToken];
+            int stp = stop[iToken];
+            // check if is not . or ?
+            if (j + 1 == stp && (Text[j] == '.' || Text[j] == '?')){
+                return defaultValue;
+            }
+            // check length
+            if (stp - j > MAX_DIGITS_LONG){
+                try {
+                    return double.Parse(Text.Substring(j, stp - j));
+                } catch (System.OverflowException e) {
+                    throw NewValueParsingCifException(iToken, "Cannot parse as real number (" + e.Message + ")");
+                }
+            }
+            // parse sign
+            if (Text[j] == '-'){
+                negative = true;
+                j++;
+            } else if (Text[j] == '+'){
+                j++;
+            }
+            // parse the whole part of the real number             
+            for ( ; j < stp; j++)
+            {
+                char c = Text[j];
+                if (c == '.'){
+                    hasFractional = true;
+                    j++;
+                    break;
+                }
+                if (c < '0' || c > '9'){
+                    throw NewValueParsingCifException(iToken, "Cannot parse as real number");
+                }
+                whole *= 10;
+                whole += (c - '0');
+            }
+            // parse the fractional part of the real number (if any)
+            if (hasFractional){
+                for ( ; j < stp; j++)
+                {
+                    char c = Text[j];
+                    if (c == 'e' || c == 'E'){
+                        hasExponent = true;
+                        j++;
+                        break;
+                    }
+                    if (c < '0' || c > '9'){
+                        throw NewValueParsingCifException(iToken, "Cannot parse as real number");
+                    }
+                    fractionalScale *= 10;
+                    fractional *= 10;
+                    fractional += (c - '0');
+                }
+                value = whole + (double)fractional / fractionalScale;
+            } else {
+                value = whole;
+            }
+            if (negative){
+                value *= -1;
+            }
+            if (hasExponent){
+                if (Text[j] == '-'){
+                    negativeExponent = true;
+                    j++;
+                } else if (Text[j] == '+'){
+                    j++;
+                }
+                for ( ; j < stp; j++)
+                {
+                    char c = Text[j];
+                    if (c < '0' || c > '9'){
+                        throw NewValueParsingCifException(iToken, "Cannot parse as real number");
+                    }
+                    exponent *= 10;
+                    exponent += (c - '0');
+                }
+                if (negativeExponent){
+                    exponent *= -1;
+                }
+                value *= Math.Pow(10, exponent);
+            }
+            return value;
+        }
+        internal double[] GetValuesAsDoubles(int iTag){
+            int count = nValuesForTag[iTag];
+            double[] array = new double[count];
+            int iToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int iValue = 0; iValue < count; iValue++)
+            {
+                array[iValue] = ParseDouble(iToken); // parsing manually instead of Double.Parse() for efficiency
+                iToken += step;
             }
             return array;
         }
+        internal double[] GetValuesAsDoubles(int iTag, int[] indices){
+            int count = indices.Length;
+            double[] array = new double[count];
+            int first = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int i = 0; i < count; i++)
+            {
+                int iValue = indices[i];
+                int iToken = first + iValue * step;
+                array[i] = ParseDouble(iToken); // parsing manually instead of Double.Parse() for efficiency
+            }
+            return array;
+        }
+        internal double[] GetValuesAsDoubles(int iTag, double defaultValue){
+            int count = nValuesForTag[iTag];
+            double[] array = new double[count];
+            int iToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int iValue = 0; iValue < count; iValue++)
+            {
+                array[iValue] = ParseDouble(iToken, defaultValue); // parsing manually instead of Double.Parse() for efficiency
+                iToken += step;
+            }
+            return array;
+        }
+        internal double[] GetValuesAsDoubles(int iTag, int[] indices, double defaultValue){
+            int count = indices.Length;
+            double[] array = new double[count];
+            int first = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int i = 0; i < count; i++)
+            {
+                int iValue = indices[i];
+                int iToken = first + iValue * step;
+                array[i] = ParseDouble(iToken, defaultValue); // parsing manually instead of Double.Parse() for efficiency
+            }
+            return array;
+        }
+
+        internal int[] GetIndicesWhere(int iTag, Func<string,bool> predicate){
+            int count = nValuesForTag[iTag];
+            List<int> indices = new List<int>();
+            int iToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int iValue = 0; iValue < count; iValue++)
+            {
+                string str = Text.Substring(start[iToken], stop[iToken] - start[iToken]);
+                if (predicate(str)){
+                    indices.Add(iValue);
+                }
+                iToken += step;
+            }
+            return indices.ToArray();
+        }
+        internal int[] GetIndicesWhere(int iTag, Func<string,int,int,bool> predicate){
+            int count = nValuesForTag[iTag];
+            List<int> indices = new List<int>();
+            int iToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int iValue = 0; iValue < count; iValue++)
+            {
+                if (predicate(Text, start[iToken], stop[iToken])){
+                    indices.Add(iValue);
+                }
+                iToken += step;
+            }
+            return indices.ToArray();
+        }
+
+        internal int[] GetIndicesWith(int iTag, string sample){
+            int count = nValuesForTag[iTag];
+            //string[] array = new string[count];
+            int length = sample.Length;
+            List<int> indices = new List<int>();
+            int iToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int iValue = 0; iValue < count; iValue++)
+            {
+                // checking string equality manually instead of (Text.Substring(...) == sample) for efficiency
+                int strt = start[iToken];
+                int stp = stop[iToken];
+                bool ok = true;
+                if (stp-strt == length){
+                    for (int i = 0; i < length; i++)
+                    {
+                        if (Text[strt+i] != sample[i]){
+                            ok = false;
+                            break;
+                        }
+                    }
+                    if (ok){
+                        indices.Add(iValue);
+                    }
+                }
+                iToken += step;
+            }
+            return indices.ToArray();
+        }
+        internal int[] GetIndicesWith(int iTag, string[] samples){
+            int count = nValuesForTag[iTag];
+            //string[] array = new string[count];
+            int nSamples = samples.Length;
+            int[] lengths = samples.Select(s => s.Length).ToArray();
+            List<int> indices = new List<int>();
+            int iToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int iValue = 0; iValue < count; iValue++)
+            {
+                // checking string equality manually instead of (Text.Substring(...) == sample) for efficiency
+                int strt = start[iToken];
+                int stp = stop[iToken];
+                for (int s = 0; s < nSamples; s++) // iterate samples
+                {
+                    string sample = samples[s];
+                    int length = lengths[s];
+                    bool ok = true;
+                    if (stp-strt == length){
+                        for (int i = 0; i < length; i++)
+                        {
+                            if (Text[strt+i] != sample[i]){
+                                ok = false;
+                                break; // mismatch -> discard sample, continue with next sample
+                            }
+                        }
+                        if (ok){
+                            indices.Add(iValue);
+                            break; // full match -> discard other samples
+                        }
+                    }
+                }
+                iToken += step;
+            }
+            return indices.ToArray();
+        }
+        
         
         private CifException NewLexicalCifException(int position, LexicalState state){
             (int line, int column) = GetLineColumn(position);
@@ -752,7 +1295,6 @@ namespace SecStrAnnot2.Cif.Raw
             return new CifException("Lexical error on line " + line + ", column " + column 
                 + ", character " + character + " (lexical analyser state: " + state +"):\n" + lineText);
         }
-
         private CifException NewSyntacticCifException(int token, SyntacticState state, string message){
             (int line, int column) = GetLineColumn(start[token]);            
             return new CifException("Syntactic error on line " + line + ", column " + column 

@@ -13,7 +13,7 @@ namespace SecStrAnnot2.Cif
         public string[] CategoryNames { get; private set; }
         public string[] ItemFullNames { get; private set; }
         public CifCategory[] Categories { get; private set; }
-        public MyCifItem[] Items { get; private set; }
+        public CifItem[] Items { get; private set; }
         private Dictionary<string,int> categoryIndex;
         private Dictionary<string,int> itemIndex;
         private Dictionary<string,string[]> keywordsByCategory;
@@ -24,18 +24,21 @@ namespace SecStrAnnot2.Cif
         public CifCategory this[string categoryName] => GetCategory(categoryName);
         public CifCategory GetCategory(string categoryName) {
             if (!categoryIndex.ContainsKey(categoryName)){
-                throw new KeyNotFoundException("This " + this.GetType() + " does not contain category with name '" + categoryName + "'");
+                throw new KeyNotFoundExceptionWithKey<string>(categoryName, "This " + this.GetType() + " does not contain category with name '" + categoryName + "'");
             }
             return Categories[categoryIndex[categoryName]];
         }
+        public bool ContainsCategory(string categoryName) => categoryIndex.ContainsKey(categoryName);
 
-        public MyCifItem GetItem(string itemFullName) {
+        public CifItem GetItem(string itemFullName) {
             if (!itemIndex.ContainsKey(itemFullName)){
-                throw new KeyNotFoundException("This " + this.GetType() + " does not contain item with full name '" + itemFullName + "'");
+                throw new KeyNotFoundExceptionWithKey<string>(itemFullName, "This " + this.GetType() + " does not contain item with full name '" + itemFullName + "'");
             }
             return Items[itemIndex[itemFullName]];
         }
+        public bool ContainsItem(string itemFullName) => itemIndex.ContainsKey(itemFullName);
 
+        // Not to be instantiated directly. Use CifPackage.GetBlock().
         internal CifBlock(CifParser parser, int iBlock){
             this.parser = parser;
             this.iBlock = iBlock;
@@ -60,7 +63,7 @@ namespace SecStrAnnot2.Cif
             }
 
             // initialize items
-            this.Items = new MyCifItem[ItemFullNames.Length];
+            this.Items = new CifItem[ItemFullNames.Length];
             this.itemIndex = new Dictionary<string,int>(ItemFullNames.Length);
             for (int j = 0; j < ItemFullNames.Length; j++)
             {

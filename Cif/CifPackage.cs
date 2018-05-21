@@ -17,10 +17,11 @@ namespace SecStrAnnot2.Cif
         public CifBlock this[string blockName] => GetBlock(blockName);        
         public CifBlock GetBlock(string blockName) {
             if (!blockIndex.ContainsKey(blockName)){
-                throw new KeyNotFoundException("This " + this.GetType() + " does not contain block with name '" + blockName + "'");
+                throw new KeyNotFoundExceptionWithKey<string>(blockName, "This " + this.GetType() + " does not contain block with name '" + blockName + "'");
             }
             return Blocks[blockIndex[blockName]];
         }
+        public bool ContainsBlock(string blockName) => blockIndex.ContainsKey(blockName);
 
         public static CifPackage FromString(string text){
             return new CifPackage(text);
