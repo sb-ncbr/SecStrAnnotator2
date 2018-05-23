@@ -49,10 +49,14 @@ namespace SecStrAnnot2
                         string[] asymIds = category["label_asym_id"].GetStrings();
                         string[] entityIds = category["label_entity_id"].GetStrings();
                         int[] gatheredByEntity = category["label_comp_id"].GetRowsGatheredByValue();
-                        Console.WriteLine("row \tatom \tcmp seq\tasym \tentity");
-                        Lib.WriteLineDebug("gathered by entity: ");
+                        Console.WriteLine("row \tatom \t  comp seq\tasym \tentity");
+                        for (int iRow = 0; iRow < atomIds.Length; iRow++){
+                            Console.WriteLine($"{iRow}:\t {atomIds[iRow]}\t   {compIds[iRow]} {seqIds[iRow]}\t {asymIds[iRow]}\t {entityIds[iRow]}");
+                        }
+                        Lib.WriteLineDebug("SORTED:");
+                        Console.WriteLine("row \tatom \t  comp seq\tasym \tentity");
                         foreach (int iRow in gatheredByEntity){
-                            Console.WriteLine($"{iRow}:\t {atomIds[iRow]}\t {compIds[iRow]} {seqIds[iRow]}\t {asymIds[iRow]}\t {entityIds[iRow]}");
+                            Console.WriteLine($"{iRow}:\t {atomIds[iRow]}\t   {compIds[iRow]} {seqIds[iRow]}\t {asymIds[iRow]}\t {entityIds[iRow]}");
                         }
 
                         // Lib.WriteLineDebug(table.GetColumn<char>("sheet_id").Enumerate());

@@ -1,0 +1,35 @@
+DATA_3ejb_permutated
+
+loop_
+_atom_site.group_PDB                
+_atom_site.id                       
+_atom_site.type_symbol              
+_atom_site.label_atom_id            
+_atom_site.label_alt_id             
+_atom_site.label_comp_id            
+_atom_site.label_asym_id            
+_atom_site.label_entity_id          
+_atom_site.label_seq_id             
+_atom_site.pdbx_PDB_ins_code        
+_atom_site.Cartn_x                  
+_atom_site.Cartn_y                  
+_atom_site.Cartn_z                  
+_atom_site.occupancy                
+_atom_site.B_iso_or_equiv           
+_atom_site.pdbx_formal_charge       
+_atom_site.auth_seq_id              
+_atom_site.auth_comp_id             
+_atom_site.auth_asym_id             
+_atom_site.auth_atom_id             
+_atom_site.pdbx_PDB_model_num       
+_atom_site.pdbe_label_seq_id        
+  ATOM   364  C     C . ALA  A 1  65 ?  65.293   0.996  99.404 1.00 25.76 ?  65 ALA A     C 1  65
+  ATOM   920  C    CG . GLU  B 2  45 ?  58.765  42.004 104.054 1.00 22.64 ?  45 GLU B    CG 1  45
+  ATOM  8804  C    CZ . TYR  F 2 110 ?  58.861  36.725  58.411 1.00 28.65 ? 110 TYR F    CZ 1 110
+  ATOM  2143  C    CA . GLN  B 2 196 ?  40.771  16.460  67.230 1.00 31.42 ? 196 GLN B    CA 1 196
+  ATOM 12884  N     N . ILE  H 2 165 ?  84.950  45.935 147.110 1.00 25.97 ? 165 ILE H     N 1 165
+  ATOM    47  C    CA . GLU  A 1  24 ?  76.202  -6.651 100.196 1.00 30.52 ?  24 GLU A    CA 1  24
+  ATOM  8213  C    CB . TRP  F 2  39 ?  97.877  31.719  42.915 1.00 19.59 ?  39 TRP F    CB 1  39
+  ATOM 14274  C     C . HIS  H 2 342 ?  89.066  63.909 148.797 1.00 18.32 ? 342 HIS H     C 1 342
+  ATOM  2902  C    CB . VAL  B 2 297 ?  71.780  33.918 103.377 1.00 35.42 ? 297 VAL B    CB 1 297
+  ATOM  8663  C    CZ . ARG  F 2  92 ?  80.270  25.493  58.461 1.00 20.48 ?  92 ARG F    CZ 1  92

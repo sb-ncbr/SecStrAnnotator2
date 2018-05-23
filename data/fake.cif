@@ -1,0 +1,99 @@
+data_FAKE
+
+loop_
+_atom_site.group_PDB                
+_atom_site.id                       
+_atom_site.type_symbol              
+_atom_site.label_atom_id            
+_atom_site.label_alt_id             
+_atom_site.label_comp_id            
+_atom_site.label_asym_id            
+_atom_site.label_entity_id          
+_atom_site.label_seq_id             
+_atom_site.pdbx_PDB_ins_code        
+_atom_site.Cartn_x                  
+_atom_site.Cartn_y                  
+_atom_site.Cartn_z                  
+_atom_site.occupancy                
+_atom_site.B_iso_or_equiv           
+_atom_site.pdbx_formal_charge       
+_atom_site.auth_seq_id              
+_atom_site.auth_comp_id             
+_atom_site.auth_asym_id             
+_atom_site.auth_atom_id             
+_atom_site.pdbx_PDB_model_num       
+_atom_site.pdbe_label_seq_id        
+  ATOM     1  N     N . SER  A 1  18 ?  73.942 -22.441  96.515 1.00 32.88 ?  18 SER A     N 1  18
+  ATOM     2  C    CA . SER  A 1  18 ?  73.166 -21.185  96.724 1.00 32.75 ?  18 SER A    CA 1  18
+  ATOM     3  C     C . SER  A 1  18 ?  73.202 -20.751  98.185 1.00 32.65 ?  18 SER A     C 1  18
+  ATOM     4  O     O . SER  A 1  18 ?  73.611 -21.514  99.061 1.00 32.65 ?  18 SER A     O 1  18
+  ATOM     5  C    CB . SER  A 1  18 ?  71.717 -21.362  96.259 1.00 32.82 ?  18 SER A    CB 1  18
+  ATOM     6  O    OG . SER  A 1  18 ?  71.028 -22.297  97.070 1.00 32.76 ?  18 SER A    OG 1  18
+  ATOM     7  N     N . HIS  A 1  19 ?  72.774 -19.517  98.439 1.00 32.56 ?  19 HIS A     N 1  19
+  ATOM     8  C    CA . HIS  A 1  19 ?  72.725 -18.981  99.795 1.00 32.39 ?  19 HIS A    CA 1  19
+  ATOM     9  C     C . HIS  A 1  19 ?  71.730 -17.828  99.891 1.00 32.18 ?  19 HIS A     C 1  19
+  ATOM    10  O     O . HIS  A 1  19 ?  71.368 -17.224  98.879 1.00 32.12 ?  19 HIS A     O 1  19
+  ATOM    11  C    CB . HIS  A 1  19 ?  74.114 -18.517 100.240 1.00 32.51 ?  19 HIS A    CB 1  19
+  ATOM    12  C    CG . HIS  A 1  19 ?  74.716 -17.473  99.352 1.00 32.88 ?  19 HIS A    CG 1  19
+  ATOM    13  N   ND1 . HIS  A 1  19 ?  75.402 -17.784  98.198 1.00 33.12 ?  19 HIS A   ND1 1  19
+  ATOM    14  C   CD2 . HIS  A 1  19 ?  74.738 -16.123  99.451 1.00 33.12 ?  19 HIS A   CD2 1  19
+  ATOM    15  C   CE1 . HIS  A 1  19 ?  75.818 -16.670  97.622 1.00 33.32 ?  19 HIS A   CE1 1  19
+  ATOM    16  N   NE2 . HIS  A 1  19 ?  75.428 -15.648  98.362 1.00 33.38 ?  19 HIS A   NE2 1  19
+  ATOM    17  N     N . MET  A 1  20 ?  71.284 -17.534 101.109 1.00 31.93 ?  20 MET A     N 1  20
+  ATOM    18  C    CA . MET  A 1  20 ?  70.410 -16.392 101.351 1.00 31.65 ?  20 MET A    CA 1  20
+  ATOM    19  C     C . MET  A 1  20 ?  71.148 -15.091 101.049 1.00 31.65 ?  20 MET A     C 1  20
+  ATOM    20  O     O . MET  A 1  20 ?  72.361 -14.996 101.243 1.00 31.64 ?  20 MET A     O 1  20
+  ATOM    21  C    CB . MET  A 1  20 ?  69.912 -16.389 102.800 1.00 31.69 ?  20 MET A    CB 1  20
+  ATOM    22  C    CG . MET  A 2  20 ?  69.140 -17.641 103.203 1.00 31.34 ?  20 MET A    CG 1  20
+  ATOM    23  S    SD . MET  A 2  20 ?  67.570 -17.824 102.332 1.00 30.25 ?  20 MET A    SD 1  20
+  ATOM    24  C    CE . MET  A 2  20 ?  66.583 -16.559 103.127 1.00 30.02 ?  20 MET A    CE 1  20
+  ATOM    25  N     N . SER  A 2  21 ?  70.411 -14.094 100.567 1.00 31.40 ?  21 SER A     N 1  21
+  ATOM    26  C    CA . SER  A 2  21 ?  71.007 -12.827 100.154 1.00 31.29 ?  21 SER A    CA 1  21
+  ATOM    27  C     C . SER  A 2  21 ?  71.707 -12.127 101.316 1.00 31.04 ?  21 SER A     C 1  21
+  ATOM    28  O     O . SER  A 2  21 ?  71.113 -11.914 102.372 1.00 30.95 ?  21 SER A     O 1  21
+  ATOM    29  C    CB . SER  A 2  21 ?  69.947 -11.907  99.547 1.00 31.27 ?  21 SER A    CB 1  21
+  ATOM    30  O    OG . SER  A 2  21 ?  69.359 -12.493  98.398 1.00 31.71 ?  21 SER A    OG 1  21
+  ATOM    31  N     N . THR  A 1  22 ?  72.973 -11.779 101.113 1.00 30.95 ?  22 THR A     N 1  22
+  ATOM    32  C    CA . THR  A 1  22 ?  73.740 -11.053 102.120 1.00 30.75 ?  22 THR A    CA 1  22
+  ATOM    33  C     C . THR  A 1  22 ?  73.422  -9.562 102.070 1.00 30.67 ?  22 THR A     C 1  22
+  ATOM    34  O     O . THR  A 1  22 ?  72.723  -9.098 101.169 1.00 30.66 ?  22 THR A     O 1  22
+  ATOM    35  C    CB . THR  A 1  22 ?  75.257 -11.245 101.924 1.00 30.79 ?  22 THR A    CB 1  22
+  ATOM    36  O   OG1 . THR  A 1  22 ?  75.645 -10.727 100.646 1.00 30.53 ?  22 THR A   OG1 1  22
+  ATOM    37  C   CG2 . THR  A 1  22 ?  75.626 -12.720 102.005 1.00 30.83 ?  22 THR A   CG2 1  22
+  ATOM    38  N     N . ILE  A 1  23 ?  73.938  -8.817 103.043 1.00 30.61 ?  23 ILE A     N 1  23
+  ATOM    39  C    CA . ILE  A 1  23 ?  73.787  -7.366 103.057 1.00 30.60 ?  23 ILE A    CA 1  23
+  ATOM    40  C     C . ILE  A 1  23 ?  74.343  -6.749 101.778 1.00 30.47 ?  23 ILE A     C 1  23
+  ATOM    41  O     O . ILE  A 1  23 ?  73.682  -5.929 101.140 1.00 30.32 ?  23 ILE A     O 1  23
+  ATOM    42  C    CB . ILE  A 1  23 ?  74.490  -6.731 104.277 1.00 30.70 ?  23 ILE A    CB 1  23
+  ATOM    43  C   CG1 . ILE  A 1  23 ?  73.980  -7.355 105.579 1.00 30.84 ?  23 ILE A   CG1 1  23
+  ATOM    44  C   CG2 . ILE  A 1  23 ?  74.288  -5.223 104.285 1.00 30.62 ?  23 ILE A   CG2 1  23
+  ATOM    45  C   CD1 . ILE  A 1  23 ?  72.500  -7.139 105.832 1.00 31.76 ?  23 ILE A   CD1 1  23
+  ATOM    46  N     N . GLU  A 1  24 ?  75.550  -7.161 101.400 1.00 30.48 ?  24 GLU A     N 1  24
+  ATOM    47  C    CA . GLU  A 1  24 ?  76.202  -6.651 100.196 1.00 30.52 ?  24 GLU A    CA 1  24
+  ATOM    48  C     C . GLU  A 1  24 ?  75.383  -6.930  98.938 1.00 30.38 ?  24 GLU A     C 1  24
+  ATOM    49  O     O . GLU  A 1  24 ?  75.202  -6.050  98.098 1.00 30.31 ?  24 GLU A     O 1  24
+  ATOM    50  C    CB . GLU  A 1  24 ?  77.608  -7.243 100.046 1.00 30.50 ?  24 GLU A    CB 1  24
+  ATOM    51  C    CG . GLU  A 1  24 ?  78.262  -6.949  98.700 1.00 30.67 ?  24 GLU A    CG 1  24
+  ATOM    52  C    CD . GLU  A 1  24 ?  79.678  -7.488  98.597 1.00 30.90 ?  24 GLU A    CD 1  24
+  ATOM    53  O   OE1 . GLU  A 1  24 ?  79.905  -8.659  98.970 1.00 31.90 ?  24 GLU A   OE1 1  24
+  ATOM    54  O   OE2 . GLU  A 1  24 ?  80.563  -6.743  98.128 1.00 31.54 ?  24 GLU A   OE2 1  24
+  ATOM    55  N     N . GLU  A 1  25 ?  74.896  -8.160  98.811 1.00 30.41 ?  25 GLU A     N 1  25
+  ATOM    56  C    CA . GLU  A 1  25 ?  74.139  -8.565  97.630 1.00 30.46 ?  25 GLU A    CA 1  25
+  ATOM    57  C     C . GLU  A 1  25 ?  72.815  -7.813  97.515 1.00 30.31 ?  25 GLU A     C 1  25
+  ATOM    58  O     O . GLU  A 1  25 ?  72.397  -7.444  96.418 1.00 30.50 ?  25 GLU A     O 1  25
+  ATOM    59  C    CB . GLU  A 1  25 ?  73.900 -10.077  97.635 1.00 30.39 ?  25 GLU A    CB 1  25
+  ATOM    60  C    CG . GLU  A 1  25 ?  75.146 -10.898  97.337 1.00 30.62 ?  25 GLU A    CG 1  25
+  ATOM    61  C    CD . GLU  A 1  25 ?  74.935 -12.385  97.555 1.00 30.69 ?  25 GLU A    CD 1  25
+  ATOM    62  O   OE1 . GLU  A 1  25 ?  74.126 -12.752  98.436 1.00 30.90 ?  25 GLU A   OE1 1  25
+  ATOM    63  O   OE2 . GLU  A 1  25 ?  75.581 -13.186  96.847 1.00 30.88 ?  25 GLU A   OE2 1  25
+  ATOM    64  N     N . ARG  A 1  26 ?  72.165  -7.582  98.653 1.00 30.22 ?  26 ARG A     N 1  26
+  ATOM    65  C    CA . ARG  A 1  26 ?  70.893  -6.862  98.686 1.00 30.27 ?  26 ARG A    CA 1  26
+  ATOM    66  C     C . ARG  A 1  26 ?  71.060  -5.394  98.296 1.00 30.39 ?  26 ARG A     C 1  26
+  ATOM    67  O     O . ARG  A 1  26 ?  70.247  -4.845  97.551 1.00 30.27 ?  26 ARG A     O 1  26
+  ATOM    68  C    CB . ARG  A 1  26 ?  70.250  -6.971 100.072 1.00 30.21 ?  26 ARG A    CB 1  26
+  ATOM    69  C    CG . ARG  A 1  26 ?  69.586  -8.316 100.349 1.00 29.95 ?  26 ARG A    CG 1  26
+  ATOM    70  C    CD . ARG  A 1  26 ?  69.424  -8.561 101.845 1.00 29.71 ?  26 ARG A    CD 1  26
+  ATOM    71  N    NE . ARG  A 1  26 ?  68.384  -7.723 102.434 1.00 29.11 ?  26 ARG A    NE 1  26
+  ATOM    72  C    CZ . ARG  A 1  26 ?  68.252  -7.500 103.739 1.00 29.72 ?  26 ARG A    CZ 1  26
+  ATOM    73  N   NH1 . ARG  A 1  26 ?  69.105  -8.044 104.598 1.00 29.48 ?  26 ARG A   NH1 1  26
+  ATOM    74  N   NH2 . ARG  A 1  26 ?  67.274  -6.725 104.186 1.00 29.23 ?  26 ARG A   NH2 1  26
