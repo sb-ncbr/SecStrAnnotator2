@@ -101,5 +101,9 @@ namespace SecStrAnnot2.Cif
         /// </summary>
         public int[] GetRowsWith (params string[] samples) => parser.GetIndicesWith(iTag, samples);
 
+        public int[] GetRowsGatheredByValue(){
+            int[] startsOfRuns;
+            return parser.GatherByValuesInEachRegion(iTag, Enumerable.Range(0, Count).ToArray(), new int[]{0, Count}, out startsOfRuns);
+        }
     }
 }

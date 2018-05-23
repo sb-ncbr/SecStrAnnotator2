@@ -759,12 +759,21 @@ namespace SecStrAnnot2.Cif.Raw
             }
         }
 
-
-        internal ValueTuple<int,int> GetValuePosition(int iTag, int iValue){
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal int GetValueStartPosition(int iTag, int iValue){
             int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
-            return new ValueTuple<int,int>(start[iToken], stop[iToken]); 
+            return start[iToken]; 
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal (int, int) GetValuePosition(int iTag, int iValue){
+            int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
+            return (start[iToken], stop[iToken]); 
         }
         
+        internal string GetValueAsString(int iTag, int iValue){
+            int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
+            return Text.Substring(start[iToken], stop[iToken] - start[iToken]);
+        }
         internal string[] GetValuesAsStrings(int iTag){
             int count = nValuesForTag[iTag];
             string[] array = new string[count];
@@ -821,6 +830,26 @@ namespace SecStrAnnot2.Cif.Raw
                 array[i] = Text[start[iToken]];
             }
             return array;
+        }
+
+        // Assumes that a whitespace will eventually be found in each string (does not check for out-of-bound)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool StringsEqualUntilWhitespace(int start1, int start2) {
+            while (true) {
+                char c1 = Text[start1];
+                char c2 = Text[start2];
+                // Lib.WriteLineDebug("    StrEq: " + c1 + " " +c2);
+                if (c1 != c2) {
+                    // mismatch => check if both strings have ended
+                    return isWhiteSpaceChar[c1] && isWhiteSpaceChar[c2];
+                } else if (isWhiteSpaceChar[c1]){
+                    // both strings have ended, followed by the same whitespace character
+                    return true;
+                }
+                // match without ending
+                start1++;
+                start2++;
+            }
         }
 
         //TODO make faster by replacing cycle variable checking by checking if character is white-space ?
@@ -1281,6 +1310,117 @@ namespace SecStrAnnot2.Cif.Raw
             }
             return indices.ToArray();
         }
+
+        // Gets the indices of values in iValues[from:to], where the value of iTag changes, + to at the end
+        // Doesn't check if iValues is non-empty
+        //TODO implement variant with int iValueFrom, int iValueTo instead of int[] iValues (faster for sequential iValues)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void GetRuns(int iTag, int[] iValues, int from, int to, List<int> outRunStartIndices, List<int> outRunHeadPositions){
+            Lib.WriteLineDebug("GetRuns {0} to {1}", from, to);
+            int valueCount = to - from;
+            int first = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            int iToken = first + iValues[from] * step;
+            outRunStartIndices.Clear();
+            outRunStartIndices.Add(from);
+            int currentHeadPosition = start[iToken]; // position (in Text) of the first token of this run (contiguous region)
+            outRunHeadPositions.Clear();
+            outRunHeadPositions.Add(currentHeadPosition);
+            for (int i = from+1; i < to; i++){
+                iToken = first + iValues[i] * step;
+                // Lib.WriteLineDebug(GetTokenString(iToken) + " " + StringsEqualUntilWhitespace(start[iToken], currentHeadPosition));
+                if (!StringsEqualUntilWhitespace(start[iToken], currentHeadPosition)){
+                    // start a new run
+                    outRunStartIndices.Add(i);
+                    currentHeadPosition = start[iToken];
+                    outRunHeadPositions.Add(currentHeadPosition);
+                }
+            }
+            outRunStartIndices.Add(to);
+            Lib.WriteLineDebug("run starts: " + outRunStartIndices.Enumerate(" "));
+        }
+        /// <param name="seekedValue"> position in Text, where the seeked value starts</param>
+        /// <param name="values"> positions in Text, where the searched values start</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int LookupValue(List<int> values, int seekedValue, int expectedIndex){
+            int nValues = values.Count;
+            for (int index = expectedIndex; index < nValues; index++){
+                if (StringsEqualUntilWhitespace(seekedValue, values[index])){
+                    return index;
+                }
+            }
+            for (int index = 0 ; index < expectedIndex; index++){
+                if (StringsEqualUntilWhitespace(seekedValue, values[index])){
+                    return index;
+                }
+            }
+            return -1;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void GatherSameRuns(int[] array, List<int> startIndicesOfRuns, List<int> headPositionsOfRuns, int[] outArray){
+            int nRuns = startIndicesOfRuns.Count - 1; // the last value is sentinel
+            List<int> uniqueValueHeadPositions = new List<int>(nRuns); //TODO recycle
+            List<int> firstRunForUniqueValues = new List<int>(nRuns);
+            List<int> lastRunForUniqueValues = new List<int>(nRuns);
+            int[] nextSameRun = new int[nRuns]; // used to implement multiple linked lists  
+            int lastUsedUniqueValueIndex = 0;
+            for (int iRun = 0; iRun < nRuns; iRun++)
+            {
+                int uniqueValueIndex = LookupValue(uniqueValueHeadPositions, headPositionsOfRuns[iRun], lastUsedUniqueValueIndex);
+                if (uniqueValueIndex == -1){
+                    // unique value not found => add a new one
+                    uniqueValueHeadPositions.Add(headPositionsOfRuns[iRun]);
+                    firstRunForUniqueValues.Add(iRun);
+                    lastRunForUniqueValues.Add(iRun);
+                } else {
+                    // unique value found => add to the correct linked list
+                    nextSameRun[lastRunForUniqueValues[uniqueValueIndex]] = iRun;
+                    lastRunForUniqueValues[uniqueValueIndex] = iRun; 
+                }
+            }
+            Lib.WriteLineDebug("Unique: " + firstRunForUniqueValues.Enumerate(" "));
+            Lib.WriteLineDebug("Linked lists: " + nextSameRun.Enumerate(" "));
+            int outCount = startIndicesOfRuns[0];
+            for (int iUnique = 0; iUnique < uniqueValueHeadPositions.Count; iUnique++){
+                Lib.WriteLineDebug("  unique " + iUnique);
+                int iRun = firstRunForUniqueValues[iUnique];
+                while (true){
+                //for (int iRun = firstRunForUniqueValues[iUnique]; iRun != 0; iRun = nextSameRun[iRun]){ // iterate through the linked list
+                    int runStart = startIndicesOfRuns[iRun];
+                    int runEnd = startIndicesOfRuns[iRun+1];
+                    int runLength = runEnd - runStart;
+                    Array.Copy(array, runStart, outArray, outCount, runLength);
+                    outCount += runLength;
+                    Lib.WriteLineDebug("    run " + iRun);
+                    Lib.WriteLineDebug("    run length " + runLength);
+                    Lib.WriteLineDebug("    outCount " + outCount);
+                    iRun = nextSameRun[iRun];
+                    if (iRun == 0){
+                        break; // end of linked list
+                    }
+                }
+            }
+        }
+
+        internal int[] GatherByValuesInEachRegion(int itag, int[] iValues, int[] startIndicesOfRegions, out int[] startsOfGatheredRuns){
+            int nRegions = startIndicesOfRegions.Length - 1; // the last value is sentinel
+            int[] gatheredIValues = new int[iValues.Length];
+            List<int> recyclableRunStartIndices = new List<int>();
+            List<int> recyclableRunHeadPositions = new List<int>();
+            for (int iRegion = 0; iRegion < nRegions; iRegion++)
+            {
+                //TODO put smth. here - call GetRuns and JoinSameRuns (+ change them so that they can with only a part of the iValues array)
+                //maybe inline
+                GetRuns(itag, iValues, startIndicesOfRegions[iRegion], startIndicesOfRegions[iRegion+1], recyclableRunStartIndices, recyclableRunHeadPositions);
+                GatherSameRuns(iValues, recyclableRunStartIndices, recyclableRunHeadPositions, gatheredIValues); //TODO add indexation!!!
+                Lib.WriteLineDebug("ivalues: " + iValues.Enumerate(" "));
+                Lib.WriteLineDebug("gathered: " + gatheredIValues.Enumerate(" "));
+            }
+            //TODO fill startsOfGatheredRuns
+            startsOfGatheredRuns = null;
+            return gatheredIValues;
+        }
+        
         
         
         private CifException NewLexicalCifException(int position, LexicalState state){
@@ -1336,5 +1476,7 @@ namespace SecStrAnnot2.Cif.Raw
             }
             return new ValueTuple<int,int>(line, column);
         }
+
+
     }
 }
