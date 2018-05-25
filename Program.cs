@@ -14,6 +14,7 @@ namespace SecStrAnnot2
         public static DateTime SyntacticDone;
         static void Main(string[] args)
         {
+            args = new string[]{"../SecStrAnnot2_data/1tqn_updated.cif"};
             foreach (string filename in args){
                 // Console.Error.WriteLine("\n" + filename);
                     try {
@@ -43,6 +44,9 @@ namespace SecStrAnnot2
                         // }
 
                         int[] groupedRows = category.GetRowsGroupedByValues();
+                        ModelCollection mc = ModelCollection.FromCifBlock(block);
+                        Model model = mc.GetModel(0);
+                        Lib.WriteLineDebug("model " + model.ModelNumber);
 
                         DateTime t3 = DateTime.Now;
 

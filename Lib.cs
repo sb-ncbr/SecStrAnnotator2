@@ -72,5 +72,35 @@ namespace SecStrAnnot2
         public static void Log(object o){
             WriteLineDebug(o.GetType().ToString() + ": " + o.ToString());
         }
+
+		/// <summary>
+        /// Gets indices on which the value in the array is greater than the previous value (including index 0).
+        /// </summary>
+        /// <param name="array"> Array of monotonically increasing values.</param>
+        public static List<int> RunStartsInOrderedArray(int[] array) {
+			List<int> runStarts = new List<int>();
+			if (array.Length == 0){
+				return runStarts;
+			} else {
+				runStarts.Add(0);
+				int currentRunValue = array[0];
+				for (int i = 1; i < array.Length; i++)
+				{
+					int value = array[i];
+					// Lib.WriteLineDebug("    " + value + " <--> " + currentRunValue);
+					if (value == currentRunValue){
+						// do nothing
+					} else if (value > currentRunValue){
+						// start new run
+						runStarts.Add(i);
+						currentRunValue = value;
+					} else {
+						// array is not ordered (value < currentRunValue)
+						throw new ArgumentException($"Input array was not ordered (array[{i-1}] = {currentRunValue}, array[{i}] = {value})");
+					}
+				}
+				return runStarts;
+			}
+		}
     }
 }

@@ -79,12 +79,12 @@ namespace SecStrAnnot2.Cif
 
         /// <summary>
         /// Gets indices of rows which fulfil the given predicate "predicate".
+        /// </summary>
         /// <param name="predicate"> Predicate function: 
         /// takes string Text (full text of CIF file), 
         /// int Start (index of the first character of the CIF value within Text), 
         /// int Stop (index of the last character of the CIF value within Text + 1),
         /// returns true iff a row containing this CIF value should be selected.</param>
-        /// </summary>
         /// <remarks>
         /// Can be faster than calling GetIndicesWhere (Func<string,bool> predicate).
         /// Does not implicitly instantiate text.Substring(i, j).
