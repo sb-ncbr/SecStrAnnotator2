@@ -9,7 +9,7 @@ namespace SecStrAnnot2.Cif
     public class CifItem
     {
         private CifParser parser;
-        private int iTag;
+        internal int iTag; //TODO make private
         public string KeywordName { get; private set; }
         public string CategoryName { get; private set; }
         public string FullName { get; private set; }
@@ -101,9 +101,11 @@ namespace SecStrAnnot2.Cif
         /// </summary>
         public int[] GetRowsWith (params string[] samples) => parser.GetIndicesWith(iTag, samples);
 
-        public int[] GetRowsGatheredByValue(){
-            int[] startsOfRuns;
-            return parser.GatherByValuesInEachRegion(iTag, Enumerable.Range(0, Count).ToArray(), new int[]{0, Count}, out startsOfRuns);
+        public int[] GetRowsGroupedByValue(out int[] startsOfGroups) {
+            return GetRowsGroupedByValue(Enumerable.Range(0, Count).ToArray(), out startsOfGroups);
+        }
+        public int[] GetRowsGroupedByValue(int[] rows, out int[] startsOfGroups) {
+            return parser.GroupByValuesInEachRegion(iTag, rows, new int[]{0, rows.Length}, out startsOfGroups);
         }
     }
 }
