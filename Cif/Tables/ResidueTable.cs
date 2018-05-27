@@ -7,6 +7,7 @@ namespace SecStrAnnot2.Cif.Tables
     public class ResidueTable
     {
         public const string KEY_COLUMN = SEQ_NUMBER_COLUMN;
+        public const int DEFAULT_RESIDUE_NUMBER = 0; // used for residues with label_seq_id = .
 
         //TODO make arrays private and access individual values through methods
         public int Count { get; private set; }

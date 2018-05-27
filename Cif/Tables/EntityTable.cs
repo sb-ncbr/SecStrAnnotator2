@@ -12,18 +12,18 @@ namespace SecStrAnnot2.Cif.Tables
         public int Count { get; private set; }
 
         // down
-        private int[] atomStartIndex;
+        internal int[] atomStartIndex;
 
-        private int[] residueStartIndex;
+        internal int[] residueStartIndex;
 
-        private int[] fragmentStartIndex;
+        internal int[] fragmentStartIndex;
 
-        private int[] chainStartIndex;
+        internal int[] chainStartIndex;
         public int ChainStartIndex(int iEntity) => chainStartIndex[iEntity];
         public int ChainEndIndex(int iEntity) => chainStartIndex[iEntity+1];
 
         // up
-        // nothing
+        // --
 
         // own properties
         private const string ID_COLUMN = "label_entity_id";
@@ -31,8 +31,17 @@ namespace SecStrAnnot2.Cif.Tables
         public string Id(int iEntity) => id[iEntity];
 
         ///<summary> Not to be called directly! Use Model.Entities.</summary>
-        public EntityTable(CifCategory category, int[] rows, out int[] entityStarts) {
-            throw new NotImplementedException();
+        public EntityTable(CifCategory category, int[] rows, int[] atomStartsOfEntities, int[] residueStartsOfEntities, int[] fragmentStartsOfEntities, int[] chainStartsOfEntities) {
+            this.Count = atomStartsOfEntities.Length - 1;
+            // down
+            this.atomStartIndex = atomStartsOfEntities;
+            this.residueStartIndex = residueStartsOfEntities;
+            this.fragmentStartIndex = fragmentStartsOfEntities;
+            this.chainStartIndex = chainStartsOfEntities;
+            // up
+            // --
+            // own properties
+            this.id = category[KEY_COLUMN].GetStrings(Model.GetSelectedElements(rows, atomStartsOfEntities, true));
         }
     }
 }

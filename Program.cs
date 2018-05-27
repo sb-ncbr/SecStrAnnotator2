@@ -60,18 +60,18 @@ namespace SecStrAnnot2
 
                         DateTime t3 = DateTime.Now;
 
-                        string[] atomIds = category["id"].GetStrings();
-                        string[] atomNames = category["label_atom_id"].GetStrings();
-                        string[] seqIds = category["label_seq_id"].GetStrings();
-                        string[] compIds = category["label_comp_id"].GetStrings();
-                        string[] asymIds = category["label_asym_id"].GetStrings();
-                        string[] entityIds = category["label_entity_id"].GetStrings();
+                        // string[] atomIds = category["id"].GetStrings();
+                        // string[] atomNames = category["label_atom_id"].GetStrings();
+                        // string[] seqIds = category["label_seq_id"].GetStrings();
+                        // string[] compIds = category["label_comp_id"].GetStrings();
+                        // string[] asymIds = category["label_asym_id"].GetStrings();
+                        // string[] entityIds = category["label_entity_id"].GetStrings();
                         // Console.WriteLine("row \tatom \ta.name\t  comp seq\tasym \tentity");
                         // for (int iRow = 0; iRow < atomIds.Length; iRow++){
                         //     Console.WriteLine($"{iRow}:\t {atomIds[iRow]}\t {atomNames[iRow]}\t   {compIds[iRow]}  {seqIds[iRow]} \t {asymIds[iRow]}\t {entityIds[iRow]}");
                         // }
-                        Lib.WriteLineDebug("SORTED:");
-                        Console.WriteLine("row \tatom \ta.name\t  comp seq\tasym \tentity");
+                        // Lib.WriteLineDebug("SORTED:");
+                        // Console.WriteLine("row \tatom \ta.name\t  comp seq\tasym \tentity");
                         // foreach (int iRow in groupedRows){
                         //     Console.WriteLine($"{iRow}:\t {atomIds[iRow]}\t {atomNames[iRow]}\t   {compIds[iRow]}  {seqIds[iRow]} \t {asymIds[iRow]}\t {entityIds[iRow]}");
                         // }
