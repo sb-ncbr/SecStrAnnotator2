@@ -14,7 +14,7 @@ namespace SecStrAnnot2
         public static DateTime SyntacticDone;
         static void Main(string[] args)
         {
-            args = new string[]{"../SecStrAnnot2_data/1tqn_updated.cif"};
+            // args = new string[]{"../SecStrAnnot2_data/3ejb_updated.cif"};
             foreach (string filename in args){
                 // Console.Error.WriteLine("\n" + filename);
                     try {
@@ -43,7 +43,17 @@ namespace SecStrAnnot2
                         //     Table table = sheetCategory.MakeTable(sheetIdB, ("sheet_id", CifValueType.Char), ("range_1_label_comp_id", CifValueType.String), ("range_1_label_seq_id", CifValueType.Integer));
                         // }
 
-                        int[] groupedRows = category.GetRowsGroupedByValues();
+                        // int[] startsOfEntities;
+                        // int[] startsOfChains;
+                        // int[] startChainsOfEntities;
+                        // int[] groupedRows = Enumerable.Range(0, category.RowCount).ToArray();
+                        // groupedRows = category["label_entity_id"].GetRowsGroupedByValue(groupedRows, out startsOfEntities);
+                        // Lib.LogList("Grouped rows", groupedRows);
+                        // Lib.LogList("Starts of entities", startsOfEntities);
+                        // groupedRows = category["label_asym_id"].GetRowsGroupedByValueInEachRegion(groupedRows, startsOfEntities, out startsOfChains, out startChainsOfEntities);
+                        // Lib.LogList("Starts of chains", startsOfChains);
+                        // Lib.LogList("Start chains of entities", startChainsOfEntities);
+                        // return;
                         ModelCollection mc = ModelCollection.FromCifBlock(block);
                         Model model = mc.GetModel(0);
                         Lib.WriteLineDebug("model " + model.ModelNumber);
@@ -62,9 +72,9 @@ namespace SecStrAnnot2
                         // }
                         Lib.WriteLineDebug("SORTED:");
                         Console.WriteLine("row \tatom \ta.name\t  comp seq\tasym \tentity");
-                        foreach (int iRow in groupedRows){
-                            Console.WriteLine($"{iRow}:\t {atomIds[iRow]}\t {atomNames[iRow]}\t   {compIds[iRow]}  {seqIds[iRow]} \t {asymIds[iRow]}\t {entityIds[iRow]}");
-                        }
+                        // foreach (int iRow in groupedRows){
+                        //     Console.WriteLine($"{iRow}:\t {atomIds[iRow]}\t {atomNames[iRow]}\t   {compIds[iRow]}  {seqIds[iRow]} \t {asymIds[iRow]}\t {entityIds[iRow]}");
+                        // }
 
                         // Lib.WriteLineDebug(table.GetColumn<char>("sheet_id").Enumerate());
                         // Lib.WriteLineDebug(table.GetColumn<string>("range_1_label_comp_id").Enumerate());

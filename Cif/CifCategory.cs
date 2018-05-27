@@ -57,7 +57,7 @@ namespace SecStrAnnot2.Cif
 
         public Table MakeTable(int[] rows, params ValueTuple<string,CifValueType>[] schema) => new Table(this, rows, schema);
 
-        public int[] GetRowsGroupedByValues(params string[] itemKeywordNames){
+        /*public int[] GetRowsGroupedByValues(params string[] itemKeywordNames){
             int[] indices = Enumerable.Range(0, RowCount).ToArray();
             int[][] startsOfGroups = new int[itemKeywordNames.Length][];
 
@@ -74,6 +74,6 @@ namespace SecStrAnnot2.Cif
             // Lib.WriteLineDebug("entity starts: " + startsOfEntities);
             // Lib.WriteLineDebug("asym starts: " + startsOfAsyms);
             return indices;
-        }
+        }*/
     }
 }

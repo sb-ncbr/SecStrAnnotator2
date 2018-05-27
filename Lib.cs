@@ -73,6 +73,10 @@ namespace SecStrAnnot2
             WriteLineDebug(o.GetType().ToString() + ": " + o.ToString());
         }
 
+        public static void LogList<T>(string name, IEnumerable<T> list){
+            WriteLineDebug($"{name} [{list.Count()}]: {list.Enumerate(" ")}");
+        }
+
 		/// <summary>
         /// Gets indices on which the value in the array is greater than the previous value (including index 0).
         /// </summary>

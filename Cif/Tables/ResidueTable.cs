@@ -6,7 +6,7 @@ namespace SecStrAnnot2.Cif.Tables
 {
     public class ResidueTable
     {
-        private const string KEY_COLUMN = SEQ_NUMBER_COLUMN;
+        public const string KEY_COLUMN = SEQ_NUMBER_COLUMN;
 
         //TODO make arrays private and access individual values through methods
         public int Count { get; private set; }

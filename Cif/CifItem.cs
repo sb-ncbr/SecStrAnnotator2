@@ -105,7 +105,12 @@ namespace SecStrAnnot2.Cif
             return GetRowsGroupedByValue(Enumerable.Range(0, Count).ToArray(), out startsOfGroups);
         }
         public int[] GetRowsGroupedByValue(int[] rows, out int[] startsOfGroups) {
-            return parser.GroupByValuesInEachRegion(iTag, rows, new int[]{0, rows.Length}, out startsOfGroups);
+            int[] _;
+            return parser.GroupByValuesInEachRegion(iTag, rows, new int[]{0, rows.Length}, out startsOfGroups, out _);
+        }
+
+        public int[] GetRowsGroupedByValueInEachRegion(int[] rows, int[] startsOfRegions, out int[] startsOfGroups, out int[] startGroupsOfRegions) {
+            return parser.GroupByValuesInEachRegion(iTag, rows, startsOfRegions, out startsOfGroups, out startGroupsOfRegions);
         }
     }
 }

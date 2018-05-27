@@ -6,7 +6,7 @@ namespace SecStrAnnot2.Cif.Tables
 {
     public class AtomTable
     {
-        private const string KEY_COLUMN = ID_COLUMN;
+        public const string KEY_COLUMN = ID_COLUMN;
 
         //TODO make arrays private and access individual values through methods
         public int Count { get; private set; }

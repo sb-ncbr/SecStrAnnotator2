@@ -1402,23 +1402,26 @@ namespace SecStrAnnot2.Cif.Raw
             }
         }
 
-        internal int[] GroupByValuesInEachRegion(int itag, int[] iValues, int[] startIndicesOfRegions, out int[] startsOfGroupedRuns){
-            int nRegions = startIndicesOfRegions.Length - 1; // the last value is sentinel
+        internal int[] GroupByValuesInEachRegion(int itag, int[] iValues, int[] startsOfRegions, out int[] startsOfGroupedRuns, out int[] startRunsOfRegions){
+            int nRegions = startsOfRegions.Length - 1; // the last value is sentinel
             int[] groupedIValues = new int[iValues.Length];
             List<int> recyclableRunStartIndices = new List<int>();
             List<int> recyclableRunHeadPositions = new List<int>();
             List<int> startsOfGroupedRunsList = new List<int>();
+            List<int> startRunsOfRegionsList = new List<int>();
             for (int iRegion = 0; iRegion < nRegions; iRegion++)
             {
                 //TODO put smth. here - call GetRuns and JoinSameRuns (+ change them so that they can with only a part of the iValues array)
                 //maybe inline
-                GetRuns(itag, iValues, startIndicesOfRegions[iRegion], startIndicesOfRegions[iRegion+1], recyclableRunStartIndices, recyclableRunHeadPositions);
+                startRunsOfRegionsList.Add(startsOfGroupedRunsList.Count);
+                GetRuns(itag, iValues, startsOfRegions[iRegion], startsOfRegions[iRegion+1], recyclableRunStartIndices, recyclableRunHeadPositions);
+                // Lib.LogList("rec. run starts", recyclableRunStartIndices);
                 GroupSameRuns(iValues, recyclableRunStartIndices, recyclableRunHeadPositions, groupedIValues, startsOfGroupedRunsList); //TODO add indexation!!!
                 // Lib.WriteLineDebug("ivalues: " + iValues.Enumerate(" "));
                 // Lib.WriteLineDebug("grouped: " + groupedIValues.Enumerate(" "));
             }
-            startsOfGroupedRunsList.Add(startIndicesOfRegions[nRegions]);
-            startsOfGroupedRuns = startsOfGroupedRunsList.ToArray();
+            startRunsOfRegions = startRunsOfRegionsList.Append(startsOfGroupedRunsList.Count).ToArray();
+            startsOfGroupedRuns = startsOfGroupedRunsList.Append(startsOfRegions[nRegions]).ToArray();
             return groupedIValues;
         }
         
@@ -1477,7 +1480,5 @@ namespace SecStrAnnot2.Cif.Raw
             }
             return new ValueTuple<int,int>(line, column);
         }
-
-
     }
 }
