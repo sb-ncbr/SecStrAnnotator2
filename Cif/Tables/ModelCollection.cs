@@ -6,9 +6,7 @@ namespace SecStrAnnot2.Cif.Tables
 {
     public class ModelCollection : AbstractLazyCollection<int, Model>
     {
-        private const string CATEGORY_NAME = "_atom_site";
-        private const string MODEL_NUM_COLUMN = "pdbx_PDB_model_num";
-        private const int DEFAULT_MODEL_NUM = 0;
+        public const string CATEGORY_NAME = "_atom_site";
 
         public int[] ModelNumbers => base.keys;
         public int Count => base.count;
@@ -31,8 +29,8 @@ namespace SecStrAnnot2.Cif.Tables
         private ModelCollection(CifCategory category, int[] rows) : base("model number", "model") {
             this.category = category;
             this.rows = rows;
-            if (category.ContainsItem(MODEL_NUM_COLUMN)) {
-                CifItem modelNumItem = category[MODEL_NUM_COLUMN];
+            if (category.ContainsItem(Model.MODEL_NUM_COLUMN)) {
+                CifItem modelNumItem = category[Model.MODEL_NUM_COLUMN];
                 int[] modelNumberPerAtom = modelNumItem.GetIntegers(rows);
                 List<int> runStarts;
                 try {
@@ -45,7 +43,7 @@ namespace SecStrAnnot2.Cif.Tables
                 base.Initialize(modelNumbers);
             } else if (rows.Length > 0) {
                 modelStartRowIndex = new int[]{ 0, rows.Length };
-                base.Initialize(new int[] { DEFAULT_MODEL_NUM });
+                base.Initialize(new int[] { Model.DEFAULT_MODEL_NUM });
             } else {
                 modelStartRowIndex = new int[] { 0 };
                 base.Initialize(new int[]{});

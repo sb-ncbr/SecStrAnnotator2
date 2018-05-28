@@ -10,31 +10,49 @@ namespace SecStrAnnot2.Cif.Tables
         public const int DEFAULT_RESIDUE_NUMBER = 0; // used for residues with label_seq_id = .
 
         //TODO make arrays private and access individual values through methods
-        public int Count { get; private set; }
+        public readonly int Count;
 
         // down
-        private int[] atomStartIndex;
-        public int AtomStartIndex(int iResidue) => atomStartIndex[iResidue];
-        public int AtomEndIndex(int iResidue) => atomStartIndex[iResidue+1];
+        private readonly int[] atomStartIndex;
+        public readonly ArraySegment<int> AtomStartIndex;
+        public readonly ArraySegment<int> AtomEndIndex;
 
         // up
-        private int[] fragmentIndex;
-        public int FragmentIndex(int iResidue) => fragmentIndex[iResidue];
-
-        private int[] chainIndex;
-        public int ChainIndex(int iResidue) => chainIndex[iResidue];
-
-        private int[] entityIndex;
-        public int EntityIndex(int iResidue) => entityIndex[iResidue];
+        public readonly int[] FragmentIndex;
+        public readonly int[] ChainIndex;
+        public readonly int[] EntityIndex;
+        private readonly Model model;
 
         // own properties
-        private const string SEQ_NUMBER_COLUMN = "label_seq_id";
-        private int[] seqNumber;
-        public int SeqNumber(int iResidue) => seqNumber[iResidue];
+        public const string SEQ_NUMBER_COLUMN = "label_seq_id";
+        public readonly int[] SeqNumber;
 
-        private const string COMPOUND_COLUMN = "label_comp_id";
-        private string[] compound;
-        public string Compound(int iResidue) => compound[iResidue];
+        public const string COMPOUND_COLUMN = "label_comp_id";
+        public readonly string[] Compound;
+
+        public string String(int iResidue) => 
+            model.Chains.Id[ChainIndex[iResidue]] 
+            + " " + Compound[iResidue] 
+            + " " + SeqNumber[iResidue]; 
+
+
+        ///<summary> Not to be called directly! Use Model.Residues.</summary>
+        internal ResidueTable(Model model, CifCategory category, int[] rows, int[] atomStartsOfResidues, int[] residueStartsOfFragments, int[] residueStartsOfChains, int[] residueStartsOfEntities) {
+            this.Count = atomStartsOfResidues.Length - 1;
+            // down
+            this.atomStartIndex = atomStartsOfResidues;
+            // up
+            this.FragmentIndex = Model.GetUpRefs(residueStartsOfFragments);
+            this.ChainIndex = Model.GetUpRefs(residueStartsOfChains);
+            this.EntityIndex = Model.GetUpRefs(residueStartsOfEntities);
+            this.model = model;
+            // own properties
+            this.SeqNumber = category[SEQ_NUMBER_COLUMN].GetIntegers(Model.GetSelectedElements(rows, atomStartsOfResidues, true), DEFAULT_RESIDUE_NUMBER);
+            this.Compound = category[COMPOUND_COLUMN].GetStrings(Model.GetSelectedElements(rows, atomStartsOfResidues, true));
+            // array segments
+            AtomStartIndex = new ArraySegment<int>(atomStartIndex, 0, Count);
+            AtomEndIndex = new ArraySegment<int>(atomStartIndex, 1, Count);
+        }
 
         // usefull info about residues in CIF is in _pdbx_poly_seq_scheme        
     }

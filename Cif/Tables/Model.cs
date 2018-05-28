@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace SecStrAnnot2.Cif.Tables
 {
     public class Model
     {
+        public const string MODEL_NUM_COLUMN = "pdbx_PDB_model_num";
+        public const int DEFAULT_MODEL_NUM = 0;
+
         public int ModelNumber { get; private set; }
         public AtomTable Atoms { get; private set; }
         public ResidueTable Residues { get; private set; }
@@ -41,26 +45,17 @@ namespace SecStrAnnot2.Cif.Tables
             // remaining combinations
             int[] residueStartsOfEntities = GetSelectedElements(residueStartsOfChains, chainStartsOfEntities, false);
             int[] fragmentStartsOfEntities = GetSelectedElements(fragmentStartsOfChains, chainStartsOfEntities, false);
+            int[] atomStartsOfFragments = GetSelectedElements(atomStartsOfResidues, residueStartsOfFragments, false);
 
-            //TODO create Chains, Fragments, Residues, Atoms in the same way + make those tables nested classes of Model and their constructors only available to Model?
-            this.Entities = new EntityTable(category, rows, atomStartsOfEntities, residueStartsOfEntities, fragmentStartsOfEntities, chainStartsOfEntities);
-
-            Lib.LogList("Entities.chainStartIndex", Entities.chainStartIndex);
-            Lib.LogList("Entities.fragmentStartIndex", Entities.fragmentStartIndex);
-            Lib.LogList("Entities.residueStartIndex", Entities.residueStartIndex);
-            Lib.LogList("Entities.atomStartIndex", Entities.atomStartIndex);
-            // string[] atomIds = category["id"].GetStrings();
-            // string[] atomNames = category["label_atom_id"].GetStrings();
-            // string[] seqIds = category["label_seq_id"].GetStrings();
-            // string[] compIds = category["label_comp_id"].GetStrings();
-            // string[] asymIds = category["label_asym_id"].GetStrings();
-            // string[] entityIds = category["label_entity_id"].GetStrings();           
-            // Console.WriteLine("row \tatom \ta.name\t  comp seq\tasym \tentity");
-            // foreach (int iRow in rows){
-            //     Console.WriteLine($"{iRow}:\t {atomIds[iRow]}\t {atomNames[iRow]}\t   {compIds[iRow]}  {seqIds[iRow]} \t {asymIds[iRow]}\t {entityIds[iRow]}");
-            // }
+            // fill fields
+            this.Entities = new EntityTable(this, category, rows, atomStartsOfEntities, residueStartsOfEntities, fragmentStartsOfEntities, chainStartsOfEntities);
+            this.Chains = new ChainTable(this, category, rows, atomStartsOfChains, residueStartsOfChains, fragmentStartsOfChains, chainStartsOfEntities);
+            this.Fragments = new FragmentTable(this, category, rows, atomStartsOfFragments, residueStartsOfFragments, fragmentStartsOfChains, fragmentStartsOfEntities);
+            this.Residues = new ResidueTable(this, category, rows, atomStartsOfResidues, residueStartsOfFragments, residueStartsOfChains, residueStartsOfEntities);
+            this.Atoms = new AtomTable(this, category, rows, atomStartsOfResidues, atomStartsOfFragments, atomStartsOfChains, atomStartsOfEntities);
         }
 
+        //TODO move helper method to a static helper class
         private static void GetFragmentsAndResidues(
             CifItem residueNumberItem, 
             ref int[] rows, 
@@ -130,6 +125,39 @@ namespace SecStrAnnot2.Cif.Tables
                 selected[i] = elements[indices[i]];
             }
             return selected;
+        }
+
+        internal static int[] GetUpRefs(int[] downRefs){
+            int nTop = downRefs.Length - 1;
+            int nBottom = downRefs[nTop];
+            int[] upRefs = new int[nBottom];
+            for (int iTop = 0; iTop < nTop; iTop++) {
+                for (int iBottom = downRefs[iTop]; iBottom < downRefs[iTop+1]; iBottom++) {
+                    upRefs[iBottom] = iTop;
+                }
+            }
+            return upRefs;
+        }
+
+        public string Print() {
+            const string IN = "    ";
+            StringBuilder builder = new StringBuilder();
+            for (int iEntity = 0; iEntity < Entities.Count; iEntity++) {
+                builder.Append("Entity " + Entities.String(iEntity) + "\n");
+                for (int iChain = Entities.ChainStartIndex[iEntity]; iChain < Entities.ChainEndIndex[iEntity]; iChain++) {
+                    builder.Append(IN + "Chain " + Chains.String(iChain) + "\n");
+                    for (int iFragment = Chains.FragmentStartIndex[iChain]; iFragment < Chains.FragmentEndIndex[iChain]; iFragment++) {
+                        builder.Append(IN + IN + "Fragment " + Fragments.String(iFragment) + "\n");
+                        for (int iResidue = Fragments.ResidueStartIndex[iFragment]; iResidue < Fragments.ResidueEndIndex[iFragment]; iResidue++) {
+                            builder.Append(IN + IN + IN + "Residue " + Residues.String(iResidue) + "\n");
+                            for (int iAtom = Residues.AtomStartIndex[iResidue]; iAtom < Residues.AtomEndIndex[iResidue]; iAtom++) {
+                                builder.Append(IN + IN + IN + IN + "Row " + Atoms.RowIndex[iAtom] + ":   Atom " + Atoms.String(iAtom) + "\n");
+                            }
+                        }
+                    }
+                }
+            }
+            return builder.ToString();
         }
     }
 }

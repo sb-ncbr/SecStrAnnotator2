@@ -8,50 +8,58 @@ namespace SecStrAnnot2.Cif.Tables
     {
         public const string KEY_COLUMN = ID_COLUMN;
 
-        //TODO make arrays private and access individual values through methods
-        public int Count { get; private set; }
+        public readonly int Count;
         
         // down
-        private int[] rowIndex;
-        public int RowIndex(int iAtom) => rowIndex[iAtom];
+        public readonly int[] RowIndex;
 
         // up
-        private int[] residueIndex;
-        public int ResidueIndex(int iAtom) => residueIndex[iAtom];
-
-        private int[] fragmentIndex;
-        public int FragmentIndex(int iAtom) => fragmentIndex[iAtom];
-
-        private int[] chainIndex;
-        public int ChainIndex(int iAtom) => chainIndex[iAtom];
-
-        private int[] entityIndex;
-        public int EntityIndex(int iAtom) => entityIndex[iAtom];
+        public readonly int[] ResidueIndex;
+        public readonly int[] FragmentIndex;
+        public readonly int[] ChainIndex;
+        public readonly int[] EntityIndex;
+        private readonly Model model;
 
         // own properties
-        private const string ID_COLUMN = "id";
-        private string[] id;
-        public string Id(int iAtom) => id[iAtom];
+        public const string ID_COLUMN = "id";
+        public readonly string[] Id;
 
-        private const string NAME_COLUMN = "label_atom_id";
-        private string[] name;
-        public string Name(int iAtom) => name[iAtom];
+        public const string NAME_COLUMN = "label_atom_id";
+        public readonly string[] Name;
 
-        private const string ELEMENT_COLUMN = "type_symbol";
-        private string[] element;
-        public string Element(int iAtom) => element[iAtom];
+        public const string ELEMENT_COLUMN = "type_symbol";
+        public readonly string[] Element;
 
-        private const string ALT_LOC_COLUMN = "label_alt_id";
-        private string[] altLoc;
-        public string AltLoc(int iAtom) => altLoc[iAtom];
+        public const string ALT_LOC_COLUMN = "label_alt_id";
+        public const string DEFAULT_ALT_LOC = ".";
+        public readonly string[] AltLoc;
 
-        internal AtomTable(CifCategory cifCategory, int[] rows, int[] residueStarts){
-            rowIndex = rows;
-            id = cifCategory[ID_COLUMN].GetStrings();
-            name = cifCategory[NAME_COLUMN].GetStrings();
-            element = cifCategory[ELEMENT_COLUMN].GetStrings();
-            altLoc = cifCategory[ALT_LOC_COLUMN].GetStrings();
-            //TODO connections to residues etc.
+        public string String(int iAtom) => 
+            model.Chains.Id[ChainIndex[iAtom]] 
+            + " " + model.Residues.Compound[ResidueIndex[iAtom]] 
+            + " " + model.Residues.SeqNumber[ResidueIndex[iAtom]]
+            + " " + Name[iAtom]
+            + (AltLoc[iAtom] != DEFAULT_ALT_LOC ? " (alt " + AltLoc[iAtom] + ")" : "" ); 
+
+        ///<summary> Not to be called directly! Use Model.Atoms.</summary>
+        internal AtomTable(Model model, CifCategory category, int[] rows, int[] atomStartsOfResidues, int[] atomStartsOfFragments, int[] atomStartsOfChains, int[] atomStartsOfEntities) {
+            this.Count = rows.Length;
+            // down
+            this.RowIndex = rows;
+            // up
+            this.ResidueIndex = Model.GetUpRefs(atomStartsOfResidues);
+            this.FragmentIndex = Model.GetUpRefs(atomStartsOfFragments);
+            this.ChainIndex = Model.GetUpRefs(atomStartsOfChains);
+            this.EntityIndex = Model.GetUpRefs(atomStartsOfEntities);
+            this.model = model;
+            // own properties
+            RowIndex = rows;
+            Id = category[ID_COLUMN].GetStrings();
+            Name = category[NAME_COLUMN].GetStrings();
+            Element = category[ELEMENT_COLUMN].GetStrings();
+            AltLoc = category[ALT_LOC_COLUMN].GetStrings();
+            // array segments
+            // --
         }
     }
 }

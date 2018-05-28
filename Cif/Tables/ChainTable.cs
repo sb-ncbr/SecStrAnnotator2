@@ -9,28 +9,55 @@ namespace SecStrAnnot2.Cif.Tables
         public const string KEY_COLUMN = ID_COLUMN;
         
         //TODO make arrays private and access individual values through methods
-        public int Count { get; private set; }
+        public readonly int Count;
 
         // down
-        private int[] atomStartIndex;
+        private readonly int[] atomStartIndex;
+        public readonly ArraySegment<int> AtomStartIndex;
+        public readonly ArraySegment<int> AtomEndIndex;
 
         private int[] residueStartIndex;
+        public readonly ArraySegment<int> ResidueStartIndex;
+        public readonly ArraySegment<int> ResidueEndIndex;
 
         private int[] fragmentStartIndex;
-        public int FragmentStartIndex(int iChain) => fragmentStartIndex[iChain];
-        public int FragmentEndIndex(int iChain) => fragmentStartIndex[iChain+1];
-        
+        public readonly ArraySegment<int> FragmentStartIndex;
+        public readonly ArraySegment<int> FragmentEndIndex;
+
         // up
-        private int[] entityIndex;
-        public int EntityIndex(int iChain) => entityIndex[iChain];
+        public readonly int[] EntityIndex;
+        private readonly Model model;
 
         // own properties
-        private const string ID_COLUMN = "label_asym_id";
-        private string[] id;
-        public string Id(int iChain) => id[iChain];
+        public const string ID_COLUMN = "label_asym_id";
+        public readonly string[] Id;
 
-        private const string AUTH_ID_COLUMN = "auth_asym_id";
-        private string[]  authId;
-        public string AuthId(int iChain) => authId[iChain];
+        public const string AUTH_ID_COLUMN = "auth_asym_id";
+        public readonly string[] AuthId;
+
+        public string String(int iChain) => Id[iChain];
+
+
+        ///<summary> Not to be called directly! Use Model.Chains.</summary>
+        internal ChainTable(Model model, CifCategory category, int[] rows, int[] atomStartsOfChains, int[] residueStartsOfChains, int[] fragmentStartsOfChains, int[] chainStartsOfEntities) {
+            this.Count = atomStartsOfChains.Length - 1;
+            // down
+            this.atomStartIndex = atomStartsOfChains;
+            this.residueStartIndex = residueStartsOfChains;
+            this.fragmentStartIndex = fragmentStartsOfChains;
+            // up
+            this.EntityIndex = Model.GetUpRefs(chainStartsOfEntities);
+            this.model = model;
+            // own properties
+            this.Id = category[ID_COLUMN].GetStrings(Model.GetSelectedElements(rows, atomStartsOfChains, true));
+            this.AuthId = category[AUTH_ID_COLUMN].GetStrings(Model.GetSelectedElements(rows, atomStartsOfChains, true));
+            // array segments
+            AtomStartIndex = new ArraySegment<int>(atomStartIndex, 0, Count);
+            AtomEndIndex = new ArraySegment<int>(atomStartIndex, 1, Count);
+            ResidueStartIndex = new ArraySegment<int>(residueStartIndex, 0, Count);
+            ResidueEndIndex = new ArraySegment<int>(residueStartIndex, 1, Count);
+            FragmentStartIndex = new ArraySegment<int>(fragmentStartIndex, 0, Count);
+            FragmentEndIndex = new ArraySegment<int>(fragmentStartIndex, 1, Count);
+        }
     }
 }
