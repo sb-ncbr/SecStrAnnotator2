@@ -852,7 +852,6 @@ namespace SecStrAnnot2.Cif.Raw
             }
         }
 
-        //TODO make faster by replacing cycle variable checking by checking if character is white-space ?
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal int ParseInteger(int iToken){
             bool negative = false;
@@ -915,7 +914,7 @@ namespace SecStrAnnot2.Cif.Raw
                 j++;
             }
             // get value
-            for ( ; j <stp; j++)
+            for ( ; j < stp; j++)
             {
                 char c = Text[j];
                 if (c < '0' || c > '9'){
@@ -1215,6 +1214,19 @@ namespace SecStrAnnot2.Cif.Raw
             return array;
         }
 
+        internal bool[] GetTrueWhereFirstCharacterMatches(int iTag, int[] indices, char testedCharacter){
+            int count = indices.Length;
+            bool[] array = new bool[count];
+            int first = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            for (int i = 0; i < count; i++) {
+                int iValue = indices[i];
+                int iToken = first + iValue * step;
+                array[i] = Text[start[iToken]] == testedCharacter;
+            }
+            return array;
+        }
+
         internal int[] GetIndicesWhere(int iTag, Func<string,bool> predicate){
             int count = nValuesForTag[iTag];
             List<int> indices = new List<int>();
@@ -1357,17 +1369,20 @@ namespace SecStrAnnot2.Cif.Raw
             return -1;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void GroupSameRuns(int[] array, List<int> startIndicesOfRuns, List<int> headPositionsOfRuns, int[] outArray, List<int> outStartIndicesOfGroupedRuns){
+        private void GroupSameRuns(int[] array, List<int> startIndicesOfRuns, List<int> headPositionsOfRuns, ref int[] outArray, List<int> outStartIndicesOfGroupedRuns) {
             int nRuns = startIndicesOfRuns.Count - 1; // the last value is sentinel
-            List<int> uniqueValueHeadPositions = new List<int>(nRuns); //TODO recycle
+            List<int> uniqueValueHeadPositions = new List<int>(nRuns);
             List<int> firstRunForUniqueValues = new List<int>(nRuns);
             List<int> lastRunForUniqueValues = new List<int>(nRuns);
+            // (List<int> uniqueValueHeadPositions, List<int> firstRunForUniqueValues, List<int> lastRunForUniqueValues) = threeRecyclableLists;
+            // uniqueValueHeadPositions.Clear();
+            // firstRunForUniqueValues.Clear();
+            // lastRunForUniqueValues.Clear();
             int[] nextSameRun = new int[nRuns]; // used to implement multiple linked lists  
             int lastUsedUniqueValueIndex = 0;
-            for (int iRun = 0; iRun < nRuns; iRun++)
-            {
+            for (int iRun = 0; iRun < nRuns; iRun++) {
                 int uniqueValueIndex = LookupValue(uniqueValueHeadPositions, headPositionsOfRuns[iRun], lastUsedUniqueValueIndex);
-                if (uniqueValueIndex == -1){
+                if (uniqueValueIndex == -1) {
                     // unique value not found => add a new one
                     uniqueValueHeadPositions.Add(headPositionsOfRuns[iRun]);
                     firstRunForUniqueValues.Add(iRun);
@@ -1380,23 +1395,38 @@ namespace SecStrAnnot2.Cif.Raw
             }
             // Lib.WriteLineDebug("Unique: " + firstRunForUniqueValues.Enumerate(" "));
             // Lib.WriteLineDebug("Linked lists: " + nextSameRun.Enumerate(" "));
-            int outCount = startIndicesOfRuns[0];
-            for (int iUnique = 0; iUnique < uniqueValueHeadPositions.Count; iUnique++){
-                outStartIndicesOfGroupedRuns.Add(outCount);
-                // Lib.WriteLineDebug("  unique " + iUnique);
-                int iRun = firstRunForUniqueValues[iUnique];
-                while (true){
-                    int runStart = startIndicesOfRuns[iRun];
-                    int runEnd = startIndicesOfRuns[iRun+1];
-                    int runLength = runEnd - runStart;
-                    Array.Copy(array, runStart, outArray, outCount, runLength);
-                    outCount += runLength;
-                    // Lib.WriteLineDebug("    run " + iRun);
-                    // Lib.WriteLineDebug("    run length " + runLength);
-                    // Lib.WriteLineDebug("    outCount " + outCount);
-                    iRun = nextSameRun[iRun];
-                    if (iRun == 0){
-                        break; // end of linked list
+            // rearranging the values
+            int nUnique = firstRunForUniqueValues.Count;
+            if (nUnique == nRuns) { // needn't rearrange
+                if (array != outArray) { // must copy elements without rearranging 
+                    int outCount = startIndicesOfRuns[0];
+                    int nValuesToCopy = startIndicesOfRuns[nRuns] - outCount;
+                    Array.Copy(array, outCount, outArray, outCount, nValuesToCopy);
+                }
+                outStartIndicesOfGroupedRuns.AddRange(startIndicesOfRuns.SkipLast(1));
+            } else { // must group
+                int outCount = startIndicesOfRuns[0];
+                if (array == outArray) { // must allocate new array for rearranged values
+                    outArray = new int[array.Length];
+                    Array.Copy(array, outArray, outCount);
+                }
+                for (int iUnique = 0; iUnique < nUnique; iUnique++) {
+                    outStartIndicesOfGroupedRuns.Add(outCount);
+                    // Lib.WriteLineDebug("  unique " + iUnique);
+                    int iRun = firstRunForUniqueValues[iUnique];
+                    while (true){
+                        int runStart = startIndicesOfRuns[iRun];
+                        int runEnd = startIndicesOfRuns[iRun+1];
+                        int runLength = runEnd - runStart;
+                        Array.Copy(array, runStart, outArray, outCount, runLength);
+                        outCount += runLength;
+                        // Lib.WriteLineDebug("    run " + iRun);
+                        // Lib.WriteLineDebug("    run length " + runLength);
+                        // Lib.WriteLineDebug("    outCount " + outCount);
+                        iRun = nextSameRun[iRun];
+                        if (iRun == 0){
+                            break; // end of linked list
+                        }
                     }
                 }
             }
@@ -1404,24 +1434,31 @@ namespace SecStrAnnot2.Cif.Raw
 
         internal int[] GroupByValuesInEachRegion(int itag, int[] iValues, int[] startsOfRegions, out int[] startsOfGroupedRuns, out int[] startRunsOfRegions){
             int nRegions = startsOfRegions.Length - 1; // the last value is sentinel
-            int[] groupedIValues = new int[iValues.Length];
+            int[] groupedIValues = iValues; // = new int[iValues.Length];
             List<int> recyclableRunStartIndices = new List<int>();
             List<int> recyclableRunHeadPositions = new List<int>();
             List<int> startsOfGroupedRunsList = new List<int>();
             List<int> startRunsOfRegionsList = new List<int>();
-            for (int iRegion = 0; iRegion < nRegions; iRegion++)
-            {
-                //TODO put smth. here - call GetRuns and JoinSameRuns (+ change them so that they can with only a part of the iValues array)
+            for (int iRegion = 0; iRegion < nRegions; iRegion++) {
                 //maybe inline
                 startRunsOfRegionsList.Add(startsOfGroupedRunsList.Count);
                 GetRuns(itag, iValues, startsOfRegions[iRegion], startsOfRegions[iRegion+1], recyclableRunStartIndices, recyclableRunHeadPositions);
                 // Lib.LogList("rec. run starts", recyclableRunStartIndices);
-                GroupSameRuns(iValues, recyclableRunStartIndices, recyclableRunHeadPositions, groupedIValues, startsOfGroupedRunsList); //TODO add indexation!!!
+                GroupSameRuns(iValues, recyclableRunStartIndices, recyclableRunHeadPositions, ref groupedIValues, startsOfGroupedRunsList);
                 // Lib.WriteLineDebug("ivalues: " + iValues.Enumerate(" "));
                 // Lib.WriteLineDebug("grouped: " + groupedIValues.Enumerate(" "));
             }
-            startRunsOfRegions = startRunsOfRegionsList.Append(startsOfGroupedRunsList.Count).ToArray();
-            startsOfGroupedRuns = startsOfGroupedRunsList.Append(startsOfRegions[nRegions]).ToArray();
+            // int nGroups = startsOfGroupedRunsList.Count;
+            // startRunsOfRegions = new int[nRegions+1]; 
+            // startRunsOfRegionsList.CopyTo(startRunsOfRegions); 
+            // startRunsOfRegions[nRegions] = nGroups;
+            startRunsOfRegions = startRunsOfRegionsList.AppendAndCopyToArray(startsOfGroupedRunsList.Count);
+            // startRunsOfRegions = startRunsOfRegionsList.Append(startsOfGroupedRunsList.Count).ToArray();
+            // startsOfGroupedRuns = new int[nGroups+1];
+            // startsOfGroupedRunsList.CopyTo(startsOfGroupedRuns);
+            // startsOfGroupedRuns[nGroups] = startsOfRegions[nRegions];
+            startsOfGroupedRuns = startsOfGroupedRunsList.AppendAndCopyToArray(startsOfRegions[nRegions]);
+            // startsOfGroupedRuns = startsOfGroupedRunsList.Append(startsOfRegions[nRegions]).ToArray();
             return groupedIValues;
         }
         

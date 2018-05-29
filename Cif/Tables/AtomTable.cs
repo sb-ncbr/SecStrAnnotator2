@@ -34,6 +34,16 @@ namespace SecStrAnnot2.Cif.Tables
         public const string DEFAULT_ALT_LOC = ".";
         public readonly string[] AltLoc;
 
+        public const string IS_HETATM_COLUMN = "group_PDB";
+        public readonly bool[] IsHetatm;
+
+        public const string X_COLUMN = "Cartn_x";
+        public readonly double[] X;
+        public const string Y_COLUMN = "Cartn_y";
+        public readonly double[] Y;
+        public const string Z_COLUMN = "Cartn_z";
+        public readonly double[] Z;
+
         public string String(int iAtom) => 
             model.Chains.Id[ChainIndex[iAtom]] 
             + " " + model.Residues.Compound[ResidueIndex[iAtom]] 
@@ -54,10 +64,14 @@ namespace SecStrAnnot2.Cif.Tables
             this.model = model;
             // own properties
             RowIndex = rows;
-            Id = category[ID_COLUMN].GetStrings();
-            Name = category[NAME_COLUMN].GetStrings();
-            Element = category[ELEMENT_COLUMN].GetStrings();
-            AltLoc = category[ALT_LOC_COLUMN].GetStrings();
+            Id = category[ID_COLUMN].GetStrings(rows);
+            Name = category[NAME_COLUMN].GetStrings(rows);
+            Element = category[ELEMENT_COLUMN].GetStrings(rows);
+            AltLoc = category[ALT_LOC_COLUMN].GetStrings(rows);
+            try { X = category[X_COLUMN].GetDoubles(rows); } catch (KeyNotFoundExceptionWithKey<string> e) { Lib.WriteWarning("Missing data item " + e.Key); }
+            try { Y = category[Y_COLUMN].GetDoubles(rows); } catch (KeyNotFoundExceptionWithKey<string> e) { Lib.WriteWarning("Missing data item " + e.Key); }
+            try { Z = category[Z_COLUMN].GetDoubles(rows); } catch (KeyNotFoundExceptionWithKey<string> e) { Lib.WriteWarning("Missing data item " + e.Key); }
+            try { IsHetatm = category[IS_HETATM_COLUMN].GetTrueWhereFirstCharacterMatches(rows, 'H'); } catch (KeyNotFoundExceptionWithKey<string> e) { Lib.WriteWarning("Missing data item " + e.Key); }
             // array segments
             // --
         }

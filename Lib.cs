@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace SecStrAnnot2
 {
@@ -105,6 +106,15 @@ namespace SecStrAnnot2
 				}
 				return runStarts;
 			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T[] AppendAndCopyToArray<T>(this List<T> list, T lastValue) {
+			int n = list.Count;
+			T[] array = new T[n+1];
+			list.CopyTo(array);
+			array[n] = lastValue;
+			return array;
 		}
     }
 }

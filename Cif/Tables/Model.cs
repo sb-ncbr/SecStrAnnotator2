@@ -30,19 +30,18 @@ namespace SecStrAnnot2.Cif.Tables
             CifItem asymId = category[ChainTable.KEY_COLUMN];
             int[] atomStartsOfChains;
             int[] chainStartsOfEntities;
-            rows = asymId.GetRowsGroupedByValueInEachRegion(rows, atomStartsOfEntities, out atomStartsOfChains, out chainStartsOfEntities); //TODO assume grouped
+            rows = asymId.GetRowsGroupedByValueInEachRegion(rows, atomStartsOfEntities, out atomStartsOfChains, out chainStartsOfEntities);
 
             // fragments + residues
             CifItem residueId = category[ResidueTable.KEY_COLUMN];
             int[] fragmentStartsOfChains;
             int[] residueStartsOfFragments;
             int[] atomStartsOfResidues;
-            int[] residueStartsOfChains;
             int[] residueNumbers;
             GetFragmentsAndResidues(residueId, ref rows, atomStartsOfChains, out fragmentStartsOfChains, out residueStartsOfFragments, out atomStartsOfResidues, out residueNumbers);
-            rows = residueId.GetRowsGroupedByValueInEachRegion(rows, atomStartsOfChains, out atomStartsOfResidues, out residueStartsOfChains); //TODO replace by sorting by seq_id! + try to assume sorted
             
             // remaining combinations
+            int[] residueStartsOfChains = GetSelectedElements(residueStartsOfFragments, fragmentStartsOfChains, false);
             int[] residueStartsOfEntities = GetSelectedElements(residueStartsOfChains, chainStartsOfEntities, false);
             int[] fragmentStartsOfEntities = GetSelectedElements(fragmentStartsOfChains, chainStartsOfEntities, false);
             int[] atomStartsOfFragments = GetSelectedElements(atomStartsOfResidues, residueStartsOfFragments, false);
@@ -55,7 +54,6 @@ namespace SecStrAnnot2.Cif.Tables
             this.Atoms = new AtomTable(this, category, rows, atomStartsOfResidues, atomStartsOfFragments, atomStartsOfChains, atomStartsOfEntities);
         }
 
-        //TODO move helper method to a static helper class
         private static void GetFragmentsAndResidues(
             CifItem residueNumberItem, 
             ref int[] rows, 
@@ -75,8 +73,7 @@ namespace SecStrAnnot2.Cif.Tables
             List<int> atomOfResList = new List<int>();
             int iResidue = 0;
             int iFragment = 0;
-            for (int iChain = 0; iChain < nChains; iChain++)
-            {
+            for (int iChain = 0; iChain < nChains; iChain++) {
                 int startAtom = atomStartsOfChains[iChain];
                 int endAtom = atomStartsOfChains[iChain+1];
                 // start new residue, new fragment, new chain
@@ -84,8 +81,7 @@ namespace SecStrAnnot2.Cif.Tables
                 atomOfResList.Add(startAtom);      
                 resOfFragList.Add(iResidue);   
                 fragOfChainList.Add(iFragment);
-                for (int iAtom = startAtom+1; iAtom < endAtom; iAtom++)
-                {
+                for (int iAtom = startAtom+1; iAtom < endAtom; iAtom++) {
                     int newResNum = residueNumbers[iAtom];
                     if (newResNum == resNum) {
                         // continue residue (do nothing)
@@ -111,9 +107,9 @@ namespace SecStrAnnot2.Cif.Tables
                 iResidue++;
                 iFragment++;
             }
-            fragmentStartsOfChains = fragOfChainList.Append(iFragment).ToArray();
-            residueStartsOfFragments = resOfFragList.Append(iResidue).ToArray();
-            atomStartsOfResidues = atomOfResList.Append(atomStartsOfChains[nChains]).ToArray();
+            fragmentStartsOfChains = fragOfChainList.AppendAndCopyToArray(iFragment); // fragOfChainList.Append(iFragment).ToArray();
+            residueStartsOfFragments = resOfFragList.AppendAndCopyToArray(iResidue); // resOfFragList.Append(iResidue).ToArray();
+            atomStartsOfResidues = atomOfResList.AppendAndCopyToArray(atomStartsOfChains[nChains]); // atomOfResList.Append(atomStartsOfChains[nChains]).ToArray();
             residueNumbersOfResidues = atomOfResList.Select(a => residueNumbers[a]).ToArray();
         }
 
@@ -127,7 +123,7 @@ namespace SecStrAnnot2.Cif.Tables
             return selected;
         }
 
-        internal static int[] GetUpRefs(int[] downRefs){
+        internal static int[] GetUpRefs(int[] downRefs){ 
             int nTop = downRefs.Length - 1;
             int nBottom = downRefs[nTop];
             int[] upRefs = new int[nBottom];

@@ -14,7 +14,9 @@ namespace SecStrAnnot2
         public static DateTime SyntacticDone;
         static void Main(string[] args)
         {
-            // args = new string[]{"../SecStrAnnot2_data/3ejb_updated.cif"};
+            if (args.Length == 0) {
+                args = new string[]{"../SecStrAnnot2_data/3ejb_updated.cif"};
+            }
             foreach (string filename in args){
                 // Console.Error.WriteLine("\n" + filename);
                 try {
@@ -54,9 +56,9 @@ namespace SecStrAnnot2
                     // Lib.LogList("Starts of chains", startsOfChains);
                     // Lib.LogList("Start chains of entities", startChainsOfEntities);
                     // return;
-                    ModelCollection mc = ModelCollection.FromCifBlock(block);
+                    ModelCollection mc = ModelCollection.FromCifBlock(block/*, block["_atom_site"]["label_atom_id"].GetRowsWith("CA")*/);
                     foreach (Model model in mc.GetModels()) {
-                        Lib.WriteLineDebug("Model " + model.ModelNumber + "\n");
+                        // Lib.WriteLineDebug("Model " + model.ModelNumber + " (" + model.Atoms.Count + " atoms)\n");
                         // Lib.WriteLineDebug(model.Print() + "\n");
                     }
 

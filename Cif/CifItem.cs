@@ -70,6 +70,8 @@ namespace SecStrAnnot2.Cif
         public double[] GetDoubles (int[] rows) => parser.GetValuesAsDoubles(iTag, rows);
         public double[] GetDoubles (double defaultValue) => parser.GetValuesAsDoubles(iTag, defaultValue);
         public double[] GetDoubles (int[] rows, double defaultValue) => parser.GetValuesAsDoubles(iTag, rows, defaultValue);
+        
+        public bool[] GetTrueWhereFirstCharacterMatches (int[] rows, char testedCharacter) => parser.GetTrueWhereFirstCharacterMatches(iTag, rows, testedCharacter);
 
         /// <summary>
         /// Gets indices of rows which fulfil the given predicate "predicate".
