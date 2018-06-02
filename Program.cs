@@ -12,13 +12,22 @@ namespace SecStrAnnot2
         public static DateTime LexicalDone;
         public static DateTime ExtractNamesDone;
         public static DateTime SyntacticDone;
-        static void Main(string[] args)
-        {
+        static int Main(string[] args) {
+            // return protein.MainClass.Main_SecStrAnnot1(args);
+
+            return TestingMain(args);
+        }
+
+        static int TestingMain(string[] args) {
             if (args.Length == 0) {
                 args = new string[]{"../SecStrAnnot2_data/3ejb_updated.cif"};
             }
             foreach (string filename in args){
                 // Console.Error.WriteLine("\n" + filename);
+                protein.Protein p = CifWrapperForSecStrAnnot1.ProteinFromCifFile(filename);
+                p.Save(filename + "-converted.pdb");
+                continue;
+
                 try {
                     string text = "";
                     DateTime t0 = DateTime.Now;
@@ -121,6 +130,7 @@ namespace SecStrAnnot2
                     Lib.WriteErrorAndExit(e.Message);
                 }
             }
+            return 0;
         }
 
         private static bool CmpStr(string text, int index, string sample){
