@@ -28,6 +28,17 @@ namespace SecStrAnnot2
             return ProteinFromCifModel(model);
         }
 
+        public static protein.Protein ProteinFromCifFile(string filename, char chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
+            CifPackage package = CifPackage.FromFile(filename);
+            if (package.BlockNames.Length < 1) {
+                throw new FormatException(EXCEPTION_MESSAGE + "CIF file must contain at least one block");
+            }
+            CifCategory category = package.Blocks[0].GetCategory(ModelCollection.CATEGORY_NAME);
+            int[] rows = category.GetItem(ChainTable.ID_COLUMN).GetRowsWith(chainId.ToString());
+            //TODO continue here (select rows based on resSeqRanges)
+            throw new NotImplementedException();
+        }
+
         public static protein.Protein ProteinFromCifModel(Model model) {
             return new protein.Protein(AtomsFromModel(model));
         }
@@ -97,5 +108,6 @@ namespace SecStrAnnot2
 
             return atomArray;
         }
+        
     }
 }
