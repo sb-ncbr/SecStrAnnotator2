@@ -34,9 +34,16 @@ namespace SecStrAnnot2
                 throw new FormatException(EXCEPTION_MESSAGE + "CIF file must contain at least one block");
             }
             CifCategory category = package.Blocks[0].GetCategory(ModelCollection.CATEGORY_NAME);
-            int[] rows = category.GetItem(ChainTable.ID_COLUMN).GetRowsWith(chainId.ToString());
-            //TODO continue here (select rows based on resSeqRanges)
-            throw new NotImplementedException();
+            int[] rows = category.GetItem(ChainTable.ID_COLUMN).GetRowsWith(chainId.ToString()); // filter rows by chain ID
+            int[] seqNumbers = category.GetItem(ResidueTable.SEQ_NUMBER_COLUMN).GetIntegers(rows, 0);
+            rows = rows.Where( (r, i) => resSeqRanges.Any(range => range.Item1 <= seqNumbers[i] && seqNumbers[i] <= range.Item2) ).ToArray(); // filter rows by resi
+
+            ModelCollection models = ModelCollection.FromCifCategory(category, rows);
+            if (models.Count < 1) {
+                throw new FormatException(EXCEPTION_MESSAGE + "Atom selection given by chain ID and residue ranges is empty");
+            }
+            Model model = models.GetModel(0);
+            return ProteinFromCifModel(model);
         }
 
         public static protein.Protein ProteinFromCifModel(Model model) {

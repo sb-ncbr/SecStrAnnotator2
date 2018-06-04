@@ -102,6 +102,24 @@ namespace protein
 
 		public static String Directory { get; private set; }
 
+		public const bool USE_CIF = false;
+		private static Protein ReadProteinFromFile(string filename, char chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
+			try {
+				Protein p;
+				if (USE_CIF) {
+					p = SecStrAnnot2.CifWrapperForSecStrAnnot1.ProteinFromCifFile(filename, chainId, resSeqRanges);
+				} else {
+					using (StreamReader reader = new StreamReader (filename)) {
+						p = new Protein (reader, new char[]{chainId}, resSeqRanges);
+					}
+				}
+				return p.KeepOnlyNormalResidues(true);
+			} catch (IOException) {
+				Lib.WriteErrorAndExit ("Could not open \"" + filename + "\".");
+				throw new Exception();
+			}
+		}
+		//TODO test this
 
 		/// <summary>
 		/// The entry point of the program, where the program control starts and ends.
