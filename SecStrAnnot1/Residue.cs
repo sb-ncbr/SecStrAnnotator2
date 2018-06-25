@@ -17,14 +17,15 @@ namespace protein
             }
             private set
             {
-                if (value.Length == 3)
-                {
-                    name = value;
-                }
-                else
-                {
-                    throw new ArgumentException("Residue name must consist of exactly 3 characters, not " + value);
-                }
+                name = value;
+                // if (value.Length == 3)
+                // {
+                //     name = value;
+                // }
+                // else
+                // {
+                //     throw new ArgumentException("Residue name must consist of exactly 3 characters, not " + value);
+                // }
             }
         }
 		public char ShortName {
@@ -33,7 +34,7 @@ namespace protein
 				return namesLongToShort.TryGetValue (this.Name, out result) ? result : UNKNOWN_RESIDUE_1_LETTER;
 			}
 		}
-        public char ChainID { get; private set; }
+        public string ChainID { get; private set; }
         public int ResSeq { get; private set; }
 		//public bool IsModified { get; set; }
         private SortedSet<Atom> atoms;
@@ -47,7 +48,7 @@ namespace protein
 		};
 		public const char UNKNOWN_RESIDUE_1_LETTER = '?';
 
-		public Residue(String name, char chainID, int resSeq)
+		public Residue(String name, string chainID, int resSeq)
 		{
 			//Program.logger.Debug("new Residue(" + name + " " + chainID + " " + resSeq);
 			Name = name;
@@ -56,7 +57,7 @@ namespace protein
 			atoms = new SortedSet<Atom>();
 		}
 
-		public Residue(String name, char chainID, int resSeq, IEnumerable<Atom> atoms)
+		public Residue(String name, string chainID, int resSeq, IEnumerable<Atom> atoms)
 			: this(name,chainID,resSeq)
 		{
 			foreach (Atom a in atoms) {
@@ -65,7 +66,7 @@ namespace protein
 		}
 
 		public Residue WithoutHydrogens(){
-			var newAtoms = this.GetAtoms ().Where (a => a.Element != " H");
+			var newAtoms = this.GetAtoms ().Where (a => !a.IsHydrogen);
 			Residue result = new Residue (this.Name, this.ChainID, this.ResSeq, newAtoms);
 			return result;
 		}
@@ -90,7 +91,7 @@ namespace protein
 
         public int CompareTo(Residue other)
         {
-            int result = this.ChainID - other.ChainID;
+            int result = this.ChainID.CompareTo(other.ChainID);
             if (result != 0) return result;
             result = this.ResSeq - other.ResSeq;
             if (result != 0) return result;
@@ -123,7 +124,7 @@ namespace protein
 		public bool IsProline{ get { return this.Name == "PRO"; } }
 
 		public bool HasCAlpha(){
-			return GetAtoms ().Any (a => a.Name == " CA " && a.Element == " C");
+			return GetAtoms ().Any (a => a.IsCAlpha);
 		}
 
 		public bool IsHet(){
@@ -160,8 +161,8 @@ namespace protein
             {
                 Atom a1 = null;
                 Atom a2 = null;
-                foreach (Atom atom in r1.GetAtoms()) if (atom.Name.Equals(" CA ")) a1 = atom;
-                foreach (Atom atom in r2.GetAtoms()) if (atom.Name.Equals(" CA ")) a2 = atom;
+                foreach (Atom atom in r1.GetAtoms()) if (atom.IsCAlpha) a1 = atom;
+                foreach (Atom atom in r2.GetAtoms()) if (atom.IsCAlpha) a2 = atom;
                 if (a1 == null && a2 == null) return a1.CompareTo(a1);
                 if (a1 == null) return 1;
                 if (a2 == null) return -1;

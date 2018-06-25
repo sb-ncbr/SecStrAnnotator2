@@ -13,10 +13,10 @@ namespace protein
 		public const bool IGNORE_ALTERNATIVE_LOCATIONS = true;
 		private static bool alternativeLocationWarningPrinted = false;
 
-        private Dictionary<char,Chain> chains;
+        private Dictionary<string,Chain> chains;
 
 		private void InitializeThis(IEnumerable<Atom> atoms){
-			chains = new Dictionary<char, Chain>();
+			chains = new Dictionary<string, Chain>();
 
 			if (atoms != null) {
 				foreach (Atom a in atoms) {
@@ -49,7 +49,7 @@ namespace protein
 			InitializeThis (atoms);
 		}
 
-		public Protein(StreamReader reader, char[] chainIDs, IEnumerable<Tuple<int,int>> resSeqRanges)
+		public Protein(StreamReader reader, string[] chainIDs, IEnumerable<Tuple<int,int>> resSeqRanges)
 		{
 			List<Residue> modifiedResidues;
 			IEnumerable<Atom> atoms = ReadAtomsFromPDB (reader);
@@ -140,17 +140,17 @@ namespace protein
             return result;
         }
 
-		public Chain GetChain(char chainID)
+		public Chain GetChain(string chainID)
 		{
 			return chains[chainID];
 		}
 
-		public bool HasChain(char chainID)
+		public bool HasChain(string chainID)
 		{
 			return chains.ContainsKey(chainID);
 		}
 
-        public void AddChain(char chainID, Chain newChain)
+        public void AddChain(string chainID, Chain newChain)
         {
             if (!chains.ContainsKey(chainID))
             {

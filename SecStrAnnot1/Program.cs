@@ -54,7 +54,7 @@ namespace protein
 
 		public const double STR_ALIGNMENT_SCALING_DISTANCE = 20.0; //Angstrom
 
-		const char DEFAULT_CHAIN_ID = 'A';
+		const string DEFAULT_CHAIN_ID = "A";
 		const String DEFAULT_DOMAIN_RANGES_STRING = ":";
 
 		const bool JSON_INPUT = true;
@@ -103,14 +103,14 @@ namespace protein
 		public static String Directory { get; private set; }
 
 		public const bool USE_CIF = false;
-		private static Protein ReadProteinFromFile(string filename, char chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
+		private static Protein ReadProteinFromFile(string filename, string chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
 			try {
 				Protein p;
 				if (USE_CIF) {
 					p = SecStrAnnot2.CifWrapperForSecStrAnnot1.ProteinFromCifFile(filename, chainId, resSeqRanges);
 				} else {
 					using (StreamReader reader = new StreamReader (filename)) {
-						p = new Protein (reader, new char[]{chainId}, resSeqRanges);
+						p = new Protein (reader, new string[]{chainId}, resSeqRanges);
 					}
 				}
 				return p.KeepOnlyNormalResidues(true);
@@ -141,8 +141,8 @@ namespace protein
 
 			bool onlyDetect = false;
 
-			char templateChainID_ = DEFAULT_CHAIN_ID;
-			char queryChainID_ = DEFAULT_CHAIN_ID;
+			string templateChainID_ = DEFAULT_CHAIN_ID;
+			string queryChainID_ = DEFAULT_CHAIN_ID;
 
 			List<Tuple<int,int>> templateDomainRanges = null;
 			List<Tuple<int,int>> queryDomainRanges = null;
@@ -352,10 +352,10 @@ namespace protein
 			#endregion
 
 
-			char[] queryChainIDs = new char[]{ queryChainID_ };
-			Dictionary<char,char[]> chainMapping = new Dictionary<char,char[]> { { templateChainID_, queryChainIDs } }; // mapping which chain in template corresponds to which chain(s) in the query protein
-			char[] allTemplateChainIDs = chainMapping.Keys.ToArray ();
-			char[] allQueryChainIDs = chainMapping.Values.SelectMany (x => x).ToArray ();
+			string[] queryChainIDs = new string[]{ queryChainID_ };
+			Dictionary<string,string[]> chainMapping = new Dictionary<string,string[]> { { templateChainID_, queryChainIDs } }; // mapping which chain in template corresponds to which chain(s) in the query protein
+			string[] allTemplateChainIDs = chainMapping.Keys.ToArray ();
+			string[] allQueryChainIDs = chainMapping.Values.SelectMany (x => x).ToArray ();
 
 			#region Reading configuration file.
 			String configFile = Path.Combine (AppDomain.CurrentDomain.BaseDirectory, CONFIG_FILE);
@@ -404,7 +404,7 @@ namespace protein
 			if (tryToReuseAlignment && File.Exists (fileQueryAlignedPDB)) {
 				try {
 					reader = new StreamReader (fileQueryAlignedPDB);
-					qProtein = new Protein (reader, new char[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
+					qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
 					reader.Close ();
 				} catch (IOException) {
 					Lib.WriteError ("Could not open \"" + fileQueryAlignedPDB + "\".");
@@ -413,7 +413,7 @@ namespace protein
 			} else {
 				try {
 					reader = new StreamReader (fileQueryPDB);
-					qProtein = new Protein (reader, new char[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
+					qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
 					reader.Close ();
 				} catch (IOException) {
 					Lib.WriteError ("Could not open \"" + fileQueryPDB + "\".");
@@ -426,13 +426,13 @@ namespace protein
 			}
 
 			if (!onlyDetect) {
-				foreach (char c in chainMapping.Keys) {
+				foreach (string c in chainMapping.Keys) {
 					if (!tProtein.HasChain (c)) {
 						Lib.WriteError ("Template protein does not contain chain {0}.", c);
 						return -1;
 					}
 				}
-				foreach (char c in allQueryChainIDs) {
+				foreach (string c in allQueryChainIDs) {
 					if (!qProtein.HasChain (c)) {
 						Lib.WriteError ("Query protein does not contain chain {0}.", c);
 						return -1;
@@ -576,15 +576,15 @@ namespace protein
 
 
 			#region Superimposition and annotation for each chain.
-			foreach (char templateChainID in allTemplateChainIDs) {
-				foreach (char queryChainID in chainMapping[templateChainID]) {
+			foreach (string templateChainID in allTemplateChainIDs) {
+				foreach (string queryChainID in chainMapping[templateChainID]) {
 
 					#region Superimposing p over t.
 					if (tryToReuseAlignment && File.Exists (fileQueryAlignedPDB)) {
 						// The query protein has already been read from aligned PDB file.
 					} else {
 						if (alignMethod == AlignMethod.None) {
-							qProtein.Save (fileQueryAlignedPDB);
+							// qProtein.Save (fileQueryAlignedPDB);
 						} else if (alignMethodNames.ContainsKey (alignMethod)) {
 							#region Superimpose by a given PyMOL's command.
 							Lib.WriteInColor (ConsoleColor.Yellow, "Running PyMOL to align proteins:\n");
@@ -601,7 +601,7 @@ namespace protein
 								return -1;
 							try {
 								reader = new StreamReader (fileQueryAlignedPDB);
-								qProtein = new Protein (reader, new char[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
+								qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
 								reader.Close ();
 							} catch (IOException) {
 								Lib.WriteError ("Could not open \"" + fileQueryAlignedPDB + "\".");
@@ -984,17 +984,13 @@ namespace protein
 			).EnumerateWithSeparators (",");
 		}
 
-		private static void ParseDomainSpecification(String domain, out String pdb, out char chain, out List<Tuple<int,int>> ranges){
+		private static void ParseDomainSpecification(String domain, out String pdb, out string chain, out List<Tuple<int,int>> ranges){
 			String[] parts = domain.Split (new char[]{','}, 3);
 
 			pdb = parts [0];
 
 			if (parts.Length >= 2) {
-				if (parts [1].Length != 1) {
-					throw new FormatException ("Chain identifier must be 1 character, input was \"" + parts [1] + "\"");
-				} else {
-					chain = parts [1] [0];
-				}
+				chain = parts [1];
 			} else {
 				chain = DEFAULT_CHAIN_ID;
 			}

@@ -17,6 +17,7 @@ namespace SecStrAnnot2.Cif.Raw
         private const bool PRINT_TOKENS = false; //true;
         private static int MAX_DIGITS_INT = (int)Math.Floor(Math.Log10(int.MaxValue));
         private static int MAX_DIGITS_LONG = (int)Math.Floor(Math.Log10(long.MaxValue));
+        private static int REMOVE_QUOTES = 1; // Value 1 to removed the quotes (' or " or ;) from quoted strings, value 0 to keep them.
 
         private static char[] ordinaryChars = "!%&()*+,-./0123456789:<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\\^`abcdefghijklmnopqrstuvwxyz{|}~".ToCharArray();
         private static char[] nonBlankChars = ordinaryChars.Concat("\"#$'_;[]").ToArray();
@@ -129,16 +130,16 @@ namespace SecStrAnnot2.Cif.Raw
                                 break;
                             case '\'':
                                 state = LexicalState.Single;
-                                startList.Add(i);
+                                startList.Add(i + REMOVE_QUOTES);
                                 break;
                             case '"':
                                 state = LexicalState.Double;
-                                startList.Add(i);
+                                startList.Add(i + REMOVE_QUOTES);
                                 break;
                             case ';':
                                 if (i == 0 || Text[i-1] == '\n' || Text[i-1] =='\r'){
                                     state = LexicalState.Semicolon;
-                                    startList.Add(i);
+                                    startList.Add(i + REMOVE_QUOTES);
                                 } else {
                                     state = LexicalState.Token;
                                     startList.Add(i);
@@ -228,7 +229,7 @@ namespace SecStrAnnot2.Cif.Raw
                         if (c == '\'' && isWhiteSpaceChar[Text[i+1]]){
                             state = LexicalState.Out;
                             typeList.Add(TokenType.Single);
-                            stopList.Add(i+1);
+                            stopList.Add(i+1 - REMOVE_QUOTES);
                         } else if (isAnyPrintChar[c]){
                             // stay in Single
                         } else {
@@ -239,7 +240,7 @@ namespace SecStrAnnot2.Cif.Raw
                         if (c == '"' && isWhiteSpaceChar[Text[i+1]]){
                             state = LexicalState.Out;
                             typeList.Add(TokenType.Double);
-                            stopList.Add(i+1);
+                            stopList.Add(i+1 - REMOVE_QUOTES);
                         } else if (isAnyPrintChar[c]){
                             // stay in Double
                         } else {
@@ -250,7 +251,7 @@ namespace SecStrAnnot2.Cif.Raw
                         if (c == ';' &&  (Text[i-1] == '\n' || Text[i-1] =='\r')){
                             state = LexicalState.Out;
                             typeList.Add(TokenType.Semicolon);
-                            stopList.Add(i+1);
+                            stopList.Add(i+1 - REMOVE_QUOTES);
                         } else {
                             // stay in Semicolon
                         }
@@ -384,14 +385,14 @@ namespace SecStrAnnot2.Cif.Raw
                         startList.Add(i);
                         goto STATE_COMMENT;
                     case '\'':
-                        startList.Add(i);
+                        startList.Add(i + REMOVE_QUOTES);
                         goto STATE_SINGLE;
                     case '"':
-                        startList.Add(i);
+                        startList.Add(i + REMOVE_QUOTES);
                         goto STATE_DOUBLE;
                     case ';':
                         if (i == 0 || Text[i-1] == '\n' || Text[i-1] =='\r'){
-                            startList.Add(i);
+                            startList.Add(i + REMOVE_QUOTES);
                             goto STATE_SEMICOLON;
                         } else {
                             startList.Add(i);
@@ -495,7 +496,7 @@ namespace SecStrAnnot2.Cif.Raw
                 c = Text[i];
                 if (c == '\'' && isWhiteSpaceChar[Text[i+1]]){
                     typeList.Add(TokenType.Single);
-                    stopList.Add(i+1);
+                    stopList.Add(i+1 - REMOVE_QUOTES);
                     goto STATE_OUT;
                 } else if (isAnyPrintChar[c]){
                     goto STATE_SINGLE;
@@ -508,7 +509,7 @@ namespace SecStrAnnot2.Cif.Raw
                 c = Text[i];
                 if (c == '"' && isWhiteSpaceChar[Text[i+1]]){
                     typeList.Add(TokenType.Double);
-                    stopList.Add(i+1);
+                    stopList.Add(i+1 - REMOVE_QUOTES);
                     goto STATE_OUT;
                 } else if (isAnyPrintChar[c]){
                     goto STATE_DOUBLE;
@@ -521,7 +522,7 @@ namespace SecStrAnnot2.Cif.Raw
                 c = Text[i];
                 if (c == ';' &&  (Text[i-1] == '\n' || Text[i-1] =='\r')){
                     typeList.Add(TokenType.Semicolon);
-                    stopList.Add(i+1);
+                    stopList.Add(i+1 - REMOVE_QUOTES);
                     goto STATE_OUT;
                 } else {
                     goto STATE_SEMICOLON;

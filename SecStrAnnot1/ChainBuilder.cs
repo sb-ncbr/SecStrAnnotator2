@@ -109,7 +109,7 @@ namespace protein
                     if (currentResidue != null)
                     {
                         //Program.logger.Debug("Residue " + i + " present, added to new chain " + result.Count);
-                        currentChain = new Chain(' ');
+                        currentChain = new Chain(" ");
                         currentChain.AddResidue(i, currentResidue);
                     }
                     else

@@ -396,7 +396,7 @@ namespace protein
 											Lib.WriteWarning("Suspicious joining in {0}. Gap between joined SSEs = {1}",Context.Templates [i].Label,all[j+1].Start-all[j].End-1);
 										}
 									}
-									char chainID = all.First ().ChainID;
+									string chainID = all.First ().ChainID;
 									int first = all.Select (sse => sse.Start).ArgMin ();
 									int last = all.Select (sse => sse.End).ArgMax ();
 									rememberedAnnotatedCandidates [i] = new SSEInSpace (new SSE (Context.Templates [i].Label, chainID, all [first].Start, all [last].End, 
@@ -491,7 +491,7 @@ namespace protein
 					List<String> correction = corrs.Where (l => l [1] == Context.Templates [i].Label).DefaultIfEmpty (null).FirstOrDefault ();
 					if (correction != null) {
 						SSEInSpace template = Context.Templates [i];
-						char chainID = correction [2][0];
+						string chainID = correction [2];
 						int start = Int32.Parse (correction [3]);
 						int end = Int32.Parse (correction [4]);
 						SSE correctedSSE = new SSE (template.Label, chainID, start, end, template.Type, null);

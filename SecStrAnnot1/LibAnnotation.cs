@@ -76,16 +76,13 @@ namespace protein
 				table = Lib.ReadCSV (r, 5, SEPARATOR, COMMENT_SIGN_READ);
 			}
 			foreach (List<String> sse in table) {
-				char chainID;
+				string chainID;
 				int start;
 				int end;
 				char type;
 				if (!labels.Add (sse [0]))
 					Lib.WriteWarning ("Multiple definition of \"{0}\" in file \"{1}\".", sse [0], fileName);
-				if (sse [1].Length == 1)
-					chainID = sse [1] [0];
-				else
-					throw new FormatException ("ReadAnnotationFile: Wrong format. ChainID must be 1 character, but \"" + sse [1] + "\" was found in file \"\"+fileName+\"\".");
+				chainID = sse[1];
 				try {
 					start = Convert.ToInt32 (sse [2]);
 				} catch (FormatException f) {
@@ -299,13 +296,11 @@ namespace protein
 					throw new FormatException (JsonLocationString (fileName,name,JsNames.SSES,i) + "  is not a JSON object.");
 				try {
 					String chainId = sse [JsNames.CHAIN_ID].String;
-					if (chainId.Length != 1)
-						throw new FormatException (JsonLocationString (fileName,name,JsNames.SSES,i,JsNames.CHAIN_ID) + " is not a single character.");
 					String type = sse [JsNames.TYPE].String;
 					if (type.Length != 1)
 						throw new FormatException (JsonLocationString (fileName,name,JsNames.SSES,i,JsNames.TYPE) + " is not a single character.");
 					int? sheetId=sse.Contains (JsNames.SHEET_ID) ? sse [JsNames.SHEET_ID].Int as int? : null;
-					SSE s = new SSE (sse [JsNames.LABEL].String, chainId [0], sse [JsNames.START_RESI].Int, sse [JsNames.END_RESI].Int, type [0],sheetId);
+					SSE s = new SSE (sse [JsNames.LABEL].String, chainId, sse [JsNames.START_RESI].Int, sse [JsNames.END_RESI].Int, type [0],sheetId);
 
 					if (sse.Contains (JsNames.START_VECTOR) && sse.Contains (JsNames.END_VECTOR)) {
 						JsonValue vec = sse [JsNames.START_VECTOR];
@@ -432,7 +427,7 @@ namespace protein
 					String resSeqStr = line.Substring (6, 4);
 					if (!resSeqStr.TrimStart ().Equals ("")) {
 						int resSeq = Int32.Parse (resSeqStr);
-						char chainID = line [11];
+						string chainID = line [11].ToString();
 						char type = line [16];
 						lastStrand1Char = (strand1Char != ' ') ? strand1Char : lastStrand1Char;
 						lastStrand2Char = (strand2Char != ' ') ? strand2Char : lastStrand2Char;
@@ -605,7 +600,7 @@ namespace protein
 			maxRMSD = 0;
 			//Lib.WriteDebug ("Geometry check on {0} {1,3} - {2,3}: ", residues.First ().ChainID, residues.First ().ResSeq, residues.Last ().ResSeq);
 
-			List<Atom> CAlphas = residues.SelectMany (r => r.GetAtoms ().Where (a => a.Name == " CA ")).ToList ();
+			List<Atom> CAlphas = residues.SelectMany (r => r.GetAtoms ().Where (a => a.IsCAlpha)).ToList ();
 			//Lib.WriteLineDebug ("residues: {0}, CAlphas: {1}", residues.Count(), CAlphas.Count);
 			if (CAlphas.Any (x => x.AltLoc != ' ' && x.AltLoc != 'A')) {
 				if (!alternativeLocationWarningPrinted) {
@@ -642,7 +637,7 @@ namespace protein
 			rmsd = 0;
 			int unitLength = residues.Count();
 			List<Atom> unit = residues
-				.Select (r => r.GetAtoms ().Where (a => a.Name == " CA "))
+				.Select (r => r.GetAtoms ().Where (a => a.IsCAlpha))
 				.TakeWhile(la => la.Count()>0)
 				.Select(la => la.First())
 				.ToList ();
@@ -712,30 +707,6 @@ namespace protein
 			return rotMatrix.ToRowVectors () [2];
 		}
 
-		public static Vector DirectionVector_LinRegVersionAlphaHelix_ByName(IList<Atom> helix, String atomName){
-			helix = helix.Where (x => x.Name == atomName).ToList();
-			double rotationPerAtom = 2 * Math.PI / 3.6;
-
-			if (helix.Count < 2)
-				throw new ArgumentException ("Backbone of the helix must contain at least 2 residues.");
-			List<int> indices = helix.ToList().Select ((x, i) => i).ToList();
-			List<double> values = indices.Select (i => Math.Cos (rotationPerAtom * i)).ToList ();
-			values.AddRange (indices.Select (i => Math.Sin (rotationPerAtom * i)));
-			values.AddRange (indices.Select (i => Convert.ToDouble (i)));
-			Matrix niceHelixTransposed = Matrix.CreateByRows (3, indices.Count, values);
-			niceHelixTransposed.MeanCenterHorizontally ();
-			Matrix myHelix = Matrix.FromRowVectors (helix.ToList().Select(x => x.Position()).ToList());
-			myHelix.MeanCenterVertically ();
-			Matrix rotMatrix = niceHelixTransposed * myHelix;
-			rotMatrix.NormalizeRows ();
-			if (helix [0].ResSeq == 172) {
-				Console.WriteLine (rotMatrix.ToRowVectors () [0]);
-				Console.WriteLine (rotMatrix.ToRowVectors () [1]);
-				Console.WriteLine (rotMatrix.ToRowVectors () [2]);
-			}
-			return rotMatrix.ToRowVectors () [2];
-		}
-
 		private static Tuple<Vector,Vector> HelixAsLineSegment(List<Atom> backbone){
 			Vector center = Vector.Average (backbone.Select (a => a.Position ()));
 			Vector direction = DirectionVector (backbone);
@@ -747,7 +718,7 @@ namespace protein
 		public static List<SSEInSpace> HelicesAsLineSegments(Chain chain, List<SSE> sses){
 			IEnumerable<Tuple<int,int>> ranges = sses.Select (x => new Tuple<int,int> (x.Start, x.End));
 			List<List<Atom>> atoms = chain.GetResidues (ranges)
-				.Select(l=>l.SelectMany(res=>res.GetAtoms().Where(a=>a.Name==" CA "||a.Name==" N  " ||a.Name==" C  ")).ToList()).ToList();
+				.Select(l=>l.SelectMany(res=>res.GetAtoms().Where(a => a.IsCAlpha || a.IsNAmide || a.IsCCarb)).ToList()).ToList();
 
 			List<SSEInSpace> ssesInSpace = 
 				sses.Select ((x,i)=> {
@@ -776,20 +747,20 @@ namespace protein
 			} catch(Exception) {
 				Lib.WriteErrorAndExit ("SSE starting or ending residue is missing: {0}", sse);
 			}
-			if (residues.Count() < 4 || !residues.All (r => r.GetAtoms ().Any(a => a.Name == " CA "))) {
+			if (residues.Count() < 4 || !residues.All (r => r.GetAtoms ().Any(a => a.IsCAlpha))) {
 				Lib.WriteWarning ("At least 4 residues are needed to calculate line segment. Less than 4 residues are given, so atom coordinates will be used instead of line segment approximation.");
-				Vector u_ = residues.ElementAt (startIndex).GetAtoms ().First (a => a.Name == " CA ").Position ();
-				Vector v_ = residues.ElementAt (endIndex).GetAtoms ().First (a => a.Name == " CA ").Position ();
+				Vector u_ = residues.ElementAt (startIndex).GetAtoms ().First (a => a.IsCAlpha).Position ();
+				Vector v_ = residues.ElementAt (endIndex).GetAtoms ().First (a => a.IsCAlpha).Position ();
 				return new Tuple<Vector,Vector> (u_, v_);
 			}
 			if (residues.Select ((r, i) => r.ResSeq - i).Distinct ().Count () != 1) {
 				Lib.WriteWarning ("Missing residues around " +sse.ToString () + ". Atom coordinates will be used instead of line segment approximation.");
-				Vector u_ = residues.ElementAt (startIndex).GetAtoms ().First (a => a.Name == " CA ").Position ();
-				Vector v_ = residues.ElementAt (endIndex).GetAtoms ().First (a => a.Name == " CA ").Position ();
+				Vector u_ = residues.ElementAt (startIndex).GetAtoms ().First (a => a.IsCAlpha).Position ();
+				Vector v_ = residues.ElementAt (endIndex).GetAtoms ().First (a => a.IsCAlpha).Position ();
 				return new Tuple<Vector,Vector> (u_, v_);
 			}
 
-			List<Vector> coords = residues.Select (r => r.GetAtoms ().First (a => a.Name == " CA ").Position()).ToList ();
+			List<Vector> coords = residues.Select (r => r.GetAtoms ().First (a => a.IsCAlpha).Position()).ToList ();
 
 
 			Vector sumAxes = Vector.ZERO;
@@ -1015,14 +986,14 @@ namespace protein
 			chainMapping indicates SSEs from which template chain should be looked for in which protein chain.
 			SSEs are choose in such way that the value of metric is minimized.
 			*/
-		public static List<Tuple<SSEInSpace,double>> FindCounterpartsNew(IEnumerable<SSEInSpace> templates, IEnumerable<SSEInSpace> candidates, Dictionary<char,char> chainMapping, Func<char,char,bool> typeMatching, Func<SSEInSpace,SSEInSpace,double> metricToMax){
+		public static List<Tuple<SSEInSpace,double>> FindCounterpartsNew(IEnumerable<SSEInSpace> templates, IEnumerable<SSEInSpace> candidates, Dictionary<string,string> chainMapping, Func<char,char,bool> typeMatching, Func<SSEInSpace,SSEInSpace,double> metricToMax){
 
-			Dictionary<char,List<SSEInSpaceInt>> templatesByResseq = new Dictionary<char,List<SSEInSpaceInt>> (); // list of SSEs for each template chain sorted by starting resseq
-			Dictionary<char,List<SSEInSpaceInt>> templatesByPriority = new Dictionary<char,List<SSEInSpaceInt>> (); // list of SSEs for each template chain sorted by their order of processing
-			Dictionary<char,List<SSEInSpaceInt>> candidatesByResseq = new Dictionary<char,List<SSEInSpaceInt>> (); // list of SSEs for each template chain sorted by starting resseq
+			Dictionary<string,List<SSEInSpaceInt>> templatesByResseq = new Dictionary<string,List<SSEInSpaceInt>> (); // list of SSEs for each template chain sorted by starting resseq
+			Dictionary<string,List<SSEInSpaceInt>> templatesByPriority = new Dictionary<string,List<SSEInSpaceInt>> (); // list of SSEs for each template chain sorted by their order of processing
+			Dictionary<string,List<SSEInSpaceInt>> candidatesByResseq = new Dictionary<string,List<SSEInSpaceInt>> (); // list of SSEs for each template chain sorted by starting resseq
 			List<Tuple<SSEInSpace,double>> result = new List<Tuple<SSEInSpace,double>> ();
 
-			foreach (char chain in chainMapping.Keys) {
+			foreach (string chain in chainMapping.Keys) {
 				templatesByResseq [chain] = new List<SSEInSpaceInt> ();
 				templatesByPriority [chain] = new List<SSEInSpaceInt> ();
 				candidatesByResseq [chainMapping [chain]] = new List<SSEInSpaceInt> ();
@@ -1038,7 +1009,7 @@ namespace protein
 				if (candidatesByResseq.ContainsKey (candidate.ChainID))
 					candidatesByResseq [candidate.ChainID].Add (new SSEInSpaceInt (candidate, -1)); // -1=not annotated yet
 
-			foreach (char chain in chainMapping.Keys) {
+			foreach (string chain in chainMapping.Keys) {
 				templatesByResseq [chain].Sort ((x, y) => x.SSE.Start.CompareTo (y.SSE.Start));
 				candidatesByResseq [chainMapping [chain]].Sort ((x, y) => x.SSE.Start.CompareTo (y.SSE.Start));
 				/*templatesByResseq [chain].ForEach (x => Console.WriteLine (x.SSE.ToString ()));
@@ -1571,7 +1542,7 @@ namespace protein
 			Vector[] qVectors = candidates.Select (r => r.GetAtoms ().First (a => a.IsCAlpha).Position ()).ToArray ();
 
 			if (Lib.DoWriteDebug) {
-				new Protein (tVectors.Select ((v, i) => new Atom (i, " CA ", ' ', "ALA", 'X', i, ' ', v.X, v.Y, v.Z, 1, 1, " C", "  ", false)))
+				new Protein (tVectors.Select ((v, i) => new Atom (i, Atom.NAME_C_ALPHA, ' ', "ALA", "X", i, ' ', v.X, v.Y, v.Z, 1, 1, "C", Atom.CHARGE_ZERO, false)))
 					.Save (Path.Combine (MainClass.Directory, "template-smooth.pdb"));
 			}
 

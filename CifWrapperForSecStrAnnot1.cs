@@ -28,7 +28,7 @@ namespace SecStrAnnot2
             return ProteinFromCifModel(model);
         }
 
-        public static protein.Protein ProteinFromCifFile(string filename, char chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
+        public static protein.Protein ProteinFromCifFile(string filename, string chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
             CifPackage package = CifPackage.FromFile(filename);
             if (package.BlockNames.Length < 1) {
                 throw new FormatException(EXCEPTION_MESSAGE + "CIF file must contain at least one block");
@@ -66,16 +66,16 @@ namespace SecStrAnnot2
                 }
                 string elementString = atoms.Element[iAtom];
                 string name = atoms.Name[iAtom];
-                if (name.Length < 4) {
-                    if (elementString.Length == 1) {
-                        name = " " + name;
-                    }
-                    name = name.PadRight(4);
-                } else if (name.Length == 4) {
-                    // this is OK, do nothing
-                } else {
-                    throw new FormatException(EXCEPTION_MESSAGE + $"Atom name must have at most 4 characters: {elementString}");
-                }
+                // if (name.Length < 4) {
+                //     if (elementString.Length == 1) {
+                //         name = " " + name;
+                //     }
+                //     name = name.PadRight(4);
+                // } else if (name.Length == 4) {
+                //     // this is OK, do nothing
+                // } else {
+                //     throw new FormatException(EXCEPTION_MESSAGE + $"Atom name must have at most 4 characters: {name}");
+                // }
                 
                 string altLocString = atoms.AltLoc[iAtom];
                 char altLoc;
@@ -88,12 +88,12 @@ namespace SecStrAnnot2
                 }
                 string resName = residues.Compound[atoms.ResidueIndex[iAtom]];
                 string chainIdString = chains.Id[atoms.ChainIndex[iAtom]];
-                char chainId;
-                if (chainIdString.Length == 1) {
-                    chainId = chainIdString[0];
-                } else {
-                    throw new FormatException(EXCEPTION_MESSAGE + $"Chain ID must be a single character: {chainIdString}");
-                }
+                // char chainId;
+                // if (chainIdString.Length == 1) {
+                //     chainId = chainIdString[0];
+                // } else {
+                //     throw new FormatException(EXCEPTION_MESSAGE + $"Chain ID must be a single character: {chainIdString}");
+                // }
                 int resSeq = residues.SeqNumber[atoms.ResidueIndex[iAtom]];
                 char insCode = PDB_DEFAULT_INS_CODE;
                 double x = atoms.X[iAtom];
@@ -101,16 +101,16 @@ namespace SecStrAnnot2
                 double z = atoms.Z[iAtom];
                 double occupancy = DEFAULT_OCCUPANCY;
                 double tempFactor = DEFAULT_TEMP_FACTOR;
-                string element;
-                if (elementString.Length <= 2) {
-                    element = elementString.PadLeft(2);
-                } else {
-                    throw new FormatException(EXCEPTION_MESSAGE + $"Element symbol must be have at most 2 characters: {elementString}");
-                }
+                // string element;
+                // if (elementString.Length <= 2) {
+                //     element = elementString.PadLeft(2);
+                // } else {
+                //     throw new FormatException(EXCEPTION_MESSAGE + $"Element symbol must be have at most 2 characters: {elementString}");
+                // }
                 string charge = DEFAULT_CHARGE;
                 bool isHetatm = atoms.IsHetatm[iAtom];
 
-                atomArray[iAtom] = new protein.Atom(serial, name, altLoc, resName, chainId, resSeq, insCode, x, y, z, occupancy, tempFactor, element, charge, isHetatm);
+                atomArray[iAtom] = new protein.Atom(serial, name, altLoc, resName, chainIdString, resSeq, insCode, x, y, z, occupancy, tempFactor, elementString, charge, isHetatm);
             }
 
             return atomArray;

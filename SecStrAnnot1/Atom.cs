@@ -22,14 +22,15 @@ namespace protein
             }
             private set
             {
-                if (value.Length == 4)
-                {
-                    name = value;
-                }
-                else
-                {
-                    throw new ArgumentException();
-                }
+                name = value;
+                // if (value.Length == 4)
+                // {
+                //     name = value;
+                // }
+                // else
+                // {
+                //     throw new ArgumentException();
+                // }
             }
         }
 
@@ -44,18 +45,19 @@ namespace protein
             }
             private set
             {
-                if (value.Length == 3)
-                {
-                    resName = value;
-                }
-                else
-                {
-                    throw new ArgumentException();
-                }
+                resName = value;
+                // if (value.Length == 3)
+                // {
+                //     resName = value;
+                // }
+                // else
+                // {
+                //     throw new ArgumentException();
+                // }
             }
         }
 
-        public char ChainID { get; private set; }
+        public string ChainID { get; private set; }
 
         public int ResSeq { get; private set; }
 
@@ -95,14 +97,15 @@ namespace protein
             }
             private set
             {
-                if (value.Length == 2)
-                {
-                    element = value;
-                }
-                else
-                {
-                    throw new ArgumentException();
-                }
+                element = value;
+                // if (value.Length == 2)
+                // {
+                //     element = value;
+                // }
+                // else
+                // {
+                //     throw new ArgumentException();
+                // }
             }
         }
 
@@ -129,11 +132,11 @@ namespace protein
         public bool IsHetAtm { get; private set; }
 
         public Atom(int serial, String name, char altLoc, String resName,
-            char chainID, int resSeq, char iCode, double x, double y, double z,
+            string chainID, int resSeq, char iCode, double x, double y, double z,
             double occupancy, double tempFactor, String element, String charge, bool isHetAtm)
         {
             Serial = serial;
-            Name = name;
+            Name = name.Trim();
             AltLoc = altLoc;
             ResName = resName;
             ChainID = chainID;
@@ -173,10 +176,10 @@ namespace protein
                     throw new FormatException("serial");
                 }
 
-                Name = line.Substring(12, 4);
+                Name = line.Substring(12, 4).Trim();
                 AltLoc = line[16];
                 ResName = line.Substring(17, 3);
-                ChainID = line[21];
+                ChainID = line.Substring(21, 1);
 
                 if (Int32.TryParse(line.Substring(22, 4), out parsedInt))
                 {
@@ -234,7 +237,7 @@ namespace protein
                     throw new FormatException("tempFactor");
                 }
 
-                Element = line.Substring(76, 2);
+                Element = line.Substring(76, 2).Trim();
                 Charge = line.Substring(78, 2);
 
                 if (line.Substring(0, 6).Equals("HETATM"))
@@ -300,21 +303,21 @@ namespace protein
 			return new Vector (X, Y, Z);
 		}
 		
-		public const String NAME_N_AMIDE = " N  ";
-		public const String NAME_H_AMIDE = " H  ";
-		public const String NAME_C_ALPHA = " CA ";
-		public const String NAME_C_CARB = " C  ";
-		public const String NAME_O_CARB = " O  ";
+		public const String NAME_N_AMIDE = "N";
+		public const String NAME_H_AMIDE = "H";
+		public const String NAME_C_ALPHA = "CA";
+		public const String NAME_C_CARB = "C";
+		public const String NAME_O_CARB = "O";
 
-		public const String ELEMENT_H = " H";
+		public const String ELEMENT_H = "H";
 
 		public const String CHARGE_ZERO = "  ";
 
-		public bool IsNAmide { get { return Name == NAME_N_AMIDE; } }
-		public bool IsHAmide { get { return Name == NAME_H_AMIDE; } }
-		public bool IsCAlpha { get { return Name == NAME_C_ALPHA; } }
-		public bool IsCCarb { get { return Name == NAME_C_CARB; } }
-		public bool IsOCarb { get { return Name == NAME_O_CARB; } }
+		public bool IsNAmide { get { return Element == "N" && Name == NAME_N_AMIDE; } }
+		public bool IsHAmide { get { return Element == "H" && Name == NAME_H_AMIDE; } }
+		public bool IsCAlpha { get { return Element == "C" && Name == NAME_C_ALPHA; } }
+		public bool IsCCarb { get { return Element == "C" && Name == NAME_C_CARB; } }
+		public bool IsOCarb { get { return Element == "O" && Name == NAME_O_CARB; } }
 
 		public bool IsHydrogen{ get { return Element == ELEMENT_H; } }
     }

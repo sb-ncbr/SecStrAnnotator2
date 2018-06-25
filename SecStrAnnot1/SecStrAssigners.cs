@@ -56,9 +56,9 @@ namespace protein
 
 		public class FileSecStrAssigner : ISecStrAssigner {
 			public String SsaFile { get; private set; }
-			public char[] ChainIDs { get; private set; }
+			public string[] ChainIDs { get; private set; }
 
-			public FileSecStrAssigner(String ssaFile,  IEnumerable<char> chainIDs){
+			public FileSecStrAssigner(String ssaFile,  IEnumerable<string> chainIDs){
 				this.SsaFile=ssaFile;
 				this.ChainIDs=chainIDs.ToArray ();
 			}
@@ -80,10 +80,10 @@ namespace protein
 		public class FileSecStrAssigner_Json : ISecStrAssigner {
 			public String SsaFile { get; private set; }
 			public String EntryName{ get; private set; }
-			public char[] ChainIDs { get; private set; }
+			public string[] ChainIDs { get; private set; }
 
 			/* If entryName==null, it will take the first entry in the file. */
-			public FileSecStrAssigner_Json(String ssaFile,String entryName, IEnumerable<char> chainIDs){
+			public FileSecStrAssigner_Json(String ssaFile,String entryName, IEnumerable<string> chainIDs){
 				this.SsaFile=ssaFile;
 				this.EntryName=entryName;
 				this.ChainIDs=chainIDs.ToArray ();
@@ -118,10 +118,10 @@ namespace protein
 			public String DSSPExecutable { get; private set; }
 			public String PDBFile { get; private set; }
 			public String DSSPFile { get; private set; }
-			public char[] ChainIDs { get; private set; }
+			public string[] ChainIDs { get; private set; }
 			public char[] AcceptedSSETypes { get; private set; }
 
-			public DsspSecStrAssigner(String dsspExecutable, String PDBFile, String DSSPFile, IEnumerable<char> chainIDs, char[] acceptedSSETypes){
+			public DsspSecStrAssigner(String dsspExecutable, String PDBFile, String DSSPFile, IEnumerable<string> chainIDs, char[] acceptedSSETypes){
 				this.DSSPExecutable = dsspExecutable;
 				this.PDBFile = PDBFile;
 				this.DSSPFile = DSSPFile;
@@ -244,8 +244,8 @@ namespace protein
 				if (SheetsAllowed) {
 					// Deleting sheets that have no hydrogen bonds
 					List<List<Residue>> sheets = Chain.GetResidues (result.Where (sse => sse.Type == sheetType).Select (sse => new Tuple<int,int> (sse.Start, sse.End)));
-					IEnumerable<Atom> atomsN = sheets.SelectMany (sse => sse.SelectMany (r => r.GetAtoms ().Where (a => a.Name == " N  ")));
-					IEnumerable<Atom> atomsO = sheets.SelectMany (sse => sse.SelectMany (r => r.GetAtoms ().Where (a => a.Name == " O  ")));
+					IEnumerable<Atom> atomsN = sheets.SelectMany (sse => sse.SelectMany (r => r.GetAtoms ().Where (a => a.IsNAmide)));
+					IEnumerable<Atom> atomsO = sheets.SelectMany (sse => sse.SelectMany (r => r.GetAtoms ().Where (a => a.IsOCarb)));
 					double maxDistanceForHydrogenBond = 3.5; //TODO Get a rational value for this number (distance N-O). This value is just a guess.
 					int minResiduesBetweenHydrogenBond = 2; // number of residues that must be between 2 residues that are forming a beta-sheet stabilizing hydrogen bond
 
@@ -266,11 +266,11 @@ namespace protein
 				result.RemoveAll (sse => sse.Type == sheetType && deletedSheetsByStart.Contains (sse.Start));*/
 
 						// Version with shortening sheets
-						List<int> hbN = sheets [i].Where (r => r.GetAtoms ().Where (a => a.Name == " N  ").Any (a1 => atomsO.Any (a2 => 
+						List<int> hbN = sheets [i].Where (r => r.GetAtoms ().Where (a => a.IsNAmide).Any (a1 => atomsO.Any (a2 => 
 							!(a2.ResSeq >= firstResSeq && a2.ResSeq <= lastResSeq)
 							&& (Math.Abs (a2.ResSeq - a1.ResSeq) > minResiduesBetweenHydrogenBond)
 							&& LibProtein.Distance (a1, a2) <= maxDistanceForHydrogenBond))).Select (r => r.ResSeq).ToList ();
-						List<int> hbO = sheets [i].Where (r => r.GetAtoms ().Where (a => a.Name == " O  ").Any (a1 => atomsN.Any (a2 => 
+						List<int> hbO = sheets [i].Where (r => r.GetAtoms ().Where (a => a.IsOCarb).Any (a1 => atomsN.Any (a2 => 
 							!(a2.ResSeq >= firstResSeq && a2.ResSeq <= lastResSeq)
 							&& (Math.Abs (a2.ResSeq - a1.ResSeq) > minResiduesBetweenHydrogenBond)
 							&& LibProtein.Distance (a1, a2) <= maxDistanceForHydrogenBond))).Select (r => r.ResSeq).ToList ();
@@ -520,9 +520,9 @@ namespace protein
 				<Prefix><SSE_type><sequentially_assigned_identifier>, e.g. 1tqn_H10 */
 			public ISecStrAssigner InnerAssigner { get; private set; }
 			public char[] AcceptedSSETypes { get; private set; }
-			public char[] ChainIDs{ get; private set; }
+			public string[] ChainIDs{ get; private set; }
 
-			public FilteringSecStrAssigner(ISecStrAssigner innerAssigner, IEnumerable<char> acceptedTypes, IEnumerable<char> chainIDs){
+			public FilteringSecStrAssigner(ISecStrAssigner innerAssigner, IEnumerable<char> acceptedTypes, IEnumerable<string> chainIDs){
 				this.InnerAssigner = innerAssigner;
 				this.AcceptedSSETypes=acceptedTypes.ToArray ();
 				this.ChainIDs=chainIDs.ToArray ();
@@ -1182,7 +1182,7 @@ namespace protein
 				Lib.WriteLineDebug ("Merging strands {0} ({1}) and {2} ({3}).", extendedStrand.SSE.Label, extendedStrand.SheetId, extendingStrand.SSE.Label, extendingStrand.SheetId);
 				if (extendedStrand == extendingStrand)
 					throw new ArgumentException ();
-				char chain = extendedStrand.SSE.ChainID;
+				string chain = extendedStrand.SSE.ChainID;
 				int start = Math.Min (extendedStrand.SSE.Start, extendingStrand.SSE.Start);
 				int end = Math.Max (extendedStrand.SSE.End, extendingStrand.SSE.End);
 
@@ -1225,7 +1225,7 @@ namespace protein
 			}
 
 			private SSE GetStrand0(BetaLadder ladder){
-				char chainId = residues [ladder.Start0].ChainID;
+				string chainId = residues [ladder.Start0].ChainID;
 				int start = residues [ladder.Start0].ResSeq;
 				int end = residues [ladder.End0].ResSeq;
 				if (STRANDS_BY_ALPHA) {
@@ -1238,7 +1238,7 @@ namespace protein
 			}
 
 			private SSE GetStrand1(BetaLadder ladder){
-				char chainId = residues [ladder.Start1].ChainID;
+				string chainId = residues [ladder.Start1].ChainID;
 				int start = residues [ladder.Start1].ResSeq;
 				int end = residues [ladder.End1].ResSeq;
 				if (STRANDS_BY_ALPHA) {
@@ -1453,7 +1453,7 @@ namespace protein
 
 				// Build C7 turns and wiggles
 				List<SSE> c7TurnsAndWiggles = new List<SSE> ();
-				char? currentChain = null;
+				string currentChain = null;
 				int? firstResi = null;
 				int? lastResi = null;
 				int strandCounter = 0;
@@ -1465,7 +1465,7 @@ namespace protein
 						if (currentChain != null) { 
 							// finishing the old SSE
 							char type = (lastResi - firstResi > 2) ? SSE.WIGGLE_C7_TYPE : SSE.TURN_C7_TYPE;
-							c7TurnsAndWiggles.Add (new SSE ("" + type + (strandCounter++), (char)currentChain, (int)firstResi, (int)lastResi, type, null));
+							c7TurnsAndWiggles.Add (new SSE ("" + type + (strandCounter++), currentChain, (int)firstResi, (int)lastResi, type, null));
 						}
 						// starting a new SSE
 						currentChain = t.ChainID;
@@ -1587,19 +1587,19 @@ namespace protein
 					}
 				}*/
 
-				Dictionary<Tuple<char,int,int>,int> chainStartEnd2Index = new Dictionary<Tuple<char, int, int>, int> ();
+				Dictionary<Tuple<string,int,int>,int> chainStartEnd2Index = new Dictionary<Tuple<string, int, int>, int> ();
 				for (int i = 0; i < resultSSEs.Count; i++) {
 					SSE sse = resultSSEs [i];
-					chainStartEnd2Index [new Tuple<char,int,int> (sse.ChainID, sse.Start, sse.End)] = i;
+					chainStartEnd2Index [new Tuple<string,int,int> (sse.ChainID, sse.Start, sse.End)] = i;
 				}
 				List<Tuple<int,int,int>> edges = new List<Tuple<int, int,int>> ();
 				foreach (var seed in seeds) {
 					seed.DFS (u => {
-						int vertex1 = chainStartEnd2Index [new Tuple<char,int,int> (u.SSE.ChainID, u.SSE.Start, u.SSE.End)];
+						int vertex1 = chainStartEnd2Index [new Tuple<string,int,int> (u.SSE.ChainID, u.SSE.Start, u.SSE.End)];
 						for (int i = 0; i < u.DownNeighbours.Count; i++) {
 							var v = u.DownNeighbours [i];
 							var ladder = u.DownLadders [i];
-							int vertex2 = chainStartEnd2Index [new Tuple<char,int,int> (v.SSE.ChainID, v.SSE.Start, v.SSE.End)];
+							int vertex2 = chainStartEnd2Index [new Tuple<string,int,int> (v.SSE.ChainID, v.SSE.Start, v.SSE.End)];
 							int ladderType = ladder.Type == BetaLadder.LadderType.Parallel ? 1 : -1;
 							edges.Add (new Tuple<int,int,int> (Math.Min (vertex1, vertex2), Math.Max (vertex1, vertex2), ladderType));
 						}

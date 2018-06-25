@@ -11,7 +11,7 @@ namespace protein
 		public const int NOT_FOUND_START = 0;
 		public const int NOT_FOUND_END = 0;
 		public const char NOT_FOUND_TYPE = 'X';
-		public const char NOT_FOUND_CHAIN = 'X';
+		public const string NOT_FOUND_CHAIN = "?";
 		public const char MIXED_HELIX_TYPE = 'h';
 		public const char HELIX_G_TYPE = 'G';
 		public const char HELIX_H_TYPE = 'H';
@@ -42,7 +42,7 @@ namespace protein
 		public static char[] ALL_SHEET_TYPES = { SHEET_TYPE, ISOLATED_BETA_BRIDGE_TYPE };
 
 		public String Label { get; private set;} // Arbitrary name for the SSE.
-		public char ChainID { get; private set;} // ID of the chain in which it is located.
+		public string ChainID { get; private set;} // ID of the chain in which it is located.
 		public int Start{ get; set;} // Sequence number of the first residue.
 		public int End{ get; set;} // Sequence number of the last residue.
 		public char Type{ get; set;} // Type of SSE according to DSSP abbreviations (H = alpha helix, G = 3_10 helix...)
@@ -50,7 +50,7 @@ namespace protein
 		public List<SSE> NestedSSEs{get; private set;}
 		public String Comment { get; private set;} // Any string which is a comment for this SSE. 
 
-		public SSE (String label, char chainID, int start, int end, char type, int? sheetId)
+		public SSE (String label, string chainID, int start, int end, char type, int? sheetId)
 		{
 			Label = label;
 			ChainID = chainID;

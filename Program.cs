@@ -25,7 +25,8 @@ namespace SecStrAnnot2
             foreach (string filename in args){
                 // Console.Error.WriteLine("\n" + filename);
                 protein.Protein p = CifWrapperForSecStrAnnot1.ProteinFromCifFile(filename);
-                p.Save(filename + "-converted.pdb");
+                // p.Save(filename + "-converted.pdb");
+                Lib.WriteLineDebug("Read and pseudoconverted " + filename);
                 continue;
 
                 try {

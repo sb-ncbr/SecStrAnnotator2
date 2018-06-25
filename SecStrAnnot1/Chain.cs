@@ -8,7 +8,7 @@ namespace protein
 {
     public class Chain : IComparable<Chain>
     {
-        public char ID { get; private set; }
+        public string ID { get; private set; }
         private ChainBuilder chainBuilder;
         public int FirstResidueNumber { get { return chainBuilder.FirstResidueNumber; } }
         public int LastResidueNumber { get { return chainBuilder.LastResidueNumber; } }
@@ -76,7 +76,7 @@ namespace protein
             }
         }
 
-		public Chain(char id)
+		public Chain(string id)
         {
 			this.ID = id;
             this.chainBuilder = new ChainBuilder();
