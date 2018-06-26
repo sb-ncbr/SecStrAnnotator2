@@ -1,7 +1,7 @@
 # PymolScriptSession for SecStrAnnotator 1.0
 # Creates and saves a session with superimposed template and query structures and with selected and colored SSEs.
 # Usage: 
-#     pymol -qcyr script_session.py -- directory template_pdbid template_chain template_ranges query_pdbid query_chain query_ranges
+#     pymol -qcyr script_session.py -- file_format directory template_pdbid template_chain template_ranges query_pdbid query_chain query_ranges
 
 
 # Modifiable constants
@@ -28,13 +28,20 @@ from pymol import cmd
 
 N_PSEUDOARGUMENTS = 1
 arguments = sys.argv[N_PSEUDOARGUMENTS:]
-if len(arguments) != 7:
-	print('ERROR: Exactly 7 command line arguments required, ' + str(len(arguments)) + ' given: ' + ' '.join(arguments))
+if len(arguments) != 8:
+	print('ERROR: Exactly 8 command line arguments required, ' + str(len(arguments)) + ' given: ' + ' '.join(arguments))
 	cmd.quit(1)
-directory, template_id, template_chain, template_range, query_id, query_chain, query_range = arguments
+file_format, directory, template_id, template_chain, template_range, query_id, query_chain, query_range = arguments
 
 
 # Additional constants
+
+if file_format == 'cif':
+	USE_CIF = True
+elif file_format == 'pdb':
+	USE_CIF = False
+else:
+	raise Exception('Unknown file format: ' + file_format)
 
 SSES = 'secondary_structure_elements'
 LABEL = 'label'
@@ -45,8 +52,8 @@ TYPE = 'type'
 SHEET_ID = 'sheet_id'
 COLOR='color'
 
-TEMPLATE_STRUCT_EXT = '.pdb'
-QUERY_STRUCT_EXT = '-aligned.pdb'
+TEMPLATE_STRUCT_EXT = '.cif' if USE_CIF else '.pdb'
+QUERY_STRUCT_EXT = '-aligned.cif' if USE_CIF else '-aligned.pdb'
 TEMPLATE_ANNOT_EXT = '-template.sses.json'
 QUERY_ANNOT_EXT = '-annotated.sses.json'
 SESSION_EXT = '-annotated.pse'
@@ -165,6 +172,8 @@ def create_session(directory, template_id, template_chain, template_range, query
 # Main script
 
 try:
+	if USE_CIF:
+		cmd.set('cif_use_auth', False)
 	create_session(directory, template_id, template_chain, template_range, query_id, query_chain, query_range)
 	cmd.quit(0)
 except Exception as e:

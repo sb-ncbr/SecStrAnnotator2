@@ -1,7 +1,7 @@
 # PymolScriptAlign for SecStrAnnotator 1.0
 # Superimposes template and query domain.
 # Usage: 
-#     pymol -qcyr script_align.py -- align_method directory template_pdbid template_chain template_ranges query_pdbid query_chain query_ranges
+#     pymol -qcyr script_align.py -- file_format align_method directory template_pdbid template_chain template_ranges query_pdbid query_chain query_ranges
 
 
 # Imports
@@ -15,16 +15,23 @@ from pymol import cmd
 
 N_PSEUDOARGUMENTS = 1
 arguments = sys.argv[N_PSEUDOARGUMENTS:]
-if len(arguments) != 8:
-	print('ERROR: Exactly 8 command line arguments required, ' + str(len(arguments)) + ' given: ' + ' '.join(arguments))
+if len(arguments) != 9:
+	print('ERROR: Exactly 9 command line arguments required, ' + str(len(arguments)) + ' given: ' + ' '.join(arguments))
 	cmd.quit(1)
-method, directory, template_id, template_chain, template_range, query_id, query_chain, query_range = arguments
+file_format, method, directory, template_id, template_chain, template_range, query_id, query_chain, query_range = arguments
 
 
 # Additional constants
 
-STRUCTURE_EXT = '.pdb'
-ALIGNED_STRUCTURE_EXT = '-aligned.pdb'
+if file_format == 'cif':
+	USE_CIF = True
+elif file_format == 'pdb':
+	USE_CIF = False
+else:
+	raise Exception('Unknown file format: ' + file_format)
+
+STRUCTURE_EXT = '.cif' if USE_CIF else '.pdb'
+ALIGNED_STRUCTURE_EXT = '-aligned.cif' if USE_CIF else '-aligned.pdb'
 ALIGNMENT_OBJECT = 'aln'
 
 
@@ -94,6 +101,8 @@ def perform_alignment(method, directory, template_id, template_chain, template_r
 # Main script
 
 try:
+	if USE_CIF:
+		cmd.set('cif_use_auth', False)
 	perform_alignment(method, directory, template_id, template_chain, template_range, query_id, query_chain, query_range)
 	cmd.quit(0)
 except Exception as e:

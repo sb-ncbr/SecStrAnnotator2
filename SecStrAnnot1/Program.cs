@@ -63,13 +63,13 @@ namespace protein
 
 		const bool LABEL_DETECTED_SSES_AS_NULL = false;
 
-		const String PDB_FILE_EXT = ".pdb";
-		const String ALIGNED_PDB_FILE_EXT = "-aligned.pdb";
+		const String PDB_FILE_EXT = USE_CIF ? ".cif" : ".pdb";
+		const String ALIGNED_PDB_FILE_EXT = USE_CIF ? "-aligned.cif" : "-aligned.pdb";
 		const String TEMPLATE_ANNOTATION_FILE_EXT = "-template.sses";
 		const String ANNOTATION_FILE_EXT = "-annotated.sses";
 		const String ANNOTATION_WITH_SEQUENCES_FILE_EXT = "-annotated_with_sequences.sses";
 		const String DSSP_OUTPUT_FILE_EXT = ".dssp";
-		const String LINE_SEGMENTS_FILE_EXT = "-line_segments.pdb";
+		const String LINE_SEGMENTS_FILE_EXT = USE_CIF ? "-line_segments.cif" : "-line_segments.pdb";
 		const String INPUT_SSES_FILE_EXT = ".sses";
 		const String DETECTED_SSES_FILE_EXT = "-detected.sses";
 		const String JOINED_SSES_FILE_EXT = "-joined.sses";
@@ -102,7 +102,7 @@ namespace protein
 
 		public static String Directory { get; private set; }
 
-		public const bool USE_CIF = false;
+		public const bool USE_CIF = true;
 		private static Protein ReadProteinFromFile(string filename, string chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
 			try {
 				Protein p;
@@ -386,39 +386,45 @@ namespace protein
 			Protein qProtein; // query
 
 			if (!onlyDetect) {
-				try {
-					reader = new StreamReader (fileTemplatePDB);
-					tProtein = new Protein (reader).KeepOnlyNormalResidues(true);
-					if (tProtein.GetChains().Count == 0){
-						Lib.WriteErrorAndExit ("Query domain contains no atoms.");
-					}
-					reader.Close ();
-				} catch (IOException) {
-					Lib.WriteError ("Could not open \"" + fileTemplatePDB + "\".");
-					return -1;
+				tProtein = ReadProteinFromFile(fileTemplatePDB, templateChainID_, templateDomainRanges).KeepOnlyNormalResidues(true);
+				if (tProtein.GetChains().Count == 0){
+					Lib.WriteErrorAndExit ("Template domain contains no atoms.");
 				}
+				// try {
+				// 	reader = new StreamReader (fileTemplatePDB);
+				// 	tProtein = new Protein (reader).KeepOnlyNormalResidues(true);
+				// 	if (tProtein.GetChains().Count == 0){
+				// 		Lib.WriteErrorAndExit ("Template domain contains no atoms.");
+				// 	}
+				// 	reader.Close ();
+				// } catch (IOException) {
+				// 	Lib.WriteError ("Could not open \"" + fileTemplatePDB + "\".");
+				// 	return -1;
+				// }
 			} else {
 				tProtein = null;
 			}
 
 			if (tryToReuseAlignment && File.Exists (fileQueryAlignedPDB)) {
-				try {
-					reader = new StreamReader (fileQueryAlignedPDB);
-					qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
-					reader.Close ();
-				} catch (IOException) {
-					Lib.WriteError ("Could not open \"" + fileQueryAlignedPDB + "\".");
-					return -1;
-				}
+				qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
+				// try {
+				// 	reader = new StreamReader (fileQueryAlignedPDB);
+				// 	qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
+				// 	reader.Close ();
+				// } catch (IOException) {
+				// 	Lib.WriteError ("Could not open \"" + fileQueryAlignedPDB + "\".");
+				// 	return -1;
+				// }
 			} else {
-				try {
-					reader = new StreamReader (fileQueryPDB);
-					qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
-					reader.Close ();
-				} catch (IOException) {
-					Lib.WriteError ("Could not open \"" + fileQueryPDB + "\".");
-					return -1;
-				}
+				qProtein = ReadProteinFromFile(fileQueryPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
+				// try {
+				// 	reader = new StreamReader (fileQueryPDB);
+				// 	qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
+				// 	reader.Close ();
+				// } catch (IOException) {
+				// 	Lib.WriteError ("Could not open \"" + fileQueryPDB + "\".");
+				// 	return -1;
+				// }
 			}
 
 			if (qProtein.GetChains().Count == 0){
@@ -589,6 +595,7 @@ namespace protein
 							#region Superimpose by a given PyMOL's command.
 							Lib.WriteInColor (ConsoleColor.Yellow, "Running PyMOL to align proteins:\n");
 							if (!Lib.RunPyMOLScriptWithCommandLineArguments (config.PymolExecutable, config.PymolScriptAlign, new string[] {
+								USE_CIF ? "cif" : "pdb",
 								alignMethodNames [alignMethod],
 								Directory,
 								templateID,
@@ -599,14 +606,15 @@ namespace protein
 								FormatRanges(queryDomainRanges)
 							}))
 								return -1;
-							try {
-								reader = new StreamReader (fileQueryAlignedPDB);
-								qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
-								reader.Close ();
-							} catch (IOException) {
-								Lib.WriteError ("Could not open \"" + fileQueryAlignedPDB + "\".");
-								return -1;
-							}
+							qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
+							// try {
+							// 	reader = new StreamReader (fileQueryAlignedPDB);
+							// 	qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
+							// 	reader.Close ();
+							// } catch (IOException) {
+							// 	Lib.WriteError ("Could not open \"" + fileQueryAlignedPDB + "\".");
+							// 	return -1;
+							// }
 							#endregion
 						} else {
 							throw new Exception (alignMethod + " has no assigned name in alignMethodNames.");
@@ -902,6 +910,7 @@ namespace protein
 				}
 				Lib.WriteInColor (ConsoleColor.Yellow, "Running PyMOL:\n");
 				if ( !Lib.RunPyMOLScriptWithCommandLineArguments (config.PymolExecutable, config.PymolScriptSession, new string[]{ 
+					USE_CIF ? "cif" : "pdb",
 					Directory,
 					templateID,
 					templateChainID_.ToString (), 

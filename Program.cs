@@ -13,8 +13,9 @@ namespace SecStrAnnot2
         public static DateTime ExtractNamesDone;
         public static DateTime SyntacticDone;
         static int Main(string[] args) {
-            // return protein.MainClass.Main_SecStrAnnot1(args);
+            return protein.MainClass.Main_SecStrAnnot1(args);
 
+            // 
             return TestingMain(args);
         }
 
