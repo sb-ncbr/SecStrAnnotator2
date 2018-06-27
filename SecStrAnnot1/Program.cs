@@ -591,6 +591,7 @@ namespace protein
 					} else {
 						if (alignMethod == AlignMethod.None) {
 							// qProtein.Save (fileQueryAlignedPDB);
+							File.Copy(fileQueryPDB, fileQueryAlignedPDB, true);
 						} else if (alignMethodNames.ContainsKey (alignMethod)) {
 							#region Superimpose by a given PyMOL's command.
 							Lib.WriteInColor (ConsoleColor.Yellow, "Running PyMOL to align proteins:\n");
