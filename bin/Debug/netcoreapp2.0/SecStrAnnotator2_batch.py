@@ -1,0 +1,1 @@
+/home/adam/Workspace/VSCode/SecStrAnnot2/scripts/SecStrAnnotator2_batch.py
