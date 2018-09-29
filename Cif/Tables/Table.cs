@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cif.Libraries;
 
-namespace SecStrAnnot2.Cif.Tables
+namespace /*SecStrAnnot2.*/Cif.Tables
 {
     public class Table
     {
@@ -97,7 +98,7 @@ namespace SecStrAnnot2.Cif.Tables
             for (int i = 0; i < ColumnCount; i++)
             {
                 Console.WriteLine(ColumnNames[i] + ":");
-                Console.WriteLine((columnArray[i] as IEnumerable<object>).Enumerate());
+                Console.WriteLine(string.Join (", ", columnArray[i] as IEnumerable<object>));
             }
         }
     }

@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Cif.Libraries;
 
-namespace SecStrAnnot2.Cif
+namespace /*SecStrAnnot2.*/Cif
 {
     public class Benchmark
     {

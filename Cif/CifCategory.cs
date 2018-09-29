@@ -2,10 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using SecStrAnnot2.Cif.Raw;
-using SecStrAnnot2.Cif.Tables;
+using /*SecStrAnnot2.*/Cif.Raw;
+using /*SecStrAnnot2.*/Cif.Tables;
 
-namespace SecStrAnnot2.Cif
+namespace /*SecStrAnnot2.*/Cif
 {
     public class CifCategory
     {

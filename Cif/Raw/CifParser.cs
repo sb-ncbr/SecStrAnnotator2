@@ -3,8 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Cif.Libraries;
 
-namespace SecStrAnnot2.Cif.Raw
+namespace /*SecStrAnnot2.*/Cif.Raw
 {
     /// <summary>
 	/// This mmCIF parser is based on https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax ; 
@@ -81,17 +82,30 @@ namespace SecStrAnnot2.Cif.Raw
         public string[] SaveNames { get; private set; }
         public string[] TagNames { get; private set; }
 
+        public class TimeStampsClass {
+            public DateTime Started;
+            public DateTime SetTextDone;
+            public DateTime LexicalAnalysisDone;
+            public DateTime ExtractNamesDone;
+            public DateTime SyntacticAnalysisDone;
+            public DateTime Completed;
+        }
+        public TimeStampsClass TimeStamps;
+
 
         internal CifParser(string text){
+            TimeStamps = new TimeStampsClass();
+            TimeStamps.Started = DateTime.Now;
             SetText(text);
-            Program.SetTextDone = DateTime.Now;
+            TimeStamps.SetTextDone = DateTime.Now; // Program.SetTextDone = DateTime.Now;
             LexicalAnalysis_Goto(); // Lexical analysis is ~ 20% faster with Goto version (1.05 s vs. 1.26 s on 3j3q)
-            Program.LexicalDone = DateTime.Now;
+            TimeStamps.LexicalAnalysisDone = DateTime.Now; // Program.LexicalDone = DateTime.Now;
             ExtractControlTokenNames();
-            Program.ExtractNamesDone = DateTime.Now;
+            TimeStamps.ExtractNamesDone = DateTime.Now; // Program.ExtractNamesDone = DateTime.Now;
             SyntacticAnalysis();
-            Program.SyntacticDone = DateTime.Now;
-        }
+            TimeStamps.SyntacticAnalysisDone = DateTime.Now; // Program.SyntacticDone = DateTime.Now;
+            TimeStamps.Completed = DateTime.Now;
+        } 
 
         private void SetText(string text){
             if (Text != null) {
@@ -1453,12 +1467,12 @@ namespace SecStrAnnot2.Cif.Raw
             // startRunsOfRegions = new int[nRegions+1]; 
             // startRunsOfRegionsList.CopyTo(startRunsOfRegions); 
             // startRunsOfRegions[nRegions] = nGroups;
-            startRunsOfRegions = startRunsOfRegionsList.AppendAndCopyToArray(startsOfGroupedRunsList.Count);
+            startRunsOfRegions = Lib.AppendAndCopyToArray(startRunsOfRegionsList, startsOfGroupedRunsList.Count);
             // startRunsOfRegions = startRunsOfRegionsList.Append(startsOfGroupedRunsList.Count).ToArray();
             // startsOfGroupedRuns = new int[nGroups+1];
             // startsOfGroupedRunsList.CopyTo(startsOfGroupedRuns);
             // startsOfGroupedRuns[nGroups] = startsOfRegions[nRegions];
-            startsOfGroupedRuns = startsOfGroupedRunsList.AppendAndCopyToArray(startsOfRegions[nRegions]);
+            startsOfGroupedRuns = Lib.AppendAndCopyToArray(startsOfGroupedRunsList, startsOfRegions[nRegions]);
             // startsOfGroupedRuns = startsOfGroupedRunsList.Append(startsOfRegions[nRegions]).ToArray();
             return groupedIValues;
         }

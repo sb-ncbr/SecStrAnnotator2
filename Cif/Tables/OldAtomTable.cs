@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cif.Libraries;
 
-namespace SecStrAnnot2.Cif.Tables
+namespace /*SecStrAnnot2.*/Cif.Tables
 {
     // Based on http://mmcif.wwpdb.org/dictionaries/mmcif_pdbx_v50.dic/Categories/atom_site.html
     public class OldAtomTable

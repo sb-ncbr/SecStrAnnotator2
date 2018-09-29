@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using SecStrAnnot2.Cif;
-using SecStrAnnot2.Cif.Tables;
+using Cif;
+using Cif.Tables;
 
 namespace SecStrAnnot2
 {

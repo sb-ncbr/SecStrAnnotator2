@@ -3,13 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using SecStrAnnot2.Cif.Raw;
+using /*SecStrAnnot2.*/Cif.Raw;
 
-namespace SecStrAnnot2.Cif
+namespace /*SecStrAnnot2.*/Cif
 {
     public class CifPackage
     {
-        private CifParser parser;
+        internal CifParser Parser;
         public string[] BlockNames { get; private set; }
         public CifBlock[] Blocks { get; private set; }
         private Dictionary<string,int> blockIndex;
@@ -34,13 +34,13 @@ namespace SecStrAnnot2.Cif
             return new CifPackage(text);
         }
         private CifPackage(string text){
-            this.parser = new CifParser(text);
-            this.BlockNames = parser.BlockNames;
+            this.Parser = new CifParser(text);
+            this.BlockNames = Parser.BlockNames;
             this.Blocks = new CifBlock[BlockNames.Length];
             this.blockIndex = new Dictionary<string, int>(BlockNames.Length);
             for (int i = 0; i < BlockNames.Length; i++)
             {
-                Blocks[i] = new CifBlock(parser, i);
+                Blocks[i] = new CifBlock(Parser, i);
                 blockIndex[BlockNames[i]] = i;
             }
         }

@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cif.Libraries;
 
-namespace SecStrAnnot2.Cif.Tables
+namespace /*SecStrAnnot2.*/Cif.Tables
 {
     public class AtomTable
     {

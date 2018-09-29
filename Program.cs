@@ -1,17 +1,17 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using SecStrAnnot2.Cif;
-using SecStrAnnot2.Cif.Tables;
+using Cif;
+using Cif.Tables;
 
 namespace SecStrAnnot2
 {
     class Program
     {
-        public static DateTime SetTextDone;
+        /*public static DateTime SetTextDone;
         public static DateTime LexicalDone;
         public static DateTime ExtractNamesDone;
-        public static DateTime SyntacticDone;
+        public static DateTime SyntacticDone;*/
         static int Main(string[] args) {
             return protein.MainClass.Main_SecStrAnnot1(args);
 
@@ -122,11 +122,11 @@ namespace SecStrAnnot2
 
                     Lib.WriteLineDebug("Read:    " + Format(t1-t0));
                     Lib.WriteLineDebug("Parse:   " + Format(t2-t1));
-                    Lib.WriteLineDebug("    Set text:   " + Format(SetTextDone-t1));
-                    Lib.WriteLineDebug("    Lexical:    " + Format(LexicalDone-SetTextDone));
-                    Lib.WriteLineDebug("    Names:      " + Format(ExtractNamesDone-LexicalDone));
-                    Lib.WriteLineDebug("    Syntactic:  " + Format(SyntacticDone-ExtractNamesDone));
-                    Lib.WriteLineDebug("    ?:          " + Format(t2-SyntacticDone));
+                    Lib.WriteLineDebug("    Set text:   " + Format(pack.Parser.TimeStamps.SetTextDone-t1));
+                    Lib.WriteLineDebug("    Lexical:    " + Format(pack.Parser.TimeStamps.LexicalAnalysisDone-pack.Parser.TimeStamps.SetTextDone));
+                    Lib.WriteLineDebug("    Names:      " + Format(pack.Parser.TimeStamps.ExtractNamesDone-pack.Parser.TimeStamps.LexicalAnalysisDone));
+                    Lib.WriteLineDebug("    Syntactic:  " + Format(pack.Parser.TimeStamps.SyntacticAnalysisDone-pack.Parser.TimeStamps.ExtractNamesDone));
+                    Lib.WriteLineDebug("    ?:          " + Format(t2-pack.Parser.TimeStamps.SyntacticAnalysisDone));
                     Lib.WriteLineDebug("Extract: " + Format(t3-t2));
                 } catch (CifException e) {
                     Lib.WriteErrorAndExit(e.Message);

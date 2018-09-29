@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Cif.Libraries;
 
-namespace SecStrAnnot2.Cif.Tables
+namespace /*SecStrAnnot2.*/Cif.Tables
 {
     public class Model
     {
@@ -107,9 +108,9 @@ namespace SecStrAnnot2.Cif.Tables
                 iResidue++;
                 iFragment++;
             }
-            fragmentStartsOfChains = fragOfChainList.AppendAndCopyToArray(iFragment); // fragOfChainList.Append(iFragment).ToArray();
-            residueStartsOfFragments = resOfFragList.AppendAndCopyToArray(iResidue); // resOfFragList.Append(iResidue).ToArray();
-            atomStartsOfResidues = atomOfResList.AppendAndCopyToArray(atomStartsOfChains[nChains]); // atomOfResList.Append(atomStartsOfChains[nChains]).ToArray();
+            fragmentStartsOfChains = Lib.AppendAndCopyToArray(fragOfChainList, iFragment); // fragOfChainList.Append(iFragment).ToArray();
+            residueStartsOfFragments = Lib.AppendAndCopyToArray(resOfFragList, iResidue); // resOfFragList.Append(iResidue).ToArray();
+            atomStartsOfResidues = Lib.AppendAndCopyToArray(atomOfResList, atomStartsOfChains[nChains]); // atomOfResList.Append(atomStartsOfChains[nChains]).ToArray();
             residueNumbersOfResidues = atomOfResList.Select(a => residueNumbers[a]).ToArray();
         }
 
