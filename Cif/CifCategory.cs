@@ -2,14 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using /*SecStrAnnot2.*/Cif.Raw;
-using /*SecStrAnnot2.*/Cif.Tables;
+using System.Text;
+using Cif.Raw;
+using Cif.Tables;
 
-namespace /*SecStrAnnot2.*/Cif
+namespace Cif
 {
     public class CifCategory
     {
-        private CifParser parser;
+        internal CifParser parser;
         public string[] ItemKeywordNames { get; private set; }
         public CifItem[] Items { get; private set; }
         private Dictionary<string,int> itemIndex;
@@ -56,6 +57,61 @@ namespace /*SecStrAnnot2.*/Cif
         public Table MakeTable(params ValueTuple<string,CifValueType>[] schema) => new Table(this, schema);
 
         public Table MakeTable(int[] rows, params ValueTuple<string,CifValueType>[] schema) => new Table(this, rows, schema);
+
+        public string MakeCifString() => MakeCifString(Enumerable.Range(0, RowCount).ToArray());
+        public string MakeCifString(int[] rows){
+            string CATEGORY_SEPARATOR = "#\n";
+            string COMMENT_STRING = "# ";
+            string LOOP_STRING = "loop_\n";
+            string SEPARATOR = " ";
+            string ROW_SEPARATOR = "\n";
+
+            StringBuilder builder = new StringBuilder();
+            builder.Append(CATEGORY_SEPARATOR);
+
+            if (rows.Length == 0) {
+                foreach(CifItem item in this.Items){
+                    builder.Append(COMMENT_STRING);
+                    builder.Append(item.FullName);
+                    builder.Append(ROW_SEPARATOR);
+                }
+            } else if (rows.Length == 1) {
+                // print in 1-value format (without loop)
+                foreach(CifItem item in this.Items){
+                    builder.Append(item.FullName);
+                    builder.Append(SEPARATOR);
+                    builder.Append(item.GetStrings()[0]);
+                    builder.Append(ROW_SEPARATOR);
+                }
+            } else {
+                // print in multi-value format (loop)
+                builder.Append(LOOP_STRING);
+                foreach(CifItem item in Items){
+                    builder.Append(item.FullName);
+                    builder.Append(ROW_SEPARATOR);
+                }
+                //Version with printing separate values:
+                // foreach(int iRow in rows){
+                //     foreach(CifItem item in Items){
+                //         (int start, int stop) = parser.GetValuePosition(item.iTag, iRow);
+                //         builder.Append(parser.Text, start, stop - start);
+                //         builder.Append(SEPARATOR);
+                //     }
+                //     builder.Append(ROW_SEPARATOR);
+                // }
+                //Version with copying rows directly from the original text:
+                int firstTag = Items[0].iTag;
+                int lastTag = Items[Items.Length-1].iTag;
+                foreach(int iRow in rows){
+                    int start = parser.GetValuePosition(firstTag, iRow).Item1;
+                    int stop = parser.GetValuePosition(lastTag, iRow).Item2;
+                    builder.Append(parser.Text, start, stop - start);
+                    builder.Append(ROW_SEPARATOR);
+                }
+            }
+            builder.Append(ROW_SEPARATOR);
+            return builder.ToString();
+        }
 
         /*public int[] GetRowsGroupedByValues(params string[] itemKeywordNames){
             int[] indices = Enumerable.Range(0, RowCount).ToArray();

@@ -107,7 +107,8 @@ namespace protein
 			try {
 				Protein p;
 				if (USE_CIF) {
-					p = SecStrAnnot2.CifWrapperForSecStrAnnot1.ProteinFromCifFile(filename, chainId, resSeqRanges);
+					(int,int)[] resSeqRangesArray = resSeqRanges.Select(tup => (tup.Item1, tup.Item2)).ToArray();
+					p = SecStrAnnot2.CifWrapperForSecStrAnnot1.ProteinFromCifFile(filename, chainId, resSeqRangesArray);
 				} else {
 					using (StreamReader reader = new StreamReader (filename)) {
 						p = new Protein (reader, new string[]{chainId}, resSeqRanges);
@@ -558,9 +559,20 @@ namespace protein
 			#endregion
 
 			if (onlyDetect) {
+				if (Lib.DoWriteDebug) {
+					List<double>[] dump;
+					var qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion (qProtein.GetChain (queryChainID_), querySSA.SSEs, out dump);
+
+					LibAnnotation.WriteAnnotationFile_Json (fileQueryDetectedHelices, queryID,
+						qSSEsInSpace,
+						null, //extras
+						querySSA.Connectivity,
+						querySSA.HBonds, 
+						null);
+				}
 				PrintTimes (times, t0);
 				return 0;
-    			}
+    		}
 
 			List <SSEInSpace> annotQHelicesInSpace_AllChains = new List<SSEInSpace> ();
 			List <Tuple<int,int,int>> annotQConnectivity_AllChains = new List<Tuple<int, int, int>> ();

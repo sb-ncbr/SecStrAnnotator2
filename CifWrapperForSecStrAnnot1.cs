@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Cif;
 using Cif.Tables;
+using Cif.Filtering;
 
 namespace SecStrAnnot2
 {
@@ -28,19 +29,23 @@ namespace SecStrAnnot2
             return ProteinFromCifModel(model);
         }
 
-        public static protein.Protein ProteinFromCifFile(string filename, string chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
+        public static protein.Protein ProteinFromCifFile(string filename, string chainId, (int,int)[] resSeqRanges) {
             CifPackage package = CifPackage.FromFile(filename);
             if (package.BlockNames.Length < 1) {
                 throw new FormatException(EXCEPTION_MESSAGE + "CIF file must contain at least one block");
             }
             CifCategory category = package.Blocks[0].GetCategory(ModelCollection.CATEGORY_NAME);
-            int[] rows = category.GetItem(ChainTable.ID_COLUMN).GetRowsWith(chainId.ToString()); // filter rows by chain ID
-            int[] seqNumbers = category.GetItem(ResidueTable.SEQ_NUMBER_COLUMN).GetIntegers(rows, 0);
-            rows = rows.Where( (r, i) => resSeqRanges.Any(range => range.Item1 <= seqNumbers[i] && seqNumbers[i] <= range.Item2) ).ToArray(); // filter rows by resi
+            // int[] rows = category.GetItem(ChainTable.ID_COLUMN).GetRowsWith(chainId.ToString()).ToArray(); // filter rows by chain ID
+            // int[] seqNumbers = category.GetItem(ResidueTable.SEQ_NUMBER_COLUMN).GetIntegers(rows, 0);
+            // rows = rows.Where( (r, i) => resSeqRanges.Any(range => range.Item1 <= seqNumbers[i] && seqNumbers[i] <= range.Item2) ).ToArray(); // filter rows by resi
+            Filter filter = Filter.StringEquals(ChainTable.ID_COLUMN, chainId.ToString()) 
+                            & Filter.IntegerInRange(ResidueTable.SEQ_NUMBER_COLUMN, resSeqRanges);
+            int[] rows = filter.GetFilteredRows(category).ToArray();
 
             ModelCollection models = ModelCollection.FromCifCategory(category, rows);
             if (models.Count < 1) {
-                throw new FormatException(EXCEPTION_MESSAGE + "Atom selection given by chain ID and residue ranges is empty");
+                string rangeString = String.Join(",", resSeqRanges.Select(range => range.Item1 + ":" + range.Item2));
+                throw new FormatException(EXCEPTION_MESSAGE + $"Atom selection given by chain ID '{chainId}' and residue ranges '{rangeString}' is empty");
             }
             Model model = models.GetModel(0);
             return ProteinFromCifModel(model);

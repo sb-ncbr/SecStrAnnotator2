@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Cif.Libraries;
 
-namespace /*SecStrAnnot2.*/Cif.Raw
+namespace Cif.Raw
 {
     /// <summary>
 	/// This mmCIF parser is based on https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax ; 
@@ -943,6 +943,47 @@ namespace /*SecStrAnnot2.*/Cif.Raw
             }
             return value;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        /// Returns int if the value is integer, null if the value is . or ?, otherwise throws exception.
+        internal int? ParseIntegerOrNull(int iToken){
+            bool negative = false;
+            int value = 0;
+            int j = start[iToken];
+            int stp = stop[iToken];
+            // check if is not . or ?
+            if (j + 1 == stp && (Text[j] == '.' || Text[j] == '?')){
+                return null;
+            }
+            // check length
+            if (stp - j > MAX_DIGITS_INT){
+                try {
+                    return int.Parse(Text.Substring(j, stp - j));
+                } catch (System.OverflowException e) {
+                    throw NewValueParsingCifException(iToken, "Cannot parse as integer (" + e.Message + ")");
+                }
+            }
+            // get sign
+            if (Text[j] == '-'){
+                negative = true;
+                j++;
+            } else if (Text[j] == '+'){
+                j++;
+            }
+            // get value
+            for ( ; j < stp; j++)
+            {
+                char c = Text[j];
+                if (c < '0' || c > '9'){
+                    throw NewValueParsingCifException(iToken, "Cannot parse as integer");
+                }
+                value *= 10;
+                value += (c - '0');
+            }
+            if (negative){
+                value *= -1;
+            }
+            return value;
+        }
         internal int[] GetValuesAsIntegers(int iTag){
             int count = nValuesForTag[iTag];
             int[] array = new int[count];
@@ -1242,7 +1283,7 @@ namespace /*SecStrAnnot2.*/Cif.Raw
             return array;
         }
 
-        internal int[] GetIndicesWhere(int iTag, Func<string,bool> predicate){
+        internal List<int> GetIndicesWhere(int iTag, Func<string,bool> predicate){
             int count = nValuesForTag[iTag];
             List<int> indices = new List<int>();
             int iToken = firstValueForTag[iTag];
@@ -1255,9 +1296,24 @@ namespace /*SecStrAnnot2.*/Cif.Raw
                 }
                 iToken += step;
             }
-            return indices.ToArray();
+            return indices;
         }
-        internal int[] GetIndicesWhere(int iTag, Func<string,int,int,bool> predicate){
+        internal List<int> GetIndicesWhere(int iTag, Func<string,bool> predicate, List<int> inputIndices){
+            int count = nValuesForTag[iTag];
+            List<int> indices = new List<int>();
+            int firstToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            foreach (int iValue in inputIndices)
+            {
+                int iToken = firstToken + iValue*step;
+                string str = Text.Substring(start[iToken], stop[iToken] - start[iToken]);
+                if (predicate(str)){
+                    indices.Add(iValue);
+                }
+            }
+            return indices;
+        }
+        internal List<int> GetIndicesWhere(int iTag, Func<string,int,int,bool> predicate){
             int count = nValuesForTag[iTag];
             List<int> indices = new List<int>();
             int iToken = firstValueForTag[iTag];
@@ -1269,12 +1325,25 @@ namespace /*SecStrAnnot2.*/Cif.Raw
                 }
                 iToken += step;
             }
-            return indices.ToArray();
+            return indices;
+        }
+        internal List<int> GetIndicesWhere(int iTag, Func<string,int,int,bool> predicate, List<int> inputIndices){
+            int count = nValuesForTag[iTag];
+            List<int> indices = new List<int>();
+            int firstToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            foreach (int iValue in inputIndices)
+            {
+                int iToken = firstToken + iValue*step;
+                if (predicate(Text, start[iToken], stop[iToken])){
+                    indices.Add(iValue);
+                }
+            }
+            return indices;
         }
 
-        internal int[] GetIndicesWith(int iTag, string sample){
+        internal List<int> GetIndicesWith(int iTag, string sample){
             int count = nValuesForTag[iTag];
-            //string[] array = new string[count];
             int length = sample.Length;
             List<int> indices = new List<int>();
             int iToken = firstValueForTag[iTag];
@@ -1299,11 +1368,38 @@ namespace /*SecStrAnnot2.*/Cif.Raw
                 }
                 iToken += step;
             }
-            return indices.ToArray();
+            return indices;
         }
-        internal int[] GetIndicesWith(int iTag, string[] samples){
+        internal List<int> GetIndicesWith(int iTag, string sample, List<int> inputIndices){
             int count = nValuesForTag[iTag];
-            //string[] array = new string[count];
+            int length = sample.Length;
+            List<int> indices = new List<int>();
+            int firstToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            foreach (int iValue in inputIndices)
+            {
+                // checking string equality manually instead of (Text.Substring(...) == sample) for efficiency
+                int iToken = firstToken + iValue*step;
+                int strt = start[iToken];
+                int stp = stop[iToken];
+                bool ok = true;
+                if (stp-strt == length){
+                    for (int i = 0; i < length; i++)
+                    {
+                        if (Text[strt+i] != sample[i]){
+                            ok = false;
+                            break;
+                        }
+                    }
+                    if (ok){
+                        indices.Add(iValue);
+                    }
+                }
+            }
+            return indices;
+        }
+        internal List<int> GetIndicesWith(int iTag, string[] samples){
+            int count = nValuesForTag[iTag];
             int nSamples = samples.Length;
             int[] lengths = samples.Select(s => s.Length).ToArray();
             List<int> indices = new List<int>();
@@ -1335,8 +1431,81 @@ namespace /*SecStrAnnot2.*/Cif.Raw
                 }
                 iToken += step;
             }
-            return indices.ToArray();
+            return indices;
         }
+        internal List<int> GetIndicesWith(int iTag, string[] samples, List<int> inputIndices){
+            int count = nValuesForTag[iTag];
+            int nSamples = samples.Length;
+            int[] lengths = samples.Select(s => s.Length).ToArray();
+            List<int> indices = new List<int>();
+            int firstToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            foreach (int iValue in inputIndices)
+            {
+                // checking string equality manually instead of (Text.Substring(...) == sample) for efficiency
+                int iToken = firstToken + iValue*step;
+                int strt = start[iToken];
+                int stp = stop[iToken];
+                for (int s = 0; s < nSamples; s++) // iterate samples
+                {
+                    string sample = samples[s];
+                    int length = lengths[s];
+                    bool ok = true;
+                    if (stp-strt == length){
+                        for (int i = 0; i < length; i++)
+                        {
+                            if (Text[strt+i] != sample[i]){
+                                ok = false;
+                                break; // mismatch -> discard sample, continue with next sample
+                            }
+                        }
+                        if (ok){
+                            indices.Add(iValue);
+                            break; // full match -> discard other samples
+                        }
+                    }
+                }
+            }
+            return indices;
+        }
+
+        internal List<int> GetIndicesWithIntegerInRange(int iTag, (int,int) range, List<int> inputIndices){
+            int count = nValuesForTag[iTag];
+            List<int> indices = new List<int>();
+            int firstToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            (int rangeFrom, int rangeTo) = range;
+            foreach (int iValue in inputIndices)
+            {
+                int iToken = firstToken + iValue*step;
+                int? value = ParseIntegerOrNull(iToken);
+                if (value is int && rangeFrom <= value && value <= rangeTo){
+                    indices.Add(iValue);
+                }
+            }
+            return indices;
+        }
+        internal List<int> GetIndicesWithIntegerInRange(int iTag, (int,int)[] ranges, List<int> inputIndices){
+            int count = nValuesForTag[iTag];
+            List<int> indices = new List<int>();
+            int firstToken = firstValueForTag[iTag];
+            int step = stepForTag[iTag];
+            foreach (int iValue in inputIndices)
+            {
+                int iToken = firstToken + iValue*step;
+                int? value = ParseIntegerOrNull(iToken);
+                if (value is int) {
+                    foreach ((int rangeFrom, int rangeTo) in ranges){
+                        if (rangeFrom <= value && value <= rangeTo){
+                            indices.Add(iValue);
+                            break; // once added, discard other ranges
+                        }
+                    }
+                }
+            }
+            return indices;
+        }
+        
 
         // Gets the indices of values in iValues[from:to], where the value of iTag changes, + to at the end
         // Doesn't check if iValues is non-empty
@@ -1477,6 +1646,11 @@ namespace /*SecStrAnnot2.*/Cif.Raw
             return groupedIValues;
         }
         
+
+        // internal void PrintLoop(int iLoop){
+        //     int loopToken = loops[iLoop];
+        //     int firstsTags = tags.First(token => token > loopToken);
+        // }
         
         
         private CifException NewLexicalCifException(int position, LexicalState state){
@@ -1503,7 +1677,7 @@ namespace /*SecStrAnnot2.*/Cif.Raw
                 + ", token '" + GetTokenString(token) + "':\n" + message);
         }
 
-        private ValueTuple<int,int> GetLineColumn(int position){
+        private (int,int) GetLineColumn(int position){
             int i = 0;
             int line = 1;
             int column = 1;
@@ -1530,7 +1704,7 @@ namespace /*SecStrAnnot2.*/Cif.Raw
                 }
                 
             }
-            return new ValueTuple<int,int>(line, column);
+            return (line, column);
         }
     }
 }

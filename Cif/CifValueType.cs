@@ -1,4 +1,4 @@
-namespace /*SecStrAnnot2.*/Cif
+namespace Cif
 {
     public enum CifValueType
     {

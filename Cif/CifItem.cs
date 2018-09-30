@@ -10,8 +10,8 @@ namespace /*SecStrAnnot2.*/Cif
     {
         private CifParser parser;
         internal int iTag; //TODO make private
-        public string KeywordName { get; private set; }
         public string CategoryName { get; private set; }
+        public string KeywordName { get; private set; }
         public string FullName { get; private set; }
         public int Count { get; private set; }
 
@@ -77,7 +77,7 @@ namespace /*SecStrAnnot2.*/Cif
         /// Gets indices of rows which fulfil the given predicate "predicate".
         /// </summary>
         /// <param name="predicate"> Predicate function: takes string Value, returns true iff a row containing Value should be selected.</param>
-        public int[] GetRowsWhere (Func<string,bool> predicate) => parser.GetIndicesWhere(iTag, predicate);
+        //public List<int> GetRowsWhere (Func<string,bool> predicate) => parser.GetIndicesWhere(iTag, predicate);
 
         /// <summary>
         /// Gets indices of rows which fulfil the given predicate "predicate".
@@ -91,18 +91,19 @@ namespace /*SecStrAnnot2.*/Cif
         /// Can be faster than calling GetIndicesWhere (Func<string,bool> predicate).
         /// Does not implicitly instantiate text.Substring(i, j).
         /// </remarks>
-        public int[] GetRowsWhere (Func<string,int,int,bool> predicate) => parser.GetIndicesWhere(iTag, predicate);
+        // public List<int> GetRowsWhere (Func<string,int,int,bool> predicate) => parser.GetIndicesWhere(iTag, predicate);
 
         /// <summary>
         /// Gets indices of rows which contain exactly the string "sample".
         /// </summary>
-        public int[] GetRowsWith (string sample) => parser.GetIndicesWith(iTag, sample);
+        // public List<int> GetRowsWith (string sample) => parser.GetIndicesWith(iTag, sample);
 
         /// <summary>
         /// Gets indices of rows which contain any of the strings "samples".
         /// </summary>
-        public int[] GetRowsWith (params string[] samples) => parser.GetIndicesWith(iTag, samples);
-
+        // public List<int> GetRowsWith (params string[] samples) => parser.GetIndicesWith(iTag, samples);
+        ///
+        
         public int[] GetRowsGroupedByValue(out int[] startsOfGroups) {
             return GetRowsGroupedByValue(Enumerable.Range(0, Count).ToArray(), out startsOfGroups);
         }

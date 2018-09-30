@@ -3,32 +3,28 @@ using System.IO;
 using System.Linq;
 using Cif;
 using Cif.Tables;
+using Cif.Filtering;
 
 namespace SecStrAnnot2
 {
     class Program
     {
-        /*public static DateTime SetTextDone;
-        public static DateTime LexicalDone;
-        public static DateTime ExtractNamesDone;
-        public static DateTime SyntacticDone;*/
         static int Main(string[] args) {
             return protein.MainClass.Main_SecStrAnnot1(args);
 
-            // 
-            return TestingMain(args);
+            // return TestingMain(args);
         }
 
         static int TestingMain(string[] args) {
             if (args.Length == 0) {
-                args = new string[]{"../SecStrAnnot2_data/3ejb_updated.cif"};
+                args = new string[]{"../SecStrAnnot2_data/1tqn_updated.cif"};
             }
             foreach (string filename in args){
                 // Console.Error.WriteLine("\n" + filename);
                 protein.Protein p = CifWrapperForSecStrAnnot1.ProteinFromCifFile(filename);
                 // p.Save(filename + "-converted.pdb");
                 Lib.WriteLineDebug("Read and pseudoconverted " + filename);
-                continue;
+                // continue;
 
                 try {
                     string text = "";
@@ -74,6 +70,32 @@ namespace SecStrAnnot2
                     }
 
                     DateTime t3 = DateTime.Now;
+
+                    Filter filter1 = Filter.IntegerInRange("label_seq_id", (100,105), (200,202)) 
+                                    //  & Filter.StringEquals("label_comp_id", new string[]{"TRP","CYS"})
+                                     & Filter.StringEquals("label_atom_id", new string[]{"CA", "N"})
+                                     & Filter.StringEquals("label_asym_id", new string[]{"A"});
+                    Filter filter2 = Filter.IntegerInRange("label_seq_id", (100, 105))
+                                     | Filter.StringEquals("label_comp_id", new string[]{"TRP","CYS"})
+                                     | Filter.StringEquals("label_atom_id", new string[]{"CA"});
+                    Filter filter3 = ! Filter.IntegerInRange("label_seq_id", (0, 390)) & ! Filter.IsNull("label_seq_id");
+                    Filter filter4 = Filter.TheseRows(new int[]{0,1,2,5});
+                    Filter filter5 = Filter.Where("label_seq_id", str => str.Contains('5')) & Filter.StringEquals("label_atom_id", new string[]{"CA"});
+
+                    int[] filteredRows = filter5.GetFilteredRows(category).ToArray();
+                    string[] atomIds = category["id"].GetStrings(filteredRows);
+                    string[] atomNames = category["label_atom_id"].GetStrings(filteredRows);
+                    string[] seqIds = category["label_seq_id"].GetStrings(filteredRows);
+                    string[] compIds = category["label_comp_id"].GetStrings(filteredRows);
+                    string[] asymIds = category["label_asym_id"].GetStrings(filteredRows);
+                    string[] entityIds = category["label_entity_id"].GetStrings(filteredRows);
+                    Console.WriteLine("row \tatom \ta.name\t  comp seq\tasym \tentity");
+                    for (int iRow = 0; iRow < atomIds.Length; iRow++){
+                        Console.WriteLine($"{iRow}:\t {atomIds[iRow]}\t {atomNames[iRow]}\t   {compIds[iRow]}  {seqIds[iRow]} \t {asymIds[iRow]}\t {entityIds[iRow]}");
+                    }
+
+                    Console.WriteLine(string.Join(" ", filteredRows));
+                    Console.WriteLine(category.MakeCifString(filteredRows));
 
                     // string[] atomIds = category["id"].GetStrings();
                     // string[] atomNames = category["label_atom_id"].GetStrings();

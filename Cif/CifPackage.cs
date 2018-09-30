@@ -3,13 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using /*SecStrAnnot2.*/Cif.Raw;
+using Cif.Raw;
 
-namespace /*SecStrAnnot2.*/Cif
+namespace Cif
 {
     public class CifPackage
     {
-        internal CifParser Parser;
+        internal CifParser Parser;  // should be private?
         public string[] BlockNames { get; private set; }
         public CifBlock[] Blocks { get; private set; }
         private Dictionary<string,int> blockIndex;
