@@ -31,6 +31,10 @@ namespace protein
 		{
 			return new SSEInSpace (base.RelabeledCopy(newLabel), StartVector, EndVector);
 		}
+		public new SSEInSpace RelabeledCopy (String newLabel, String newColor)
+		{
+			return new SSEInSpace (base.RelabeledCopy(newLabel, newColor), StartVector, EndVector);
+		}
 
 		public static SSEInSpace Join(SSEInSpace first, SSEInSpace second, String comment){
 			return new SSEInSpace (SSE.Join(first,second,comment), first.StartVector, second.EndVector);

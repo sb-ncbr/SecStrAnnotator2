@@ -42,6 +42,12 @@ namespace protein
 		{ { SelectionMethod.DynProg,"dp" }, { SelectionMethod.BB,"bb" }, { SelectionMethod.MOM,"mom" }, { SelectionMethod.Combined,"combined" }, { SelectionMethod.None,"none" } };
 		const SelectionMethod DEFAULT_SELECTION_METHOD = SelectionMethod.MOM;
 
+		private enum MetricMethod { No3, No7, No8 };
+		private static Dictionary<MetricMethod,String> metricMethodNames = new Dictionary<MetricMethod, string> 
+		{ { MetricMethod.No3,"3" }, { MetricMethod.No7,"7" }, { MetricMethod.No8,"8" } };
+		const MetricMethod DEFAULT_METRIC_METHOD = MetricMethod.No8;
+
+
 		// penalty for not matching template SSE S1 with query SSE S2 = pen0 + pen1*L1 + pen2*L2, where L1 (L2) is length of S1 (S2) in Angstroms.
 		private static double[] DEFAULT_MAXMETRIC = new double[]{ 30, 0, 0 };
 			
@@ -153,6 +159,7 @@ namespace protein
 
 			SecStrMethod secStrMethod = DEFAULT_SEC_STR_METHOD;
 			bool joinHelices = false;
+			bool forceCalculateVectors = false;
 
 			SelectionMethod selectionMethod = DEFAULT_SELECTION_METHOD;
 			bool alternativeMatching = false;
@@ -180,6 +187,7 @@ namespace protein
 				true 
 					: false);
 
+			MetricMethod metricMethod = DEFAULT_METRIC_METHOD;
 			double[] maxmetric = DEFAULT_MAXMETRIC;
 			Func<SSEInSpace,double> skipTemplatePenalty = (sse => maxmetric[0] + maxmetric[1]*(sse.EndVector - sse.StartVector).Size);
 			Func<SSEInSpace,double> skipCandidatePenalty = (sse => maxmetric[2]*(sse.EndVector - sse.StartVector).Size);
@@ -266,6 +274,14 @@ namespace protein
 			options.AddOption (Option.SwitchOption(new string[]{"-s", "--session"}, v => { createPymolSession = v; })
 				.AddHelp("Create PyMOL session with results (.pse file).")
 			);
+			options.AddOption (Option.DictionaryChoiceOption(new string[]{"-M", "--metrictype"}, v => { metricMethod = v; }, metricMethodNames)
+				.AddParameter("TYPE")
+				.AddHelp("Specify metric for measuring difference between two SSEs.")
+				.AddHelp("TYPE is one of " + metricMethodNames.Values.EnumerateWithCommas() + "; default: " + metricMethodNames [DEFAULT_METRIC_METHOD])
+				.AddHelp("    3:  based on 3D coordinates (distance of start vectors + distance of end vectors)")
+				.AddHelp("    7:  based on residue positions in structural alignment")
+				.AddHelp("    8:  0.5 * (metric3 + metric7) + length_difference_penalty")
+			);
 			options.AddOption (Option.StringOption(new string[]{"-k", "--maxmetric"}, v => { maxmetric = v.Split(',').Select(Double.Parse).ToArray().Resized(3); })
 				.AddConstraint(optArgs => optArgs[0].Split(',').All(k => Double.TryParse(k, out _)), "must be a float or a comma-separated list 3 floats") 
 				.AddParameter ("K0[,K1,K2]")
@@ -275,6 +291,9 @@ namespace protein
 			options.AddOption (Option.SwitchOption(new string[]{"-i", "--ignoreinsertions"}, v => { IgnoreInsertions = v; })
 				.AddHelp("Ignore residues with insertion code, if such are present in the input file.")
 				.AddHelp("WARNING: Loaded structure will not correspond fully to the input file!")
+			);
+			options.AddOption (Option.SwitchOption(new string[]{"-c", "--calculatevectors"}, v => { forceCalculateVectors = v; })
+				.AddHelp("Force calculation of start and end vector of SSEs, even if they are in the input files.")
 			);
 			options.AddOption (Option.SwitchOption(new string[]{"-v", "--verbose"}, v => { Lib.DoWriteDebug = v; })
 				.AddHelp("Print debugging notes and write out additional files.")
@@ -674,11 +693,20 @@ namespace protein
 						}
 						#endregion
 
-						#region Calculating line segments corresponding to helices in template and processed protein.
+						#region Calculating line segments corresponding to helices in template and query protein.
 
 						List<double>[] dump;
-						tSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion (tProtein.GetChain (templateChainID), tSSEs, out dump);
-						qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion (qProtein.GetChain (queryChainID), qSSEs, out dump);
+						if (forceCalculateVectors || !tSSEs.All(sse => sse is SSEInSpace)){
+							tSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion (tProtein.GetChain (templateChainID), tSSEs, out dump);
+						} else {
+							tSSEsInSpace = tSSEs.Select(sse => sse as SSEInSpace).ToList();
+						}
+
+						if (forceCalculateVectors || !qSSEs.All(sse => sse is SSEInSpace)){
+							qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion (qProtein.GetChain (queryChainID), qSSEs, out dump);
+						} else {
+							qSSEsInSpace = qSSEs.Select(sse => sse as SSEInSpace).ToList();
+						}
 
 						times.Add (new Tuple<string, TimeSpan> ("Calculate line segments", DateTime.Now.Subtract (stamp)));
 						stamp = DateTime.Now;
@@ -722,15 +750,34 @@ namespace protein
 					List<Tuple<int?, int?, double>> alignment = LibAnnotation.AlignResidues_DynProg (tResiduesForAlignment, qResiduesForAlignment);
 					Tuple<List<int>, List<int>> pos = LibAnnotation.AlignmentToPositions (alignment);
 
-					Func<SSEInSpace,SSEInSpace,double> metric3 = LibAnnotation.MetricNo3Pos;
-					Func<SSEInSpace,SSEInSpace,double> metric7 = (s, t) => LibAnnotation.MetricNo7Pos (s, t, alignment, LibAnnotation.DictResiToAli (tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli (qResiduesForAlignment, pos.Item2));
-					double xx=0.5;
-					Func<SSEInSpace,SSEInSpace,double> metric8 = (s, t) => 
-						(1-xx) * metric3(s,t)
-						+ xx * metric7(s,t)
-						+ LibAnnotation.LengthDiffPenalty (s,t);
+					// Func<SSEInSpace,SSEInSpace,double> metric3 = LibAnnotation.MetricNo3Pos;
+					// Func<SSEInSpace,SSEInSpace,double> metric7 = (s, t) => LibAnnotation.MetricNo7Pos (s, t, alignment, LibAnnotation.DictResiToAli (tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli (qResiduesForAlignment, pos.Item2));
+					// double xx=0.5;
+					// Func<SSEInSpace,SSEInSpace,double> metric8 = (s, t) => 
+					// 	(1-xx) * metric3(s,t)
+					// 	+ xx * metric7(s,t)
+					// 	+ LibAnnotation.LengthDiffPenalty (s,t);
 						
-					Func<SSEInSpace,SSEInSpace,double> metricToMinimize = metric8;
+					Func<SSEInSpace,SSEInSpace,double> metricToMinimize;
+					switch(metricMethod){
+						case MetricMethod.No3:
+							metricToMinimize = LibAnnotation.MetricNo3Pos;
+							break;
+						case MetricMethod.No7:
+							metricToMinimize = (s, t) => 
+								LibAnnotation.MetricNo7Pos (s, t, alignment, LibAnnotation.DictResiToAli (tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli (qResiduesForAlignment, pos.Item2));
+							break;
+						case MetricMethod.No8:
+							Func<SSEInSpace,SSEInSpace,double> metric3 = LibAnnotation.MetricNo3Pos;
+							Func<SSEInSpace,SSEInSpace,double> metric7 = (s, t) => LibAnnotation.MetricNo7Pos (s, t, alignment, LibAnnotation.DictResiToAli (tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli (qResiduesForAlignment, pos.Item2));
+							double xx=0.5;
+							metricToMinimize = (s, t) => 
+								(1-xx) * metric3(s,t) + xx * metric7(s,t) + LibAnnotation.LengthDiffPenalty (s,t);
+							break;
+						default:
+							throw new Exception("Unknown MetricMethod: " + metricMethod);
+					}
+					
 
 					Lib.WriteLineDebug ("Template connections: {0}", tConnectivity.Select (t=>tSSEs[t.Item1].Label+"-"+tSSEs[t.Item2].Label).EnumerateWithCommas ());
 					Lib.WriteLineDebug ("Query connections: {0}", qConnectivity.Select (t=>qSSEs[t.Item1].Label+"-"+qSSEs[t.Item2].Label).EnumerateWithCommas ());
@@ -813,8 +860,9 @@ namespace protein
 					annotQSseSequences_AllChains.AddRange (qSseSequences);
 					//metric3List_AllChains.AddRange (ssePairs.Select (x => x.Q.IsNotFound () ? Double.NaN : metric3(x.T,x.Q)));
 					//metric7List_AllChains.AddRange (ssePairs.Select (x => x.Q.IsNotFound () ? Double.NaN : metric7(x.T,x.Q)));
-					metric3List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric3(t,q)));
-					metric7List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric7(t,q)));
+
+					// metric3List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric3(t,q)));
+					// metric7List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric7(t,q)));
 					if (allTemplateChainIDs.Length==1 && allQueryChainIDs.Length==1) {
 						IEnumerable<Tuple<string,string>> labelPairs = annotator.GetMatching ().Select (t=>
 							new Tuple<string,string> (annotator.Context.Templates[t.Item1].Label,annotator.Context.Candidates[t.Item2].Label));

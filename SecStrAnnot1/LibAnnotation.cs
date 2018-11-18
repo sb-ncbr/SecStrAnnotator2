@@ -22,6 +22,7 @@ namespace protein
 			public const string START_VECTOR = "start_vector";
 			public const string END_VECTOR = "end_vector";
 			public const string COMMENT = "comment";
+			public const string COLOR = "color";
 			public const string METRIC = "metric_value";
 			public const string SUSPICIOUSNESS = "suspiciousness";
 
@@ -148,6 +149,8 @@ namespace protein
 				elem [JsNames.SHEET_ID] = new JsonValue ((int)sse.SheetId);
 			if (sse.Comment != null)
 				elem [JsNames.COMMENT] = new JsonValue (sse.Comment);
+			if (sse.Color != null)
+				elem [JsNames.COLOR] = new JsonValue (sse.Color);
 			if (WRITE_VECTORS && sse is SSEInSpace) {
 				elem [JsNames.START_VECTOR] = new JsonValue ((sse as SSEInSpace).StartVector.Round (DEFAULT_DOUBLE_DIGITS).AsList ());
 				elem [JsNames.END_VECTOR] = new JsonValue ((sse as SSEInSpace).EndVector.Round (DEFAULT_DOUBLE_DIGITS).AsList ());
@@ -255,11 +258,11 @@ namespace protein
 			String dump;
 			List<Tuple<int,int,int>> dump2;
 			List<Tuple<String,int,int>> dump3;
-			return ReadAnnotationFile_Json (fileName, null, out dump, out dump2, out dump3);
+			return ReadAnnotationFile_Json (fileName, null, out dump, out dump2, out dump3, false);
 		}
 
 		/* If name==null, takes the first entity in the file. */
-		public static List<SSE> ReadAnnotationFile_Json(String fileName, String name, out String comment, out List<Tuple<int,int,int>> betaConnectivity, out List<Tuple<String,int,int>> merging){
+		public static List<SSE> ReadAnnotationFile_Json(String fileName, String name, out String comment, out List<Tuple<int,int,int>> betaConnectivity, out List<Tuple<String,int,int>> merging, bool takeTheOnlyEntryEvenIfNameDoesntMatch){
 			List<SSE> result = new List<SSE> ();
 			String str;
 			using (StreamReader r = new StreamReader (fileName)) {
@@ -278,8 +281,14 @@ namespace protein
 				throw new FormatException (fileName + " is an empty JSON object.");
 			if (name == null)
 				name = json.Key (0);
-			if (!json.Contains (name))
-				throw new FormatException (fileName + " does not contain key " + name + ".");
+			if (!json.Contains (name)) {
+				if (json.Count == 1) {
+					Lib.WriteWarning(fileName + " does not contain entry '" + name + "', taking '" + json.Key(0) + "' instead.");
+					name = json.Key(0);
+				} else {
+					throw new FormatException (fileName + " does not contain key " + name + ".");
+				}
+			}
 			JsonValue entry = json [name];
 			if (entry.Type!=JsonType.Object || !entry.Contains (JsNames.SSES))
 				throw new FormatException (JsonLocationString (fileName,name)+" does not contain key \""+JsNames.SSES+"\".");
@@ -311,6 +320,8 @@ namespace protein
 					}
 					if (sse.Contains (JsNames.COMMENT))
 						s.AddComment (sse [JsNames.COMMENT].String);
+					if (sse.Contains (JsNames.COLOR))
+						s.Color = sse[JsNames.COLOR].String;
 					result.Add (s);
 				} catch (JsonKeyNotFoundException e) {
 					throw new FormatException ("Error in parsing JSON object " + JsonLocationString (fileName,name,JsNames.SSES,i) + ". " + "Does not contain key \"" + e.MissingKey + "\".");

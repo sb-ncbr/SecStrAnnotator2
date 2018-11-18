@@ -670,11 +670,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/adam/Workspace/VSCode/SecStrAnnot2/SecStrAnnot2.csproj",
+      "projectUniqueName": "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnot2.csproj",
       "projectName": "SecStrAnnot2",
-      "projectPath": "/home/adam/Workspace/VSCode/SecStrAnnot2/SecStrAnnot2.csproj",
+      "projectPath": "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnot2.csproj",
       "packagesPath": "/home/adam/.nuget/packages/",
-      "outputPath": "/home/adam/Workspace/VSCode/SecStrAnnot2/obj/",
+      "outputPath": "/home/adam/Workspace/C#/SecStrAnnot2/obj/",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "/usr/share/dotnet/sdk/NuGetFallbackFolder"

@@ -49,6 +49,7 @@ namespace protein
 		public int? SheetId{get;set;} // ID number of the beta-sheet that this beta-strand belong to. The value should be null for helices.
 		public List<SSE> NestedSSEs{get; private set;}
 		public String Comment { get; private set;} // Any string which is a comment for this SSE. 
+		public String Color { get; set;} // Additional info about the color used for visualization (if assigned explicitly, else null).
 
 		public SSE (String label, string chainID, int start, int end, char type, int? sheetId)
 		{
@@ -60,6 +61,7 @@ namespace protein
 			SheetId = sheetId;
 			NestedSSEs = null;
 			Comment = null;
+			Color = null;
 		}
 		public SSE (SSE orig){
 			Label = orig.Label;
@@ -70,6 +72,7 @@ namespace protein
 			SheetId = orig.SheetId;
 			NestedSSEs = orig.NestedSSEs;
 			Comment = orig.Comment;
+			Color = orig.Color;
 		}
 		public static SSE NewNotFound(String label){
 			SSE result= new SSE(label,NOT_FOUND_CHAIN,NOT_FOUND_START, NOT_FOUND_END,NOT_FOUND_TYPE,null);
@@ -121,6 +124,15 @@ namespace protein
 		{
 			SSE result = new SSE (this);
 			result.Label = newLabel;
+			return result;
+		}
+
+		/** Return an identical SSEInSpace, but with a different label. */
+		public SSE RelabeledCopy (String newLabel, String newColor)
+		{
+			SSE result = new SSE (this);
+			result.Label = newLabel;
+			result.Color = newColor;
 			return result;
 		}
 

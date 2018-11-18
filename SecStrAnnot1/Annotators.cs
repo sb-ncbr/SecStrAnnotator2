@@ -373,7 +373,7 @@ namespace protein
 						// each vertex is matched at most once
 						Lib.Shuffler annotShuffler = Lib.Shuffler.FromMatching (matching);
 						rememberedAnnotatedCandidates = annotShuffler.ShuffleBack (Context.Candidates, () => SSEInSpace.NewNotFound (null))
-							.Select ((sse, i) => sse.RelabeledCopy (Context.Templates [i].Label)).ToArray ();
+							.Select ((sse, i) => sse.RelabeledCopy (Context.Templates [i].Label, Context.Templates [i].Color)).ToArray ();
 					} else {
 						// some vertices are matched more than once
 						matching = matching.OrderBy (m => m.Item1).ToList ();
@@ -387,7 +387,7 @@ namespace protein
 							} else {
 								SSEInSpace[] all = multiMatching [i].Select (j => Context.Candidates [j]).OrderBy (x => x).Distinct ().ToArray ();
 								if (all.Length == 1) {
-									rememberedAnnotatedCandidates [i] = all [0].RelabeledCopy (Context.Templates [i].Label);
+									rememberedAnnotatedCandidates [i] = all [0].RelabeledCopy (Context.Templates [i].Label, Context.Templates [i].Color);
 								} else if (all.Length > 1) {
 									if (all.Select (sse => sse.ChainID).Distinct ().Count () > 1)
 										throw new Exception ("Strands from different chains have been annotated as parts of one strand.");
