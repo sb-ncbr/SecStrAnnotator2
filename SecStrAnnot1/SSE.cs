@@ -24,6 +24,8 @@ namespace protein
 		public const char BULGE_CLASSIC_LONG_SIDE_TYPE = 'N';
 		public const char BULGE_WIDE_SHORT_SIDE_TYPE = 'm';
 		public const char BULGE_WIDE_LONG_SIDE_TYPE = 'M';
+		public const char BULGE_ANTIPARALLEL33_SHORT_SIDE_TYPE = 'u'; // in 2qad chain B ~ resi 15 // "short" side is the one donating protons
+		public const char BULGE_ANTIPARALLEL33_LONG_SIDE_TYPE = 'U'; // "long" side is the one accepting protons
 		public const char BULGE_ANTIPARALLEL22_SHORT_SIDE_TYPE = 't'; // in 1gei ~ resi 13 // "short" side is the one donating protons
 		public const char BULGE_ANTIPARALLEL22_LONG_SIDE_TYPE = 'T'; // "long" side is the one accepting protons
 		public const char BULGE_ANTIPARALLEL15_SHORT_SIDE_TYPE = 's'; // in 1gjm ~ resi 94

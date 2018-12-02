@@ -791,7 +791,7 @@ namespace protein
 		}
 
 		private class BetaBulge {
-			public enum BulgeType { Classic, Wide, Antiparallel22, Antiparallel15, Antiparallel23, Parallel14, Parallel32, Parallel13, Parallel33 } // New types might be added
+			public enum BulgeType { Classic, Wide, Antiparallel22, Antiparallel33, Antiparallel15, Antiparallel23, Parallel14, Parallel32, Parallel13, Parallel33 } // New types might be added
 			public BulgeType Type {get;private set;}
 			public int StartShort{ get; private set; }
 			public int EndShort{ get; private set; }
@@ -867,6 +867,7 @@ namespace protein
 			public const bool HELICES_BY_ALPHA = true;
 			// To use DSSP-style joining, set MIN_Z_OVERLAP_FOR_JOINING = 3*MIN_OVERLAP_FOR_JOINING+2
 			public const int MIN_Z_OVERLAP_FOR_JOINING = 1; // 3*MIN_OVERLAP_FOR_JOINING+2; // condition for joining 2 beta-strands: Z(end0) >= Z(start1) + MIN_OVERLAP et vice versa
+			public const bool ALLOW_BULGE_A33 = true;  // antiparallel beta-bulge defined as only 1 missing H-bond from regular beta-ladder (in 2qad chain B ~ resi 15)
 
 			public bool DetectSheets { get; set; }
 			public bool DetectHelices { get; set; }
@@ -1060,7 +1061,7 @@ namespace protein
 			private BetaBulge BuildBetaBulge(BetaLadder la,BetaLadder lb){
 				return BuildBetaBulgeWithFirstLadderFirst (la, lb) ?? BuildBetaBulgeWithFirstLadderFirst (lb, la);
 			}
-				/* Tries to build a beta-bulge so than the la.Strand0 and lb.Strand0 form the SHORT side of the bulge. */
+			/* Tries to build a beta-bulge so than the la.Strand0 and lb.Strand0 form the SHORT side of the bulge. */
 			private BetaBulge BuildBetaBulgeWithFirstLadderFirst(BetaLadder la,BetaLadder lb){
 				if (residues [la.Start1].ChainID == residues [lb.Start1].ChainID) {
 					if (la.Type == BetaLadder.LadderType.Antiparallel && lb.Type == BetaLadder.LadderType.Antiparallel) {
@@ -1078,6 +1079,11 @@ namespace protein
 							&& la.LastHBondDirection == BetaLadder.HBondDirection.From0To1 && lb.FirstHBondDirection == BetaLadder.HBondDirection.From0To1) {
 							// bulge-not-bulge a-b (type A22) found in 1gei
 							return new BetaBulge (BetaBulge.BulgeType.Antiparallel22, la.End0, lb.Start0, lb.End1, la.Start1);
+						}
+						if (ALLOW_BULGE_A33 && lb.Start0 == ResidueXAfter (la.End0, 2) && la.Start1 == ResidueXAfter (lb.End1, 2)
+							&& la.LastHBondDirection == BetaLadder.HBondDirection.From0To1 && lb.FirstHBondDirection == BetaLadder.HBondDirection.From0To1) {
+							// bulge-not-bulge a-b (type A33)
+							return new BetaBulge (BetaBulge.BulgeType.Antiparallel33, la.End0, lb.Start0, lb.End1, la.Start1);
 						}
 						if (lb.Start0 == la.End0 && la.Start1 == ResidueXAfter (lb.End1, 4)
 							&& la.LastHBondDirection == BetaLadder.HBondDirection.From1To0 && lb.FirstHBondDirection == BetaLadder.HBondDirection.From1To0) {
@@ -1269,6 +1275,8 @@ namespace protein
 						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_WIDE_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel22:
 						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_ANTIPARALLEL22_SHORT_SIDE_TYPE, null);
+					case BetaBulge.BulgeType.Antiparallel33:
+						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_ANTIPARALLEL33_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel15:
 						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_ANTIPARALLEL15_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel23:
@@ -1298,6 +1306,8 @@ namespace protein
 						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_WIDE_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel22:
 						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_ANTIPARALLEL22_LONG_SIDE_TYPE, null);
+					case BetaBulge.BulgeType.Antiparallel33:
+						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_ANTIPARALLEL33_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel15:
 						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_ANTIPARALLEL15_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel23:
