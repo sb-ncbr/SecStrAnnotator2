@@ -786,12 +786,14 @@ namespace protein
 				sumAxes += (IdealShapes.GetShape (sse.Type).Axis * rotBack).ToRowVectors () [0];
 				sumOrigins += (IdealShapes.GetShape (sse.Type).Origin * rotBack - trans).ToRowVectors () [0];
 				rmsdList.Add (rmsd);
+				// if (Double.IsNaN(sumAxes.X)) Lib.WriteLineDebug($"    SumAxes {sumAxes}, SumOrigins {sumOrigins}, Mobile {mobile}, Rot {rot}, Trans {trans}");
 				//Console.WriteLine ("<{0,3}> {1,8}", quad [1].ResSeq, rmsd);
 			}
 			Vector axis = sumAxes.Normalize ();
 			Vector origin = sumOrigins / (coords.Count - 3);
 			Vector u = origin + ((coords [startIndex] - origin) * axis) * axis;
 			Vector v = origin + ((coords [endIndex] - origin) * axis) * axis;
+			// Lib.WriteLineDebug($"Axis {axis}, SumAxes {sumAxes}, Origin {origin}, {Double.IsNaN(u.X)}");
 			return new Tuple<Vector, Vector> (u, v);
 		}
 

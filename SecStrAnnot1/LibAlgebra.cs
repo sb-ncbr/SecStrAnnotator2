@@ -192,11 +192,14 @@ namespace protein
 		/**Performs Singular Value Decomposition of a n*3 matrix Y and returns U, S, and V such that U*S*V=Y. */
 		public static Tuple<Matrix,Matrix.DiagMatrix,Matrix> SVD(Matrix Y){
 			List<Tuple<Vector,double>> eigenVecs = Eigenvectors (Y.Transpose()*Y);
-			Matrix.DiagMatrix S = new Matrix.DiagMatrix (eigenVecs.Select (x => Math.Sqrt(x.Item2)));
+			if (eigenVecs.Any(x => x.Item2 < 0)) {
+				Lib.WriteWarning($"SVD: Negative eigenvalue of covariance matrix: {eigenVecs.Select(x => x.Item2).EnumerateWithCommas()}");
+			}
+			Matrix.DiagMatrix S = new Matrix.DiagMatrix (eigenVecs.Select (x => Math.Sqrt(Math.Abs(x.Item2))));
 			Matrix V = Matrix.FromRowVectors(eigenVecs.Select (x => x.Item1).ToList());
 			// so far so good
 			Matrix U = Y * V.Transpose () * S.Inverse();
-			//Console.WriteLine ("V = {0}\nV transpose = {1}\nS = {2}\nS inverse = {3}\nU = {4}", V,V.Transpose(),S,S.Inverse(),U);
+			// Console.WriteLine ($"V = {V}\nV transpose = {V.Transpose()}\nS = {S}\nS inverse = {S.Inverse()}\nU = {U}\nEigenvecs = {eigenVecs.EnumerateWithCommas()}");
 			return new Tuple<Matrix, Matrix.DiagMatrix,Matrix> (U, S, V);
 		}
 
@@ -211,6 +214,7 @@ namespace protein
 			Matrix U = USV.Item1;
 			Matrix V = USV.Item3;
 			Matrix R = U*V;
+			// Lib.WriteLineDebug($"U: {U}, V: {V}");
 			if (R.Determinant3 () < 0) { 
 				//Correction for reflexion matrix
 				R = (U * new Matrix.DiagMatrix (new double[]{ 1, 1, -1 })) * V;

@@ -588,6 +588,8 @@ namespace protein
 						querySSA.Connectivity,
 						querySSA.HBonds, 
 						null);
+					// string outStr = qSSEsInSpace.Select(sse => sse.ToString() + sse.StartVector.ToString() + sse.EndVector.ToString()).EnumerateWithSeparators("\n");
+					// Lib.WriteLineDebug($"qSSEs in space: {outStr}");
 				}
 				PrintTimes (times, t0);
 				return 0;
