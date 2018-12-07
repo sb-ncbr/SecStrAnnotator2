@@ -1533,20 +1533,20 @@ namespace protein
 					sheets.Add (sheet);
 				}
 
-				// DEBUG: Write out sheet info.
-				Lib.WriteLineDebug ("From list of sheets:");
-				foreach (var sheet in sheets) {
-					Lib.WriteLineDebug ("Sheet {0}:", sheet.First ().SheetId);
-					foreach (var u in sheet) {
-						Lib.WriteLineDebug ("Strand {0} ({1} {2}-{3}): up: {4}, down: {5}",
-							u.SSE.Label,
-							u.SSE.ChainID,
-							u.SSE.Start,
-							u.SSE.End,
-							Lib.EnumerateWithCommas (u.UpNeighbours.Select (n => n.SSE.Label)),
-							Lib.EnumerateWithCommas (u.DownNeighbours.Select (n => n.SSE.Label)));
-					}
-				}
+				// // DEBUG: Write out sheet info.
+				// Lib.WriteLineDebug ("From list of sheets:");
+				// foreach (var sheet in sheets) {
+				// 	Lib.WriteLineDebug ("Sheet {0}:", sheet.First ().SheetId);
+				// 	foreach (var u in sheet) {
+				// 		Lib.WriteLineDebug ("Strand {0} ({1} {2}-{3}): up: {4}, down: {5}",
+				// 			u.SSE.Label,
+				// 			u.SSE.ChainID,
+				// 			u.SSE.Start,
+				// 			u.SSE.End,
+				// 			Lib.EnumerateWithCommas (u.UpNeighbours.Select (n => n.SSE.Label)),
+				// 			Lib.EnumerateWithCommas (u.DownNeighbours.Select (n => n.SSE.Label)));
+				// 	}
+				// }
 
 				List<SSE> realStrands = sheets
 					.SelectMany (s => s)
@@ -1619,6 +1619,8 @@ namespace protein
 						}*/
 					});
 				}
+				edges = edges.Distinct().ToList();  // a ladder contained a bulge, there would be listed two edges connecting the strands; this removes the duplicite edges
+
 				SecStrAssignment result = new SecStrAssignment (resultSSEs);
 				result.Connectivity = edges;
 				result.HBonds = hBonds;
