@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace protein
+namespace protein.Components
 {
     public class Residue : IComparable<Residue>
     {
@@ -148,29 +148,6 @@ namespace protein
 			}
 		}
 
-        public class DistanceComparer : IComparer<Residue>
-        {
-            public Atom CentralAtom { get; private set; }
-
-            public DistanceComparer(Atom centralAtom)
-            {
-                CentralAtom = centralAtom;
-            }
-
-            public int Compare(Residue r1, Residue r2)
-            {
-                Atom a1 = null;
-                Atom a2 = null;
-                foreach (Atom atom in r1.GetAtoms()) if (atom.IsCAlpha) a1 = atom;
-                foreach (Atom atom in r2.GetAtoms()) if (atom.IsCAlpha) a2 = atom;
-                if (a1 == null && a2 == null) return a1.CompareTo(a1);
-                if (a1 == null) return 1;
-                if (a2 == null) return -1;
-				int result = Math.Sign(LibProtein.Distance(a1, CentralAtom) - LibProtein.Distance(a2, CentralAtom));
-                if (result != 0) return result;
-                else return a1.CompareTo(a2);
-            }
-        }
         
     }
 }

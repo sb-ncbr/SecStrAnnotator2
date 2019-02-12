@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
+using Cif.Components;
 
 namespace protein
 {
@@ -607,18 +608,22 @@ namespace protein
 
 		public enum GeometryCheckResult {OK, NOK, IncompleteChain};
 
+		private static bool IsAltLocOK(Atom a){
+			return a.AltLoc == Cif.Tables.AtomTable.DEFAULT_ALT_LOC || a.AltLoc == "A";
+		}
+
 		public static GeometryCheckResult CheckGeometry (IEnumerable<Residue> residues, char sseType, double RMSDLimit, out double maxRMSD){
 			maxRMSD = 0;
 			//Lib.WriteDebug ("Geometry check on {0} {1,3} - {2,3}: ", residues.First ().ChainID, residues.First ().ResSeq, residues.Last ().ResSeq);
 
-			List<Atom> CAlphas = residues.SelectMany (r => r.GetAtoms ().Where (a => a.IsCAlpha)).ToList ();
+			List<Atom> CAlphas = residues.SelectMany (r => r.GetCAlphas()).ToList ();
 			//Lib.WriteLineDebug ("residues: {0}, CAlphas: {1}", residues.Count(), CAlphas.Count);
-			if (CAlphas.Any (x => x.AltLoc != ' ' && x.AltLoc != 'A')) {
+			if (CAlphas.Any (a => !IsAltLocOK(a))) {
 				if (!alternativeLocationWarningPrinted) {
 					Lib.WriteWarning ("Alternative locations found. Ignoring alternative locations except for ' ' and 'A'.");
 					alternativeLocationWarningPrinted = true;
 				}
-				CAlphas = CAlphas.Where (x => x.AltLoc == ' ' || x.AltLoc == 'A').ToList ();
+				CAlphas = CAlphas.Where (a => IsAltLocOK(a)).ToList ();
 			}
 
 			for (int i = 0; i <= CAlphas.Count - 4; i++) {
@@ -648,17 +653,17 @@ namespace protein
 			rmsd = 0;
 			int unitLength = residues.Count();
 			List<Atom> unit = residues
-				.Select (r => r.GetAtoms ().Where (a => a.IsCAlpha))
+				.Select (r => r.GetCAlphas())
 				.TakeWhile(la => la.Count()>0)
 				.Select(la => la.First())
 				.ToList ();
 				
-			if (unit.Any (x => x.AltLoc != ' ' && x.AltLoc != 'A')) {
+			if (unit.Any (a => !IsAltLocOK(a))) {
 				if (!alternativeLocationWarningPrinted) {
 					Lib.WriteWarning ("Alternative locations found. Ignoring alternative locations except for ' ' and 'A'.");
 					alternativeLocationWarningPrinted = true;
 				}
-				unit = unit.Where (x => x.AltLoc == ' ' || x.AltLoc == 'A').ToList ();
+				unit = unit.Where (a => IsAltLocOK(a)).ToList ();
 			}
 			if (unit.Count != unitLength) {
 				return GeometryCheckResult.NOK; //some of the input residues miss CAlpha atom
@@ -718,27 +723,6 @@ namespace protein
 			return rotMatrix.ToRowVectors () [2];
 		}
 
-		private static Tuple<Vector,Vector> HelixAsLineSegment(List<Atom> backbone){
-			Vector center = Vector.Average (backbone.Select (a => a.Position ()));
-			Vector direction = DirectionVector (backbone);
-			Vector A = Geom.ProjectPointOnLine (backbone[0].Position(), center, direction);
-			Vector B = Geom.ProjectPointOnLine (backbone [backbone.Count - 1].Position(), center, direction);
-			return new Tuple<Vector,Vector> (A, B);
-		}
-
-		public static List<SSEInSpace> HelicesAsLineSegments(Chain chain, List<SSE> sses){
-			IEnumerable<Tuple<int,int>> ranges = sses.Select (x => new Tuple<int,int> (x.Start, x.End));
-			List<List<Atom>> atoms = chain.GetResidues (ranges)
-				.Select(l=>l.SelectMany(res=>res.GetAtoms().Where(a => a.IsCAlpha || a.IsNAmide || a.IsCCarb)).ToList()).ToList();
-
-			List<SSEInSpace> ssesInSpace = 
-				sses.Select ((x,i)=> {
-					Tuple<Vector,Vector> uv = LibAnnotation.HelixAsLineSegment (atoms[i]);
-					return new SSEInSpace (x, uv.Item1, uv.Item2);
-				}).ToList ();
-			return ssesInSpace;
-		}
-
 		/**Calculate a line segment that best describes an SSE given as a list of residues. 
 		 * numExtraResidues - indicates the number of residues at both the beginning and the end of the list which are not the part of the SSE but should be used in geometrical calculations.
 		 */
@@ -758,20 +742,28 @@ namespace protein
 			} catch(Exception) {
 				Lib.WriteErrorAndExit ("SSE starting or ending residue is missing: {0}", sse);
 			}
-			if (residues.Count() < 4 || !residues.All (r => r.GetAtoms ().Any(a => a.IsCAlpha))) {
+			if (residues.Count() < 4 || !residues.All (r => r.HasCAlpha())) {
 				Lib.WriteWarning ("At least 4 residues are needed to calculate line segment. Less than 4 residues are given, so atom coordinates will be used instead of line segment approximation.");
-				Vector u_ = residues.ElementAt (startIndex).GetAtoms ().First (a => a.IsCAlpha).Position ();
-				Vector v_ = residues.ElementAt (endIndex).GetAtoms ().First (a => a.IsCAlpha).Position ();
-				return new Tuple<Vector,Vector> (u_, v_);
+				Vector? u_ = residues.ElementAt (startIndex).GetCAlpha()?.Position ();
+				Vector? v_ = residues.ElementAt (endIndex).GetCAlpha()?.Position ();
+				if (u_ != null && v_ !=null){
+					return new Tuple<Vector,Vector> ((Vector) u_, (Vector) v_);
+				} else {
+					throw new Exception("Important residues are missing C alpha atom.");
+				}
 			}
 			if (residues.Select ((r, i) => r.ResSeq - i).Distinct ().Count () != 1) {
 				Lib.WriteWarning ("Missing residues around " +sse.ToString () + ". Atom coordinates will be used instead of line segment approximation.");
-				Vector u_ = residues.ElementAt (startIndex).GetAtoms ().First (a => a.IsCAlpha).Position ();
-				Vector v_ = residues.ElementAt (endIndex).GetAtoms ().First (a => a.IsCAlpha).Position ();
-				return new Tuple<Vector,Vector> (u_, v_);
+				Vector? u_ = residues.ElementAt (startIndex).GetCAlpha()?.Position ();
+				Vector? v_ = residues.ElementAt (endIndex).GetCAlpha()?.Position ();
+				if (u_ != null && v_ !=null){
+					return new Tuple<Vector,Vector> ((Vector) u_, (Vector) v_);
+				} else {
+					throw new Exception("Important residues are missing C alpha atom.");
+				}
 			}
 
-			List<Vector> coords = residues.Select (r => r.GetAtoms ().First (a => a.IsCAlpha).Position()).ToList ();
+			List<Vector> coords = residues.Select (r => r.GetCAlpha()).Where(a => a != null).Select(a => ((Atom) a).Position()).ToList ();
 
 
 			Vector sumAxes = Vector.ZERO;
@@ -868,8 +860,8 @@ namespace protein
 		}
 
 		public static double MetricNo6Pos(SSE sse1, SSE sse2, Chain chain1, Chain chain2){
-			Vector[] ra = chain1.GetResidues (new Tuple<int,int>[] { new Tuple<int, int> (sse1.Start, sse1.End) })[0].Select (r=>r.GetAtoms ().First (a=>a.IsCAlpha).Position ()).ToArray ();
-			Vector[] rb = chain2.GetResidues (new Tuple<int,int>[] { new Tuple<int, int> (sse2.Start, sse2.End) })[0].Select (r=>r.GetAtoms ().First (a=>a.IsCAlpha).Position ()).ToArray ();
+			Vector[] ra = chain1.GetResidues (new Tuple<int,int>[] { new Tuple<int, int> (sse1.Start, sse1.End) })[0].Select (r=>r.GetCAlphas().First().Position ()).ToArray ();
+			Vector[] rb = chain2.GetResidues (new Tuple<int,int>[] { new Tuple<int, int> (sse2.Start, sse2.End) })[0].Select (r=>r.GetCAlphas().First().Position ()).ToArray ();
 			int minDisplacement = -rb.Length + 1;
 			int maxDisplacement = ra.Length - 1;
 			IEnumerable<int> displacements = Enumerable.Range (minDisplacement, maxDisplacement-minDisplacement+1);
@@ -1551,12 +1543,14 @@ namespace protein
 
 			Lib.WriteLineDebug ("Align residues: Candidate residues: {0}", candidates.Select (r => r.ToString ()).EnumerateWithCommas ());
 			
-			Vector[] tVectors = templates.Select (r => r.GetAtoms ().First (a => a.IsCAlpha).Position ()).ToArray ();
-			Vector[] qVectors = candidates.Select (r => r.GetAtoms ().First (a => a.IsCAlpha).Position ()).ToArray ();
+			Vector[] tVectors = templates.Select (r => r.GetCAlphas().First().Position ()).ToArray ();
+			Vector[] qVectors = candidates.Select (r => r.GetCAlphas().First().Position ()).ToArray ();
 
 			if (Lib.DoWriteDebug) {
-				new Protein (tVectors.Select ((v, i) => new Atom (i, Atom.NAME_C_ALPHA, ' ', "ALA", "X", i, ' ', v.X, v.Y, v.Z, 1, 1, "C", Atom.CHARGE_ZERO, false)))
-					.Save (Path.Combine (MainClass.Directory, "template-smooth.pdb"));
+				throw new NotImplementedException();
+				//TODO implement this somehow
+				// new Protein (tVectors.Select ((v, i) => new Atom (i, Atom.NAME_C_ALPHA, ' ', "ALA", "X", i, ' ', v.X, v.Y, v.Z, 1, 1, "C", Atom.CHARGE_ZERO, false)))
+				// 	.Save (Path.Combine (MainClass.Directory, "template-smooth.pdb"));
 			}
 
 			double scalingDistance = MainClass.STR_ALIGNMENT_SCALING_DISTANCE;

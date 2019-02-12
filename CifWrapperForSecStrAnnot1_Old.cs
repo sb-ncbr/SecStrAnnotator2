@@ -8,7 +8,7 @@ using Cif.Filtering;
 
 namespace SecStrAnnot2
 {
-    public static class CifWrapperForSecStrAnnot1 {
+    public static class CifWrapperForSecStrAnnot1_Old {
         private const string EXCEPTION_MESSAGE = "Cannot fit CIF data to PDB data model: ";
         private const char PDB_DEFAULT_ALT_LOC = ' ';
         private const char PDB_DEFAULT_INS_CODE = ' ';
@@ -16,7 +16,7 @@ namespace SecStrAnnot2
         private const double DEFAULT_TEMP_FACTOR = 0.0;
         private const string DEFAULT_CHARGE = "  ";
 
-        public static protein.Protein ProteinFromCifFile(string filename) {
+        public static protein.Components.Protein ProteinFromCifFile(string filename) {
             CifPackage package = CifPackage.FromFile(filename);
             if (package.BlockNames.Length < 1) {
                 throw new FormatException(EXCEPTION_MESSAGE + "CIF file must contain at least one block");
@@ -29,7 +29,7 @@ namespace SecStrAnnot2
             return ProteinFromCifModel(model);
         }
 
-        public static protein.Protein ProteinFromCifFile(string filename, string chainId, (int,int)[] resSeqRanges) {
+        public static protein.Components.Protein ProteinFromCifFile(string filename, string chainId, (int,int)[] resSeqRanges) {
             CifPackage package = CifPackage.FromFile(filename);
             if (package.BlockNames.Length < 1) {
                 throw new FormatException(EXCEPTION_MESSAGE + "CIF file must contain at least one block");
@@ -51,16 +51,16 @@ namespace SecStrAnnot2
             return ProteinFromCifModel(model);
         }
 
-        public static protein.Protein ProteinFromCifModel(Model model) {
-            return new protein.Protein(AtomsFromModel(model));
+        public static protein.Components.Protein ProteinFromCifModel(Model model) {
+            return new protein.Components.Protein(AtomsFromModel(model));
         }
 
-        private static protein.Atom[] AtomsFromModel(Model model) {
+        private static protein.Components.Atom[] AtomsFromModel(Model model) {
             AtomTable atoms = model.Atoms;
             ResidueTable residues = model.Residues;
             ChainTable chains = model.Chains;
 
-            protein.Atom[] atomArray = new protein.Atom[atoms.Count];
+            protein.Components.Atom[] atomArray = new protein.Components.Atom[atoms.Count];
 
             for (int iAtom = 0; iAtom < atoms.Count; iAtom++) {
                 int serial;
@@ -115,7 +115,7 @@ namespace SecStrAnnot2
                 string charge = DEFAULT_CHARGE;
                 bool isHetatm = atoms.IsHetatm[iAtom];
 
-                atomArray[iAtom] = new protein.Atom(serial, name, altLoc, resName, chainIdString, resSeq, insCode, x, y, z, occupancy, tempFactor, elementString, charge, isHetatm);
+                atomArray[iAtom] = new protein.Components.Atom(serial, name, altLoc, resName, chainIdString, resSeq, insCode, x, y, z, occupancy, tempFactor, elementString, charge, isHetatm);
             }
 
             return atomArray;

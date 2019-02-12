@@ -8,9 +8,7 @@ using System.Diagnostics;
 using System.Resources;
 using System.Threading;
 using System.Globalization;
-//using MonoDevelop.Core;
-
-//TODO Make loading PDB file faster - try better representation of the protein.
+using Cif.Components;
 
 namespace protein
 {
@@ -69,13 +67,13 @@ namespace protein
 
 		const bool LABEL_DETECTED_SSES_AS_NULL = false;
 
-		const String PDB_FILE_EXT = USE_CIF ? ".cif" : ".pdb";
-		const String ALIGNED_PDB_FILE_EXT = USE_CIF ? "-aligned.cif" : "-aligned.pdb";
+		const String PDB_FILE_EXT = ".cif";
+		const String ALIGNED_PDB_FILE_EXT = "-aligned.cif";
 		const String TEMPLATE_ANNOTATION_FILE_EXT = "-template.sses";
 		const String ANNOTATION_FILE_EXT = "-annotated.sses";
 		const String ANNOTATION_WITH_SEQUENCES_FILE_EXT = "-annotated_with_sequences.sses";
 		const String DSSP_OUTPUT_FILE_EXT = ".dssp";
-		const String LINE_SEGMENTS_FILE_EXT = USE_CIF ? "-line_segments.cif" : "-line_segments.pdb";
+		const String LINE_SEGMENTS_FILE_EXT = "-line_segments.cif";
 		const String INPUT_SSES_FILE_EXT = ".sses";
 		const String DETECTED_SSES_FILE_EXT = "-detected.sses";
 		const String JOINED_SSES_FILE_EXT = "-joined.sses";
@@ -108,18 +106,11 @@ namespace protein
 
 		public static String Directory { get; private set; }
 
-		public const bool USE_CIF = true;
 		private static Protein ReadProteinFromFile(string filename, string chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
 			try {
 				Protein p;
-				if (USE_CIF) {
-					(int,int)[] resSeqRangesArray = resSeqRanges.Select(tup => (tup.Item1, tup.Item2)).ToArray();
-					p = SecStrAnnot2.CifWrapperForSecStrAnnot1.ProteinFromCifFile(filename, chainId, resSeqRangesArray);
-				} else {
-					using (StreamReader reader = new StreamReader (filename)) {
-						p = new Protein (reader, new string[]{chainId}, resSeqRanges);
-					}
-				}
+				(int,int)[] resSeqRangesArray = resSeqRanges.Select(tup => (tup.Item1, tup.Item2)).ToArray();
+				p = SecStrAnnot2.CifWrapperForSecStrAnnot1_New.ProteinFromCifFile(filename, chainId, resSeqRangesArray);
 				return p.KeepOnlyNormalResidues(true);
 			} catch (IOException) {
 				Lib.WriteErrorAndExit ("Could not open \"" + filename + "\".");
@@ -407,7 +398,7 @@ namespace protein
 
 			if (!onlyDetect) {
 				tProtein = ReadProteinFromFile(fileTemplatePDB, templateChainID_, templateDomainRanges).KeepOnlyNormalResidues(true);
-				if (tProtein.GetChains().Count == 0){
+				if (tProtein.GetChains().Count() == 0){
 					Lib.WriteErrorAndExit ("Template domain contains no atoms.");
 				}
 				// try {
@@ -422,32 +413,16 @@ namespace protein
 				// 	return -1;
 				// }
 			} else {
-				tProtein = null;
+				tProtein = new Protein(null); // dummy protein, never will be used
 			}
 
 			if (tryToReuseAlignment && File.Exists (fileQueryAlignedPDB)) {
 				qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
-				// try {
-				// 	reader = new StreamReader (fileQueryAlignedPDB);
-				// 	qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
-				// 	reader.Close ();
-				// } catch (IOException) {
-				// 	Lib.WriteError ("Could not open \"" + fileQueryAlignedPDB + "\".");
-				// 	return -1;
-				// }
 			} else {
 				qProtein = ReadProteinFromFile(fileQueryPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
-				// try {
-				// 	reader = new StreamReader (fileQueryPDB);
-				// 	qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
-				// 	reader.Close ();
-				// } catch (IOException) {
-				// 	Lib.WriteError ("Could not open \"" + fileQueryPDB + "\".");
-				// 	return -1;
-				// }
 			}
 
-			if (qProtein.GetChains().Count == 0){
+			if (qProtein.GetChains().Count() == 0){
 				Lib.WriteErrorAndExit ("Query domain contains no atoms.");
 			}
 
@@ -629,7 +604,7 @@ namespace protein
 							#region Superimpose by a given PyMOL's command.
 							Lib.WriteInColor (ConsoleColor.Yellow, "Running PyMOL to align proteins:\n");
 							if (!Lib.RunPyMOLScriptWithCommandLineArguments (config.PymolExecutable, config.PymolScriptAlign, new string[] {
-								USE_CIF ? "cif" : "pdb",
+								"cif",
 								alignMethodNames [alignMethod],
 								Directory,
 								templateID,
@@ -675,7 +650,7 @@ namespace protein
 							TextWriter wRMSD = new StreamWriter (fileQueryRmsds);
 							wRMSD.WriteLine (LibAnnotation.COMMENT_SIGN_WRITE + "RMSDs from fitting helix and sheet shape to the alpha-carbons. Value for resi=x is calculated from residues x, x+1, x+2, x+3.");
 							wRMSD.WriteLine (LibAnnotation.COMMENT_SIGN_WRITE + "resi\tRMSD_vs_H\tRMSD_vs_H5\tRMSD_vs_H6\tRMSD_vs_E");
-							List<Residue> residues = qProtein.GetChain (queryChainID).GetResidues ();
+							List<Residue> residues = qProtein.GetChain (queryChainID).GetResidues ().ToList();
 							for (int i = 0; i <= residues.Count - 6/*UNIT_LENGTH*/; i++) {
 								double rmsdH;
 								double rmsdE;
@@ -716,6 +691,8 @@ namespace protein
 
 						#endregion
 					} else {
+						throw new NotImplementedException();
+						/*
 						#region OLD VERSION joining + line segments
 
 						#region Calculating line segments corresponding to helices in template and processed protein - old version.
@@ -743,6 +720,7 @@ namespace protein
 						#endregion
 
 						#endregion
+						*/
 					}
 
 					#region Matching.
@@ -973,7 +951,7 @@ namespace protein
 				}
 				Lib.WriteInColor (ConsoleColor.Yellow, "Running PyMOL:\n");
 				if ( !Lib.RunPyMOLScriptWithCommandLineArguments (config.PymolExecutable, config.PymolScriptSession, new string[]{ 
-					USE_CIF ? "cif" : "pdb",
+					"cif",
 					Directory,
 					templateID,
 					templateChainID_.ToString (), 

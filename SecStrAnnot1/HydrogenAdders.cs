@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Cif.Components;
 
 namespace protein
 {
@@ -23,7 +24,9 @@ namespace protein
 			 * (Position of H is 1.0 Angstrom from N, in the opposite direction than carboxylic O is from C.)
 			 */
 			public List<Residue> AddHydrogens(IEnumerable<Residue> residues){
-				int nextAtomID = residues.SelectMany(r => r.GetAtoms()).Max (a => a.Serial) + 1;
+				throw new NotImplementedException();
+				//TODO implement this somehow!
+				/*int nextAtomID = residues.SelectMany(r => r.GetAtoms()).Max (a => a.Serial) + 1;
 				List<Residue> newResidues = residues.Select(r => r.WithoutHydrogens()).ToList();
 				List<Residue> relevantResidues = newResidues.Where (r => r.HasCAlpha ()).ToList();
 
@@ -45,7 +48,7 @@ namespace protein
 						}
 					}
 				}
-				return newResidues;
+				return newResidues;*/
 			}
 		}
 

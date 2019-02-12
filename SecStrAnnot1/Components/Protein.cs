@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 // using SecStrAnnot2.Cif.Tables;
 
-namespace protein
+namespace protein.Components
 {
     public class Protein
     {

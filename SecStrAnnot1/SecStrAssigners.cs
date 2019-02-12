@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Cif.Components;
 
 namespace protein
 {
@@ -244,8 +245,8 @@ namespace protein
 				if (SheetsAllowed) {
 					// Deleting sheets that have no hydrogen bonds
 					List<List<Residue>> sheets = Chain.GetResidues (result.Where (sse => sse.Type == sheetType).Select (sse => new Tuple<int,int> (sse.Start, sse.End)));
-					IEnumerable<Atom> atomsN = sheets.SelectMany (sse => sse.SelectMany (r => r.GetAtoms ().Where (a => a.IsNAmide)));
-					IEnumerable<Atom> atomsO = sheets.SelectMany (sse => sse.SelectMany (r => r.GetAtoms ().Where (a => a.IsOCarb)));
+					IEnumerable<Atom> atomsN = sheets.SelectMany (sse => sse.SelectMany (r => r.GetNAmides()));
+					IEnumerable<Atom> atomsO = sheets.SelectMany (sse => sse.SelectMany (r => r.GetOCarbs()));
 					double maxDistanceForHydrogenBond = 3.5; //TODO Get a rational value for this number (distance N-O). This value is just a guess.
 					int minResiduesBetweenHydrogenBond = 2; // number of residues that must be between 2 residues that are forming a beta-sheet stabilizing hydrogen bond
 
@@ -266,11 +267,11 @@ namespace protein
 				result.RemoveAll (sse => sse.Type == sheetType && deletedSheetsByStart.Contains (sse.Start));*/
 
 						// Version with shortening sheets
-						List<int> hbN = sheets [i].Where (r => r.GetAtoms ().Where (a => a.IsNAmide).Any (a1 => atomsO.Any (a2 => 
+						List<int> hbN = sheets [i].Where (r => r.GetNAmides().Any (a1 => atomsO.Any (a2 => 
 							!(a2.ResSeq >= firstResSeq && a2.ResSeq <= lastResSeq)
 							&& (Math.Abs (a2.ResSeq - a1.ResSeq) > minResiduesBetweenHydrogenBond)
 							&& LibProtein.Distance (a1, a2) <= maxDistanceForHydrogenBond))).Select (r => r.ResSeq).ToList ();
-						List<int> hbO = sheets [i].Where (r => r.GetAtoms ().Where (a => a.IsOCarb).Any (a1 => atomsN.Any (a2 => 
+						List<int> hbO = sheets [i].Where (r => r.GetOCarbs().Any (a1 => atomsN.Any (a2 => 
 							!(a2.ResSeq >= firstResSeq && a2.ResSeq <= lastResSeq)
 							&& (Math.Abs (a2.ResSeq - a1.ResSeq) > minResiduesBetweenHydrogenBond)
 							&& LibProtein.Distance (a1, a2) <= maxDistanceForHydrogenBond))).Select (r => r.ResSeq).ToList ();
@@ -562,17 +563,8 @@ namespace protein
 			private double energyCutoff;
 
 			public SimpleHBondFinder(IEnumerable<Residue> residues, double dsspEnergyCutoff){
-				if (residues.Any (r=>!r.HasCAlpha ()))
-					throw new ArgumentException ("Some residues have no C-alpha atoms.");
-				this.residues = residues
-					//.Select ( r => new Residue (r.Name, r.ChainID, r.ResSeq, r.GetAtoms ().Where (a=>a.IsCAlpha||a.IsNAmide||a.IsHAmide||a.IsCCarb||a.IsOCarb)) )
-					.ToArray();
+				this.residues = residues.ToArray();
 				energyCutoff=dsspEnergyCutoff;
-				/*vecH=residues.Select (r=>r.GetAtoms ().First (a=>a.IsHAmide).Position ()).ToArray ();
-				vecN=residues.Select (r=>r.GetAtoms ().First (a=>a.IsNAmide).Position ()).ToArray ();
-				vecCA=residues.Select (r=>r.GetAtoms ().First (a=>a.IsCAlpha).Position ()).ToArray ();
-				vecC=residues.Select (r=>r.GetAtoms ().First (a=>a.IsCCarb).Position ()).ToArray ();
-				vecO=residues.Select (r=>r.GetAtoms ().First (a=>a.IsOCarb).Position ()).ToArray ();*/
 
 				canBeDonor=new bool[this.residues.Length];
 				canBeAcceptor=new bool[this.residues.Length];
@@ -583,26 +575,27 @@ namespace protein
 				vecO=new Vector[this.residues.Length];
 				for (int i = 0; i < this.residues.Length; i++) {
 					Residue r = this.residues[i];
-					vecCA[i]=r.GetAtoms ().First (a=>a.IsCAlpha).Position ();
-					if (r.GetAtoms ().Any (a => a.IsHAmide) && r.GetAtoms ().Any (a => a.IsNAmide)){
-						canBeDonor[i]=true;
-						vecH[i]=r.GetAtoms ().First (a=>a.IsHAmide).Position ();
-						vecN[i]=r.GetAtoms ().First (a=>a.IsNAmide).Position ();
+					Atom? cAlpha = r.GetCAlpha();
+					if (cAlpha == null){
+						throw new ArgumentException ($"Residue {r} has no C-alpha atom.");
 					}
-					if (r.GetAtoms ().Any (a => a.IsCCarb) && r.GetAtoms ().Any (a => a.IsOCarb)){
+					vecCA[i]= ((Atom) r.GetCAlpha()).Position ();
+					Atom? hAmide = r.GetHAmide();
+					Atom? nAmide = r.GetNAmide();
+					Atom? cCarb = r.GetCCarb();		
+					Atom? oCarb = r.GetOCarb();				
+					if (hAmide != null && nAmide != null){
+						canBeDonor[i]=true;
+						vecH[i]=((Atom) hAmide).Position ();
+						vecN[i]=((Atom) nAmide).Position ();
+					}
+					if (cCarb != null && oCarb != null){
 						canBeAcceptor[i]=true;
-						vecC[i]=r.GetAtoms ().First (a=>a.IsCCarb).Position ();
-						vecO[i]=r.GetAtoms ().First (a=>a.IsOCarb).Position ();
+						vecC[i]=((Atom) cCarb).Position ();
+						vecO[i]=((Atom) oCarb).Position ();
 					}
 				}
 			}
-
-			/*public bool ResidueCanBeDonor(Residue r){
-				return r.GetAtoms ().Any (a => a.IsHAmide) && r.GetAtoms ().Any (a => a.IsNAmide);
-			}
-			public bool ResidueCanBeAcceptor(Residue r){
-				return r.GetAtoms ().Any (a => a.IsCCarb) && r.GetAtoms ().Any (a => a.IsOCarb);
-			}*/
 
 			public double DsspEnergy(int donor, int acceptor){
 				if (canBeDonor [donor] && canBeAcceptor [acceptor]) {
