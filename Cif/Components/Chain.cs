@@ -16,8 +16,22 @@ namespace Cif.Components
         }
 
         // own properties
-        public string ID => Model.Chains.Id[ChainIndex];
+        public string Id => Model.Chains.Id[ChainIndex];
+        public string AuthId => Model.Chains.AuthId[ChainIndex];
+
+        // indirect properties
+        public string EntityId => Model.Entities.Id[Model.Chains.EntityIndex[ChainIndex]];
                         
+        public IEnumerable<int> GetFragmentIndices(){
+            int start = Model.Chains.FragmentStartIndex[ChainIndex];
+            int end = Model.Chains.FragmentEndIndex[ChainIndex];
+            return Enumerable.Range(start, end-start);
+        }
+        public IEnumerable<Fragment> GetFragments(){
+            Model model = this.Model;
+            return GetFragmentIndices().Select(fi => new Fragment(model, fi));
+        }
+		                        
         
         public IEnumerable<int> GetResidueIndices(){
             int start = Model.Chains.ResidueStartIndex[ChainIndex];
@@ -58,7 +72,7 @@ namespace Cif.Components
         }
 
         public override string ToString(){
-            return $"Chain {ID}";
+            return $"Chain {Id}";
         }
     }
 }

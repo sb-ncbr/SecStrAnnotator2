@@ -16,6 +16,14 @@ namespace Cif.Components
         }
 
 
+        public IEnumerable<int> GetEntityIndices(){
+            return Enumerable.Range(0, Model.Entities.Count);
+        }
+        public IEnumerable<Entity> GetEntitys(){
+            Model model = this.Model;
+            return GetEntityIndices().Select(ei => new Entity(model, ei));
+        }
+        
         public IEnumerable<int> GetChainIndices(){
             return Enumerable.Range(0, Model.Chains.Count);
         }
@@ -62,6 +70,17 @@ namespace Cif.Components
          * Returns a protein containing only those residues which have a C alpha atom.
          */
 		public Protein KeepOnlyNormalResidues(bool doPrintWarningForHet){
+            ModelBuilder builder = new ModelBuilder();
+            foreach (Chain chain in this.GetChains()) {
+                builder.StartChain(chain.Id, chain.AuthId);
+                foreach (Residue residue in chain.GetResidues()) {
+                    builder.StartResidue(residue.SeqNumber, residue.Compound);
+                    foreach (Atom atom in residue.GetAtoms()) {
+                        builder.AddAtom(atom.Id, atom.AtomInfo());
+                    }
+                }
+            }
+
             throw new NotImplementedException();
             //TODO implement this somehow!
         }

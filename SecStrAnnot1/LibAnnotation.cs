@@ -224,10 +224,10 @@ namespace protein
 			JsonValue hBondsJson = JsonValue.MakeList ();
 			foreach (var bond in hBonds) {
 				JsonValue bondJson = JsonValue.MakeList ();
-				bondJson.Add (new JsonValue(bond.Item1.ChainID.ToString ()));
-				bondJson.Add (new JsonValue(bond.Item1.ResSeq));
-				bondJson.Add (new JsonValue(bond.Item2.ChainID.ToString ()));
-				bondJson.Add (new JsonValue(bond.Item2.ResSeq));
+				bondJson.Add (new JsonValue(bond.Item1.ChainId.ToString ()));
+				bondJson.Add (new JsonValue(bond.Item1.SeqNumber));
+				bondJson.Add (new JsonValue(bond.Item2.ChainId.ToString ()));
+				bondJson.Add (new JsonValue(bond.Item2.SeqNumber));
 				hBondsJson.Add (bondJson);
 			}
 			return hBondsJson;
@@ -564,7 +564,7 @@ namespace protein
 			List<SSE> result = new List<SSE> ();
 
 			foreach (Chain chain in p.GetChains ()) {		
-				List<SSE> chainSSEs = sses.Where (x => x.ChainID == chain.ID).OrderBy (x => x.Start).ToList ();
+				List<SSE> chainSSEs = sses.Where (x => x.ChainID == chain.Id).OrderBy (x => x.Start).ToList ();
 
 				List<Tuple<int,int>> ranges = new List<Tuple<int, int>> ();
 				List<char?> checkTypes = new List<char?> ();
@@ -629,8 +629,8 @@ namespace protein
 			for (int i = 0; i <= CAlphas.Count - 4; i++) {
 				List<Atom> quad = CAlphas.GetRange (i, 4);
 				//Lib.WriteLineDebug ("quad [{0}]: {1}", quad.Count(), quad.EnumerateWithCommas());
-				if (quad.Select ((x, j) => x.ResSeq - j).Distinct ().Count () != 1) {
-					Lib.WriteLineDebug ("Missing residues somewhere between {0} and {1}", quad [0].ResSeq, quad [3].ResSeq);
+				if (quad.Select ((x, j) => x.ResidueSeqNumber - j).Distinct ().Count () != 1) {
+					Lib.WriteLineDebug ("Missing residues somewhere between {0} and {1}", quad [0].ResidueSeqNumber, quad [3].ResidueSeqNumber);
 					return GeometryCheckResult.IncompleteChain;
 				}
 				Matrix mobile = Matrix.FromRowVectors (quad.Select (x => x.Position ()).ToList ());
@@ -669,8 +669,8 @@ namespace protein
 				return GeometryCheckResult.NOK; //some of the input residues miss CAlpha atom
 			}
 
-			if (unit.Select ((x, j) => x.ResSeq - j).Distinct ().Count () != 1) {
-				Lib.WriteLineDebug ("Missing residues somewhere between {0} and {1}", unit [0].ResSeq, unit [3].ResSeq);
+			if (unit.Select ((x, j) => x.ResidueSeqNumber - j).Distinct ().Count () != 1) {
+				Lib.WriteLineDebug ("Missing residues somewhere between {0} and {1}", unit [0].ResidueSeqNumber, unit [3].ResidueSeqNumber);
 				return GeometryCheckResult.IncompleteChain;
 			}
 			Matrix mobile = Matrix.FromRowVectors (unit.Select (x => x.Position ()).ToList ());
@@ -715,7 +715,7 @@ namespace protein
 			myHelix.MeanCenterVertically ();
 			Matrix rotMatrix = niceHelixTransposed * myHelix;
 			rotMatrix.NormalizeRows ();
-			if (helix [0].ResSeq == 172) {
+			if (helix [0].ResidueSeqNumber == 172) {
 				Console.WriteLine (rotMatrix.ToRowVectors () [0]);
 				Console.WriteLine (rotMatrix.ToRowVectors () [1]);
 				Console.WriteLine (rotMatrix.ToRowVectors () [2]);
@@ -737,8 +737,8 @@ namespace protein
 			int startIndex = 0;
 			int endIndex = residues.Count () - 1;
 			try{
-				startIndex = residues.IndicesWhere (r => r.ResSeq == sse.Start).First ();
-				endIndex = residues.IndicesWhere (r => r.ResSeq == sse.End).First ();
+				startIndex = residues.IndicesWhere (r => r.SeqNumber == sse.Start).First ();
+				endIndex = residues.IndicesWhere (r => r.SeqNumber == sse.End).First ();
 			} catch(Exception) {
 				Lib.WriteErrorAndExit ("SSE starting or ending residue is missing: {0}", sse);
 			}
@@ -752,7 +752,7 @@ namespace protein
 					throw new Exception("Important residues are missing C alpha atom.");
 				}
 			}
-			if (residues.Select ((r, i) => r.ResSeq - i).Distinct ().Count () != 1) {
+			if (residues.Select ((r, i) => r.SeqNumber - i).Distinct ().Count () != 1) {
 				Lib.WriteWarning ("Missing residues around " +sse.ToString () + ". Atom coordinates will be used instead of line segment approximation.");
 				Vector? u_ = residues.ElementAt (startIndex).GetCAlpha()?.Position ();
 				Vector? v_ = residues.ElementAt (endIndex).GetCAlpha()?.Position ();
@@ -790,8 +790,8 @@ namespace protein
 		}
 
 		public static List<SSEInSpace> SSEsAsLineSegments_GeomVersion(Chain chain, List<SSE> sses, out List<double>[] rmsdLists){
-			if (sses.Any (x => x.ChainID != chain.ID))
-				throw new ArgumentException (System.Reflection.MethodBase.GetCurrentMethod ().Name + ": Some SSEs are not from this chain (" + chain.ID + ").");
+			if (sses.Any (x => x.ChainID != chain.Id))
+				throw new ArgumentException (System.Reflection.MethodBase.GetCurrentMethod ().Name + ": Some SSEs are not from this chain (" + chain.Id + ").");
 			IEnumerable<Tuple<int,int>> ranges = sses.Select (sse => new Tuple<int,int> (sse.Start - NumExtraResidues (sse), sse.End + NumExtraResidues (sse)));
 			List<List<Residue>> residueLists = chain.GetResidues (ranges).ToList ();
 			for (int i = 0; i < sses.Count; i++) {
@@ -1416,7 +1416,7 @@ namespace protein
 				throw new ArgumentException ();
 			Dictionary<int,int> dictResiToAli = new Dictionary<int,int> ();
 			for (int i = 0; i < residues.Count; i++) {
-				dictResiToAli.Add (residues[i].ResSeq,positions[i]);
+				dictResiToAli.Add (residues[i].SeqNumber,positions[i]);
 			}
 			return dictResiToAli;
 		}
@@ -1566,13 +1566,13 @@ namespace protein
 			if (Lib.DoWriteDebug) {
 				StreamWriter w = new StreamWriter (Path.Combine (MainClass.Directory, "residue_alignment.tsv"));
 				List<List<String>> alignmentTable = alignment.Select (t => new List<String> { 
-					t.Item1 == null ? "-" : templates [(int)t.Item1].ChainID.ToString (), 
-					t.Item1 == null ? "-" : templates [(int)t.Item1].ResSeq.ToString (), 
+					t.Item1 == null ? "-" : templates [(int)t.Item1].ChainId.ToString (), 
+					t.Item1 == null ? "-" : templates [(int)t.Item1].SeqNumber.ToString (), 
 					t.Item1 == null ? "-" : templates [(int)t.Item1].ShortName.ToString (), 
 					t.Item3.ToString ("0.000"),
 					t.Item2 == null ? "-" : candidates [(int)t.Item2].ShortName.ToString (),
-					t.Item2 == null ? "-" : candidates [(int)t.Item2].ResSeq.ToString (),
-					t.Item2 == null ? "-" : candidates [(int)t.Item2].ChainID.ToString ()
+					t.Item2 == null ? "-" : candidates [(int)t.Item2].SeqNumber.ToString (),
+					t.Item2 == null ? "-" : candidates [(int)t.Item2].ChainId.ToString ()
 				}).ToList ();
 				w.WriteLine ("#chain1\tresi1\tresn1\tscore\tresn2\tresi2\tchain2");
 				Lib.WriteCSV (w, alignmentTable, '\t');
@@ -1620,7 +1620,7 @@ namespace protein
 		}
 
 		public static List<String> GetSequences(Chain ch, IEnumerable<SSE> sses){
-			if (sses.Any (sse => sse.ChainID != ch.ID))
+			if (sses.Any (sse => sse.ChainID != ch.Id))
 				throw new Exception ("Some SSEs belong to another chain");
 			return ch.GetResidues (sses.Select (s => new Tuple<int,int> (s.Start, s.End)))
 				.Select (s => String.Concat (s.Select (r => r.ShortName))).ToList ();

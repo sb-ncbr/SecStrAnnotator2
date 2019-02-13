@@ -15,18 +15,20 @@ namespace Cif.Components
         }
 
         // own properties
-        public int ResSeq => Model.Residues.SeqNumber[ResidueIndex];
-        public string Name => Model.Residues.Compound[ResidueIndex];
+        public int SeqNumber => Model.Residues.SeqNumber[ResidueIndex];
+        public string Compound => Model.Residues.Compound[ResidueIndex];
 
         // indirect properties
-        public string ChainID => Model.Chains.Id[Model.Residues.ChainIndex[ResidueIndex]];
+        public string ChainId => Model.Chains.Id[Model.Residues.ChainIndex[ResidueIndex]];
+        public string ChainAuthId => Model.Chains.AuthId[Model.Residues.ChainIndex[ResidueIndex]];
+        public string EntityId => Model.Entities.Id[Model.Residues.EntityIndex[ResidueIndex]];
 
 		public override string ToString() => ToString(true);
 		public string ToString(bool shortString){
 			if (shortString) {
-				return $"{this.ResSeq} {this.Name}";
+				return $"{this.SeqNumber} {this.Compound}";
 			} else {
-				return $"Residue {this.ChainID} {this.ResSeq} {this.Name}";
+				return $"Residue {this.ChainId} {this.SeqNumber} {this.Compound}";
 			}
 		}
 
@@ -78,7 +80,7 @@ namespace Cif.Components
 			{ "SER",'S' }, { "THR",'T' }, { "SEC",'U' }, { "VAL",'V' }, { "TRP",'W' }, { "TYR",'Y' }
 		};
 		public const char UNKNOWN_RESIDUE_1_LETTER = '?';
-        public char ShortName => namesLongToShort.GetValueOrDefault(this.Name, UNKNOWN_RESIDUE_1_LETTER);
+        public char ShortName => namesLongToShort.GetValueOrDefault(this.Compound, UNKNOWN_RESIDUE_1_LETTER);
 
     }
 }

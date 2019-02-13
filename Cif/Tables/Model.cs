@@ -57,16 +57,24 @@ namespace /*SecStrAnnot2.*/Cif.Tables
 
         ///<summary> Not to be called directly! Use ModelBuilder.GetModel() or similar.</summary>
         internal Model(int modelNumber, 
-                       int[] atomStartsOfResidues, int[] residueStartsOfFragments, int[] fragmentStartsOfChains, int[] chainStartsOfEntities,
+                       int[] atomStartsOfResidues, int[] residueStartsOfChains, int[] chainStartsOfEntities,
                        string[] entityId, 
                        string[] chainId, string[] chainAuthId, 
                        int[] residueSeqNumber, string[] residueCompound,
                        string[] atomId, AtomInfo[] atomInfo){
             this.ModelNumber = modelNumber;
 
+            // get fragments
+            int[] fragmentStartsOfChains;
+            int[] residueStartsOfFragments;
+            GetFragmentsAndResidues(residueSeqNumber, residueStartsOfChains, out fragmentStartsOfChains, out residueStartsOfFragments);
+            Console.WriteLine("SeqNumbers: " + string.Join(" ", residueSeqNumber));
+            Console.WriteLine("ResOfChains: " + string.Join(" ", residueStartsOfChains));
+            Console.WriteLine("FragOfChains: " + string.Join(" ", fragmentStartsOfChains));
+            Console.WriteLine("ResOfFrags: " + string.Join(" ", residueStartsOfFragments));
+
             // remaining combinations
             int[] fragmentStartsOfEntities = GetSelectedElements(fragmentStartsOfChains, chainStartsOfEntities, false);
-            int[] residueStartsOfChains = GetSelectedElements(residueStartsOfFragments, fragmentStartsOfChains, false);
             int[] residueStartsOfEntities = GetSelectedElements(residueStartsOfFragments, fragmentStartsOfEntities, false);
             int[] atomStartsOfFragments = GetSelectedElements(atomStartsOfResidues, residueStartsOfFragments, false);
             int[] atomStartsOfChains = GetSelectedElements(atomStartsOfResidues, residueStartsOfChains, false);
@@ -137,6 +145,33 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             residueStartsOfFragments = Lib.AppendAndCopyToArray(resOfFragList, iResidue); // resOfFragList.Append(iResidue).ToArray();
             atomStartsOfResidues = Lib.AppendAndCopyToArray(atomOfResList, atomStartsOfChains[nChains]); // atomOfResList.Append(atomStartsOfChains[nChains]).ToArray();
             residueNumbersOfResidues = atomOfResList.Select(a => residueNumbers[a]).ToArray();
+        }
+
+        private static void GetFragmentsAndResidues(
+            int[] residueSeqNumbers,
+            int[] residueStartsOfChains, 
+            out int[] fragmentStartsOfChains,
+            out int[] residueStartsOfFragments)
+        {
+            int nChains = residueStartsOfChains.Length - 1; // the last is sentinel
+            List<int> fragOfChainList = new List<int>();
+            List<int> resOfFragList = new List<int>();
+            int iResidue = 0;
+            for (int iChain = 0; iChain < nChains; iChain++) {
+                int startResidue = residueStartsOfChains[iChain];
+                int endResidue = residueStartsOfChains[iChain+1];
+                // new fragment, new chain   
+                fragOfChainList.Add(resOfFragList.Count);
+                resOfFragList.Add(iResidue);   
+                for (iResidue = startResidue + 1; iResidue < endResidue; iResidue++) {
+                    if (residueSeqNumbers[iResidue] != residueSeqNumbers[iResidue-1] + 1) {
+                        // new fragment
+                        resOfFragList.Add(iResidue);
+                    }
+                }
+            }
+            fragmentStartsOfChains = Lib.AppendAndCopyToArray(fragOfChainList, resOfFragList.Count); // fragOfChainList.Append(iFragment).ToArray();
+            residueStartsOfFragments = Lib.AppendAndCopyToArray(resOfFragList, residueSeqNumbers.Length); // resOfFragList.Append(iResidue).ToArray();
         }
 
         internal static int[] GetSelectedElements(int[] elements, int[] indices, bool ignoreLastIndex) {

@@ -14,7 +14,7 @@ namespace Cif.Components
         }
 
         // own properties
-        public string Serial => Model.Atoms.Id[AtomIndex];
+        public string Id => Model.Atoms.Id[AtomIndex];
         public string Name => Model.Atoms.Name[AtomIndex];
         public string Element => Model.Atoms.Element[AtomIndex];
         public bool IsHetatm => Model.Atoms.IsHetatm[AtomIndex];        
@@ -24,28 +24,31 @@ namespace Cif.Components
         public double Z => Model.Atoms.Z[AtomIndex];
 
         // indirect properties
-        public int ResSeq => Model.Residues.SeqNumber[Model.Atoms.ResidueIndex[AtomIndex]];
-        public string ResName => Model.Residues.Compound[Model.Atoms.ResidueIndex[AtomIndex]];
-        public string ChainID => Model.Chains.Id[Model.Atoms.ChainIndex[AtomIndex]];
+        public int ResidueSeqNumber => Model.Residues.SeqNumber[Model.Atoms.ResidueIndex[AtomIndex]];
+        public string ResidueCompound => Model.Residues.Compound[Model.Atoms.ResidueIndex[AtomIndex]];
+        public string ChainId => Model.Chains.Id[Model.Atoms.ChainIndex[AtomIndex]];
+        public string ChainAuthId => Model.Chains.Id[Model.Atoms.ChainIndex[AtomIndex]];
+        public string EntityId => Model.Entities.Id[Model.Atoms.EntityIndex[AtomIndex]];
 
 
         public protein.Vector Position() => new protein.Vector (X, Y, Z);
+        public AtomInfo AtomInfo() => new AtomInfo(Name, Element, AltLoc, IsHetatm, X, Y, Z);
         
         static readonly CultureInfo CULTURE_INFO = new CultureInfo("en-US");
         public override string ToString()
         {
 			return (IsHetatm?"HETATM":"ATOM  ")
-                + Serial.ToString().PadLeft(5)
+                + Id.ToString().PadLeft(5)
                 + " "
                 + Name.PadRight(4)
                 + " "
                 + AltLoc
                 + " "
-                + ResName
+                + ResidueCompound
                 + " "
-                + ChainID
+                + ChainId
                 + " "
-                + ResSeq.ToString().PadLeft(4)
+                + ResidueSeqNumber.ToString().PadLeft(4)
                 + "  "
                 + X.ToString("0.000", CULTURE_INFO).PadLeft(8)
                 + Y.ToString("0.000", CULTURE_INFO).PadLeft(8)

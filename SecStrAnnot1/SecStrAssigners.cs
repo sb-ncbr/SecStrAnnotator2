@@ -194,8 +194,8 @@ namespace protein
 							maxRmsd = Math.Max (maxRmsd, rmsd);
 						} else {
 							//finish helix
-							if (residues [end].ResSeq - residues [start].ResSeq + 1 >= minimumSSELength)
-								result.Add (new SSE ("_", Chain.ID, residues [start].ResSeq, residues [end].ResSeq, helixType,null));
+							if (residues [end].SeqNumber - residues [start].SeqNumber + 1 >= minimumSSELength)
+								result.Add (new SSE ("_", Chain.Id, residues [start].SeqNumber, residues [end].SeqNumber, helixType,null));
 							makingHelix = false;
 						}
 					} else if (makingSheet) {
@@ -206,8 +206,8 @@ namespace protein
 						} else {
 							//finish sheet
 							//Console.WriteLine ("Ending sheet at {0}", residues [i + lastAssignedInQuad].ResSeq);
-							if (residues [end].ResSeq - residues [start].ResSeq + 1 >= minimumSSELength)
-								result.Add (new SSE ("_", Chain.ID, residues [start].ResSeq, residues [end].ResSeq, sheetType,null));
+							if (residues [end].SeqNumber - residues [start].SeqNumber + 1 >= minimumSSELength)
+								result.Add (new SSE ("_", Chain.Id, residues [start].SeqNumber, residues [end].SeqNumber, sheetType,null));
 							makingSheet = false;
 						}
 					} 
@@ -231,14 +231,14 @@ namespace protein
 				}
 				if (makingHelix) {
 					//finish helix
-					if (residues [end].ResSeq - residues [start].ResSeq + 1 >= minimumSSELength)
-						result.Add (new SSE ("_", Chain.ID, residues [start].ResSeq, residues [end].ResSeq, helixType,null));
+					if (residues [end].SeqNumber - residues [start].SeqNumber + 1 >= minimumSSELength)
+						result.Add (new SSE ("_", Chain.Id, residues [start].SeqNumber, residues [end].SeqNumber, helixType,null));
 					makingHelix = false;
 				}
 				if (makingSheet){
 					//finish sheet
-					if (residues [end].ResSeq - residues [start].ResSeq + 1 >= minimumSSELength)
-						result.Add (new SSE ("_", Chain.ID, residues [start].ResSeq, residues [end].ResSeq, sheetType,null));
+					if (residues [end].SeqNumber - residues [start].SeqNumber + 1 >= minimumSSELength)
+						result.Add (new SSE ("_", Chain.Id, residues [start].SeqNumber, residues [end].SeqNumber, sheetType,null));
 					makingSheet = false;
 				}
 
@@ -252,8 +252,8 @@ namespace protein
 
 					List<int> deletedSheetsByStart = new List<int> ();
 					for (int i = sheets.Count - 1; i >= 0; i--) {
-						int firstResSeq = sheets [i] [0].ResSeq;
-						int lastResSeq = sheets [i] [sheets [i].Count - 1].ResSeq;
+						int firstResSeq = sheets [i] [0].SeqNumber;
+						int lastResSeq = sheets [i] [sheets [i].Count - 1].SeqNumber;
 
 						// Version without shortening sheets
 						/*var atomsNHere = sheets [i].SelectMany (r => r.GetAtoms ().Where (a => a.Name == " N  "));
@@ -268,13 +268,13 @@ namespace protein
 
 						// Version with shortening sheets
 						List<int> hbN = sheets [i].Where (r => r.GetNAmides().Any (a1 => atomsO.Any (a2 => 
-							!(a2.ResSeq >= firstResSeq && a2.ResSeq <= lastResSeq)
-							&& (Math.Abs (a2.ResSeq - a1.ResSeq) > minResiduesBetweenHydrogenBond)
-							&& LibProtein.Distance (a1, a2) <= maxDistanceForHydrogenBond))).Select (r => r.ResSeq).ToList ();
+							!(a2.ResidueSeqNumber >= firstResSeq && a2.ResidueSeqNumber <= lastResSeq)
+							&& (Math.Abs (a2.ResidueSeqNumber - a1.ResidueSeqNumber) > minResiduesBetweenHydrogenBond)
+							&& LibProtein.Distance (a1, a2) <= maxDistanceForHydrogenBond))).Select (r => r.SeqNumber).ToList ();
 						List<int> hbO = sheets [i].Where (r => r.GetOCarbs().Any (a1 => atomsN.Any (a2 => 
-							!(a2.ResSeq >= firstResSeq && a2.ResSeq <= lastResSeq)
-							&& (Math.Abs (a2.ResSeq - a1.ResSeq) > minResiduesBetweenHydrogenBond)
-							&& LibProtein.Distance (a1, a2) <= maxDistanceForHydrogenBond))).Select (r => r.ResSeq).ToList ();
+							!(a2.ResidueSeqNumber >= firstResSeq && a2.ResidueSeqNumber <= lastResSeq)
+							&& (Math.Abs (a2.ResidueSeqNumber - a1.ResidueSeqNumber) > minResiduesBetweenHydrogenBond)
+							&& LibProtein.Distance (a1, a2) <= maxDistanceForHydrogenBond))).Select (r => r.SeqNumber).ToList ();
 						List<int> hb = hbN.Union (hbO).ToList ();
 						if (hb.Count == 0) {
 							result.RemoveAll (sse => sse.Start == firstResSeq);
@@ -330,7 +330,7 @@ namespace protein
 
 			public GeomDsspSecStrAssigner(IEnumerable<Chain> chains, double rmsdLimit, String dsspExecutable, String PDBFile, String DSSPFile, char[] acceptedSSETypes){
 				this.HelixAssigner = new GeomSecStrAssigner(chains, rmsdLimit, acceptedSSETypes.Intersect (SSE.ALL_HELIX_TYPES).ToArray ());
-				this.SheetAssigner = new DsspSecStrAssigner(dsspExecutable, PDBFile, DSSPFile, chains.Select (c=>c.ID), acceptedSSETypes.Intersect (SSE.ALL_SHEET_TYPES).ToArray ());
+				this.SheetAssigner = new DsspSecStrAssigner(dsspExecutable, PDBFile, DSSPFile, chains.Select (c=>c.Id), acceptedSSETypes.Intersect (SSE.ALL_SHEET_TYPES).ToArray ());
 			}
 
 			public SecStrAssignment GetSecStrAssignment(){
@@ -612,7 +612,7 @@ namespace protein
 			public bool IsHBond(int donor, int acceptor){
 				if (donor < 0 || acceptor < 0)
 					return false;
-				if (residues [donor].ChainID == residues [acceptor].ChainID && Math.Abs (residues [donor].ResSeq - residues [acceptor].ResSeq) <= 1) {
+				if (residues [donor].ChainId == residues [acceptor].ChainId && Math.Abs (residues [donor].SeqNumber - residues [acceptor].SeqNumber) <= 1) {
 					return false;
 				}
 				try {
@@ -899,7 +899,7 @@ namespace protein
 			private String Ladder2String(BetaLadder ladder){
 				char fd = ladder.FirstHBondDirection == BetaLadder.HBondDirection.From0To1 ? 'v' : '^';
 				char ld = ladder.LastHBondDirection == BetaLadder.HBondDirection.From0To1 ? 'v' : '^';
-				return String.Format ("[{0} {1}-{2} : {3} {4}-{5} {6}{7}]", residues [ladder.Start0].ChainID, residues [ladder.Start0].ResSeq, residues [ladder.End0].ResSeq, residues [ladder.Start1].ChainID, residues [ladder.Start1].ResSeq, residues [ladder.End1].ResSeq,fd,ld);
+				return String.Format ("[{0} {1}-{2} : {3} {4}-{5} {6}{7}]", residues [ladder.Start0].ChainId, residues [ladder.Start0].SeqNumber, residues [ladder.End0].SeqNumber, residues [ladder.Start1].ChainId, residues [ladder.Start1].SeqNumber, residues [ladder.End1].SeqNumber,fd,ld);
 			}
 
 			private int Residue2After(int i){
@@ -914,7 +914,7 @@ namespace protein
 				if (x < 0)
 					return ResidueXBefore (resIndex, -x);
 				for (int i = x; i >= 0; i--) {
-					if (resIndex + i < residues.Count && residues [resIndex + i].ChainID == residues [resIndex].ChainID && residues [resIndex + i].ResSeq == residues [resIndex].ResSeq + x)
+					if (resIndex + i < residues.Count && residues [resIndex + i].ChainId == residues [resIndex].ChainId && residues [resIndex + i].SeqNumber == residues [resIndex].SeqNumber + x)
 						return resIndex + i;
 				}
 				return -1; //does not exist
@@ -924,7 +924,7 @@ namespace protein
 				if (x < 0)
 					return ResidueXAfter (resIndex, -x);
 				for (int i = x; i >= 0; i--) {
-					if (resIndex - i >=0 && residues [resIndex - i].ChainID == residues [resIndex].ChainID && residues [resIndex - i].ResSeq == residues [resIndex].ResSeq - x)
+					if (resIndex - i >=0 && residues [resIndex - i].ChainId == residues [resIndex].ChainId && residues [resIndex - i].SeqNumber == residues [resIndex].SeqNumber - x)
 						return resIndex - i;
 				}
 				return -1; //does not exist
@@ -1056,7 +1056,7 @@ namespace protein
 			}
 			/* Tries to build a beta-bulge so than the la.Strand0 and lb.Strand0 form the SHORT side of the bulge. */
 			private BetaBulge BuildBetaBulgeWithFirstLadderFirst(BetaLadder la,BetaLadder lb){
-				if (residues [la.Start1].ChainID == residues [lb.Start1].ChainID) {
+				if (residues [la.Start1].ChainId == residues [lb.Start1].ChainId) {
 					if (la.Type == BetaLadder.LadderType.Antiparallel && lb.Type == BetaLadder.LadderType.Antiparallel) {
 						//Antiparallel types
 						if (lb.Start0 == la.End0 && la.Start1 == ResidueXAfter (lb.End1, 1)) {
@@ -1224,9 +1224,9 @@ namespace protein
 			}
 
 			private SSE GetStrand0(BetaLadder ladder){
-				string chainId = residues [ladder.Start0].ChainID;
-				int start = residues [ladder.Start0].ResSeq;
-				int end = residues [ladder.End0].ResSeq;
+				string chainId = residues [ladder.Start0].ChainId;
+				int start = residues [ladder.Start0].SeqNumber;
+				int end = residues [ladder.End0].SeqNumber;
 				if (STRANDS_BY_ALPHA) {
 					if (ladder.FirstHBondDirection == BetaLadder.HBondDirection.From1To0)
 						start++;
@@ -1237,9 +1237,9 @@ namespace protein
 			}
 
 			private SSE GetStrand1(BetaLadder ladder){
-				string chainId = residues [ladder.Start1].ChainID;
-				int start = residues [ladder.Start1].ResSeq;
-				int end = residues [ladder.End1].ResSeq;
+				string chainId = residues [ladder.Start1].ChainId;
+				int start = residues [ladder.Start1].SeqNumber;
+				int end = residues [ladder.End1].SeqNumber;
 				if (STRANDS_BY_ALPHA) {
 					if (ladder.Type == BetaLadder.LadderType.Antiparallel) {
 						if (ladder.FirstHBondDirection == BetaLadder.HBondDirection.From1To0)
@@ -1263,25 +1263,25 @@ namespace protein
 				} else {
 					switch (bulge.Type) {
 					case BetaBulge.BulgeType.Classic:
-						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_CLASSIC_SHORT_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_CLASSIC_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Wide:
-						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_WIDE_SHORT_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_WIDE_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel22:
-						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_ANTIPARALLEL22_SHORT_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL22_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel33:
-						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_ANTIPARALLEL33_SHORT_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL33_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel15:
-						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_ANTIPARALLEL15_SHORT_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL15_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel23:
-						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_ANTIPARALLEL23_SHORT_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL23_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Parallel14:
-						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_PARALLEL14_SHORT_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL14_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Parallel32:
-						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_PARALLEL32_SHORT_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL32_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Parallel13:
-						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_PARALLEL13_SHORT_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL13_SHORT_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Parallel33:
-						return new SSE (null, residues [bulge.StartShort].ChainID, residues [bulge.StartShort].ResSeq, residues [bulge.EndShort].ResSeq, SSE.BULGE_PARALLEL33_SHORT_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL33_SHORT_SIDE_TYPE, null);
 					default:
 						throw new NotImplementedException ();
 					}
@@ -1294,25 +1294,25 @@ namespace protein
 				} else {
 					switch (bulge.Type) {
 					case BetaBulge.BulgeType.Classic:
-						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_CLASSIC_LONG_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_CLASSIC_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Wide:
-						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_WIDE_LONG_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_WIDE_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel22:
-						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_ANTIPARALLEL22_LONG_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL22_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel33:
-						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_ANTIPARALLEL33_LONG_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL33_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel15:
-						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_ANTIPARALLEL15_LONG_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL15_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Antiparallel23:
-						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_ANTIPARALLEL23_LONG_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL23_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Parallel14:
-						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_PARALLEL14_LONG_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL14_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Parallel32:
-						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_PARALLEL32_LONG_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL32_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Parallel13:
-						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_PARALLEL13_LONG_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL13_LONG_SIDE_TYPE, null);
 					case BetaBulge.BulgeType.Parallel33:
-						return new SSE (null, residues [bulge.StartLong].ChainID, residues [bulge.StartLong].ResSeq, residues [bulge.EndLong].ResSeq, SSE.BULGE_PARALLEL33_LONG_SIDE_TYPE, null);
+						return new SSE (null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL33_LONG_SIDE_TYPE, null);
 					default:
 						throw new NotImplementedException ();
 					}
@@ -1322,7 +1322,7 @@ namespace protein
 			private char LadderSSEType(BetaLadder ladder){
 				if (ladder.Start0 == ladder.Start1) {
 					// C7 motif
-					if (residues [ladder.End0].ResSeq - residues [ladder.Start0].ResSeq != 2)
+					if (residues [ladder.End0].SeqNumber - residues [ladder.Start0].SeqNumber != 2)
 						throw new  SecStrAssignmentException ("C7 turn with more than 1 stabilizing H-bond.");
 					else
 						return SSE.TURN_C7_TYPE;
@@ -1373,9 +1373,9 @@ namespace protein
 						//finish or reject helix
 						if (i - currentStart >= MIN_HBONDS_PER_HELIX) {
 							helices.Add (new SSE (null, 
-								residues [currentStart].ChainID, 
-								residues [currentStart].ResSeq + (HELICES_BY_ALPHA ? 1 : 0), 
-								residues [currentEnd].ResSeq - (HELICES_BY_ALPHA ? 1 : 0), 
+								residues [currentStart].ChainId, 
+								residues [currentStart].SeqNumber + (HELICES_BY_ALPHA ? 1 : 0), 
+								residues [currentEnd].SeqNumber - (HELICES_BY_ALPHA ? 1 : 0), 
 								assignedType, null));
 						}
 						currentStart = -1;
@@ -1446,7 +1446,7 @@ namespace protein
 
 				foreach (BetaLadder l in ladders)
 					if (l.Start0 == l.Start1 && (l.End0 - l.Start0) > 2)
-						Lib.WriteWarning ("Strange secondary structure in chain {0} {1}-{2}.", residues [l.Start0].ChainID, residues [l.Start0].ResSeq, residues [l.End0].ResSeq);
+						Lib.WriteWarning ("Strange secondary structure in chain {0} {1}-{2}.", residues [l.Start0].ChainId, residues [l.Start0].SeqNumber, residues [l.End0].SeqNumber);
 
 				List<SSE> c7Turns = ladders
 					.Where (l => l.Start0 == l.Start1)

@@ -661,7 +661,7 @@ namespace protein
 								LibAnnotation.CheckGeometryOf1Unit (residues.GetRange (i, 5), '5', rmsdLimit, out rmsdH5);
 								LibAnnotation.CheckGeometryOf1Unit (residues.GetRange (i, 6), '6', rmsdLimit, out rmsdH6);
 								//wRMSD.WriteLine ("{0}\t{1}\t{2}", residues [i].ResSeq, rmsdH.ToString ("0.000"), rmsdE.ToString ("0.000"));
-								wRMSD.WriteLine ("{0}\t{1}\t{2}\t{3}\t{4}", residues [i].ResSeq, rmsdH.ToString ("0.000"), rmsdH5.ToString ("0.000"), rmsdH6.ToString ("0.000"), rmsdE.ToString ("0.000"));
+								wRMSD.WriteLine ("{0}\t{1}\t{2}\t{3}\t{4}", residues [i].SeqNumber, rmsdH.ToString ("0.000"), rmsdH5.ToString ("0.000"), rmsdH6.ToString ("0.000"), rmsdE.ToString ("0.000"));
 							}
 							wRMSD.Close ();
 
