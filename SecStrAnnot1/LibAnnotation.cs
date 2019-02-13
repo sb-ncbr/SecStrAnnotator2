@@ -1548,7 +1548,7 @@ namespace protein
 
 			if (Lib.DoWriteDebug) {
 				throw new NotImplementedException();
-				//TODO implement this somehow
+				//TODO implement this somehow!
 				// new Protein (tVectors.Select ((v, i) => new Atom (i, Atom.NAME_C_ALPHA, ' ', "ALA", "X", i, ' ', v.X, v.Y, v.Z, 1, 1, "C", Atom.CHARGE_ZERO, false)))
 				// 	.Save (Path.Combine (MainClass.Directory, "template-smooth.pdb"));
 			}

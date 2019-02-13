@@ -10,6 +10,7 @@ namespace SecStrAnnot2
     class Program
     {
         static int Main(string[] args) {
+            // ModelBuilder.Test();
             return protein.MainClass.Main_SecStrAnnot1(args);
 
             // return TestingMain(args);
