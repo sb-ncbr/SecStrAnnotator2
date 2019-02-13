@@ -57,5 +57,8 @@ namespace Cif.Components
             return GetAtomIndices().Select(ai => new Atom(model, ai));
         }
 
+        public override string ToString(){
+            return $"Chain {ID}";
+        }
     }
 }

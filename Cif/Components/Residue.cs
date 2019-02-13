@@ -24,9 +24,9 @@ namespace Cif.Components
 		public override string ToString() => ToString(true);
 		public string ToString(bool shortString){
 			if (shortString) {
-				return this.ResSeq + this.Name;
+				return $"{this.ResSeq} {this.Name}";
 			} else {
-				return "Residue " + this.ChainID + " " + this.ResSeq + " " + this.Name;
+				return $"Residue {this.ChainID} {this.ResSeq} {this.Name}";
 			}
 		}
 

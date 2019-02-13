@@ -126,7 +126,7 @@ namespace Cif.Tables
             }
         }
 
-        public class AtomTab {
+        private class AtomTab {
             public int count = 0;
             // down
             // up
@@ -136,13 +136,14 @@ namespace Cif.Tables
             public List<int> entityIndex = new List<int>();
             // own properties
             public List<string> Id = new List<string>();
-            public List<string> Name = new List<string>();
-            public List<string> Element = new List<string>();
-            public List<string> AltLoc = new List<string>();
-            public List<bool> IsHetatm = new List<bool>();
-            public List<double> X = new List<double>();
-            public List<double> Y = new List<double>();
-            public List<double> Z = new List<double>();
+            public List<AtomInfo> Info = new List<AtomInfo>();
+            // public List<string> Name = new List<string>();
+            // public List<string> Element = new List<string>();
+            // public List<string> AltLoc = new List<string>();
+            // public List<bool> IsHetatm = new List<bool>();
+            // public List<double> X = new List<double>();
+            // public List<double> Y = new List<double>();
+            // public List<double> Z = new List<double>();
 
             public void AddRow(int entity, int chain, int fragment, int residue, string id, AtomInfo info){
                 //add row
@@ -152,36 +153,25 @@ namespace Cif.Tables
                 chainIndex.Add(chain);
                 entityIndex.Add(entity);
                 Id.Add(id);
-                Name.Add(info.Name);
-                Element.Add(info.Element);
-                AltLoc.Add(info.AltLoc);
-                IsHetatm.Add(info.IsHetatm);
-                X.Add(info.X);
-                Y.Add(info.Y);
-                Z.Add(info.Z);
+                Info.Add(info);
             }
+            // public void AddRow(int entity, int chain, int fragment, int residue, string id, AtomInfo info){
+            //     //add row
+            //     count++;
+            //     residueIndex.Add(residue);
+            //     fragmentIndex.Add(fragment);
+            //     chainIndex.Add(chain);
+            //     entityIndex.Add(entity);
+            //     Id.Add(id);
+            //     Name.Add(info.Name);
+            //     Element.Add(info.Element);
+            //     AltLoc.Add(info.AltLoc);
+            //     IsHetatm.Add(info.IsHetatm);
+            //     X.Add(info.X);
+            //     Y.Add(info.Y);
+            //     Z.Add(info.Z);
+            // }
         }
-
-        public struct AtomInfo {
-            public string Name;
-            public string Element;
-            public string AltLoc;
-            public bool IsHetatm;
-            public double X;
-            public double Y;
-            public double Z;
-
-            public AtomInfo(string name, string element, string altLoc, bool isHetatm, double x, double y, double z){
-                Name = name;
-                Element = element;
-                AltLoc = altLoc;
-                IsHetatm = isHetatm;
-                X = x;
-                Y = y;
-                Z = z;
-            }
-        }
-
 
         private EntityTab entities;
         private ChainTab chains;
@@ -210,6 +200,7 @@ namespace Cif.Tables
         public void StartChain(string id, string authId){
             chains.AddRow(entities.count-1, fragments.count, residues.count, atoms.count, id, authId);
             StartFragment();
+            // StartResidue();
         }
         public void StartChain(){
             string id = chains.count == 0 ? DEFAULT_CHAIN_ID : SuccessorIdentifier(chains.Id[chains.count-1]);
@@ -237,6 +228,32 @@ namespace Cif.Tables
             AddAtom(id, atomInfo);
         }
 
+        public Model GetModel() => GetModel(Model.DEFAULT_MODEL_NUM);
+        public Model GetModel(int modelNumber){
+
+            // count valid residues, fragments..., i.e. those which contain at least one atom, residue...
+            bool lastResidueEmpty = atoms.count == residues.atomStartIndex[residues.count-1];
+            int validResidues = lastResidueEmpty ? residues.count-1 : residues.count;
+            bool lastFragmentEmpty = validResidues == fragments.residueStartIndex[fragments.count-1];
+            int validFragments = lastFragmentEmpty ? fragments.count-1 : fragments.count;
+            bool lastChainEmpty = validFragments == chains.fragmentStartIndex[chains.count-1];
+            int validChains = lastChainEmpty ? chains.count-1 : chains.count;
+            bool lastEntityEmpty = validChains == entities.chainStartIndex[entities.count-1];
+            int validEntities = lastEntityEmpty ? entities.count-1 : entities.count;
+            
+            return new Model(modelNumber, 
+                             residues.atomStartIndex.Take(validResidues).Append(atoms.count).ToArray(), 
+                             fragments.residueStartIndex.Take(validFragments).Append(validResidues).ToArray(), 
+                             chains.fragmentStartIndex.Take(validChains).Append(validFragments).ToArray(), 
+                             entities.chainStartIndex.Take(validEntities).Append(validChains).ToArray(),
+                             entities.Id.Take(validEntities).ToArray(),
+                             chains.Id.Take(validChains).ToArray(), chains.AuthId.Take(validChains).ToArray(),
+                             residues.SeqNumber.Take(validResidues).ToArray(), residues.Compound.Take(validResidues).ToArray(),
+                             atoms.Id.ToArray(), atoms.Info.ToArray()
+                             );
+        }
+
+
         /** Divides a string into a prefix and number, e.g. "ABC" => ("ABC",0), "OMG123" => ("OMG",123), "123" => ("",123) */
         private static (string, int) PrefixAndNumber(string str){
             string prefix = str;
@@ -263,37 +280,50 @@ namespace Cif.Tables
         public static void Test(){
             ModelBuilder b = new ModelBuilder();
             b.StartChain("A", "A");
+            b.StartChain("C", "E");
             b.AddAtom(new AtomInfo("CA","C",".",false,0,1,2));
-            b.StartChain("B", "B");
+            b.StartChain();
             b.StartResidue();
             b.AddAtom(new AtomInfo("N","N",".",false,0,1,2));
             b.StartResidue();
             b.AddAtom(new AtomInfo("O","O",".",false,0,1,2));
-            b.StartEntity();            
+            b.AddAtom(new AtomInfo("C","C",".",false,0,1,2));
+                    
+            Cif.Components.Protein p = new Cif.Components.Protein(b.GetModel());
 
-            Console.WriteLine("Entities");
-            Console.WriteLine(string.Join("  ", b.entities.Id));
-            Console.WriteLine(string.Join("  ", b.entities.atomStartIndex));
+            Console.WriteLine(p.ToLongString());
+            // foreach (var chain in p.GetChains()) {
+            //     Console.WriteLine($"{chain}");
+            //     foreach (var residue in chain.GetResidues()) {
+            //         Console.WriteLine($"    {residue}");
+            //         foreach (var atom in residue.GetAtoms()) {
+            //             Console.WriteLine($"        {atom}");
+            //         }
+            //     }
+            // }
+            // Console.WriteLine("Entities");
+            // Console.WriteLine(string.Join("  ", b.entities.Id));
+            // Console.WriteLine(string.Join("  ", b.entities.atomStartIndex));
 
-            Console.WriteLine("Chains");
-            Console.WriteLine(string.Join("  ", b.chains.Id));
-            Console.WriteLine(string.Join("  ", b.chains.atomStartIndex));
+            // Console.WriteLine("Chains");
+            // Console.WriteLine(string.Join("  ", b.chains.Id));
+            // Console.WriteLine(string.Join("  ", b.chains.atomStartIndex));
 
-            Console.WriteLine("Fragments");
-            Console.WriteLine(string.Join("  ", b.fragments.atomStartIndex));
+            // Console.WriteLine("Fragments");
+            // Console.WriteLine(string.Join("  ", b.fragments.atomStartIndex));
 
-            Console.WriteLine("Residues");
-            Console.WriteLine(string.Join("  ", b.residues.SeqNumber));
-            Console.WriteLine(string.Join("  ", b.residues.Compound));
-            Console.WriteLine(string.Join("  ", b.residues.atomStartIndex));
+            // Console.WriteLine("Residues");
+            // Console.WriteLine(string.Join("  ", b.residues.SeqNumber));
+            // Console.WriteLine(string.Join("  ", b.residues.Compound));
+            // Console.WriteLine(string.Join("  ", b.residues.atomStartIndex));
 
-            Console.WriteLine("Atoms");
-            Console.WriteLine(string.Join("  ", b.atoms.Id));
-            Console.WriteLine(string.Join("  ", b.atoms.Name)); 
-            Console.WriteLine(string.Join("  ", b.atoms.residueIndex)); 
-            Console.WriteLine(string.Join("  ", b.atoms.fragmentIndex)); 
-            Console.WriteLine(string.Join("  ", b.atoms.chainIndex)); 
-            Console.WriteLine(string.Join("  ", b.atoms.entityIndex)); 
+            // Console.WriteLine("Atoms");
+            // Console.WriteLine(string.Join("  ", b.atoms.Id));
+            // Console.WriteLine(string.Join("  ", b.atoms.Info)); 
+            // Console.WriteLine(string.Join("  ", b.atoms.residueIndex)); 
+            // Console.WriteLine(string.Join("  ", b.atoms.fragmentIndex)); 
+            // Console.WriteLine(string.Join("  ", b.atoms.chainIndex)); 
+            // Console.WriteLine(string.Join("  ", b.atoms.entityIndex)); 
         }
     }
 }

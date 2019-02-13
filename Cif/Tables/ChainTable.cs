@@ -59,5 +59,28 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             FragmentStartIndex = new ArraySegment<int>(fragmentStartIndex, 0, Count);
             FragmentEndIndex = new ArraySegment<int>(fragmentStartIndex, 1, Count);
         }
+
+        ///<summary> Not to be called directly! Use Model.Chains.</summary>
+        internal ChainTable(Model model, int[] atomStartsOfChains, int[] residueStartsOfChains, int[] fragmentStartsOfChains, int[] chainStartsOfEntities,
+                            string[] id, string[] authId) {
+            this.Count = atomStartsOfChains.Length - 1;
+            // down
+            this.atomStartIndex = atomStartsOfChains;
+            this.residueStartIndex = residueStartsOfChains;
+            this.fragmentStartIndex = fragmentStartsOfChains;
+            // up
+            this.EntityIndex = Model.GetUpRefs(chainStartsOfEntities);
+            this.model = model;
+            // own properties
+            this.Id = id;
+            this.AuthId = authId;
+            // array segments
+            AtomStartIndex = new ArraySegment<int>(atomStartIndex, 0, Count);
+            AtomEndIndex = new ArraySegment<int>(atomStartIndex, 1, Count);
+            ResidueStartIndex = new ArraySegment<int>(residueStartIndex, 0, Count);
+            ResidueEndIndex = new ArraySegment<int>(residueStartIndex, 1, Count);
+            FragmentStartIndex = new ArraySegment<int>(fragmentStartIndex, 0, Count);
+            FragmentEndIndex = new ArraySegment<int>(fragmentStartIndex, 1, Count);
+        }
     }
 }

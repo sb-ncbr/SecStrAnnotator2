@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cif.Tables;
 using Cif.Libraries;
+using System.Text;
 
 namespace Cif.Components
 {
@@ -63,6 +64,21 @@ namespace Cif.Components
 		public Protein KeepOnlyNormalResidues(bool doPrintWarningForHet){
             throw new NotImplementedException();
             //TODO implement this somehow!
+        }
+
+        public string ToLongString() {
+            StringBuilder b = new StringBuilder();
+            b.AppendLine("Protein");
+            foreach (var chain in this.GetChains()) {
+                b.AppendLine($"    {chain}");
+                foreach (var residue in chain.GetResidues()) {
+                    b.AppendLine($"        {residue}");
+                    foreach (var atom in residue.GetAtoms()) {
+                        b.AppendLine($"            {atom}");
+                    }
+                }
+            }
+            return b.ToString();
         }
     }
 }

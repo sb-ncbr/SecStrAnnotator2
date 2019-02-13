@@ -58,10 +58,10 @@ namespace Cif.Libraries
 		}
 
 		/// <summary>
-        /// Gets indices on which the value in the array is greater than the previous value (including index 0).
-        /// </summary>
-        /// <param name="array"> Array of monotonically increasing values.</param>
-        public static List<int> RunStartsInOrderedArray(int[] array) {
+		/// Gets indices on which the value in the array is greater than the previous value (including index 0).
+		/// </summary>
+		/// <param name="array"> Array of monotonically increasing values.</param>
+		public static List<int> RunStartsInOrderedArray(int[] array) {
 			List<int> runStarts = new List<int>();
 			if (array.Length == 0){
 				return runStarts;
@@ -87,5 +87,23 @@ namespace Cif.Libraries
 			}
 		}
 
-    }
+		/// <summary>
+		/// Gets indices on which the value in the array is not equal to the previous value plus one (including index 0).
+		/// </summary>		
+		public static List<int> StartsOfContiguousRegions(int[] array) {
+			List<int> starts = new List<int>();
+			if (array.Length == 0){
+				return starts;
+			} else {
+				starts.Add(0);
+				for (int i = 1; i < array.Length; i++) {
+					if (array[i] != array[i-1] + 1) {
+						starts.Add(i);
+					}
+				}
+				return starts;
+			}
+		}
+
+  }
 }

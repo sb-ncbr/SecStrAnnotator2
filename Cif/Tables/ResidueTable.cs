@@ -37,7 +37,8 @@ namespace /*SecStrAnnot2.*/Cif.Tables
 
 
         ///<summary> Not to be called directly! Use Model.Residues.</summary>
-        internal ResidueTable(Model model, CifCategory category, int[] rows, int[] atomStartsOfResidues, int[] residueStartsOfFragments, int[] residueStartsOfChains, int[] residueStartsOfEntities) {
+        internal ResidueTable(Model model, CifCategory category, int[] rows, 
+                              int[] atomStartsOfResidues, int[] residueStartsOfFragments, int[] residueStartsOfChains, int[] residueStartsOfEntities) {
             this.Count = atomStartsOfResidues.Length - 1;
             // down
             this.atomStartIndex = atomStartsOfResidues;
@@ -49,6 +50,25 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             // own properties
             this.SeqNumber = category[SEQ_NUMBER_COLUMN].GetIntegers(Model.GetSelectedElements(rows, atomStartsOfResidues, true), DEFAULT_RESIDUE_NUMBER);
             this.Compound = category[COMPOUND_COLUMN].GetStrings(Model.GetSelectedElements(rows, atomStartsOfResidues, true));
+            // array segments
+            AtomStartIndex = new ArraySegment<int>(atomStartIndex, 0, Count);
+            AtomEndIndex = new ArraySegment<int>(atomStartIndex, 1, Count);
+        }
+
+        ///<summary> Not to be called directly! Use Model.Residues.</summary>
+        internal ResidueTable(Model model, int[] atomStartsOfResidues, int[] residueStartsOfFragments, int[] residueStartsOfChains, int[] residueStartsOfEntities,
+                              int[] seqNumber, string[] compound){
+            this.Count = atomStartsOfResidues.Length - 1;
+            // down
+            this.atomStartIndex = atomStartsOfResidues;
+            // up
+            this.FragmentIndex = Model.GetUpRefs(residueStartsOfFragments);
+            this.ChainIndex = Model.GetUpRefs(residueStartsOfChains);
+            this.EntityIndex = Model.GetUpRefs(residueStartsOfEntities);
+            this.model = model;
+            // own properties
+            this.SeqNumber = seqNumber;
+            this.Compound = compound;
             // array segments
             AtomStartIndex = new ArraySegment<int>(atomStartIndex, 0, Count);
             AtomEndIndex = new ArraySegment<int>(atomStartIndex, 1, Count);

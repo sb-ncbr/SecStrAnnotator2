@@ -55,6 +55,31 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             this.Atoms = new AtomTable(this, category, rows, atomStartsOfResidues, atomStartsOfFragments, atomStartsOfChains, atomStartsOfEntities);
         }
 
+        ///<summary> Not to be called directly! Use ModelBuilder.GetModel() or similar.</summary>
+        internal Model(int modelNumber, 
+                       int[] atomStartsOfResidues, int[] residueStartsOfFragments, int[] fragmentStartsOfChains, int[] chainStartsOfEntities,
+                       string[] entityId, 
+                       string[] chainId, string[] chainAuthId, 
+                       int[] residueSeqNumber, string[] residueCompound,
+                       string[] atomId, AtomInfo[] atomInfo){
+            this.ModelNumber = modelNumber;
+
+            // remaining combinations
+            int[] fragmentStartsOfEntities = GetSelectedElements(fragmentStartsOfChains, chainStartsOfEntities, false);
+            int[] residueStartsOfChains = GetSelectedElements(residueStartsOfFragments, fragmentStartsOfChains, false);
+            int[] residueStartsOfEntities = GetSelectedElements(residueStartsOfFragments, fragmentStartsOfEntities, false);
+            int[] atomStartsOfFragments = GetSelectedElements(atomStartsOfResidues, residueStartsOfFragments, false);
+            int[] atomStartsOfChains = GetSelectedElements(atomStartsOfResidues, residueStartsOfChains, false);
+            int[] atomStartsOfEntities = GetSelectedElements(atomStartsOfResidues, residueStartsOfEntities, false);
+
+            // fill fields
+            this.Entities = new EntityTable(this, atomStartsOfEntities, residueStartsOfEntities, fragmentStartsOfEntities, chainStartsOfEntities, entityId);
+            this.Chains = new ChainTable(this, atomStartsOfChains, residueStartsOfChains, fragmentStartsOfChains, chainStartsOfEntities, chainId, chainAuthId);
+            this.Fragments = new FragmentTable(this, atomStartsOfFragments, residueStartsOfFragments, fragmentStartsOfChains, fragmentStartsOfEntities);
+            this.Residues = new ResidueTable(this, atomStartsOfResidues, residueStartsOfFragments, residueStartsOfChains, residueStartsOfEntities, residueSeqNumber,residueCompound);
+            this.Atoms = new AtomTable(this, atomStartsOfResidues, atomStartsOfFragments, atomStartsOfChains, atomStartsOfEntities, atomId, atomInfo);
+        }
+
         private static void GetFragmentsAndResidues(
             CifItem residueNumberItem, 
             ref int[] rows, 

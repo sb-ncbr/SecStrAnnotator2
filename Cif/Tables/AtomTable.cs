@@ -52,6 +52,9 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             + " " + Name[iAtom]
             + (AltLoc[iAtom] != DEFAULT_ALT_LOC ? " (alt " + AltLoc[iAtom] + ")" : "" ); 
 
+
+
+
         ///<summary> Not to be called directly! Use Model.Atoms.</summary>
         internal AtomTable(Model model, CifCategory category, int[] rows, int[] atomStartsOfResidues, int[] atomStartsOfFragments, int[] atomStartsOfChains, int[] atomStartsOfEntities) {
             this.Count = rows.Length;
@@ -64,7 +67,6 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             this.EntityIndex = Model.GetUpRefs(atomStartsOfEntities);
             this.model = model;
             // own properties
-            RowIndex = rows;
             Id = category[ID_COLUMN].GetStrings(rows);
             Name = category[NAME_COLUMN].GetStrings(rows);
             Element = category[ELEMENT_COLUMN].GetStrings(rows);
@@ -73,6 +75,31 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             try { Y = category[Y_COLUMN].GetDoubles(rows); } catch (KeyNotFoundExceptionWithKey<string> e) { Lib.WriteWarning("Missing data item " + e.Key); }
             try { Z = category[Z_COLUMN].GetDoubles(rows); } catch (KeyNotFoundExceptionWithKey<string> e) { Lib.WriteWarning("Missing data item " + e.Key); }
             try { IsHetatm = category[IS_HETATM_COLUMN].GetTrueWhereFirstCharacterMatches(rows, 'H'); } catch (KeyNotFoundExceptionWithKey<string> e) { Lib.WriteWarning("Missing data item " + e.Key); }
+            // array segments
+            // --
+        }
+
+        ///<summary> Not to be called directly! Use Model.Atoms.</summary>
+        internal AtomTable(Model model, int[] atomStartsOfResidues, int[] atomStartsOfFragments, int[] atomStartsOfChains, int[] atomStartsOfEntities, 
+                           string[] id, AtomInfo[] info) {
+            this.Count = info.Length;
+            // down
+            this.RowIndex = Enumerable.Range(0, Count).ToArray();
+            // up
+            this.ResidueIndex = Model.GetUpRefs(atomStartsOfResidues);
+            this.FragmentIndex = Model.GetUpRefs(atomStartsOfFragments);
+            this.ChainIndex = Model.GetUpRefs(atomStartsOfChains);
+            this.EntityIndex = Model.GetUpRefs(atomStartsOfEntities);
+            this.model = model;
+            // own properties
+            Id = id;
+            Name = info.Select(i => i.Name).ToArray();
+            Element = info.Select(i => i.Element).ToArray();
+            AltLoc = info.Select(i => i.AltLoc).ToArray();
+            IsHetatm = info.Select(i => i.IsHetatm).ToArray();
+            X = info.Select(i => i.X).ToArray();
+            Y = info.Select(i => i.Y).ToArray();
+            Z = info.Select(i => i.Z).ToArray();
             // array segments
             // --
         }
