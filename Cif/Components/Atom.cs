@@ -58,5 +58,8 @@ namespace Cif.Components
 
         }
 
+        public const string NAME_H_AMIDE = "H";
+        public const string ELEMENT_H = "H";
+
     }
 }

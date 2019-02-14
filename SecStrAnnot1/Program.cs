@@ -616,14 +616,6 @@ namespace protein
 							}))
 								return -1;
 							qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
-							// try {
-							// 	reader = new StreamReader (fileQueryAlignedPDB);
-							// 	qProtein = new Protein (reader, new string[]{queryChainID_}, queryDomainRanges).KeepOnlyNormalResidues(true);
-							// 	reader.Close ();
-							// } catch (IOException) {
-							// 	Lib.WriteError ("Could not open \"" + fileQueryAlignedPDB + "\".");
-							// 	return -1;
-							// }
 							#endregion
 						} else {
 							throw new Exception (alignMethod + " has no assigned name in alignMethodNames.");

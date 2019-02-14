@@ -19,7 +19,7 @@ namespace Cif.Components
         public IEnumerable<int> GetEntityIndices(){
             return Enumerable.Range(0, Model.Entities.Count);
         }
-        public IEnumerable<Entity> GetEntitys(){
+        public IEnumerable<Entity> GetEntities(){
             Model model = this.Model;
             return GetEntityIndices().Select(ei => new Entity(model, ei));
         }
@@ -70,18 +70,32 @@ namespace Cif.Components
          * Returns a protein containing only those residues which have a C alpha atom.
          */
 		public Protein KeepOnlyNormalResidues(bool doPrintWarningForHet){
+			List<Residue> hetResWithCA = new List<Residue> ();
+
             ModelBuilder builder = new ModelBuilder();
-            foreach (Chain chain in this.GetChains()) {
-                builder.StartChain(chain.Id, chain.AuthId);
-                foreach (Residue residue in chain.GetResidues()) {
-                    builder.StartResidue(residue.SeqNumber, residue.Compound);
-                    foreach (Atom atom in residue.GetAtoms()) {
-                        builder.AddAtom(atom.Id, atom.AtomInfo());
+            foreach (Entity entity in this.GetEntities()){
+                builder.StartEntity(entity.Id);
+                foreach (Chain chain in entity.GetChains()) {
+                    builder.StartChain(chain.Id, chain.AuthId);
+                    foreach (Residue residue in chain.GetResidues()) {
+                        if (residue.HasCAlpha()) {
+                            builder.StartResidue(residue.SeqNumber, residue.Compound);
+                            foreach (Atom atom in residue.GetAtoms()) {
+                                builder.AddAtom(atom.Id, atom.AtomInfo());
+                            }
+                            if (residue.GetAtoms().First().IsHetatm){
+                                hetResWithCA.Add(residue);
+                            }
+                        }
                     }
                 }
             }
-
-            throw new NotImplementedException();
+			if (doPrintWarningForHet && hetResWithCA.Count > 0) {
+				Lib.WriteWarning ("Found hetero residues with C-alpha. They will be treated as normal residues: \n{0}", string.Join(", ", hetResWithCA));
+			}
+            Protein result = new Protein(builder.GetModel(this.Model.ModelNumber));
+            Lib.WriteLineDebug($"KeepOnlyNormalResidues(): {result.Model.Residues.Count}");
+            return result;
             //TODO implement this somehow!
         }
 

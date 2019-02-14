@@ -865,7 +865,7 @@ namespace protein
 			public bool DetectSheets { get; set; }
 			public bool DetectHelices { get; set; }
 
-			private List<Residue> residues;
+			private Residue[] residues;
 			List<int>[] ignoreHBondsTo_Antiparallel;
 			List<int>[] ignoreHBondsFrom_Antiparallel;
 			List<int>[] ignoreHBondsTo_Parallel;
@@ -874,26 +874,18 @@ namespace protein
 			private HydrogenAdders.IHydrogenAdder hydrogenAdder;
 			private IHBondFinder hBondFinder;
 
-			public HBondSecStrAssigner(IEnumerable<Residue> residues, double hBondEnergyCutoff){
+			public HBondSecStrAssigner(Protein protein, double hBondEnergyCutoff){
 				this.DetectSheets=true;
 				this.DetectHelices=true;
 				this.hydrogenAdder = new HydrogenAdders.DsspLikeAmideHydrogenAdder();
-				//List<Atom> atoms = residues.Where (r => r.IsProteinResidueWithCAlpha()).SelectMany (r => r.GetAtoms ()).ToList ();
-				//Protein p = hydrogenAdder.AddHydrogens (atoms);
-				//this.residues = p.GetResidues ().OrderBy (r=>r).ToList ();
-				var validResidues = residues.Where (r => r.HasCAlpha());
-				this.residues = hydrogenAdder.AddHydrogens(validResidues).OrderBy (r => r).ToList ();
-				ignoreHBondsTo_Antiparallel=new List<int>[residues.Count ()];
-				ignoreHBondsFrom_Antiparallel=new List<int>[residues.Count ()];
-				ignoreHBondsTo_Parallel=new List<int>[residues.Count ()];
-				ignoreHBondsFrom_Parallel=new List<int>[residues.Count ()];
-				//this.hBondFinder = new SimpleHBondFinder(this.residues, hBondEnergyCutoff);
+				this.residues = hydrogenAdder.AddHydrogens(protein).GetResidues().ToArray(); // removing residues without C-alpha is probably not needed here
+				Cif.Libraries.Lib.WriteLineDebug($"HBondSecStrAssigner(): {this.residues.Length}");
+				ignoreHBondsTo_Antiparallel=new List<int>[residues.Length];
+				ignoreHBondsFrom_Antiparallel=new List<int>[residues.Length];
+				ignoreHBondsTo_Parallel=new List<int>[residues.Length];
+				ignoreHBondsFrom_Parallel=new List<int>[residues.Length];
 				this.hBondFinder = new BoxingHBondFinder(this.residues, hBondEnergyCutoff);
 			}
-
-			public HBondSecStrAssigner(Protein p, double hBondEnergyCutoff) : this(p.GetResidues (),hBondEnergyCutoff) {}
-
-			public HBondSecStrAssigner(Chain c, double hBondEnergyCutoff) : this(c.GetResidues (),hBondEnergyCutoff) {}
 
 
 			private String Ladder2String(BetaLadder ladder){
@@ -914,7 +906,7 @@ namespace protein
 				if (x < 0)
 					return ResidueXBefore (resIndex, -x);
 				for (int i = x; i >= 0; i--) {
-					if (resIndex + i < residues.Count && residues [resIndex + i].ChainId == residues [resIndex].ChainId && residues [resIndex + i].SeqNumber == residues [resIndex].SeqNumber + x)
+					if (resIndex + i < residues.Length && residues [resIndex + i].ChainId == residues [resIndex].ChainId && residues [resIndex + i].SeqNumber == residues [resIndex].SeqNumber + x)
 						return resIndex + i;
 				}
 				return -1; //does not exist
@@ -1343,7 +1335,7 @@ namespace protein
 					if (DetectHelices) {
 						return GetHelices ();
 					} else {
-						return new SecStrAssignment (new SSE[0]);
+						return new SecStrAssignment (new SSE[]{});
 					}
 				}
 			}
@@ -1360,7 +1352,7 @@ namespace protein
 				List<SSE> helices = new List<SSE> ();
 				int currentStart = -1; // -1 = currently not making helix
 				int currentEnd = -1;
-				for (int i = 0; i < residues.Count; i++) {
+				for (int i = 0; i < residues.Length; i++) {
 					int j = ResidueXAfter (i, x);
 					if (currentStart == -1 && hBondFinder.IsHBond (j, i)) { 
 						//start helix
@@ -1389,7 +1381,7 @@ namespace protein
 				DateTime t0 = DateTime.Now;
 				List<BetaLadder> ladders = new List<BetaLadder> ();
 				List<Tuple<Residue,Residue>> hBonds = new List<Tuple<Residue, Residue>> ();
-				for (int i = 0; i < residues.Count; i++) {
+				for (int i = 0; i < residues.Length; i++) {
 					int nLaddersBefore = ladders.Count;
 					List<int> hAcceptors = hBondFinder.FindHAcceptors (i).Where (j => j > i)/*.Where (j => ignoreHBondsTo [i] == null || !ignoreHBondsTo [i].Contains (j))*/.ToList ();
 					foreach (int j in hAcceptors) {

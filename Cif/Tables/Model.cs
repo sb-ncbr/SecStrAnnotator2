@@ -68,10 +68,10 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             int[] fragmentStartsOfChains;
             int[] residueStartsOfFragments;
             GetFragmentsAndResidues(residueSeqNumber, residueStartsOfChains, out fragmentStartsOfChains, out residueStartsOfFragments);
-            Console.WriteLine("SeqNumbers: " + string.Join(" ", residueSeqNumber));
-            Console.WriteLine("ResOfChains: " + string.Join(" ", residueStartsOfChains));
-            Console.WriteLine("FragOfChains: " + string.Join(" ", fragmentStartsOfChains));
-            Console.WriteLine("ResOfFrags: " + string.Join(" ", residueStartsOfFragments));
+            // Console.WriteLine("SeqNumbers: " + string.Join(" ", residueSeqNumber));
+            // Console.WriteLine("ResOfChains: " + string.Join(" ", residueStartsOfChains));
+            // Console.WriteLine("FragOfChains: " + string.Join(" ", fragmentStartsOfChains));
+            // Console.WriteLine("ResOfFrags: " + string.Join(" ", residueStartsOfFragments));
 
             // remaining combinations
             int[] fragmentStartsOfEntities = GetSelectedElements(fragmentStartsOfChains, chainStartsOfEntities, false);

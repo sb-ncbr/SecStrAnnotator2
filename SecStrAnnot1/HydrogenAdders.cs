@@ -4,13 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Cif.Components;
+using Cif.Tables;
 
 namespace protein
 {
 	public static class HydrogenAdders
 	{
 		public interface IHydrogenAdder {
-			List<Residue> AddHydrogens (IEnumerable<Residue> residues);
+			// List<Residue> AddHydrogens (IEnumerable<Residue> residues);
+			Protein AddHydrogens (Protein protein);
 		}
 
 		public class DsspLikeAmideHydrogenAdder : IHydrogenAdder {
@@ -23,34 +25,58 @@ namespace protein
 			 * First removes all hydrogens and then adds amide hydrogens using simple approach described in DSSP.
 			 * (Position of H is 1.0 Angstrom from N, in the opposite direction than carboxylic O is from C.)
 			 */
-			public List<Residue> AddHydrogens(IEnumerable<Residue> residues){
-				throw new NotImplementedException();
+			public Protein AddHydrogens(Protein protein){
 				//TODO implement this somehow!
-				/*int nextAtomID = residues.SelectMany(r => r.GetAtoms()).Max (a => a.Serial) + 1;
-				List<Residue> newResidues = residues.Select(r => r.WithoutHydrogens()).ToList();
-				List<Residue> relevantResidues = newResidues.Where (r => r.HasCAlpha ()).ToList();
-
-				for (int i = 1; i < relevantResidues.Count; i++) {
-					Residue r0 = relevantResidues [i - 1];
-					Residue r1 = relevantResidues [i];
-					if (r1.ChainID == r0.ChainID && r1.ResSeq == r0.ResSeq + 1 && !r1.IsProline) {
-						try {
-							Atom nAtom = r1.GetAtoms ().First (a => a.IsNAmide);
-							Vector n = nAtom.Position ();
-							Vector c = r0.GetAtoms ().First (a => a.IsCCarb).Position ();
-							Vector o = r0.GetAtoms ().First (a => a.IsOCarb).Position ();
-							Vector h = n + NH_BOND_LENGTH * (c - o).Normalize ();
-							Atom newHydrogen = new Atom (nextAtomID++, Atom.NAME_H_AMIDE, nAtom.AltLoc, r1.Name, r1.ChainID, r1.ResSeq, nAtom.ICode, 
-								h.X, h.Y, h.Z, nAtom.Occupancy, nAtom.TempFactor, Atom.ELEMENT_H, Atom.CHARGE_ZERO, false);
-							r1.AddAtom(newHydrogen);
-						} catch (InvalidOperationException){ // Some required atoms are missing
-							//do nothing
+				ModelBuilder builder = new ModelBuilder();
+				foreach (Entity entity in protein.GetEntities()){
+					builder.StartEntity(entity.Id);
+					foreach (Chain chain in entity.GetChains()) {
+						builder.StartChain(chain.Id, chain.AuthId);
+						foreach (Fragment fragment in chain.GetFragments()) {
+							Residue[] residues = fragment.GetResidues().ToArray();
+							for (int i = 0; i < residues.Length; i++) {
+								Residue residue = residues[i];
+								builder.StartResidue(residue.SeqNumber, residue.Compound);
+								foreach (Atom atom in residue.GetAtoms()) {
+									builder.AddAtom(atom.Id, atom.AtomInfo());
+								}
+								if (i > 0){
+									AtomInfo? newHydrogen = CalculateNewHydrogen(residues[i-1], residue);
+									if (newHydrogen != null){
+										builder.AddAtom((AtomInfo) newHydrogen);
+									}
+								}
+							}
 						}
 					}
 				}
-				return newResidues;*/
+				Protein result = new Protein(builder.GetModel(protein.Model.ModelNumber));
+				Cif.Libraries.Lib.WriteLineDebug($"AddHydrogens(): {result.Model.Residues.Count}");
+				return result;
+				// return new Protein(builder.GetModel(protein.Model.ModelNumber));
 			}
+
+			private static AtomInfo? CalculateNewHydrogen(Residue previousResidue, Residue thisResidue){
+				if (thisResidue.IsProline()){
+					return null;
+				}
+				Atom? nAtom = thisResidue.GetNAmide();
+				Atom? cAtom = previousResidue.GetCCarb();
+				Atom? oAtom = previousResidue.GetOCarb();
+				if (nAtom==null || cAtom==null || oAtom==null){
+					return null;
+				}
+				Vector n = ((Atom)nAtom).Position();
+				Vector c = ((Atom)cAtom).Position();
+				Vector o = ((Atom)oAtom).Position();
+				Vector h = n + NH_BOND_LENGTH * (c - o).Normalize ();
+
+				return new AtomInfo(Atom.NAME_H_AMIDE, Atom.ELEMENT_H, ((Atom)nAtom).AltLoc, ((Atom)nAtom).IsHetatm, h.X, h.Y, h.Z );
+			}
+		
 		}
+
+
 
 	}
 }

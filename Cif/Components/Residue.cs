@@ -82,5 +82,9 @@ namespace Cif.Components
 		public const char UNKNOWN_RESIDUE_1_LETTER = '?';
         public char ShortName => namesLongToShort.GetValueOrDefault(this.Compound, UNKNOWN_RESIDUE_1_LETTER);
 
+        public bool IsProline() {
+            return this.Compound == "PRO";
+        }
+
     }
 }
