@@ -28,7 +28,7 @@ namespace /*SecStrAnnot2.*/Cif.Tables
         public string[] ElementSymbol { get; private set; } // [type_symbol] element symbol (mandatory) => _atom_type.symbol
         // Optional data items
         public string[] authName { get; private set; } // [auth_atom_id] atom name, e.g. CA, ND1...
-        public string[] authResName { get; private set; } // [auth_comp_id] residu name
+        public string[] authResName { get; private set; } // [auth_comp_id] residue name
         public string[] authResSeq_String { get; private set; } // [auth_seq_id] residue sequence number (string!)
         public double[] BIso { get; private set; } // [B_iso_or_equiv] isotropic atomic displacement parameter, or equivalent
         public double[] X { get; private set; } // [Cartn_x] x coordinate

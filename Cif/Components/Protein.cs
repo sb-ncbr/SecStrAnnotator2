@@ -4,6 +4,7 @@ using System.Linq;
 using Cif.Tables;
 using Cif.Libraries;
 using System.Text;
+using System.IO;
 
 namespace Cif.Components
 {
@@ -11,6 +12,7 @@ namespace Cif.Components
     {
         public Model Model { get; private set; }
 
+        public Protein (ModelBuilder modelBuilder, int modelNumber = Model.DEFAULT_MODEL_NUM) : this(modelBuilder.GetModel(modelNumber)) {}
         public Protein (Model model){
             this.Model = model;
         }
@@ -93,7 +95,7 @@ namespace Cif.Components
 			if (doPrintWarningForHet && hetResWithCA.Count > 0) {
 				Lib.WriteWarning ("Found hetero residues with C-alpha. They will be treated as normal residues: \n{0}", string.Join(", ", hetResWithCA));
 			}
-            Protein result = new Protein(builder.GetModel(this.Model.ModelNumber));
+            Protein result = new Protein(builder, this.Model.ModelNumber);
             Lib.WriteLineDebug($"KeepOnlyNormalResidues(): {result.Model.Residues.Count}");
             return result;
             //TODO implement this somehow!
@@ -113,5 +115,21 @@ namespace Cif.Components
             }
             return b.ToString();
         }
+
+		/** Print protein to a file.*/
+		public void SaveCif(String outputFile, string dataName = "structure")
+		{
+			try {
+                string categoryString = this.Model.ToCifCategoryString();
+				StreamWriter w = new StreamWriter (outputFile);
+                w.WriteLine("data_" + dataName);
+                w.WriteLine("#");
+                w.Write(categoryString);
+				w.Close ();
+			} catch (IOException e) {
+				Console.Error.WriteLine ("Error: Could not open \"" + outputFile + "\" for writing.");
+				throw new IOException ("Protein.SaveCif: Could not open \"" + outputFile + "\" for writing.", e);
+			}
+		}
     }
 }

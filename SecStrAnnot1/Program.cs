@@ -413,7 +413,7 @@ namespace protein
 				// 	return -1;
 				// }
 			} else {
-				tProtein = new Protein(null); // dummy protein, never will be used
+				tProtein = new Protein(null as Cif.Tables.Model); // dummy protein, never will be used
 			}
 
 			if (tryToReuseAlignment && File.Exists (fileQueryAlignedPDB)) {
@@ -830,8 +830,8 @@ namespace protein
 					suspiciousnessList_AllChains.AddRange (suspiciousnessList);
 
 					annotQSseSequences_AllChains.AddRange (qSseSequences);
-					//metric3List_AllChains.AddRange (ssePairs.Select (x => x.Q.IsNotFound () ? Double.NaN : metric3(x.T,x.Q)));
-					//metric7List_AllChains.AddRange (ssePairs.Select (x => x.Q.IsNotFound () ? Double.NaN : metric7(x.T,x.Q)));
+					// metric3List_AllChains.AddRange (ssePairs.Select (x => x.Q.IsNotFound () ? Double.NaN : metric3(x.T,x.Q)));
+					// metric7List_AllChains.AddRange (ssePairs.Select (x => x.Q.IsNotFound () ? Double.NaN : metric7(x.T,x.Q)));
 
 					// metric3List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric3(t,q)));
 					// metric7List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric7(t,q)));
@@ -919,12 +919,14 @@ namespace protein
 						{LibAnnotation.JsNames.MAX_RMSD, rmsdLists_AllChains.Select (l => l.Count()>=1 ? l.Max () : 0.0 as object)},
 						{LibAnnotation.JsNames.ARG_MAX_RMSD, rmsdLists_AllChains.Select (l => l.Count()>=1 ? l.ArgMax () : -1 as object)},
 						{LibAnnotation.JsNames.MAX_INTERNAL_RMSD, rmsdLists_AllChains.Select (l => l.Count()>=3 ? l.Take (l.Count()-1).Skip (1).Max () : 0.0 as object)},
-						{"metric3_value", metric3List_AllChains.Select (x => x as object)},
-						{"metric7_value", metric7List_AllChains.Select (x => x as object)},
-						{LibAnnotation.JsNames.SEQUENCE, annotQSseSequences_AllChains} }
+						// {"metric3_value", metric3List_AllChains.Select (x => x as object)},
+						// {"metric7_value", metric7List_AllChains.Select (x => x as object)},
+						{LibAnnotation.JsNames.SEQUENCE, annotQSseSequences_AllChains} 
+					}
 					: new Dictionary<string,IEnumerable<object>> {
 						{LibAnnotation.JsNames.METRIC, metricList_AllChains.Select (x => x as object)},
-						{LibAnnotation.JsNames.SEQUENCE, annotQSseSequences_AllChains} };
+						{LibAnnotation.JsNames.SEQUENCE, annotQSseSequences_AllChains} 
+					};
 				LibAnnotation.WriteAnnotationFile_Json (fileQueryAnnotatedHelices, queryID,
 					annotQHelicesInSpace_AllChains,
 					extras, 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
 using Cif.Components;
+using Cif.Tables;
 
 namespace protein
 {
@@ -1547,10 +1548,17 @@ namespace protein
 			Vector[] qVectors = candidates.Select (r => r.GetCAlphas().First().Position ()).ToArray ();
 
 			if (Lib.DoWriteDebug) {
-				throw new NotImplementedException();
 				//TODO implement this somehow!
+				ModelBuilder builder = new ModelBuilder();
+				foreach (Vector v in tVectors){
+					builder.AddAtom(new AtomInfo(Atom.NAME_C_ALPHA, Atom.ELEMENT_C, AtomTable.DEFAULT_ALT_LOC, false, v.X, v.Y, v.Z));
+					builder.StartResidue();
+				}
+				new Protein(builder).SaveCif(Path.Combine(MainClass.Directory, "template-smooth.cif"));
+				
 				// new Protein (tVectors.Select ((v, i) => new Atom (i, Atom.NAME_C_ALPHA, ' ', "ALA", "X", i, ' ', v.X, v.Y, v.Z, 1, 1, "C", Atom.CHARGE_ZERO, false)))
 				// 	.Save (Path.Combine (MainClass.Directory, "template-smooth.pdb"));
+
 			}
 
 			double scalingDistance = MainClass.STR_ALIGNMENT_SCALING_DISTANCE;

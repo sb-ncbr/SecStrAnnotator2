@@ -216,5 +216,75 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             }
             return builder.ToString();
         }
+    
+
+        public string ToCifCategoryString() {
+            string loop = "loop_";
+            string categoryName = "_atom_site.";
+            string[] itemNames = {
+                "group_PDB",
+                "id",
+                "type_symbol",
+                "label_atom_id",
+                "label_alt_id",
+                "label_comp_id",
+                "label_asym_id",
+                "label_entity_id",
+                "label_seq_id",
+                "pdbx_PDB_ins_code",
+                "Cartn_x",
+                "Cartn_y",
+                "Cartn_z",
+                "occupancy",
+                "B_iso_or_equiv",
+                "pdbx_formal_charge",
+                "auth_seq_id",
+                "auth_comp_id",
+                "auth_asym_id",
+                "auth_atom_id",
+                "pdbx_PDB_model_num",
+                "pdbe_label_seq_id",
+            };
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine(loop);
+            foreach (string itemName in itemNames){
+                sb.AppendLine(categoryName + itemName);
+            }
+            string NA = "?";
+            for (int ei = 0; ei < Entities.Count; ei++){
+                for (int ci = Entities.ChainStartIndex[ei]; ci < Entities.ChainEndIndex[ei]; ci++){
+                    for (int ri = Chains.ResidueStartIndex[ci]; ri < Chains.ResidueEndIndex[ci]; ri++){
+                        for (int ai = Residues.AtomStartIndex[ri]; ai < Residues.AtomEndIndex[ri]; ai++){
+                            string line = string.Join(" ", new object[]{
+                                (Atoms.IsHetatm[ai] ? "HETATM" : "ATOM"),
+                                Atoms.Id[ai],
+                                Atoms.Element[ai],
+                                Atoms.Name[ai],
+                                Atoms.AltLoc[ai],
+                                Residues.Compound[ri],
+                                Chains.Id[ci],
+                                Entities.Id[ei],
+                                Residues.SeqNumber[ri],
+                                NA, // pdbx_PDB_ins_code,
+                                Atoms.X[ai],
+                                Atoms.Y[ai],
+                                Atoms.Z[ai],
+                                NA, // occupancy,
+                                NA, // B_iso_or_equiv,
+                                NA, // pdbx_formal_charge,
+                                NA, // auth_seq_id,
+                                NA, // auth_comp_id,
+                                Chains.AuthId[ci],
+                                NA, // auth_atom_id,
+                                this.ModelNumber,
+                                NA, // pdbe_label_seq_id
+                            });
+                            sb.AppendLine(line);
+                        }
+                    }
+                }
+            }
+            return sb.ToString();
+        }
     }
 }

@@ -58,6 +58,8 @@ namespace Cif.Components
 
         }
 
+        public const string NAME_C_ALPHA = "CA";
+        public const string ELEMENT_C = "C";
         public const string NAME_H_AMIDE = "H";
         public const string ELEMENT_H = "H";
 

@@ -148,8 +148,7 @@ namespace Cif.Tables
             AddAtom(id, atomInfo);
         }
 
-        public Model GetModel() => GetModel(Model.DEFAULT_MODEL_NUM);
-        public Model GetModel(int modelNumber){
+        public Model GetModel(int modelNumber = Model.DEFAULT_MODEL_NUM){
 
             // count valid residues, chains..., i.e. those which contain at least one atom, residue...
             bool lastResidueEmpty = atoms.count == residues.atomStartIndex[residues.count-1];
