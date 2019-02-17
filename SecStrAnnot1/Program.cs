@@ -721,8 +721,10 @@ namespace protein
 
 					List<Residue> tResiduesForAlignment = tProtein.GetChain (templateChainID).GetResidues ().ToList ();
 					List<Residue> qResiduesForAlignment = qProtein.GetChain (queryChainID).GetResidues ().ToList ();
-					List<Tuple<int?, int?, double>> alignment = LibAnnotation.AlignResidues_DynProg (tResiduesForAlignment, qResiduesForAlignment);
-					Tuple<List<int>, List<int>> pos = LibAnnotation.AlignmentToPositions (alignment);
+					List<(int?, int?, double)> alignment = LibAnnotation.AlignResidues_DynProg (tResiduesForAlignment, qResiduesForAlignment);
+					(List<int>, List<int>) pos = LibAnnotation.AlignmentToPositions (alignment);
+					double R = LibAnnotation.CharacteristicDistanceOfAlignment(tResiduesForAlignment, qResiduesForAlignment);
+					Console.WriteLine($"Characteristic distance R = {R}");
 
 					// Func<SSEInSpace,SSEInSpace,double> metric3 = LibAnnotation.MetricNo3Pos;
 					// Func<SSEInSpace,SSEInSpace,double> metric7 = (s, t) => LibAnnotation.MetricNo7Pos (s, t, alignment, LibAnnotation.DictResiToAli (tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli (qResiduesForAlignment, pos.Item2));

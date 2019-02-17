@@ -881,7 +881,7 @@ namespace protein
 			return displacements.Select (d => PartialMetricNo6 (ra, rb, d)).Min ();
 		}
 
-		public static double MetricNo7Pos(SSE sse1, SSE sse2, List<Tuple<int?,int?,double>> alignment, Dictionary<int,int> tResiToAli, Dictionary<int,int> qResiToAli){
+		public static double MetricNo7Pos(SSE sse1, SSE sse2, List<(int?,int?,double)> alignment, Dictionary<int,int> tResiToAli, Dictionary<int,int> qResiToAli){
 			try{
 			int s1 = tResiToAli [sse1.Start];
 			int s2 = qResiToAli [sse2.Start];
@@ -1410,7 +1410,7 @@ namespace protein
 		}*/
 
 
-		public static Tuple<List<int>,List<int>> AlignmentToPositions (List<Tuple<int?,int?,double>> alignment){
+		public static (List<int>,List<int>) AlignmentToPositions (List<(int?,int?,double)> alignment){
 			List<int> tPositions = new List<int> ();
 			List<int> qPositions = new List<int> ();
 			for (int i = 0; i < alignment.Count; i++) {
@@ -1419,7 +1419,7 @@ namespace protein
 				if (alignment [i].Item2 != null)
 					qPositions.Add (i);
 			}
-			return new Tuple<List<int>, List<int>> (tPositions, qPositions);
+			return (tPositions, qPositions);
 		}
 
 		public static Dictionary<int,int> DictResiToAli(List<Residue> residues, List<int> positions){
@@ -1432,11 +1432,11 @@ namespace protein
 			return dictResiToAli;
 		}
 
-		public static List<Tuple<int?,int?,double>> AlignPoints_DynProg(int m, int n, Func<int,int,double> scoreFunction){
+		public static List<(int?,int?,double)> AlignPoints_DynProg(int m, int n, Func<int,int,double> scoreFunction){
 			double[,] scoreMatrix = new double[m, n];
 			double[,] dynprogMatrix = new double[m+1, n+1];
 			int[,] reconstrMatrix = new int[m+1, n+1];
-			List<Tuple<int?,int?,double>> alignment = new List<Tuple<int?,int?,double>>();
+			List<(int?,int?,double)> alignment = new List<(int?,int?,double)>();
 			//coding reconstrMatrix: 
 			//  -1: optimum was obtained from the left neighbor (skip candidate SSE)
 			//   1: optimum was obtained from upper neighbor (skip template SSE)
@@ -1521,19 +1521,19 @@ namespace protein
 				switch (reconstrMatrix [row, col]) {
 				case -1:
 					// skipped candidate SSE
-					alignment.Add (new Tuple<int?, int?, double> (null, col-1, 0));
+					alignment.Add ((null, col-1, 0));
 					alignmentPosition--;
 					col--;
 					break;
 				case 1:
 					// skipped template SSE
-					alignment.Add (new Tuple<int?, int?, double> (row-1, null,0));
+					alignment.Add ((row-1, null,0));
 					alignmentPosition--;
 					row--;
 					break;
 				case 0:
 					// paired template and candidate SSE
-					alignment.Add (new Tuple<int?,int?,double> (row-1, col-1, scoreMatrix[row-1,col-1]));
+					alignment.Add ((row-1, col-1, scoreMatrix[row-1,col-1]));
 					alignmentPosition--;
 					row--;
 					col--;
@@ -1546,7 +1546,65 @@ namespace protein
 			return alignment;
 		}
 
-		public static List<Tuple<int?,int?,double>> AlignResidues_DynProg(IList<Residue> templates, IList<Residue> candidates){
+		private static double AlignmentScore(double[,] sqDistances, double R){
+			if (R == 0.0){
+				return 0.0;
+			} else {
+				double scalingFactor = 1.0 / (R*R);
+				Func<int,int,double> scoreFunction = (i, j) => 1 / (1 + scalingFactor * sqDistances[i, j]);
+				return AlignPoints_DynProg(sqDistances.GetLength(0), sqDistances.GetLength(1), scoreFunction).Select(t => t.Item3).Sum();
+			}
+		}
+
+		public static double CharacteristicDistanceOfAlignment(IList<Residue> templates, IList<Residue> candidates){
+			if (templates.Any (r => !r.HasCAlpha()))
+				throw new ArgumentException ("Some template residues do not have C-alpha atom.");
+			if (candidates.Any (r => !r.HasCAlpha()))
+				throw new ArgumentException ("Some candidate residues do not have C-alpha atom.");
+
+			Lib.WriteLineDebug ("Align residues: Candidate residues: {0}", candidates.Select (r => r.ToString ()).EnumerateWithCommas ());
+			
+			Vector[] tVectors = templates.Select (r => r.GetCAlphas().First().Position ()).ToArray ();
+			Vector[] qVectors = candidates.Select (r => r.GetCAlphas().First().Position ()).ToArray ();
+			DateTime stamp = DateTime.Now;
+			double[,] sqDistances = new double[tVectors.Length, qVectors.Length];
+			for (int i = 0; i < tVectors.Length; i++){
+				for (int j = 0; j < qVectors.Length; j++){
+					sqDistances[i, j] = (tVectors[i]-qVectors[j]).SqSize;
+				}
+			}
+			int N = Math.Min(tVectors.Length, qVectors.Length);
+			double goalScore = N / 2;
+			const double R_GUESS = 1.024;
+			const double R_EPSILON = 0.001;
+			double Rlow = 0.0;
+			double Rhigh = R_GUESS;
+			double scoreLow = AlignmentScore(sqDistances, Rlow);
+			double scoreHigh = AlignmentScore(sqDistances, Rhigh);
+			while (scoreHigh < goalScore){
+				Rlow = Rhigh;
+				scoreLow = scoreHigh;
+				Rhigh = 2 * Rhigh;
+				scoreHigh = AlignmentScore(sqDistances, Rhigh);
+				// Console.WriteLine($"R = {Rhigh}, norm_score = {scoreHigh/N}");
+			}
+			do {
+				double Rnew = 0.5 * (Rlow + Rhigh);
+				double scoreNew = AlignmentScore(sqDistances, Rnew);
+				// Console.WriteLine($"R = {Rnew}, norm_score = {scoreNew/N}");
+				if (scoreNew < goalScore){
+					Rlow = Rnew; 
+					scoreLow = scoreNew;
+				} else {
+					Rhigh = Rnew; 
+					scoreHigh = scoreNew;
+				}
+			} while (Rhigh - Rlow > R_EPSILON);
+			// Console.WriteLine($"CharacteristicDistanceOfAlignment(): {DateTime.Now - stamp}");
+			return Rhigh;
+		}
+
+		public static List<(int?,int?,double)> AlignResidues_DynProg(IList<Residue> templates, IList<Residue> candidates){
 			if (templates.Any (r => !r.HasCAlpha()))
 				throw new ArgumentException ("Some template residues do not have C-alpha atom.");
 			if (candidates.Any (r => !r.HasCAlpha()))
@@ -1561,15 +1619,12 @@ namespace protein
 				//TODO implement this somehow!
 				ModelBuilder builder = new ModelBuilder();
 				foreach (Vector v in tVectors){
-					// builder.StartResidue();
 					builder.AddAtom(new AtomInfo(Atom.NAME_C_ALPHA, Atom.ELEMENT_C, AtomTable.DEFAULT_ALT_LOC, false, v.X, v.Y, v.Z));
 					builder.StartResidue();
 				}
 				new Protein(builder).SaveCif(Path.Combine(MainClass.Directory, "template-smooth.cif"));
-				
 				// new Protein (tVectors.Select ((v, i) => new Atom (i, Atom.NAME_C_ALPHA, ' ', "ALA", "X", i, ' ', v.X, v.Y, v.Z, 1, 1, "C", Atom.CHARGE_ZERO, false)))
 				// 	.Save (Path.Combine (MainClass.Directory, "template-smooth.pdb"));
-
 			}
 
 			double scalingDistance = MainClass.STR_ALIGNMENT_SCALING_DISTANCE;
@@ -1579,19 +1634,19 @@ namespace protein
 			Func<int,int,double> scoreFunction3 = (i, j) => scoreFunction1 (i, j) * scoreFunction2 (i, j);
 
 			DateTime stamp = DateTime.Now;
-			List<Tuple<int?,int?,double>> alignment = AlignPoints_DynProg (tVectors.Length, qVectors.Length, scoreFunction1);
+			List<(int?,int?,double)> alignment = AlignPoints_DynProg (tVectors.Length, qVectors.Length, scoreFunction1);
 			Lib.WriteLineDebug ("AlignPoints: {0}", DateTime.Now - stamp);
 
 			if (Lib.DoWriteDebug) {
 				StreamWriter w = new StreamWriter (Path.Combine (MainClass.Directory, "residue_alignment.tsv"));
 				List<List<String>> alignmentTable = alignment.Select (t => new List<String> { 
-					t.Item1 == null ? "-" : templates [(int)t.Item1].ChainId.ToString (), 
-					t.Item1 == null ? "-" : templates [(int)t.Item1].SeqNumber.ToString (), 
-					t.Item1 == null ? "-" : templates [(int)t.Item1].ShortName.ToString (), 
+					t.Item1 == null ? "-" : templates [t.Item1.Value].ChainId.ToString (), 
+					t.Item1 == null ? "-" : templates [t.Item1.Value].SeqNumber.ToString (), 
+					t.Item1 == null ? "-" : templates [t.Item1.Value].ShortName.ToString (), 
 					t.Item3.ToString ("0.000"),
-					t.Item2 == null ? "-" : candidates [(int)t.Item2].ShortName.ToString (),
-					t.Item2 == null ? "-" : candidates [(int)t.Item2].SeqNumber.ToString (),
-					t.Item2 == null ? "-" : candidates [(int)t.Item2].ChainId.ToString ()
+					t.Item2 == null ? "-" : candidates [t.Item2.Value].ShortName.ToString (),
+					t.Item2 == null ? "-" : candidates [t.Item2.Value].SeqNumber.ToString (),
+					t.Item2 == null ? "-" : candidates [t.Item2.Value].ChainId.ToString ()
 				}).ToList ();
 				w.WriteLine ("#chain1\tresi1\tresn1\tscore\tresn2\tresi2\tchain2");
 				Lib.WriteCSV (w, alignmentTable, '\t');
