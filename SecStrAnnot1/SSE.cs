@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cif.Components;
 
 namespace protein
 {
@@ -52,6 +53,11 @@ namespace protein
 		public List<SSE> NestedSSEs{get; private set;}
 		public String Comment { get; private set;} // Any string which is a comment for this SSE. 
 		public String Color { get; set;} // Additional info about the color used for visualization (if assigned explicitly, else null).
+		public string AuthChainID { get; private set;}
+		public int? AuthStart{ get; set;}
+		public string AuthStartInsCode{ get; set;}
+		public int? AuthEnd{ get; set;} 
+		public string AuthEndInsCode{ get; set;}
 
 		public SSE (String label, string chainID, int start, int end, char type, int? sheetId)
 		{
@@ -75,6 +81,11 @@ namespace protein
 			NestedSSEs = orig.NestedSSEs;
 			Comment = orig.Comment;
 			Color = orig.Color;
+			AuthChainID = orig.AuthChainID;
+			AuthStart = orig.AuthStart;
+			AuthStartInsCode = orig.AuthStartInsCode;
+			AuthEnd = orig.AuthEnd;
+			AuthEndInsCode = orig.AuthEndInsCode;
 		}
 		public static SSE NewNotFound(String label){
 			SSE result= new SSE(label,NOT_FOUND_CHAIN,NOT_FOUND_START, NOT_FOUND_END,NOT_FOUND_TYPE,null);
@@ -172,7 +183,21 @@ namespace protein
 		public bool IsSheet{get{ return ALL_SHEET_TYPES.Contains(this.Type); }}
 		public bool IsHelix{get{ return ALL_HELIX_TYPES.Contains(this.Type); }}
 
-
+		public void AddAuthFields(Protein protein){
+			// Console.WriteLine("AddAuthFields");
+			try {
+				Chain chain = protein.GetChain(this.ChainID);
+				Residue res1 = chain.GetResidues().First(r => r.SeqNumber == this.Start);
+				Residue res2 = chain.GetResidues().First(r => r.SeqNumber == this.End);
+				this.AuthChainID = chain.AuthId;
+				this.AuthStart = res1.AuthSeqNumber;
+				this.AuthStartInsCode = res1.AuthInsertionCode;
+				this.AuthEnd = res2.AuthSeqNumber;
+				this.AuthEndInsCode = res2.AuthInsertionCode;
+			} catch {
+				Lib.WriteErrorAndExit($"Could not find starting or ending residue of SSE {ChainID} {Start}-{End}");
+			}
+		}
 	}
 }
 

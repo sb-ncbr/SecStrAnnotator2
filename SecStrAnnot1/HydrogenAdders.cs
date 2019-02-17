@@ -51,7 +51,7 @@ namespace protein
 					}
 				}
 				Protein result = new Protein(builder, protein.Model.ModelNumber);
-				Cif.Libraries.Lib.WriteLineDebug($"AddHydrogens(): {result.Model.Residues.Count}");
+				// Cif.Libraries.Lib.WriteLineDebug($"AddHydrogens(): {result.Model.Residues.Count}");
 				return result;
 				// return new Protein(builder.GetModel(protein.Model.ModelNumber));
 			}

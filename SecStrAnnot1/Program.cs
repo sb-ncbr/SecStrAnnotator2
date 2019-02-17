@@ -415,7 +415,7 @@ namespace protein
 			} else {
 				tProtein = new Protein(null as Cif.Tables.Model); // dummy protein, never will be used
 			}
-			tProtein.SaveCif(Path.Combine(Directory, "template.cif")); //debug
+			// tProtein.SaveCif(Path.Combine(Directory, "template.cif")); //debug
 
 			if (tryToReuseAlignment && File.Exists (fileQueryAlignedPDB)) {
 				qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
@@ -485,13 +485,13 @@ namespace protein
 						if (num.Length==0){
 							Lib.WriteWarning ("Cannot determine sheet ID from label \"{0}\". Assigning sheet ID null.",sse.Label);
 							sse.SheetId=null;
-						}else{
+						} else {
 							sse.SheetId=Int32.Parse (num);
 						}
 					}
 				}
 			} else {
-				templateSSA=null;
+				templateSSA = null;
 			}
 			#endregion
 
@@ -531,6 +531,7 @@ namespace protein
 			secStrAssigner = new SecStrAssigners.FilteringSecStrAssigner (secStrAssigner, acceptedSSETypes, allQueryChainIDs);
 			//secStrAssigner = new SecStrAssigners.RelabellingSecStrAssigner (secStrAssigner, queryID+"_",LABEL_DETECTED_SSES_AS_NULL);
 			secStrAssigner = new SecStrAssigners.RelabellingSecStrAssigner (secStrAssigner, null,LABEL_DETECTED_SSES_AS_NULL);
+			secStrAssigner = new SecStrAssigners.AuthFieldsAddingSecStrAssigner(secStrAssigner, qProtein);
 			if (JSON_OUTPUT)
 				secStrAssigner = new SecStrAssigners.OutputtingSecStrAssigner_Json (secStrAssigner, fileQueryDetectedHelices,queryID);
 			else
@@ -884,6 +885,7 @@ namespace protein
 			for (int i = 0; i < annotQHelicesInSpace_AllChains.Count; i++) {
 				SSEInSpace sse= annotQHelicesInSpace_AllChains[i];
 				double metric = metricList_AllChains[i];
+				// Console.Write(sse.AuthStart == null);
 				Console.WriteLine ("    {0}:{1}", 
 					String.Format ("{0,-6}", sse.Label), 
 					sse.IsNotFound () ? (Double.PositiveInfinity+" (not found)") : String.Format ("{0,8:0.00}", metric));

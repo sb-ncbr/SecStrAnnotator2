@@ -96,7 +96,7 @@ namespace Cif.Components
 				Lib.WriteWarning ("Found hetero residues with C-alpha. They will be treated as normal residues: \n{0}", string.Join(", ", hetResWithCA));
 			}
             Protein result = new Protein(builder, this.Model.ModelNumber);
-            Lib.WriteLineDebug($"KeepOnlyNormalResidues(): {result.Model.Residues.Count}");
+            // Lib.WriteLineDebug($"KeepOnlyNormalResidues(): {result.Model.Residues.Count}");
             return result;
             //TODO implement this somehow!
         }

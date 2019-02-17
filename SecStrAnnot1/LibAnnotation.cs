@@ -19,6 +19,11 @@ namespace protein
 			public const string CHAIN_ID = "chain_id";
 			public const string START_RESI = "start";
 			public const string END_RESI = "end";
+			public const string AUTH_CHAIN_ID = "auth_chain_id";
+			public const string AUTH_START_RESI = "auth_start";
+			public const string AUTH_START_INS_CODE = "auth_start_ins_code";
+			public const string AUTH_END_RESI = "auth_end";
+			public const string AUTH_END_INS_CODE = "auth_end_ins_code";
 			public const string TYPE = "type";
 			public const string SHEET_ID = "sheet_id";
 			public const string START_VECTOR = "start_vector";
@@ -146,6 +151,11 @@ namespace protein
 			elem [JsNames.CHAIN_ID] = new JsonValue (sse.ChainID.ToString ());
 			elem [JsNames.START_RESI] = new JsonValue (sse.Start);
 			elem [JsNames.END_RESI] = new JsonValue (sse.End);
+			elem [JsNames.AUTH_CHAIN_ID] = new JsonValue (sse.AuthChainID);
+			elem [JsNames.AUTH_START_RESI] = sse.AuthStart != null ? new JsonValue (sse.AuthStart.Value) : new JsonValue();
+			elem [JsNames.AUTH_START_INS_CODE] = new JsonValue (sse.AuthStartInsCode);
+			elem [JsNames.AUTH_END_RESI] = sse.AuthEnd != null ? new JsonValue (sse.AuthEnd.Value) : new JsonValue();
+			elem [JsNames.AUTH_END_INS_CODE] = new JsonValue (sse.AuthEndInsCode);
 			elem [JsNames.TYPE] = new JsonValue (sse.Type.ToString ());
 			if (sse.SheetId != null)
 				elem [JsNames.SHEET_ID] = new JsonValue ((int)sse.SheetId);

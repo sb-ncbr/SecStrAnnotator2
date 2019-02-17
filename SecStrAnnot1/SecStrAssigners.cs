@@ -84,7 +84,7 @@ namespace protein
 			public string[] ChainIDs { get; private set; }
 
 			/* If entryName==null, it will take the first entry in the file. */
-			public FileSecStrAssigner_Json(String ssaFile,String entryName, IEnumerable<string> chainIDs){
+			public FileSecStrAssigner_Json(String ssaFile, String entryName, IEnumerable<string> chainIDs){
 				this.SsaFile=ssaFile;
 				this.EntryName=entryName;
 				this.ChainIDs=chainIDs.ToArray ();
@@ -544,6 +544,26 @@ namespace protein
 			}
 		}
 
+		public class AuthFieldsAddingSecStrAssigner : ISecStrAssigner {
+			public ISecStrAssigner InnerAssigner { get; private set; }
+			public Protein Protein { get; private set; }
+			public AuthFieldsAddingSecStrAssigner(ISecStrAssigner innerAssigner, Protein protein){
+				this.InnerAssigner = innerAssigner;
+				this.Protein = protein;
+			}
+			public SecStrAssignment GetSecStrAssignment(){
+				SecStrAssignment ass = InnerAssigner.GetSecStrAssignment();
+				foreach (SSE sse in ass.SSEs){
+					sse.AddAuthFields(Protein);
+				}
+				return ass;
+			}
+			public String GetDescription(){
+				return InnerAssigner.GetDescription ();
+			}
+		
+		}
+
 		private interface IHBondFinder{
 			bool IsHBond (int donor, int acceptor);
 			List<int> FindHAcceptors(int donor);
@@ -879,7 +899,7 @@ namespace protein
 				this.DetectHelices=true;
 				this.hydrogenAdder = new HydrogenAdders.DsspLikeAmideHydrogenAdder();
 				this.residues = hydrogenAdder.AddHydrogens(protein).GetResidues().ToArray(); // removing residues without C-alpha is probably not needed here
-				Cif.Libraries.Lib.WriteLineDebug($"HBondSecStrAssigner(): {this.residues.Length}");
+				// Cif.Libraries.Lib.WriteLineDebug($"HBondSecStrAssigner(): {this.residues.Length}");
 				ignoreHBondsTo_Antiparallel=new List<int>[residues.Length];
 				ignoreHBondsFrom_Antiparallel=new List<int>[residues.Length];
 				ignoreHBondsTo_Parallel=new List<int>[residues.Length];
