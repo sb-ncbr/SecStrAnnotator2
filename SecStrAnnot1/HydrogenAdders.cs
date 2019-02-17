@@ -36,7 +36,7 @@ namespace protein
 							Residue[] residues = fragment.GetResidues().ToArray();
 							for (int i = 0; i < residues.Length; i++) {
 								Residue residue = residues[i];
-								builder.StartResidue(residue.SeqNumber, residue.Compound);
+								builder.StartResidue(residue.ResidueInfo());
 								foreach (Atom atom in residue.GetAtoms()) {
 									builder.AddAtom(atom.Id, atom.AtomInfo());
 								}

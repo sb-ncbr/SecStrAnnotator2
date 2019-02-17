@@ -30,6 +30,16 @@ namespace /*SecStrAnnot2.*/Cif.Tables
         public const string COMPOUND_COLUMN = "label_comp_id";
         public readonly string[] Compound;
 
+        // own optional properties
+        public const string AUTH_SEQ_NUMBER_COLUMN = "auth_seq_id";
+        public readonly MaybeValueArray<int> AuthSeqNumber;
+
+        public const string AUTH_INSERTION_CODE_COLUMN = "pdbx_PDB_ins_code";
+        public readonly MaybeClassArray<string> AuthInsertionCode;
+
+        public const string AUTH_COMPOUND_COLUMN = "auth_comp_id";
+        public readonly MaybeClassArray<string> AuthCompound;
+
         public string String(int iResidue) => 
             model.Chains.Id[ChainIndex[iResidue]] 
             + " " + Compound[iResidue] 
@@ -50,6 +60,10 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             // own properties
             this.SeqNumber = category[SEQ_NUMBER_COLUMN].GetIntegers(Model.GetSelectedElements(rows, atomStartsOfResidues, true), DEFAULT_RESIDUE_NUMBER);
             this.Compound = category[COMPOUND_COLUMN].GetStrings(Model.GetSelectedElements(rows, atomStartsOfResidues, true));
+            // own optional properties
+            this.AuthSeqNumber = new MaybeValueArray<int>(category.ContainsItem(AUTH_SEQ_NUMBER_COLUMN) ? category[AUTH_SEQ_NUMBER_COLUMN].GetIntegers(Model.GetSelectedElements(rows, atomStartsOfResidues, true), DEFAULT_RESIDUE_NUMBER) : null);
+            this.AuthInsertionCode = new MaybeClassArray<string>(category.ContainsItem(AUTH_INSERTION_CODE_COLUMN) ? category[AUTH_INSERTION_CODE_COLUMN].GetStrings(Model.GetSelectedElements(rows, atomStartsOfResidues, true)) : null);
+            this.AuthCompound = new MaybeClassArray<string>(category.ContainsItem(AUTH_COMPOUND_COLUMN) ? category[AUTH_COMPOUND_COLUMN].GetStrings(Model.GetSelectedElements(rows, atomStartsOfResidues, true)) : null);
             // array segments
             AtomStartIndex = new ArraySegment<int>(atomStartIndex, 0, Count);
             AtomEndIndex = new ArraySegment<int>(atomStartIndex, 1, Count);
@@ -57,7 +71,7 @@ namespace /*SecStrAnnot2.*/Cif.Tables
 
         ///<summary> Not to be called directly! Use Model.Residues.</summary>
         internal ResidueTable(Model model, int[] atomStartsOfResidues, int[] residueStartsOfFragments, int[] residueStartsOfChains, int[] residueStartsOfEntities,
-                              int[] seqNumber, string[] compound){
+                              ResidueInfo[] residueInfo){
             this.Count = atomStartsOfResidues.Length - 1;
             // down
             this.atomStartIndex = atomStartsOfResidues;
@@ -67,8 +81,15 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             this.EntityIndex = Model.GetUpRefs(residueStartsOfEntities);
             this.model = model;
             // own properties
-            this.SeqNumber = seqNumber;
-            this.Compound = compound;
+            this.SeqNumber = residueInfo.Select(i => i.SeqNumber).ToArray();
+            this.Compound = residueInfo.Select(i => i.Compound).ToArray();
+            this.AuthSeqNumber = new MaybeValueArray<int>(residueInfo.Select(i => i.AuthSeqNumber).ToArray());
+            this.AuthInsertionCode = new MaybeClassArray<string>(residueInfo.Select(i => i.AuthInsertionCode).ToArray());
+            this.AuthCompound = new MaybeClassArray<string>(residueInfo.Select(i => i.AuthCompound).ToArray());
+            // own optional properties
+            this.AuthSeqNumber = new MaybeValueArray<int>(residueInfo.Select(i => i.AuthSeqNumber).ToArray());
+            this.AuthInsertionCode = new MaybeClassArray<string>(residueInfo.Select(i => i.AuthInsertionCode).ToArray());
+            this.AuthCompound = new MaybeClassArray<string>(residueInfo.Select(i => i.AuthCompound).ToArray());
             // array segments
             AtomStartIndex = new ArraySegment<int>(atomStartIndex, 0, Count);
             AtomEndIndex = new ArraySegment<int>(atomStartIndex, 1, Count);

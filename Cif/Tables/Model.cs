@@ -60,13 +60,14 @@ namespace /*SecStrAnnot2.*/Cif.Tables
                        int[] atomStartsOfResidues, int[] residueStartsOfChains, int[] chainStartsOfEntities,
                        string[] entityId, 
                        string[] chainId, string[] chainAuthId, 
-                       int[] residueSeqNumber, string[] residueCompound,
+                       ResidueInfo[] residueInfo,
                        string[] atomId, AtomInfo[] atomInfo){
             this.ModelNumber = modelNumber;
 
             // get fragments
             int[] fragmentStartsOfChains;
             int[] residueStartsOfFragments;
+            int[] residueSeqNumber = residueInfo.Select(info => info.SeqNumber).ToArray();
             GetFragmentsAndResidues(residueSeqNumber, residueStartsOfChains, out fragmentStartsOfChains, out residueStartsOfFragments);
             // Console.WriteLine("SeqNumbers: " + string.Join(" ", residueSeqNumber));
             // Console.WriteLine("ResOfChains: " + string.Join(" ", residueStartsOfChains));
@@ -84,7 +85,7 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             this.Entities = new EntityTable(this, atomStartsOfEntities, residueStartsOfEntities, fragmentStartsOfEntities, chainStartsOfEntities, entityId);
             this.Chains = new ChainTable(this, atomStartsOfChains, residueStartsOfChains, fragmentStartsOfChains, chainStartsOfEntities, chainId, chainAuthId);
             this.Fragments = new FragmentTable(this, atomStartsOfFragments, residueStartsOfFragments, fragmentStartsOfChains, fragmentStartsOfEntities);
-            this.Residues = new ResidueTable(this, atomStartsOfResidues, residueStartsOfFragments, residueStartsOfChains, residueStartsOfEntities, residueSeqNumber,residueCompound);
+            this.Residues = new ResidueTable(this, atomStartsOfResidues, residueStartsOfFragments, residueStartsOfChains, residueStartsOfEntities, residueInfo);
             this.Atoms = new AtomTable(this, atomStartsOfResidues, atomStartsOfFragments, atomStartsOfChains, atomStartsOfEntities, atomId, atomInfo);
         }
 
@@ -265,15 +266,15 @@ namespace /*SecStrAnnot2.*/Cif.Tables
                                 Chains.Id[ci],
                                 Entities.Id[ei],
                                 Residues.SeqNumber[ri],
-                                NA, // pdbx_PDB_ins_code,
+                                Residues.AuthInsertionCode[ri] ?? NA,
                                 Atoms.X[ai],
                                 Atoms.Y[ai],
                                 Atoms.Z[ai],
                                 NA, // occupancy,
                                 NA, // B_iso_or_equiv,
                                 NA, // pdbx_formal_charge,
-                                NA, // auth_seq_id,
-                                NA, // auth_comp_id,
+                                Residues.AuthSeqNumber[ri]?.ToString() ?? NA,
+                                Residues.AuthCompound[ri] ?? NA,
                                 Chains.AuthId[ci],
                                 NA, // auth_atom_id,
                                 this.ModelNumber,

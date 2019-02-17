@@ -81,7 +81,7 @@ namespace Cif.Components
                     builder.StartChain(chain.Id, chain.AuthId);
                     foreach (Residue residue in chain.GetResidues()) {
                         if (residue.HasCAlpha()) {
-                            builder.StartResidue(residue.SeqNumber, residue.Compound);
+                            builder.StartResidue(residue.ResidueInfo());
                             foreach (Atom atom in residue.GetAtoms()) {
                                 builder.AddAtom(atom.Id, atom.AtomInfo());
                             }

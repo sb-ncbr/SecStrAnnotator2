@@ -415,6 +415,7 @@ namespace protein
 			} else {
 				tProtein = new Protein(null as Cif.Tables.Model); // dummy protein, never will be used
 			}
+			tProtein.SaveCif(Path.Combine(Directory, "template.cif")); //debug
 
 			if (tryToReuseAlignment && File.Exists (fileQueryAlignedPDB)) {
 				qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);

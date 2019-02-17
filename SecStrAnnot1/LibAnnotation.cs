@@ -1551,6 +1551,7 @@ namespace protein
 				//TODO implement this somehow!
 				ModelBuilder builder = new ModelBuilder();
 				foreach (Vector v in tVectors){
+					// builder.StartResidue();
 					builder.AddAtom(new AtomInfo(Atom.NAME_C_ALPHA, Atom.ELEMENT_C, AtomTable.DEFAULT_ALT_LOC, false, v.X, v.Y, v.Z));
 					builder.StartResidue();
 				}

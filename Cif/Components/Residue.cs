@@ -17,11 +17,17 @@ namespace Cif.Components
         // own properties
         public int SeqNumber => Model.Residues.SeqNumber[ResidueIndex];
         public string Compound => Model.Residues.Compound[ResidueIndex];
+        public int? AuthSeqNumber => Model.Residues.AuthSeqNumber[ResidueIndex];
+        public string AuthInsertionCode => Model.Residues.AuthInsertionCode[ResidueIndex];
+        public string AuthCompound => Model.Residues.AuthCompound[ResidueIndex];
 
         // indirect properties
         public string ChainId => Model.Chains.Id[Model.Residues.ChainIndex[ResidueIndex]];
         public string ChainAuthId => Model.Chains.AuthId[Model.Residues.ChainIndex[ResidueIndex]];
         public string EntityId => Model.Entities.Id[Model.Residues.EntityIndex[ResidueIndex]];
+
+
+        public ResidueInfo ResidueInfo() => new ResidueInfo(SeqNumber, Compound,  AuthSeqNumber, AuthInsertionCode, AuthCompound);
 
 		public override string ToString() => ToString(true);
 		public string ToString(bool shortString){

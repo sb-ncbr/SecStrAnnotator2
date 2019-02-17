@@ -68,20 +68,17 @@ namespace Cif.Tables
             // down
             public List<int> atomStartIndex = new List<int>();
             // own properties
-            public List<int> SeqNumber = new List<int>();
-            public List<string> Compound = new List<string>();
+            public List<ResidueInfo> Info = new List<ResidueInfo>();
 
-            public void AddRow(int entity, int chain, int atom, int seqNumber, string compound){
+            public void AddRow(int entity, int chain, int atom, ResidueInfo info){
                 if (count > 0 && atom == atomStartIndex[count-1]){
                     //update row
-                    SeqNumber[count-1] = seqNumber;
-                    Compound[count-1] = compound;
+                    Info[count-1] = info;
                 } else {
                     //add row
                     count++;
                     atomStartIndex.Add(atom);
-                    SeqNumber.Add(seqNumber);
-                    Compound.Add(compound);
+                    Info.Add(info);
                 }
             }
         }
@@ -132,12 +129,15 @@ namespace Cif.Tables
             StartChain(id, id);
         }
 
-        public void StartResidue(int seqNumber, string compound){
-            residues.AddRow(entities.count-1, chains.count-1, atoms.count, seqNumber, compound);
+        // public void StartResidue(int seqNumber, string compound){
+        //     residues.AddRow(entities.count-1, chains.count-1, atoms.count, seqNumber, compound);
+        // }
+        public void StartResidue(ResidueInfo residueInfo){
+            residues.AddRow(entities.count-1, chains.count-1, atoms.count, residueInfo);
         }
         public void StartResidue(){
-            int seqNumber = residues.count == 0 ? DEFAULT_RESIDUE_SEQ_ID : residues.SeqNumber[residues.count-1] + 1;
-            StartResidue(seqNumber, DEFAULT_RESIDUE_COMPOUND);
+            int seqNumber = residues.count == 0 ? DEFAULT_RESIDUE_SEQ_ID : residues.Info[residues.count-1].SeqNumber + 1;
+            StartResidue(new ResidueInfo(seqNumber, DEFAULT_RESIDUE_COMPOUND));
         }
 
         public void AddAtom(string id, AtomInfo atomInfo){
@@ -164,7 +164,7 @@ namespace Cif.Tables
                              entities.chainStartIndex.Take(validEntities).Append(validChains).ToArray(),
                              entities.Id.Take(validEntities).ToArray(),
                              chains.Id.Take(validChains).ToArray(), chains.AuthId.Take(validChains).ToArray(),
-                             residues.SeqNumber.Take(validResidues).ToArray(), residues.Compound.Take(validResidues).ToArray(),
+                             residues.Info.Take(validResidues).ToArray(),
                              atoms.Id.ToArray(), atoms.Info.ToArray()
                              );
         }
@@ -196,26 +196,26 @@ namespace Cif.Tables
         public static void Test(){
             ModelBuilder b = new ModelBuilder();
             b.StartChain("A", "A");
-            b.StartResidue(1, "ALA");
+            b.StartResidue(new ResidueInfo(1, "ALA"));
             b.AddAtom(new AtomInfo("N","N",".",false,0,1,2));
-            b.StartResidue(2, "ALA");
+            b.StartResidue(new ResidueInfo(2, "ALA"));
             b.AddAtom(new AtomInfo("N","N",".",false,0,1,2));
-            b.StartResidue(3, "ALA");
+            b.StartResidue(new ResidueInfo(3, "ALA"));
             b.AddAtom(new AtomInfo("N","N",".",false,0,1,2));
-            b.StartResidue(5, "ALA");
+            b.StartResidue(new ResidueInfo(5, "ALA"));
             b.AddAtom(new AtomInfo("N","N",".",false,0,1,2));
-            b.StartResidue(6, "ALA");
+            b.StartResidue(new ResidueInfo(6, "ALA"));
             b.AddAtom(new AtomInfo("N","N",".",false,0,1,2));
             b.StartChain("B", "B");
-            b.StartResidue(7, "ALA");
+            b.StartResidue(new ResidueInfo(7, "ALA"));
             b.AddAtom(new AtomInfo("N","N",".",false,0,1,2));
-            b.StartResidue(8, "ALA");
+            b.StartResidue(new ResidueInfo(8, "ALA"));
             b.AddAtom(new AtomInfo("N","N",".",false,0,1,2));
-            b.StartResidue(3, "ALA");
+            b.StartResidue(new ResidueInfo(3, "ALA"));
             b.AddAtom(new AtomInfo("N","N",".",false,0,1,2));
-            b.StartResidue(5, "ALA");
+            b.StartResidue(new ResidueInfo(5, "ALA"));
             b.AddAtom(new AtomInfo("N","N",".",false,0,1,2));
-            b.StartResidue(6, "ALA");
+            b.StartResidue(new ResidueInfo(6, "ALA"));
             b.AddAtom(new AtomInfo("N","N",".",false,0,1,2));
                     
             Cif.Components.Protein p = new Cif.Components.Protein(b.GetModel());
