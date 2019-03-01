@@ -227,7 +227,7 @@ namespace protein
 				json [name] [JsNames.BETA_CONNECTIVITY] = BetaConnectivityToJson (betaConnectivity, sses);
 
 			using (StreamWriter w = new StreamWriter (fileName)) {
-				w.Write (json.ToString(MainClass.JSON_OUTPUT_MAX_INDENT_LEVEL));
+				w.Write (json.ToString(Setting.JSON_OUTPUT_MAX_INDENT_LEVEL));
 			}
 		}
 
@@ -1216,7 +1216,7 @@ namespace protein
 
 			// print raw metric matrix 
 			if (Lib.DoWriteDebug) {
-				TextWriter w = new StreamWriter (Path.Combine (MainClass.Directory, "metric_matrix.tsv"));
+				TextWriter w = new StreamWriter (Path.Combine (Setting.Directory, "metric_matrix.tsv"));
 				w.Write ("\t<length>\t");
 				for (int j = 0; j < candidateArray.Length; j++) {
 					w.Write (candidateArray [j].Label + "\t");
@@ -1237,7 +1237,7 @@ namespace protein
 
 			// print dynamic programming matrix
 			if (Lib.DoWriteDebug) {
-				TextWriter w = new StreamWriter (Path.Combine (MainClass.Directory, "dyn_prog_matrix.tsv"));
+				TextWriter w = new StreamWriter (Path.Combine (Setting.Directory, "dyn_prog_matrix.tsv"));
 				w.Write ("\t");
 				for (int j = 0; j < n; j++) {
 					w.Write (j == 0 ? "-\t" : candidateArray [j - 1].Label + "\t");
@@ -1493,7 +1493,7 @@ namespace protein
 
 			// print score matrix and dynamic programming matrix
 			if (Lib.DoWriteDebug) {
-				StreamWriter w = new StreamWriter (Path.Combine (MainClass.Directory, "score_matrix-residue_alignment.tsv"));
+				StreamWriter w = new StreamWriter (Path.Combine (Setting.Directory, "score_matrix-residue_alignment.tsv"));
 				for (int i = 0; i < m; i++) {
 					for (int j = 0; j < n; j++) {
 						w.Write (scoreMatrix[i, j] + "\t");
@@ -1503,7 +1503,7 @@ namespace protein
 				w.Close ();
 			}
 			if (Lib.DoWriteDebug) {
-				StreamWriter w = new StreamWriter (Path.Combine (MainClass.Directory, "dynprog_matrix-residue_alignment.tsv"));
+				StreamWriter w = new StreamWriter (Path.Combine (Setting.Directory, "dynprog_matrix-residue_alignment.tsv"));
 				for (int i = 0; i <= m; i++) {
 					for (int j = 0; j <= n; j++) {
 						w.Write (dynprogMatrix[i,j] + "\t");
@@ -1622,12 +1622,12 @@ namespace protein
 					builder.AddAtom(new AtomInfo(Atom.NAME_C_ALPHA, Atom.ELEMENT_C, AtomTable.DEFAULT_ALT_LOC, false, v.X, v.Y, v.Z));
 					builder.StartResidue();
 				}
-				new Protein(builder).SaveCif(Path.Combine(MainClass.Directory, "template-smooth.cif"));
+				new Protein(builder).SaveCif(Path.Combine(Setting.Directory, "template-smooth.cif"));
 				// new Protein (tVectors.Select ((v, i) => new Atom (i, Atom.NAME_C_ALPHA, ' ', "ALA", "X", i, ' ', v.X, v.Y, v.Z, 1, 1, "C", Atom.CHARGE_ZERO, false)))
 				// 	.Save (Path.Combine (MainClass.Directory, "template-smooth.pdb"));
 			}
 
-			double scalingDistance = MainClass.STR_ALIGNMENT_SCALING_DISTANCE;
+			double scalingDistance = Setting.STR_ALIGNMENT_SCALING_DISTANCE;
 			double scalingFactor = 1.0 / (scalingDistance*scalingDistance);
 			Func<int,int,double> scoreFunction1 = (i,j) => 1 / (1 + scalingFactor * (tVectors[i]-qVectors[j]).SqSize);
 			Func<int,int,double> scoreFunction2 = (i, j) => LocalRMSDScore (tVectors, qVectors, i, j, 15, 7);
@@ -1638,7 +1638,7 @@ namespace protein
 			Lib.WriteLineDebug ("AlignPoints: {0}", DateTime.Now - stamp);
 
 			if (Lib.DoWriteDebug) {
-				StreamWriter w = new StreamWriter (Path.Combine (MainClass.Directory, "residue_alignment.tsv"));
+				StreamWriter w = new StreamWriter (Path.Combine (Setting.Directory, "residue_alignment.tsv"));
 				List<List<String>> alignmentTable = alignment.Select (t => new List<String> { 
 					t.Item1 == null ? "-" : templates [t.Item1.Value].ChainId.ToString (), 
 					t.Item1 == null ? "-" : templates [t.Item1.Value].SeqNumber.ToString (), 

@@ -115,7 +115,7 @@ namespace protein
 			}
 
 			private void PrintDynProgAndOrReconstructionMatrix(double[,] dynProgMatrix, int[,] reconstructionMatrix){
-				TextWriter w = new StreamWriter (Path.Combine (MainClass.Directory, "dyn_prog_matrix.tsv"));
+				TextWriter w = new StreamWriter (Path.Combine (Setting.Directory, "dyn_prog_matrix.tsv"));
 				w.Write ("\t");
 				for (int j = 0; j < Context.Candidates.Length+1; j++) {
 					w.Write (j == 0 ? "-\t" : Context.Candidates [j - 1].Label + "\t");
@@ -401,7 +401,7 @@ namespace protein
 									int first = all.Select (sse => sse.Start).ArgMin ();
 									int last = all.Select (sse => sse.End).ArgMax ();
 									rememberedAnnotatedCandidates [i] = new SSEInSpace (new SSE (Context.Templates [i].Label, chainID, all [first].Start, all [last].End, 
-										all.Select (sse => sse.Type).Aggregate<char> ((x, y) => MainClass.JoiningTypeCombining (x, y) ?? SSE.NOT_FOUND_TYPE), Context.Templates [i].SheetId), all [first].StartVector, all [last].EndVector);
+										all.Select (sse => sse.Type).Aggregate<char> ((x, y) => Setting.JoiningTypeCombining (x, y) ?? SSE.NOT_FOUND_TYPE), Context.Templates [i].SheetId), all [first].StartVector, all [last].EndVector);
 									rememberedAnnotatedCandidates [i].AddComment ("Created by joining " + all.Count () + " SSEs: " + all.Select (sse => sse.Label).EnumerateWithCommas () + ".");
 									foreach (SSEInSpace sse in all) {
 										rememberedAnnotatedCandidates [i].AddNestedSSE (sse);
@@ -997,7 +997,7 @@ namespace protein
 		}
 
 		private static void PrintMatrix<T,T2>(String[] rowNames, String[] colNames, T2[] rowExtras, T[,] matrix, String filename){
-			TextWriter w = new StreamWriter (Path.Combine (MainClass.Directory, filename));
+			TextWriter w = new StreamWriter (Path.Combine (Setting.Directory, filename));
 			int m = rowNames.Length;
 			int n = colNames.Length;
 			bool extras = rowExtras != null;

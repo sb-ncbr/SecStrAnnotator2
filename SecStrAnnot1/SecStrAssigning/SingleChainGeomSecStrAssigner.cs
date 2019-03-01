@@ -128,11 +128,11 @@ namespace protein.SecStrAssigning
                     List<int> hbN = sheets [i].Where (r => r.GetNAmides().Any (a1 => atomsO.Any (a2 => 
                         !(a2.ResidueSeqNumber >= firstResSeq && a2.ResidueSeqNumber <= lastResSeq)
                         && (Math.Abs (a2.ResidueSeqNumber - a1.ResidueSeqNumber) > minResiduesBetweenHydrogenBond)
-                        && LibProtein.Distance (a1, a2) <= maxDistanceForHydrogenBond))).Select (r => r.SeqNumber).ToList ();
+                        && /*LibProtein.Distance (a1, a2)*/ (a1.Position() - a2.Position()).Size <= maxDistanceForHydrogenBond))).Select (r => r.SeqNumber).ToList ();
                     List<int> hbO = sheets [i].Where (r => r.GetOCarbs().Any (a1 => atomsN.Any (a2 => 
                         !(a2.ResidueSeqNumber >= firstResSeq && a2.ResidueSeqNumber <= lastResSeq)
                         && (Math.Abs (a2.ResidueSeqNumber - a1.ResidueSeqNumber) > minResiduesBetweenHydrogenBond)
-                        && LibProtein.Distance (a1, a2) <= maxDistanceForHydrogenBond))).Select (r => r.SeqNumber).ToList ();
+                        && /*LibProtein.Distance (a1, a2)*/ (a1.Position() - a2.Position()).Size <= maxDistanceForHydrogenBond))).Select (r => r.SeqNumber).ToList ();
                     List<int> hb = hbN.Union (hbO).ToList ();
                     if (hb.Count == 0) {
                         result.RemoveAll (sse => sse.Start == firstResSeq);

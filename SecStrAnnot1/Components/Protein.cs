@@ -173,11 +173,11 @@ namespace protein.Components
 		public void AddAtom(Atom atom)
 		{
 			if (atom.ICode != ' ') {
-				if (!MainClass.IgnoreInsertions) {
+				if (!Setting.IgnoreInsertions) {
 					Lib.WriteErrorAndExit ("Protein contains residues with insertion codes (not supported in current version). To ignore these residues, use option -i or --ignoreinsertions (loaded structure will not correspond fully to the input file!).");
-				} else if (!MainClass.IgnoreInsertionsWarningThrown) {
+				} else if (!Setting.IgnoreInsertionsWarningThrown) {
 					Lib.WriteWarning ("Ignoring residues with insertion codes!");
-					MainClass.IgnoreInsertionsWarningThrown = true;
+					Setting.IgnoreInsertionsWarningThrown = true;
 				}
 			} else {
 				if (!chains.ContainsKey (atom.ChainID)) {
