@@ -9,6 +9,7 @@ using System.Resources;
 using System.Threading;
 using System.Globalization;
 using Cif.Components;
+using protein.SecStrAssigning;
 
 namespace protein
 {
@@ -458,17 +459,17 @@ namespace protein
 			#endregion
 
 			#region Reading template annotation from file.
-			SecStrAssigners.SecStrAssignment templateSSA;
+			SecStrAssignment templateSSA;
 			/*List < SSE > tSSEs_AllChains; // template SSEs
 			List<Tuple<int,int,int>> tConnectivity_AllChains;*/
 			if (!onlyDetect) {
-				SecStrAssigners.ISecStrAssigner templateSecStrAssigner = 
+				ISecStrAssigner templateSecStrAssigner = 
 					JSON_INPUT ?
-					new SecStrAssigners.FileSecStrAssigner_Json (fileTemplateAnnotatedHelices,templateID, allTemplateChainIDs)
-					: new SecStrAssigners.FileSecStrAssigner (fileTemplateAnnotatedHelices, allTemplateChainIDs) as SecStrAssigners.ISecStrAssigner;
+					new FileSecStrAssigner_Json (fileTemplateAnnotatedHelices,templateID, allTemplateChainIDs)
+					: new FileSecStrAssigner (fileTemplateAnnotatedHelices, allTemplateChainIDs) as ISecStrAssigner;
 				try {
 					templateSSA = templateSecStrAssigner.GetSecStrAssignment ();
-				} catch (SecStrAssigners.SecStrAssignmentException e){
+				} catch (SecStrAssignmentException e){
 					return  -1;
 				} catch (Exception e){
 					Lib.WriteErrorAndExit ("Reading template annotation failed.");
@@ -497,54 +498,54 @@ namespace protein
 
 			#region Secondary Structure Assignment of the query protein.
 
-			SecStrAssigners.ISecStrAssigner secStrAssigner;
+			ISecStrAssigner secStrAssigner;
 
 			switch (secStrMethod) {
 			case SecStrMethod.File:
 				secStrAssigner = JSON_INPUT ? 
-					new SecStrAssigners.FileSecStrAssigner_Json (fileQueryInputHelices,queryID, allQueryChainIDs)
-					: new SecStrAssigners.FileSecStrAssigner (fileQueryInputHelices, allQueryChainIDs) as SecStrAssigners.ISecStrAssigner;
+					new FileSecStrAssigner_Json (fileQueryInputHelices,queryID, allQueryChainIDs)
+					: new FileSecStrAssigner (fileQueryInputHelices, allQueryChainIDs) as ISecStrAssigner;
 				break;
 			case SecStrMethod.Dssp:
-				secStrAssigner = new SecStrAssigners.DsspSecStrAssigner (config.DsspExecutable, fileQueryPDB, fileQueryDSSP, allQueryChainIDs, acceptedSSETypes);
+				secStrAssigner = new DsspSecStrAssigner (config.DsspExecutable, fileQueryPDB, fileQueryDSSP, allQueryChainIDs, acceptedSSETypes);
 				break;
 			case SecStrMethod.Geom:
-				secStrAssigner = new SecStrAssigners.GeomSecStrAssigner (allQueryChainIDs.Select (c=>qProtein.GetChain (c)), rmsdLimit);
+				secStrAssigner = new GeomSecStrAssigner (allQueryChainIDs.Select (c=>qProtein.GetChain (c)), rmsdLimit);
 				break;
 			case SecStrMethod.GeomDssp:
-				secStrAssigner = new SecStrAssigners.GeomDsspSecStrAssigner (allQueryChainIDs.Select (c=>qProtein.GetChain (c)), rmsdLimit, config.DsspExecutable, fileQueryPDB, fileQueryDSSP, acceptedSSETypes);
+				secStrAssigner = new GeomDsspSecStrAssigner (allQueryChainIDs.Select (c=>qProtein.GetChain (c)), rmsdLimit, config.DsspExecutable, fileQueryPDB, fileQueryDSSP, acceptedSSETypes);
 				break;
 			case SecStrMethod.Hbond:
-				secStrAssigner = new SecStrAssigners.HBondSecStrAssigner (qProtein, DEFAULT_H_BOND_ENERGY_LIMIT);
+				secStrAssigner = new HBondSecStrAssigner (qProtein, DEFAULT_H_BOND_ENERGY_LIMIT);
 				break;
 			case SecStrMethod.GeomHbond:
-				secStrAssigner = new SecStrAssigners.GeomHbondSecStrAssigner(qProtein, rmsdLimit, DEFAULT_H_BOND_ENERGY_LIMIT);
+				secStrAssigner = new GeomHbondSecStrAssigner(qProtein, rmsdLimit, DEFAULT_H_BOND_ENERGY_LIMIT);
 				break;
 			default:
 				throw new Exception ("Unknown secondary structure detection method.");
 			}
 
 			if (GEOM_VERSION && joinHelices) {
-				secStrAssigner = new SecStrAssigners.JoiningSecStrAssigner (secStrAssigner, qProtein, rmsdLimit, JoiningTypeCombining);
+				secStrAssigner = new JoiningSecStrAssigner (secStrAssigner, qProtein, rmsdLimit, JoiningTypeCombining);
 			}
 
-			secStrAssigner = new SecStrAssigners.FilteringSecStrAssigner (secStrAssigner, acceptedSSETypes, allQueryChainIDs);
-			//secStrAssigner = new SecStrAssigners.RelabellingSecStrAssigner (secStrAssigner, queryID+"_",LABEL_DETECTED_SSES_AS_NULL);
-			secStrAssigner = new SecStrAssigners.RelabellingSecStrAssigner (secStrAssigner, null,LABEL_DETECTED_SSES_AS_NULL);
-			secStrAssigner = new SecStrAssigners.AuthFieldsAddingSecStrAssigner(secStrAssigner, qProtein);
+			secStrAssigner = new FilteringSecStrAssigner (secStrAssigner, acceptedSSETypes, allQueryChainIDs);
+			//secStrAssigner = new RelabellingSecStrAssigner (secStrAssigner, queryID+"_",LABEL_DETECTED_SSES_AS_NULL);
+			secStrAssigner = new RelabellingSecStrAssigner (secStrAssigner, null,LABEL_DETECTED_SSES_AS_NULL);
+			secStrAssigner = new AuthFieldsAddingSecStrAssigner(secStrAssigner, qProtein);
 			if (JSON_OUTPUT)
-				secStrAssigner = new SecStrAssigners.OutputtingSecStrAssigner_Json (secStrAssigner, fileQueryDetectedHelices,queryID);
+				secStrAssigner = new OutputtingSecStrAssigner_Json (secStrAssigner, fileQueryDetectedHelices,queryID);
 			else
-				secStrAssigner = new SecStrAssigners.OutputtingSecStrAssigner (secStrAssigner, fileQueryDetectedHelices);
+				secStrAssigner = new OutputtingSecStrAssigner (secStrAssigner, fileQueryDetectedHelices);
 
-			SecStrAssigners.SecStrAssignment querySSA;
+			SecStrAssignment querySSA;
 			/*List <SSE> qSSEs_AllChains; // query SSEs
 			List<Tuple<int,int,int>> qConnectivity_AllChains;*/
 			try {
 				querySSA= secStrAssigner.GetSecStrAssignment ();
 				/*qSSEs_AllChains = querySSA.SSEs;// secStrAssigner.GetSecStrAssignment (out qConnectivity_AllChains);
 				qConnectivity_AllChains=querySSA.Connectivity;*/
-			} catch (SecStrAssigners.SecStrAssignmentException e) {
+			} catch (SecStrAssignmentException e) {
 				Lib.WriteError (e.Message);
 				return -1;
 			}
