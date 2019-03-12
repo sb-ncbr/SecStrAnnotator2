@@ -161,7 +161,7 @@ def run_in_threads (do_job, jobs, n_threads, progress_bar=None, initialize_threa
 	
 ################################################################################
 
-# Determine whether can run SecStrAnnotator.exe or mono SecStrAnnotator.exe
+# Determine whether can run dotnet SecStrAnnotator.dll
 if not path.exists(SECSTRANNOTATOR):
 	sys.stderr.write('Error: "' + SECSTRANNOTATOR + '" not found\n')
 	exit(1)
