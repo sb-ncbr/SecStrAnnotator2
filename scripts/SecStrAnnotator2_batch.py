@@ -11,7 +11,7 @@ except ImportError:
 import threading
 import subprocess
 
-################################################################################
+#  PARSE ARGUMENTS  ###############################################################################
 
 parser = argparse.ArgumentParser()
 parser.add_argument('directory', help='directory with the input and output files (argument DIRECTORY for SecStrAnnotator)', type=str)
@@ -19,6 +19,7 @@ parser.add_argument('template', help='template domain specification (argument TE
 parser.add_argument('queries', help='JSON file with the list of domains to be annotated (in format {PDB:[[domain_name,chain,ranges]]}, will be processed to QUERY arguments for SecStrAnnotator)', type=str)
 parser.add_argument('--options', help='Any options that are to be passed to SecStrAnnotator (must be enclosed in quotes and contain spaces, not to be confused with Python arguments, e.g. --options \'--ssa dssp --soft\' or \' --soft\')', type=str, default='')
 parser.add_argument('--threads', help='Number of parallel threads (default: 1)', type=int, default=1)
+parser.add_argument('--dll', help='Path to the SecStrAnnotator DLL (default: SecStrAnnot2.dll)', type=str, default='SecStrAnnot2.dll')
 args = parser.parse_args()
 
 options = [opt for opt in args.options.split(' ') if opt != '']
@@ -27,15 +28,15 @@ directory = args.directory
 template = args.template
 queries_file = args.queries
 n_threads = args.threads
+RUN_DIR = path.dirname(__file__)  # os.getcwd()
+SECSTRANNOTATOR = path.join(RUN_DIR, args.dll)
 
 all_annotations_file = path.join(directory, 'all_annotations.sses.json')
 output = path.join(directory, 'stdout.txt')
 output_err = path.join(directory, 'stderr.txt')
-out_files_extensions = ['-aligned.pdb', '-detected.sses.json', '-annotated.sses.json', '-annotated.pse']
-RUN_DIR = path.dirname(__file__)  # os.getcwd()
-SECSTRANNOTATOR = path.join(RUN_DIR, 'SecStrAnnot2.dll')
+out_files_extensions = ['-aligned.cif', '-detected.sses.json', '-annotated.sses.json', '-annotated.pse']
 
-################################################################################
+#  FUNCTIONS  ###############################################################################
 
 def clear_file(filename):
 	with open(filename, 'w') as w:
@@ -142,14 +143,18 @@ def run_in_threads (do_job, jobs, n_threads, progress_bar=None, initialize_threa
 				q.task_done()
 			except queue.Empty:
 				all_done = True
-	threads = []
-	for i in range(n_threads):
-		thread = threading.Thread(target=worker)
-		threads.append(thread)
-		if initialize_thread_sync is not None:
-			initialize_thread_sync(thread)
+	# threads = []
+	# for i in range(n_threads):
+	# 	thread = threading.Thread(target=worker)
+	# 	threads.append(thread)
+	# 	if initialize_thread_sync is not None:
+	# 		initialize_thread_sync(thread)
+	threads = [ threading.Thread(target=worker) for i in range(n_threads) ]
 	if progress_bar is not None:
 		progress_bar.start()
+	if initialize_thread_sync is not None:
+		for thread in threads:
+			initialize_thread_sync(thread)
 	for thread in threads:
 		thread.start()
 	q.join()
@@ -159,11 +164,21 @@ def run_in_threads (do_job, jobs, n_threads, progress_bar=None, initialize_threa
 	if progress_bar is not None:
 		progress_bar.finalize()
 	
-################################################################################
+#  MAIN  ###############################################################################
 
-# Determine whether can run dotnet SecStrAnnotator.dll
-if not path.exists(SECSTRANNOTATOR):
+# Determine whether can run dotnet SecStrAnnotator.dll and whether the template files exist
+if not path.isfile(SECSTRANNOTATOR):
 	sys.stderr.write('Error: "' + SECSTRANNOTATOR + '" not found\n')
+	exit(1)
+
+template_pdb = template.split(',')[0]
+template_struct_file = path.join(directory, template_pdb+'.cif')
+template_annot_file = path.join(directory, template_pdb+'-template.sses.json')
+if not path.isfile(template_struct_file):
+	sys.stderr.write('Error: "' + template_struct_file + '" not found\n')
+	exit(1)
+if not path.isfile(template_annot_file):
+	sys.stderr.write('Error: "' + template_annot_file + '" not found\n')
 	exit(1)
 
 secstrannotator_commands = ['dotnet', SECSTRANNOTATOR]
@@ -171,8 +186,12 @@ secstrannotator_commands = ['dotnet', SECSTRANNOTATOR]
 # Prepare domain list
 domains = read_domains_json(queries_file)
 pdbs = sorted(domains)
-found_pdbs = [pdb for pdb in pdbs if path.isfile(path.join(directory, pdb+'.pdb'))]
-not_found_pdbs = [pdb for pdb in pdbs if not path.isfile(path.join(directory, pdb+'.pdb'))]
+if not path.isdir(directory):
+	sys.stderr.write('Error: "' + directory + '" is not a directory\n')
+	exit(1)
+print(directory)
+found_pdbs = [pdb for pdb in pdbs if path.isfile(path.join(directory, pdb+'.cif'))]
+not_found_pdbs = [pdb for pdb in pdbs if not path.isfile(path.join(directory, pdb+'.cif'))]
 n_domains = sum(len(domains[pdb]) for pdb in pdbs)
 n_found_domains = sum(len(domains[pdb]) for pdb in found_pdbs)
 not_found_domains = [domain for pdb in not_found_pdbs for domain in domains[pdb] ]

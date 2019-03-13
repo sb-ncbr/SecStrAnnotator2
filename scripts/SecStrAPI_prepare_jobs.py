@@ -1,5 +1,3 @@
-# Example of usage:
-# python3 ../../SecStrAnnot2/scripts/merge_domain_lists.py CATH 1.10.630.10 cyps_cath_20190312.json Pfam PF00067 cyps_pfam_20190312.json --api_version 1.0 > cyps_merged_20190312.json
 
 import sys
 import json
@@ -26,55 +24,11 @@ FAMILY_ID = 'family'
 
 #  FUNCTIONS  ##############################################################################
 
-class UniProtManager:
-    UNIPROT = 'UniProt'
-    UNIPROT_NAME = 'name'
-    MAPPINGS = 'mappings'
-    CHAIN = 'struct_asym_id'
-    def __init__(self, source_url='http://www.ebi.ac.uk/pdbe/api/mappings/uniprot/'):
-        self.pdbchain2uniidname = {}
-        self.source_url = source_url
-    def get_uniprot_id_and_name(self, pdb, chain) -> Tuple[str, str]:  
-        if (pdb, chain) not in self.pdbchain2uniidname:
-            self._add_pdb(pdb)
-            if (pdb, chain) not in self.pdbchain2uniidname:
-                self.pdbchain2uniidname[(pdb, chain)] = (None, None)
-        return self.pdbchain2uniidname[(pdb, chain)]
-    def _add_pdb(self, pdb):
-        url = f'{self.source_url}/{pdb}'
-        r = json.loads(requests.get(url).text)
-        unip = r[pdb][self.UNIPROT]
-        for uni_id, uni_annot in unip.items():
-            uni_name = uni_annot[self.UNIPROT_NAME]
-            for mapping in uni_annot[self.MAPPINGS]:
-                chain = mapping[self.CHAIN]
-                if (pdb, chain) in self.pdbchain2uniidname and self.pdbchain2uniidname[(pdb, chain)] != (uni_id, uni_name):
-                    old_id, old_name = self.pdbchain2uniidname[(pdb, chain)]
-                    raise Exception(f'{pdb} chain {chain} has an ambiguous mapping to Uniprot: {old_id} vs {uni_id}')
-                else:
-                    self.pdbchain2uniidname[(pdb, chain)] = (uni_id, uni_name)
-
-def new_mapping(domain_name, source, family, pdb, chain, ranges):
-    mapping = { DOMAIN_NAME: domain_name, SOURCE: source, FAMILY_ID: family, PDB: pdb, CHAIN: chain, RANGES: ranges }
-    return mapping
-
-def create_domain_id(pdb, chain):
-    return pdb + chain
-
-def simplify_result(result):
-    simple_result = {}
-    for pdb, doms in result[ANNOTATIONS].items():
-        if DOMAINS_IN_DICT:
-            doms = doms.values()
-        simple_result[pdb] = [ (','.join((dom[PDB], dom[CHAIN], dom[RANGES])), dom[CHAIN], dom[RANGES]) for dom in doms ] 
-    return simple_result
-
 #  PARSE ARGUMENTS  ##############################################################################
 
 parser = argparse.ArgumentParser()
-parser.add_argument('lists', help='One or more triples of arguments SOURCE FAMILY FILE, where SOURCE is the name of a source (CATH, Pfam...), FAMILY is the identifier of the family in the source (1.10.630.10, PF00067...), and FILE is a JSON file with the list of domains from the source in format {PDB:[[domain, chain, ranges]]}', nargs='*')
+parser.add_argument('domains', help='', nargs='*')
 parser.add_argument('--api_version', help='API version information to include in the output', type=str, default=None)
-parser.add_argument('--simple_output', help='Filename for simplified output ({PDB:[[domain, chain, ranges]]})', type=str, default=None)
 args = parser.parse_args()
 
 if len(args.lists) % 3 != 0:
@@ -86,7 +40,6 @@ else:
 api_version = args.api_version
 if api_version is None:
     sys.stderr.write('WARNING: "api_version" is set to null\n')
-simple_output_file = args.simple_output
 
 #  MAIN  ##############################################################################
 
@@ -125,8 +78,3 @@ annotations = { pdb: annot for pdb, annot in sorted(annotations.items()) }
 result = { API_VERSION: api_version, ANNOTATIONS: annotations }
 json.dump(result, sys.stdout, indent=4)
 print()
-
-if simple_output_file is not None:
-    simple_result = simplify_result(result)
-    with open(simple_output_file, 'w') as w:
-        json.dump(simple_result, w, indent=4)
