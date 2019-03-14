@@ -9,44 +9,17 @@ import argparse
 import re
 from collections import OrderedDict
 
-parser = argparse.ArgumentParser()
-parser.add_argument('input_file', help='File with the list of PDBs to download', type=str)
-parser.add_argument('output_directory', help='Directory to save downloaded files', type=str)
-parser.add_argument('--input_format', 
-	help=('Specify the input file format: '
-		+ 'json = JSON file in format [PDB] or {PDB:anything}; '
-		+ 'json_by_uniprot = JSON file in format {UniProtId:[PDB]} or {UniProtId:{PDB:anything}}; '
-		+ 'text = text file with a list of PDBs (with any separator)'), 
-	choices=['json', 'json_by_uniprot', 'text'],
-	default='json')
-parser.add_argument('--format', 
-	help=('Specify the format of dowloaded structures'), 
-	choices=['cif', 'pdb'],
-	default='cif')
-parser.add_argument('--unique_uniprot', help='Download only the first PDB entry for each UniProtID', action='store_true')
-parser.add_argument('--no_gzip', help='Download uncompressed files instead of default gzip', action='store_true')
-args = parser.parse_args()
-
-# if args.format == 'cif':
-# 	args.no_gzip = True  # no Gzip for CIF
-
-if args.unique_uniprot and args.input_format != 'json_by_uniprot':
-	sys.stderr.write('Error: "--unique_uniprot" can only be used with "--input_format json_by_uniprot" \n')
-
-# URL = ('http://www.ebi.ac.uk/pdbe/entry-files/download/pdb', '.ent')
-# URL_GZ = ('http://ftp.ebi.ac.uk/pub/databases/rcsb/pdb-remediated/data/structures/divided/pdb/', '/pdb', '.ent.gz')
-# URL_CIF = ('http://www.ebi.ac.uk/pdbe/entry-files/download/1tqn_updated.cif')
+#  CONSTANTS  ##############################################################################
 
 URL_PDB = 'http://www.ebi.ac.uk/pdbe/entry-files/download/pdb{pdb}.ent'
 URL_PDB_GZ = 'http://ftp.ebi.ac.uk/pub/databases/rcsb/pdb-remediated/data/structures/divided/pdb/{pdb2}{pdb3}/pdb{pdb}.ent.gz'
 URL_CIF = 'http://www.ebi.ac.uk/pdbe/entry-files/download/{pdb}_updated.cif'
 URL_CIF_GZ = 'https://files.rcsb.org/download/{pdb}.cif.gz'
 
-
-################################################################################
+#  FUNCTIONS  ###############################################################################
 
 def log(message=''):
-	print(message)
+	sys.stderr.write(message + '\n')
 
 def try_read_json(filename):
 	with open(filename) as f:
@@ -169,7 +142,30 @@ class ProgressBar:
 		self.writer.write('|\n')
 		self.writer.flush()
 
-################################################################################
+#  PARSE ARGUMENTS  ###############################################################################
+
+parser = argparse.ArgumentParser()
+parser.add_argument('input_file', help='File with the list of PDBs to download', type=str)
+parser.add_argument('output_directory', help='Directory to save downloaded files', type=str)
+parser.add_argument('--input_format', 
+	help=('Specify the input file format: '
+		+ 'json = JSON file in format [PDB] or {PDB:anything}; '
+		+ 'json_by_uniprot = JSON file in format {UniProtId:[PDB]} or {UniProtId:{PDB:anything}}; '
+		+ 'text = text file with a list of PDBs (with any separator)'), 
+	choices=['json', 'json_by_uniprot', 'text'],
+	default='json')
+parser.add_argument('--format', 
+	help=('Specify the format of dowloaded structures'), 
+	choices=['cif', 'pdb'],
+	default='cif')
+parser.add_argument('--unique_uniprot', help='Download only the first PDB entry for each UniProtID', action='store_true')
+parser.add_argument('--no_gzip', help='Download uncompressed files instead of default gzip', action='store_true')
+args = parser.parse_args()
+
+if args.unique_uniprot and args.input_format != 'json_by_uniprot':
+	sys.stderr.write('Error: "--unique_uniprot" can only be used with "--input_format json_by_uniprot" \n')
+
+#  MAIN  ###############################################################################
 
 # Check and prepare output directory
 outdir = args.output_directory
@@ -199,9 +195,11 @@ for pdb in pdbs:
 	bar.step()
 bar.finalize()
 
+n_failed = len(failed)
+n_ok = len(pdbs) - n_failed
 log()
-if len(failed) == 0:
-	log('OK')
-if len(failed) > 0:
-	log('Failed to download ' + str(len(failed)) + ' PDBs:\n' + ' '.join(failed))
+log(f'Downloaded {n_ok} PDB entries, failed to download {n_failed} PDB entries')
+if n_failed > 0:
+	log('Failed to download: ' + ' '.join(failed))
+	exit(1)
 

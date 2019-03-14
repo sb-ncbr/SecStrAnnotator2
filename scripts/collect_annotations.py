@@ -1,6 +1,3 @@
-# Example of usage:
-# python3 ../../SecStrAnnot2/scripts/merge_domain_lists.py CATH 1.10.630.10 cyps_cath_20190312.json Pfam PF00067 cyps_pfam_20190312.json --api_version 1.0 > cyps_merged_20190312.json
-
 import os
 import sys
 import json
@@ -12,27 +9,11 @@ from os import path
 
 #  CONSTANTS  ##############################################################################
 
+from constants import *
+
 INPUT_EXT = '-annotated.sses.json'
 OUTPUT_EXT = '.json'
 SEQUENCE_EXT = '.fasta'
-
-API_VERSION = 'api_version'
-ANNOTATIONS = 'annotations'
-PDB = 'pdb'
-CHAIN = 'chain'
-RANGES = 'ranges'
-UNIPROT_ID = 'uniprot_id'
-UNIPROT_NAME = 'uniprot_name'
-MAPPINGS = 'domain_mappings'
-DOMAIN_NAME = 'domain'
-SOURCE = 'source'
-FAMILY_ID = 'family'
-
-SSES = 'secondary_structure_elements'
-CONNECTIVITY = 'beta_connectivity'
-COMMENT = 'comment'
-LABEL = 'label'
-SEQUENCE = 'sequence'
 
 #  FUNCTIONS  ##############################################################################
 
@@ -88,3 +69,7 @@ if sequences_directory is not None:
         with open(path.join(sequences_directory, label + SEQUENCE_EXT), 'w') as w:
             for domname, sequence in domnames_sequences:
                 w.write(f'>{domname}\n{sequence}\n')
+
+n_pdbs = len(input_annotations[ANNOTATIONS])
+n_domains = sum( len(doms) for doms in input_annotations[ANNOTATIONS].values() )
+sys.stderr.write(f'Collected annotations for {n_domains} domains in {n_pdbs} PDB entries\n')

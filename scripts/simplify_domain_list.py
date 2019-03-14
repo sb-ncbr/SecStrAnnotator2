@@ -1,0 +1,35 @@
+import sys
+import json
+import argparse
+
+#  CONSTANTS  ##############################################################################
+
+from constants import *
+
+#  PARSE ARGUMENTS  ##############################################################################
+
+parser = argparse.ArgumentParser()
+parser.add_argument('input_file', help='Domain list in SecStrAPI format', type=str)
+args = parser.parse_args()
+
+input_file = args.input_file
+
+#  MAIN  ##############################################################################
+
+with open(input_file) as r:
+    domain_list = json.load(r)
+    pdb2domains = domain_list[ANNOTATIONS]
+DOMAINS_IN_DICT = len(pdb2domains) > 0 and isinstance(next(iter(pdb2domains.values())), dict)
+
+simple_list = {}
+for pdb, doms in pdb2domains.items():
+    if DOMAINS_IN_DICT:
+        doms = doms.values()
+    simple_list[pdb] = [ (','.join((dom[PDB], dom[CHAIN], dom[RANGES])), dom[CHAIN], dom[RANGES]) for dom in doms ] 
+
+json.dump(simple_list, sys.stdout, indent=4)
+print()
+
+n_pdbs = len(simple_list)
+n_domains = sum( len(doms) for doms in simple_list.values() )
+sys.stderr.write(f'Formatted {n_domains} domains in {n_pdbs} PDB entries\n')

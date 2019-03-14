@@ -1,5 +1,5 @@
 # Example of usage:
-# python3 ../../SecStrAnnot2/scripts/merge_domain_lists.py CATH 1.10.630.10 cyps_cath_20190312.json Pfam PF00067 cyps_pfam_20190312.json --api_version 1.0 > cyps_merged_20190312.json
+# python3 domain_lists_to_SecStrAPI_format CATH 1.10.630.10 cyps_cath_20190312.json Pfam PF00067 cyps_pfam_20190312.json --api_version 1.0 > cyps_merged_20190312.json
 
 import sys
 import json
@@ -10,19 +10,7 @@ from typing import Tuple
 
 #  CONSTANTS  ##############################################################################
 
-DOMAINS_IN_DICT = False
-
-API_VERSION = 'api_version'
-ANNOTATIONS = 'annotations'
-PDB = 'pdb'
-CHAIN = 'chain'
-RANGES = 'ranges'
-UNIPROT_ID = 'uniprot_id'
-UNIPROT_NAME = 'uniprot_name'
-MAPPINGS = 'domain_mappings'
-DOMAIN_NAME = 'domain'
-SOURCE = 'source'
-FAMILY_ID = 'family'
+from constants import *
 
 #  FUNCTIONS  ##############################################################################
 
@@ -74,7 +62,6 @@ def simplify_result(result):
 parser = argparse.ArgumentParser()
 parser.add_argument('lists', help='One or more triples of arguments SOURCE FAMILY FILE, where SOURCE is the name of a source (CATH, Pfam...), FAMILY is the identifier of the family in the source (1.10.630.10, PF00067...), and FILE is a JSON file with the list of domains from the source in format {PDB:[[domain, chain, ranges]]}', nargs='*')
 parser.add_argument('--api_version', help='API version information to include in the output', type=str, default=None)
-parser.add_argument('--simple_output', help='Filename for simplified output ({PDB:[[domain, chain, ranges]]})', type=str, default=None)
 args = parser.parse_args()
 
 if len(args.lists) % 3 != 0:
@@ -86,7 +73,6 @@ else:
 api_version = args.api_version
 if api_version is None:
     sys.stderr.write('WARNING: "api_version" is set to null\n')
-simple_output_file = args.simple_output
 
 #  MAIN  ##############################################################################
 
@@ -126,7 +112,6 @@ result = { API_VERSION: api_version, ANNOTATIONS: annotations }
 json.dump(result, sys.stdout, indent=4)
 print()
 
-if simple_output_file is not None:
-    simple_result = simplify_result(result)
-    with open(simple_output_file, 'w') as w:
-        json.dump(simple_result, w, indent=4)
+n_pdbs = len(annotations)
+n_domains = sum( len(doms) for doms in annotations.values() )
+sys.stderr.write(f'Formatted {n_domains} domains in {n_pdbs} PDB entries\n')
