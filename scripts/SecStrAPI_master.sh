@@ -20,7 +20,7 @@ ADD_PIVOT_RESIDUES="$SCRIPT_DIR/add_pivot_residues.py"
 
 TEMPLATE="1og2,A,:"
 TEMPLATE_ANNOTATION_FILE="$DATA_DIR/1og2-template.sses.json"
-SECSTRANNOTATOR_OPTIONS="--soft"
+SECSTRANNOTATOR_OPTIONS="--soft --label2auth"
 ALIGNED_SSE_LABELS="A,B,C,D,E,H,I,J,K,L"
 
 
@@ -48,11 +48,11 @@ ALIGNED_SSE_LABELS="A,B,C,D,E,H,I,J,K,L"
 # # Download CIF files
 # python3  $DOWNLOAD_DOMAINS  --format cif  --no_gzip  $DATA_DIR/cyps_all_$TODAY.simple.json  $DATA_DIR/structures/
 
-# # Annotate
-# cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/
-# python3  $SECSTRANNOTATOR_BATCH  --dll $SECSTRANNOTATOR_DLL \
-#     --threads $N_THREADS  --options " $SECSTRANNOTATOR_OPTIONS " \
-#     $DATA_DIR/structures  $TEMPLATE  $DATA_DIR/cyps_all_$TODAY.simple.json 
+# Annotate
+cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/
+python3  $SECSTRANNOTATOR_BATCH  --dll $SECSTRANNOTATOR_DLL \
+    --threads $N_THREADS  --options " $SECSTRANNOTATOR_OPTIONS " \
+    $DATA_DIR/structures  $TEMPLATE  $DATA_DIR/cyps_all_$TODAY.simple.json 
 
 # # Collect annotations and put them to SecStrAPI format
 # python3  $COLLECT_ANNOTATIONS  $DATA_DIR/cyps_all_$TODAY.json  $DATA_DIR/structures/  >  $DATA_DIR/annotations_all.json
@@ -63,8 +63,8 @@ ALIGNED_SSE_LABELS="A,B,C,D,E,H,I,J,K,L"
 # # Perform no-gap sequence alignment and create sequence logos (from Set-NR)
 # python3  $ALIGN_SEQUENCES  $DATA_DIR/annotations_best.json  --alignments_dir $DATA_DIR/aligments_best/  --trees_dir $DATA_DIR/trees_best/  --logos_dir $DATA_DIR/logos_best/
 
-# Realign sequences from Set-ALL to the alignment from Set-NR and add pivot residue information
-python3  $ADD_PIVOT_RESIDUES  $DATA_DIR/annotations_all.json  $DATA_DIR/aligments_best/  --labels $ALIGNED_SSE_LABELS  >  $DATA_DIR/annotations_with_pivots_all.json
-python3  $ADD_PIVOT_RESIDUES  $DATA_DIR/annotations_best.json  $DATA_DIR/aligments_best/  --labels $ALIGNED_SSE_LABELS  >  $DATA_DIR/annotations_with_pivots_best.json
+# # Realign sequences from Set-ALL to the alignment from Set-NR and add pivot residue information
+# python3  $ADD_PIVOT_RESIDUES  $DATA_DIR/annotations_all.json  $DATA_DIR/aligments_best/  --labels $ALIGNED_SSE_LABELS  >  $DATA_DIR/annotations_with_pivots_all.json
+# python3  $ADD_PIVOT_RESIDUES  $DATA_DIR/annotations_best.json  $DATA_DIR/aligments_best/  --labels $ALIGNED_SSE_LABELS  >  $DATA_DIR/annotations_with_pivots_best.json
 
 # #TODO add pivot residues to the annotations for SecStrAPI (find out how to obtain their auth_ numbers!)

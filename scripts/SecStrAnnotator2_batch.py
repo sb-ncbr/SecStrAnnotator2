@@ -204,6 +204,7 @@ failed = []
 def process_pdb(pdb):
 	thread_out = path.join(directory, 'stdout_thread_' + threading.current_thread().name + '.txt')
 	thread_err = path.join(directory, 'stderr_thread_' + threading.current_thread().name + '.txt')
+	clear_file(path.join(directory, pdb + '.label2auth.tsv'))
 	for domain_name, chain, ranges in domains[pdb]:
 		query = pdb + ',' + chain + ',' + ranges
 		with open(thread_out, 'a') as w_out:
@@ -217,6 +218,11 @@ def process_pdb(pdb):
 		if exit_code == 0:
 			for ext in out_files_extensions:
 				try_rename_file(path.join(directory, pdb + ext), path.join(directory, domain_name + ext))
+			try:
+				copy_file(path.join(directory, pdb + '-label2auth.tsv'), path.join(directory, pdb + '.label2auth.tsv'), append=True)
+				remove_file(path.join(directory, pdb + '-label2auth.tsv'))
+			except:
+				pass
 			if not onlyssa:
 				annotation = try_read_json(path.join(directory, domain_name + '-annotated.sses.json')).get(pdb, {})
 				annotation['domain'] = { 'name': domain_name, 'pdb': pdb, 'chain': chain, 'ranges': ranges }
