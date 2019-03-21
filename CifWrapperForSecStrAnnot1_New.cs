@@ -29,7 +29,7 @@ namespace SecStrAnnot2
             return ProteinFromCifModel(model);
         }
 
-        public static Cif.Components.Protein ProteinFromCifFile(string filename, string chainId, (int,int)[] resSeqRanges) {
+        public static Cif.Components.Protein ProteinFromCifFile(string filename, string chainId, (int,int)[] resSeqRanges, string label2authFile=null) {
             CifPackage package = CifPackage.FromFile(filename);
             if (package.BlockNames.Length < 1) {
                 throw new FormatException(EXCEPTION_MESSAGE + "CIF file must contain at least one block");

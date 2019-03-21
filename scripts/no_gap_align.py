@@ -288,11 +288,16 @@ def draw_reordered_tree_aux(tree, root, put_root_down=False):
 
 def logo_heights(sequence_matrix):
     gap_prob = sequence_matrix[:, 0]
-    probs = sequence_matrix[:, 1:]
+    probs = sequence_matrix[:, 1:].copy()
     probs[probs<=0] = 1
     background_entropy = -np.log2(1/20)
     entropies = -np.sum(probs * np.log2(probs), axis=1)
     return (background_entropy - entropies) * (1 - gap_prob)
+
+def get_highest_column_index(sequence_matrix):
+    heights = logo_heights(sequence_matrix)
+    max_height, max_height_index = max( (height, i) for i, height in enumerate(heights) )
+    return max_height_index
 
 def run_weblogo2(alignment_file, logo_file, first_index=0):
     with open(alignment_file) as r:
@@ -323,10 +328,6 @@ def run_weblogo3(alignment_file, logo_file, first_index=0):
         '''.replace('\n', ' ')
     # print(command)
     os.system(command)
-
-def add_pivot_residues_to_annotations(annotations):
-    pdb2label2sequence = defaultdict(lambda: defaultdict())
-    pass
 
 class PriorityQueue:
 	def __init__(self, elements_keys):
@@ -394,8 +395,9 @@ class NoGapAligner:
         height = 8
         # width_per_residue = 0.8
         # n_residues = self.alignment_matrix.shape[0]
-        heights = logo_heights(self.alignment_matrix)
-        max_height, max_height_index = max( (height, i) for i, height in enumerate(heights) )
+        # heights = logo_heights(self.alignment_matrix)
+        # max_height, max_height_index = max( (height, i) for i, height in enumerate(heights) )
+        max_height_index = get_highest_column_index(self.alignment_matrix)
         alignment_file = output_file + '.fasta.tmp'
         self.output_alignment(alignment_file)
         if use_weblogo2:
@@ -403,6 +405,21 @@ class NoGapAligner:
         else:
             run_weblogo3(alignment_file, output_file, first_index=-max_height_index)
         os.remove(alignment_file)
+
+class Realigner:
+    def __init__(self, reference_alignment_file, subst_matrix_info=MatrixInfo.blosum62, gap_penalty=10):
+        self.subst_matrix, self.alphabet, self.letter2index = substitution_matrix(subst_matrix_info, gap_penalty=gap_penalty)
+        inp = SeqIO.parse(reference_alignment_file, 'fasta')
+        names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
+        sequence_matrices = [ sequence2matrix(seq, self.letter2index) for seq in seqs ]
+        self.reference_alignment_matrix = sum(sequence_matrices) / len(sequence_matrices)
+        self.pivot_index = get_highest_column_index(self.reference_alignment_matrix)
+        
+    def aligning_shift_and_pivot(self, sequence):
+        seq_matrix = sequence2matrix(sequence, self.letter2index)
+        shift, score = optimal_shift_and_score(self.reference_alignment_matrix, seq_matrix, self.subst_matrix)
+        pivot = self.pivot_index - shift
+        return shift, pivot
 
 def main(input_file, output_file, logo_output=None, keep_order=False, print_tree=False, realign=True):
     inp = SeqIO.parse(input_file, 'fasta')

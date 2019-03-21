@@ -1,5 +1,6 @@
 import os
 from os import path
+import shutil
 import sys
 import json
 import requests
@@ -48,11 +49,14 @@ if labels is None:
     labels = sorted(label2seqs.keys())
 
 if alignments_dir is not None:
-    os.makedirs(alignments_dir, exist_ok=True)
+    shutil.rmtree(alignments_dir, ignore_errors=True)
+    os.makedirs(alignments_dir)
 if trees_dir is not None:
-    os.makedirs(trees_dir, exist_ok=True)
+    shutil.rmtree(trees_dir, ignore_errors=True)
+    os.makedirs(trees_dir)
 if logos_dir is not None:
-    os.makedirs(logos_dir, exist_ok=True)
+    shutil.rmtree(logos_dir, ignore_errors=True)
+    os.makedirs(logos_dir)
 
 aligner = no_gap_align.NoGapAligner()
 for label in labels:

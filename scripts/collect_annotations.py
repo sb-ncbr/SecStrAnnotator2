@@ -22,23 +22,15 @@ SEQUENCE_EXT = '.fasta'
 parser = argparse.ArgumentParser()
 parser.add_argument('domain_list', help='JSON file with the list of domains in SecStrAPI format (from merge_domain_lists.py)', type=str)
 parser.add_argument('input_directory', help='Directory with SSE annotations (from SecStrAnnot2.dll)', type=str)
-parser.add_argument('output_directory', help='Directory for SSE annotations in SecStrAPI format', type=str)
-parser.add_argument('--sequences_directory', help='Directory for SSE sequences in multi-FASTA format', type=str, default=None)
 args = parser.parse_args()
 
 domain_list_file = args.domain_list
 input_directory = args.input_directory
-output_directory = args.output_directory
-sequences_directory = args.sequences_directory
 
 #  MAIN  ##############################################################################
 
 with open(domain_list_file) as r:
     input_annotations = json.load(r)
-
-os.makedirs(output_directory, exist_ok=True)
-if sequences_directory is not None:
-    os.makedirs(sequences_directory, exist_ok=True)
 
 api_version = input_annotations[API_VERSION]
 
@@ -57,18 +49,9 @@ for pdb, domains in input_annotations[ANNOTATIONS].items():
         for sse in domain[SSES]:
             if LABEL in sse and sse[LABEL] is not None:
                 label2domain_sequence[sse[LABEL]].append((name, sse[SEQUENCE]))
-    with open(path.join(output_directory, pdb + OUTPUT_EXT), 'w') as w:
-        result = { API_VERSION: api_version, ANNOTATIONS: { pdb: domains } }
-        json.dump(result, w, indent=4)
 
-with open(path.join(output_directory, 'all' + OUTPUT_EXT), 'w') as w:
-    json.dump(input_annotations, w, indent=4)
-
-if sequences_directory is not None:
-    for label, domnames_sequences in label2domain_sequence.items():
-        with open(path.join(sequences_directory, label + SEQUENCE_EXT), 'w') as w:
-            for domname, sequence in domnames_sequences:
-                w.write(f'>{domname}\n{sequence}\n')
+json.dump(input_annotations, sys.stdout, indent=4)
+print()
 
 n_pdbs = len(input_annotations[ANNOTATIONS])
 n_domains = sum( len(doms) for doms in input_annotations[ANNOTATIONS].values() )
