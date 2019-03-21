@@ -78,6 +78,8 @@ namespace protein
 			Func<SSEInSpace,double> skipTemplatePenalty = (sse => maxmetric[0] + maxmetric[1]*(sse.EndVector - sse.StartVector).Size);
 			Func<SSEInSpace,double> skipCandidatePenalty = (sse => maxmetric[2]*(sse.EndVector - sse.StartVector).Size);
 
+			bool printLabel2AuthTable = false;
+
 			#endregion
 
 
@@ -184,6 +186,9 @@ namespace protein
 			options.AddOption (Option.SwitchOption(new string[]{"-v", "--verbose"}, v => { Lib.DoWriteDebug = v; })
 				.AddHelp("Print debugging notes and write out additional files.")
 			);
+			options.AddOption (Option.SwitchOption(new string[]{"-L", "--label2auth"}, v => { printLabel2AuthTable = v; })
+				.AddHelp("Create an additional file with a table for converting label_ to auth_ numbering.")
+			);
 
 			#if DEVEL
 			options.AddOption (Option.StringOption(new string[]{"-C", "--corrections"}, v => { correctionsFile = v; })
@@ -215,9 +220,8 @@ namespace protein
 			if (!optionsOK){
 				Environment.Exit (1);
 			}
-
+			
 			Lib.WriteLineDebug("AppDomain.CurrentDomain.BaseDirectory: {0}", AppDomain.CurrentDomain.BaseDirectory);
-
 
 			if (onlyDetect) {
 				// Execution with --onlyssa: SecStrAnnotator.exe DIR QUERY
@@ -280,6 +284,7 @@ namespace protein
 			String fileQueryJoinedHelices = Path.Combine (Setting.Directory, queryID + Setting.JOINED_SSES_FILE_EXT)+(Setting.JSON_OUTPUT?".json":"");
 			String fileQueryAnnotatedHelices = Path.Combine (Setting.Directory, queryID + Setting.ANNOTATION_FILE_EXT)+(Setting.JSON_OUTPUT?".json":"");
 			String fileQueryRmsds = Path.Combine (Setting.Directory, queryID + Setting.RMSDS_FILE_EXT);
+			String fileQueryLabel2Auth = Path.Combine (Setting.Directory, queryID + Setting.LABEL2AUTH_FILE_EXT);
 
 			times.Add (new Tuple<string, TimeSpan> ("Process options, arguments, create file names.", DateTime.Now.Subtract (stamp)));
 			stamp = DateTime.Now;
@@ -316,6 +321,10 @@ namespace protein
 				qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
 			} else {
 				qProtein = ReadProteinFromFile(fileQueryPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
+			}
+
+			if (printLabel2AuthTable){
+				qProtein.SaveLabel2AuthTable(fileQueryLabel2Auth);
 			}
 
 			if (qProtein.GetChains().Count() == 0){

@@ -131,5 +131,17 @@ namespace Cif.Components
 				throw new IOException ("Protein.SaveCif: Could not open \"" + outputFile + "\" for writing.", e);
 			}
 		}
+
+		/** Print label_ to auth_numbering conversion table to a file.*/
+		public void SaveLabel2AuthTable(String outputFile)
+		{
+            using(StreamWriter w = new StreamWriter(outputFile)){
+                w.WriteLine($"#{ChainTable.ID_COLUMN}\t{ResidueTable.SEQ_NUMBER_COLUMN}\t{ChainTable.AUTH_ID_COLUMN}\t{ResidueTable.AUTH_SEQ_NUMBER_COLUMN}\t{ResidueTable.AUTH_INSERTION_CODE_COLUMN}");
+                foreach (Residue residue in this.GetResidues())
+                {
+                    w.WriteLine($"{residue.ChainId}\t{residue.SeqNumber}\t{residue.ChainAuthId}\t{residue.AuthSeqNumber}\t{residue.AuthInsertionCode}");
+                }           
+            }
+		}
     }
 }

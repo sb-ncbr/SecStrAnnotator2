@@ -72,6 +72,7 @@ namespace protein
 		public const string DETECTED_SSES_FILE_EXT = "-detected.sses";
 		public const string JOINED_SSES_FILE_EXT = "-joined.sses";
 		public const string RMSDS_FILE_EXT = "-rmsds.tsv";
+		public const string LABEL2AUTH_FILE_EXT = "-label2auth.tsv";
 
 		public const string CONFIG_FILE = "SecStrAnnotator_config.json";
 
@@ -97,5 +98,6 @@ namespace protein
 		}
 
 		public static string Directory { get; set; }
-    }
+
+	}
 }

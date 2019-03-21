@@ -1,10 +1,12 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Cif;
 using Cif.Tables;
 using Cif.Filtering;
+using Cif.Components;
 
 namespace SecStrAnnot2
 {
@@ -29,7 +31,7 @@ namespace SecStrAnnot2
             return ProteinFromCifModel(model);
         }
 
-        public static Cif.Components.Protein ProteinFromCifFile(string filename, string chainId, (int,int)[] resSeqRanges, string label2authFile=null) {
+        public static Cif.Components.Protein ProteinFromCifFile(string filename, string chainId, (int,int)[] resSeqRanges) {
             CifPackage package = CifPackage.FromFile(filename);
             if (package.BlockNames.Length < 1) {
                 throw new FormatException(EXCEPTION_MESSAGE + "CIF file must contain at least one block");
@@ -48,7 +50,8 @@ namespace SecStrAnnot2
                 throw new FormatException(EXCEPTION_MESSAGE + $"Atom selection given by chain ID '{chainId}' and residue ranges '{rangeString}' is empty");
             }
             Model model = models.GetModel(0);
-            return ProteinFromCifModel(model);
+            Protein protein = ProteinFromCifModel(model);
+            return protein;
         }
 
         public static Cif.Components.Protein ProteinFromCifModel(Model model) {
