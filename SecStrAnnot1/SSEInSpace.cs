@@ -15,7 +15,7 @@ namespace protein
 			EndVector = endVector;
 		}
 
-		public SSEInSpace (SSE sse, Tuple<Vector,Vector> startEndVectors) 
+		public SSEInSpace (SSE sse, (Vector, Vector) startEndVectors) 
 			: this(sse, startEndVectors.Item1,startEndVectors.Item2){ }
 
 		public static new SSEInSpace NewNotFound(String label){

@@ -738,49 +738,47 @@ namespace protein
 		 * numExtraResidues - indicates the number of residues at both the beginning and the end of the list which are not the part of the SSE but should be used in geometrical calculations.
 		 */
 		//private static Tuple<Vector,Vector> SSEAsLineSegment_GeomVersion(IEnumerable<Residue> residues, char sseType, int numExtraResidues, out List<double> rmsdList){
-		private static Tuple<Vector,Vector> SSEAsLineSegment_GeomVersion(IEnumerable<Residue> residues, SSE sse, out List<double> rmsdList){
+		private static (Vector, Vector) SSEAsLineSegment_GeomVersion(List<Residue> residues, SSE sse, out List<double> rmsdList){
 			rmsdList = new List<double> ();
 				
 			if (sse.IsNotFound ()) {
-				return new Tuple<Vector,Vector> (Vector.ZERO, Vector.ZERO);
+				return (Vector.ZERO, Vector.ZERO);
 			}
 
 			int startIndex = 0;
 			int endIndex = residues.Count () - 1;
-			try{
+			try {
 				startIndex = residues.IndicesWhere (r => r.SeqNumber == sse.Start).First ();
 				endIndex = residues.IndicesWhere (r => r.SeqNumber == sse.End).First ();
 			} catch(Exception) {
 				Lib.WriteErrorAndExit ("SSE starting or ending residue is missing: {0}", sse);
 			}
+
+			List<Vector> caCoords = residues.Select (r => r.GetCAlpha()).Where(a => a != null).Select(a => ((Atom) a).Position()).ToList ();
+			Vector? startingCoord_ = residues[startIndex].GetNAmide()?.Position() ?? residues[startIndex].GetCAlpha()?.Position();
+			Vector? endingCoord_ = residues[endIndex].GetCCarb()?.Position() ?? residues[endIndex].GetCAlpha()?.Position();
+			if (startingCoord_ == null){
+				throw new Exception($"First residue of {sse} is missing amide N atom and C-alpha atom.");
+			}
+			if (endingCoord_ == null){
+				throw new Exception($"Last residue of {sse} is missing carbonyl C atom and C-alpha atom.");
+			}
+			Vector startingCoord = startingCoord_.Value;
+			Vector endingCoord = endingCoord_.Value;
+
 			if (residues.Count() < 4 || !residues.All (r => r.HasCAlpha())) {
-				Lib.WriteWarning ("At least 4 residues are needed to calculate line segment. Less than 4 residues are given, so atom coordinates will be used instead of line segment approximation.");
-				Vector? u_ = residues.ElementAt (startIndex).GetCAlpha()?.Position ();
-				Vector? v_ = residues.ElementAt (endIndex).GetCAlpha()?.Position ();
-				if (u_ != null && v_ !=null){
-					return new Tuple<Vector,Vector> ((Vector) u_, (Vector) v_);
-				} else {
-					throw new Exception("Important residues are missing C alpha atom.");
-				}
+				// Lib.WriteWarning ($"At least 4 residues are needed to calculate line segment. Less than 4 residues are given for {sse}, so atom coordinates will be used instead of line segment approximation.");
+				return (startingCoord, endingCoord);
 			}
 			if (residues.Select ((r, i) => r.SeqNumber - i).Distinct ().Count () != 1) {
 				Lib.WriteWarning ("Missing residues around " +sse.ToString () + ". Atom coordinates will be used instead of line segment approximation.");
-				Vector? u_ = residues.ElementAt (startIndex).GetCAlpha()?.Position ();
-				Vector? v_ = residues.ElementAt (endIndex).GetCAlpha()?.Position ();
-				if (u_ != null && v_ !=null){
-					return new Tuple<Vector,Vector> ((Vector) u_, (Vector) v_);
-				} else {
-					throw new Exception("Important residues are missing C alpha atom.");
-				}
+				return (startingCoord, endingCoord);
 			}
-
-			List<Vector> coords = residues.Select (r => r.GetCAlpha()).Where(a => a != null).Select(a => ((Atom) a).Position()).ToList ();
-
 
 			Vector sumAxes = Vector.ZERO;
 			Vector sumOrigins = Vector.ZERO;
-			for (int i = 0; i < coords.Count - 3; i++) {
-				Matrix mobile = Matrix.FromRowVectors (coords.GetRange (i, 4));
+			for (int i = 0; i < caCoords.Count - 3; i++) {
+				Matrix mobile = Matrix.FromRowVectors (caCoords.GetRange (i, 4));
 				Matrix trans;
 				Matrix rot;
 				double rmsd;
@@ -793,11 +791,11 @@ namespace protein
 				//Console.WriteLine ("<{0,3}> {1,8}", quad [1].ResSeq, rmsd);
 			}
 			Vector axis = sumAxes.Normalize ();
-			Vector origin = sumOrigins / (coords.Count - 3);
-			Vector u = origin + ((coords [startIndex] - origin) * axis) * axis;
-			Vector v = origin + ((coords [endIndex] - origin) * axis) * axis;
+			Vector origin = sumOrigins / (caCoords.Count - 3);
+			Vector u = origin + ((startingCoord - origin) * axis) * axis; 
+			Vector v = origin + ((endingCoord - origin) * axis) * axis;
 			// Lib.WriteLineDebug($"Axis {axis}, SumAxes {sumAxes}, Origin {origin}, {Double.IsNaN(u.X)}");
-			return new Tuple<Vector, Vector> (u, v);
+			return (u, v);
 		}
 
 		public static List<SSEInSpace> SSEsAsLineSegments_GeomVersion(Chain chain, List<SSE> sses, out List<double>[] rmsdLists){
@@ -819,7 +817,8 @@ namespace protein
 		}
 
 		private static int NumExtraResidues(SSE sse){
-			return (sse.Length () >= 4) ? 0 : (sse.Length () >= 2) ? 1 : 2;
+			return 1;
+			// return (sse.Length () >= 4) ? 0 : (sse.Length () >= 2) ? 1 : 2;
 		}
 
 		public static double MetricNo3Neg(SSEInSpace sse1,SSEInSpace sse2){
