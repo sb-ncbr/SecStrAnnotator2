@@ -43,4 +43,4 @@ for pdb, domains in pdb2domains.items():
 
 n_pdbs = len(all_annotations[ANNOTATIONS])
 n_domains = sum( len(doms) for doms in all_annotations[ANNOTATIONS].values() )
-sys.stderr.write(f'Collected annotations for {n_domains} domains in {n_pdbs} PDB entries\n')
+sys.stderr.write(f'Divided annotations for {n_domains} domains in {n_pdbs} PDB entries\n')

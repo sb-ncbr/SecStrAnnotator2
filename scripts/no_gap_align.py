@@ -286,16 +286,24 @@ def draw_reordered_tree_aux(tree, root, put_root_down=False):
                 fig[i] = ' ' + fig[i]
         return fig, start
 
-def logo_heights(sequence_matrix):
+def logo_heights_widths_areas(sequence_matrix):
     gap_prob = sequence_matrix[:, 0]
     probs = sequence_matrix[:, 1:].copy()
     probs[probs<=0] = 1
     background_entropy = -np.log2(1/20)
     entropies = -np.sum(probs * np.log2(probs), axis=1)
-    return (background_entropy - entropies) * (1 - gap_prob)
+    heights = background_entropy - entropies
+    widths = 1 - gap_prob
+    areas = heights * widths
+    return heights, widths, areas
+
+def get_widest_and_highest_column_index(sequence_matrix):
+    heights, widths, areas = logo_heights_widths_areas(sequence_matrix)
+    max_width, max_height, index = max( (width, height, i) for i, (width, height) in enumerate(zip(widths, heights)) )
+    return index
 
 def get_highest_column_index(sequence_matrix):
-    heights = logo_heights(sequence_matrix)
+    heights, widths, areas = logo_heights_widths_areas(sequence_matrix)
     max_height, max_height_index = max( (height, i) for i, height in enumerate(heights) )
     return max_height_index
 
@@ -397,7 +405,7 @@ class NoGapAligner:
         # n_residues = self.alignment_matrix.shape[0]
         # heights = logo_heights(self.alignment_matrix)
         # max_height, max_height_index = max( (height, i) for i, height in enumerate(heights) )
-        max_height_index = get_highest_column_index(self.alignment_matrix)
+        max_height_index = get_widest_and_highest_column_index(self.alignment_matrix)
         alignment_file = output_file + '.fasta.tmp'
         self.output_alignment(alignment_file)
         if use_weblogo2:
@@ -413,7 +421,7 @@ class Realigner:
         names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
         sequence_matrices = [ sequence2matrix(seq, self.letter2index) for seq in seqs ]
         self.reference_alignment_matrix = sum(sequence_matrices) / len(sequence_matrices)
-        self.pivot_index = get_highest_column_index(self.reference_alignment_matrix)
+        self.pivot_index = get_widest_and_highest_column_index(self.reference_alignment_matrix)
         
     def aligning_shift_and_pivot(self, sequence):
         seq_matrix = sequence2matrix(sequence, self.letter2index)
@@ -459,11 +467,7 @@ def main(input_file, output_file, logo_output=None, keep_order=False, print_tree
         height = 8
         width_per_residue = 0.8
         n_residues = matAln.shape[0]
-        # max_probs = matAln[:, 1:].max(axis=1)
-        # max_prob, max_prob_index = max( (prob, i) for i, prob in enumerate(max_probs) )
-        # cca_heights = np.sum(np.matmul(matAln, subst_matrix) * matAln, axis=1)
-        heights = logo_heights(matAln)
-        max_height, max_height_index = max( (height, i) for i, height in enumerate(heights) )
+        max_height_index = get_widest_and_highest_column_index(matAln)
         # run_weblogo2(output_file, logo_output, first_index=-max_height_index)
         run_weblogo3(output_file, logo_output, first_index=-max_height_index)
             

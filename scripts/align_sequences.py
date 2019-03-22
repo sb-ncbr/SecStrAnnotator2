@@ -39,7 +39,7 @@ with open(all_annotations_file) as r:
 
 pdb2domains = all_annotations[ANNOTATIONS]
 domains = [ dom for doms in pdb2domains.values() for dom in doms ]
-label2seqs = defaultdict(lambda: [])
+label2seqs = defaultdict(list)
 for domain in domains:
     for sse in domain[SSES]:
         name = domain[PDB] + ',' + domain[CHAIN] + ',' + domain[RANGES]

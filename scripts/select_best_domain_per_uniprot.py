@@ -42,7 +42,7 @@ pdb2quality = { pdb: get_quality(pdb) for pdb in pdbs }
 
 DOMAINS_IN_DICT = len(pdb2domains) > 0 and isinstance(next(iter(pdb2domains.values())), dict)
 
-uniprot2domains = defaultdict(lambda: [])
+uniprot2domains = defaultdict(list)
 for pdb, domains in pdb2domains.items():
     if DOMAINS_IN_DICT:
         pdbs_domains_keys = [ (pdb, domain, name) for name, domain in domains.items() ]
@@ -52,7 +52,7 @@ for pdb, domains in pdb2domains.items():
         uniprot = pdb_dom_key[1][UNIPROT_ID]
         uniprot2domains[uniprot].append(pdb_dom_key)
 
-pdb2best_domains = defaultdict(lambda: {}) if DOMAINS_IN_DICT else defaultdict(lambda: [])
+pdb2best_domains = defaultdict(dict) if DOMAINS_IN_DICT else defaultdict(list)
 
 for pdbs_domains_keys in uniprot2domains.values():
     best = max(pdbs_domains_keys, key=lambda pdb_dom_key: pdb2quality[pdb_dom_key[0]])
