@@ -26,6 +26,19 @@ COLORS = ['red', 'green', 'blue', 'yellow', 'violet', 'cyan', 'salmon', 'lime', 
 global color_i
 color_i = 0
 
+# Field names in SecStrAPI format - general and domain specification
+API_VERSION = 'api_version'
+ANNOTATIONS = 'annotations'
+PDB = 'pdb'
+CHAIN = 'chain'
+RANGES = 'ranges'
+UNIPROT_ID = 'uniprot_id'
+UNIPROT_NAME = 'uniprot_name'
+DOMAIN_MAPPINGS = 'domain_mappings'
+DOMAIN = 'domain'
+SOURCE = 'source'
+FAMILY_ID = 'family'
+
 # Field names in JSON annotation format
 PDB = 'pdb'
 SSES = 'secondary_structure_elements'
@@ -58,19 +71,21 @@ def annss(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_
 				fail('Annotation for ' + name + ' not found in file ' + annotation_file)
 				return False
 			else:
-				pdbid = domains[0].get_pdbid()
-	elif name is not None:
+				pdbid = domains[0][PDB]
+	elif annotation_file is None and name is not None:
 		pdbid = name[0:4]
 		annotation_text = get_annotation_from_internet(pdbid)
 		annotation = parse_annotation_text(annotation_text)
 		domains = annotation.get_domains_by_name(name)
-	elif annotation_file is not None:
+	elif annotation_file is not None and name is None:
+		annotation_text = get_annotation_from_file(annotation_file)
+		annotation = parse_annotation_text(annotation_text)
 		pdbids = annotation.get_pdbids()
 		if len(pdbids) == 1:
 			pdbid = pdbids[0]
 			log('Selected PDB ID: ' + pdbid + ' (the only one in the annotation file)')
 		else:
-			pdbid = first_occurring_sample(pdbids, selection)
+			pdbid = first_valid_pdbid(selection, pdbids=pdbids)
 			if pdbid is None:
 				fail('Could not guess PDB ID from selection "' + selection + '" (PDB IDs in annotation file: ' + ', '.join(pdbids) + ')')
 				return False
@@ -78,7 +93,7 @@ def annss(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_
 				log('Selected PDB ID: ' + pdbid)
 		name = pdbid
 		domains = annotation.get_domains_by_pdbid(pdbid)
-	else: # guess pdbid using selection and download annotation
+	else: # annotation_file and name are None, guess pdbid using selection and download annotation
 		words = re.split('\W+', selection)
 		debug_log(words)
 		try:
@@ -96,12 +111,17 @@ def annss(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_
 	log('PDB ID: ' + pdbid + ', NAME: ' + name)
 	
 	if not is_valid_selection(selection):
-		fetch_structure(pdbid, force_cartoon=force_cartoon, domains=domains)
+		pdbid_as_in_selection = str(first_valid_pdbid(selection, pdbids=[pdbid]))  # in case that the PBDID is used in uppercase in the selection
+		try:
+			fetch_structure(pdbid_as_in_selection, force_cartoon=force_cartoon, domains=domains)
+		except None: # TODO change to except:
+			warn('Failed to fetch "' + pdbid_as_in_selection + '"')
 		if not is_valid_selection(selection):
 			fail('Invalid selection "' + selection + '"')
 			return False
 
-	apply_annotation(selection, domains)
+	debug_log('OK')
+	# apply_annotation(selection, domains)
 	return True
 
 
@@ -110,6 +130,9 @@ def debug_log(message):
 
 def log(message):
 	print(message)
+
+def warn(message):
+	sys.stderr.write(THIS_SCRIPT + ':\n    Warning: ' + message.replace('\n', '\n    ') + '\n')
 
 def fail(message):
 	sys.stderr.write(THIS_SCRIPT + ':\n    Error: ' + message.replace('\n', '\n    ') + '\n')
@@ -128,20 +151,22 @@ def is_valid_selection(selection):
 	except:
 		return False
 
-def first_valid_pdbid(text):
-	match = re.search('[0-9][a-zA-Z0-9]{3}', text)
-	if match is not None:
-		return match.group(0)
+def first_valid_pdbid(text, pdbids=None):
+	if pdbids is None:
+		match = re.search('[0-9][a-zA-Z0-9]{3}', text)
+		if match is not None:
+			return match.group(0)
+		else:
+			return None
 	else:
-		return None
-
-def first_occurring_sample(samples, text):
-	indices_samples = [ (text.find(sample), sample) for sample in samples if sample in text ]
-	if len(indices_samples) > 0:
-		index, sample = min(indices_samples)
-		return index
-	else:
-		return None
+		lower_text = text.lower()
+		indices_lengths = [ (lower_text.find(pdbid.lower()), len(pdbid)) for pdbid in pdbids ]
+		indices_lengths = [ (i, l) for (i, l) in indices_lengths if i >= 0 ]
+		if len(indices_lengths) > 0:
+			index, length = min(indices_lengths)
+			return text[index:index+length]
+		else:
+			return None
 
 def fetch_structure(pdbid, force_cartoon=True, domains=None):
 	if not is_valid_selection(pdbid):
@@ -154,10 +179,26 @@ def fetch_structure(pdbid, force_cartoon=True, domains=None):
 		if domains is None:
 			sel = pdbid
 		else:
-			sel = ' or '.join( '(' + domain.get_selection() + ')' for domain in domains )
+			sel = ' or '.join( '(' + selection_from_domain(domain) + ')' for domain in domains )
+			sel = pdbid + ' and (' + sel + ')'
 		cmd.show(DEFAULT_REPRESENTATION, sel)
 		cmd.show(DEFAULT_HET_REPRESENTATION, '(' + sel + ') and het')
 	return True
+
+def selection_from_domain(domain):
+	selection = domain.get(PDB, 'all')
+	if CHAIN in domain:
+		selection += ' and chain ' + domain[CHAIN]
+	if RANGES in domain:
+		selection += ' and resi ' + ranges_to_pymol_style(domain[RANGES])
+	return selection
+
+def range_to_pymol_style(the_range):
+	fro, to = the_range.split(':')
+	return fro.replace('-', '\-') + '-' + to.replace('-', '\-')
+
+def ranges_to_pymol_style(ranges):
+	return '+'.join( range_to_pymol_style(rang) for rang in ranges.split(',') )
 
 def get_annotation_from_file(filename):
 	'''Reads annotation file in JSON format.'''
@@ -171,38 +212,66 @@ def get_annotation_from_internet(pdbid):
 	log('Downloading annotation for ' + pdbid + '\n  [' + url + ']')
 	try:
 		annotation_text = requests.get(url).text
-		debug_log(annotation_text)
+		debug_log(annotation_text[0:70] + '...')
 		return annotation_text
 	except:
 		fail('Failed to download annotation for ' + pdbid)
 		return None
 
 def parse_annotation_text(text):
-	return Annotation_1_0(text)
+	try:
+		js = json.loads(text)
+	except:
+		fail('Could not parse annotation (not a valid JSON)')
+		raise
+	version = js.get(API_VERSION, '0.9')
+	if version == '0.9':
+		return Annotation_0_9(js)
+	elif version == '1.0':
+		return Annotation_1_0(js)
+	else:
+		fail('The annotation file is of a newer version (' + version + ') than this script (1.0). Please download the updated version of this script from SecStrAPI website http://webchem.ncbr.muni.cz/API/SecStr.')
+		raise NotImplementedError()
 
 class Annotation_1_0:
-	def __init__(self, text):
-		try:
-			self.json = json.loads(text)
-		except:
-			fail('Could not parse annotation')
-		# TODO continue here
-		raise NotImplementedError()
+	def __init__(self, json_object):
+		self.pdb2domains = {}
+		# Change domain organization for each PDBID from dict-like to list-like:
+		for pdbid, domains in json_object.get(ANNOTATIONS, {}).items():
+			if isinstance(domains, dict):
+				for name, domain in domains.items():
+					domain[DOMAIN] = name
+				self.pdb2domains[pdbid] = list(domains.values())
+			else:
+				self.pdb2domains[pdbid] = list(domains)
 	def get_pdbids(self):
-		raise NotImplementedError()
+		return sorted(self.pdb2domains.keys())
 	def get_domains_by_pdbid(self, pdbid):
-		raise NotImplementedError()
+		return self.pdb2domains.get(pdbid.lower(), [])
 	def get_domains_by_name(self, name):
-		raise NotImplementedError()
+		result = []
+		for pdbid, domains in self.pdb2domains.items():
+			for domain in domains:
+				match = domain.get(DOMAIN, None) == name or any ( mapping[DOMAIN] == name for mapping in domain.get(DOMAIN_MAPPINGS, []) )
+				if match:
+					result.append(domain)
+		return result
 
-class Domain_1_0:
-	def __init__(self, text):
-		raise NotImplementedError()
-	def get_pdbid(self):
-		raise NotImplementedError()
-
-
-
+class Annotation_0_9:
+	def __init__(self, json_object):
+		self.domain_dict = json_object
+		for name, domain in self.domain_dict.items():
+			domain[DOMAIN] = name
+			domain[PDB] = name[0:4]
+	def get_pdbids(self):
+		return sorted(set( domain[PDB] for domain in self.domain_dict.values() ))
+	def get_domains_by_pdbid(self, pdbid):
+		return [ domain for domain in self.domain_dict.values() if domain[PDB] == pdbid.lower() ]
+	def get_domains_by_name(self, name):
+		if name in self.domain_dict:
+			return [self.domain_dict[name]]
+		else:
+			return []
 
 
 
@@ -300,9 +369,11 @@ def label_sse(sse, selection):
 
 # cmd.extend('annotate_sec_str', annotate_sec_str)
 cmd.extend('annss', annss)
-# print('')
-# print('Command "annotate_sec_str" have been added.')
-# print('')
+print('')
+print('Command "annss" has been added.')
+print('')
+print('annss(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True)')
+# TODO add usefull usage info
 # print('  Usage: annotate_sec_str selection [, annotation_file [, base_color]]')
 # print('    default base_color: '+BASE_COLOR)
 # print('    default annotation_file: None (downloaded from SecStrAPI instead)')
