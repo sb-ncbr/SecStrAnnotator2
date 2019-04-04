@@ -179,19 +179,28 @@ def fetch_structure(pdbid, force_cartoon=True, domains=None):
 		if domains is None:
 			sel = pdbid
 		else:
-			sel = ' or '.join( '(' + selection_from_domain(domain) + ')' for domain in domains )
+			use_auth = should_use_auth(pdbid)
+			sel = ' or '.join( '(' + selection_from_domain(domain, use_auth) + ')' for domain in domains )
 			sel = pdbid + ' and (' + sel + ')'
 		cmd.show(DEFAULT_REPRESENTATION, sel)
 		cmd.show(DEFAULT_HET_REPRESENTATION, '(' + sel + ') and het')
 	return True
 
-def selection_from_domain(domain):
-	selection = domain.get(PDB, 'all')
-	if CHAIN in domain:
-		selection += ' and chain ' + domain[CHAIN]
-	if RANGES in domain:
-		selection += ' and resi ' + ranges_to_pymol_style(domain[RANGES])
-	return selection
+def selection_from_domain(domain, use_auth):
+	if use_auth:  # TODO include auth_ definition of domains in SecStrAPI
+		if AUTH_CHAIN in domain and AUTH_RANGES in domain:
+			return 'chain ' + domain[AUTH_CHAIN] + ' and resi ' + ranges_to_pymol_style(domain[AUTH_RANGES])
+		elif AUTH_CHAIN in domain:
+			return 'chain ' + domain[AUTH_CHAIN]
+		else:
+			return 'all'
+	else:
+		if CHAIN in domain and RANGES in domain:
+			return 'chain ' + domain[CHAIN] + ' and resi ' + ranges_to_pymol_style(domain[RANGES])
+		elif CHAIN in domain:
+			return 'chain ' + domain[CHAIN]
+		else:
+			return 'all'
 
 def range_to_pymol_style(the_range):
 	fro, to = the_range.split(':')
@@ -199,6 +208,21 @@ def range_to_pymol_style(the_range):
 
 def ranges_to_pymol_style(ranges):
 	return '+'.join( range_to_pymol_style(rang) for rang in ranges.split(',') )
+
+def is_from_cif(object_name):
+	try:
+		n_cif_atoms = cmd.count_atoms('(' + object_name + ') and not segi ""')
+		return n_cif_atoms > 0
+	except:
+		return False
+
+def should_use_auth(object_name):
+	try:
+		cif_use_auth = cmd.get('cif_use_auth')
+	except:
+		cif_use_auth = True
+	return cif_use_auth or not is_from_cif(object_name)
+
 
 def get_annotation_from_file(filename):
 	'''Reads annotation file in JSON format.'''
@@ -274,6 +298,25 @@ class Annotation_0_9:
 			return []
 
 
+def apply_annotation(selection, domains):
+	raise NotImplementedError()
+
+def assign_color(sse):
+	sse_type = 'H' if (sse[TYPE] in 'GHIh') else 'E' if (sse[TYPE] in 'EBe') else ' '
+	if COLOR in sse:
+		return sse[COLOR]
+	else:
+		magic_number = hash(sse[LABEL]) % 1000
+		return 's' + str(magic_number).zfill(3)
+
+def label_sse(sse, selection):  # TODO differentiate auth_ and label_, include chain!
+	middle = (sse[START_RESI] + sse[END_RESI]) // 2
+	label_selection = '(' + selection + ') and name CB and resi ' + str(middle)
+	if cmd.count_atoms(label_selection)==0:
+		label_selection = '(' + selection + ') and name CA and resi ' + str(middle)
+	cmd.label(label_selection, '"' + sse[LABEL].replace('"', '\\"') + '"')
+
+
 
 # OLDER:
 
@@ -325,44 +368,6 @@ def color_by_annotation(pdb_id, selection, base_color, annotation_file):
 				label_sse(sse, sel_name)
 		cmd.deselect()
 
-def read_annotation_file_json(filename, pdb_id):
-	'''Reads annotation file in JSON format.'''
-	with open(filename,'r') as f:
-		annotation = json.load(f)
-	if pdb_id in annotation:
-		return annotation[pdb_id][SSES]
-	else:
-		print('\''+filename+'\' does not contain annotation for '+pdb_id)
-		return []
-
-def download_annotation_json(pdb_id):
-	'''Downloads annotation from SecStrAPI.'''
-	pdb_id = pdb_id.lower()
-	print('Downloading annotation for '+pdb_id+' from '+SEC_STR_API+pdb_id)
-	annotation = json.loads(requests.get(SEC_STR_API+pdb_id).text)
-	if pdb_id in annotation:
-		return annotation[pdb_id][SSES]
-	else:
-		print('No available annotation for '+pdb_id)
-		return []
-
-def assign_color(sse):
-	sse_type = 'H' if (sse[TYPE] in 'GHIh') else 'E' if (sse[TYPE] in 'EBe') else ' '
-	return 's'+str(hash(sse[LABEL])%1000).zfill(3)
-
-def assign_color(sse):
-	sse_type = 'H' if (sse[TYPE] in 'GHIh') else 'E' if (sse[TYPE] in 'EBe') else ' '
-	if COLOR in sse:
-		return sse[COLOR]
-	else:
-		return 's'+str(hash(sse[LABEL])%1000).zfill(3)
-
-def label_sse(sse, selection):
-	middle = (sse[START_RESI] + sse[END_RESI]) // 2
-	label_selection = '(' + selection + ') & name cb & resi ' + str(middle)
-	if cmd.count_atoms(label_selection)==0:
-		label_selection = '(' + selection + ') & name ca & resi ' + str(middle)
-	cmd.label(label_selection, '\''+sse[LABEL].replace('\'','\\\'')+'\'')
 
 # The script for PyMOL:
 # test()
