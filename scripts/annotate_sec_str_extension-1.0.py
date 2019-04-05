@@ -31,7 +31,9 @@ API_VERSION = 'api_version'
 ANNOTATIONS = 'annotations'
 PDB = 'pdb'
 CHAIN = 'chain'
+AUTH_CHAIN = 'auth_chain'
 RANGES = 'ranges'
+AUTH_RANGES = 'auth_ranges'
 UNIPROT_ID = 'uniprot_id'
 UNIPROT_NAME = 'uniprot_name'
 DOMAIN_MAPPINGS = 'domain_mappings'
@@ -53,9 +55,21 @@ COLOR='color'
 # Auxiliary functions
 
 def test():
-	fail('urmumma\nis fat')
-	Annotation_1_0('')
-	return
+	base_dir = '/home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322'
+	def run_test(*args, **kwargs):
+		log('---------------------------------------------------')
+		log('TEST annss ' + ', '.join(str(arg) for arg in args) + ', ' + ', '.join(k + '=' + v for k, v in kwargs.items()) )
+		if annss(*args, **kwargs):
+			log('TEST OK')
+		else:
+			log('TEST FAILED')
+			raise Exception()
+		cmd.delete('all')
+	run_test('1bu7')
+	run_test('1BU7')
+	run_test('1BU7x')
+	log('ALL TESTS OK')
+	return True
 
 def annss(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True):
 	if annotation_file is not None and name is not None:
@@ -114,8 +128,9 @@ def annss(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_
 		pdbid_as_in_selection = str(first_valid_pdbid(selection, pdbids=[pdbid]))  # in case that the PBDID is used in uppercase in the selection
 		try:
 			fetch_structure(pdbid_as_in_selection, force_cartoon=force_cartoon, domains=domains)
-		except None: # TODO change to except:
+		except:
 			warn('Failed to fetch "' + pdbid_as_in_selection + '"')
+			raise
 		if not is_valid_selection(selection):
 			fail('Invalid selection "' + selection + '"')
 			return False
@@ -320,7 +335,7 @@ def label_sse(sse, selection):  # TODO differentiate auth_ and label_, include c
 
 # OLDER:
 
-def annotate_sec_str(selection, annotation_file = None, base_color = BASE_COLOR):
+def annotate_sec_str(selection, annotation_file = None, base_color = DEFAULT_BASE_COLOR):
 	if not is_valid_selection(selection):
 		pdb_id = selection[0:4]
 		if is_valid_pdbid(pdb_id):
@@ -370,14 +385,14 @@ def color_by_annotation(pdb_id, selection, base_color, annotation_file):
 
 
 # The script for PyMOL:
-# test()
+test()
 
 # cmd.extend('annotate_sec_str', annotate_sec_str)
 cmd.extend('annss', annss)
 print('')
 print('Command "annss" has been added.')
-print('')
-print('annss(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True)')
+# print('')
+# print('annss(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True)')
 # TODO add usefull usage info
 # print('  Usage: annotate_sec_str selection [, annotation_file [, base_color]]')
 # print('    default base_color: '+BASE_COLOR)
