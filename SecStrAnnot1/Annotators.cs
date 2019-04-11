@@ -397,15 +397,7 @@ namespace protein
 											Lib.WriteWarning("Suspicious joining in {0}. Gap between joined SSEs = {1}",Context.Templates [i].Label,all[j+1].Start-all[j].End-1);
 										}
 									}
-									string chainID = all.First ().ChainID;
-									int first = all.Select (sse => sse.Start).ArgMin ();
-									int last = all.Select (sse => sse.End).ArgMax ();
-									rememberedAnnotatedCandidates [i] = new SSEInSpace (new SSE (Context.Templates [i].Label, chainID, all [first].Start, all [last].End, 
-										all.Select (sse => sse.Type).Aggregate<char> ((x, y) => Setting.JoiningTypeCombining (x, y) ?? SSE.NOT_FOUND_TYPE), Context.Templates [i].SheetId), all [first].StartVector, all [last].EndVector);
-									rememberedAnnotatedCandidates [i].AddComment ("Created by joining " + all.Count () + " SSEs: " + all.Select (sse => sse.Label).EnumerateWithCommas () + ".");
-									foreach (SSEInSpace sse in all) {
-										rememberedAnnotatedCandidates [i].AddNestedSSE (sse);
-									}
+									rememberedAnnotatedCandidates[i] = SSEInSpace.Join(all).RelabeledCopy(Context.Templates [i].Label);
 								} else
 									throw new Exception ("This should never happen!");
 							}
@@ -644,10 +636,11 @@ namespace protein
 					SSEInSpace s2 = Candidates [i + 1];
 					if (s1.ChainID==s2.ChainID && s1.IsSheet && s2.IsSheet && s2.Start - s1.End - 1 <= maxGap) {
 						int index = Candidates.Length + jointCandidates.Count;
-						SSEInSpace newSSE = new SSEInSpace (new SSE (s1.Label + "+" + s2.Label, s1.ChainID, s1.Start, s2.End, 'E', null), s1.StartVector, s2.EndVector);
-						newSSE.AddComment ("Created by joining " + s1.Label + " and " + s2.Label + " with gap " + (s2.Start - s1.End - 1) + ".");
-						newSSE.AddNestedSSE (s1);
-						newSSE.AddNestedSSE (s2);
+						// SSEInSpace newSSE = new SSEInSpace (new SSE (s1.Label + "+" + s2.Label, s1.ChainID, s1.Start, s2.End, 'E', null), s1.StartVector, s2.EndVector);
+						// newSSE.AddComment ("Created by joining " + s1.Label + " and " + s2.Label + " with gap " + (s2.Start - s1.End - 1) + ".");
+						// newSSE.AddNestedSSE (s1);
+						// newSSE.AddNestedSSE (s2);
+						SSEInSpace newSSE = SSEInSpace.Join(s1, s2, null);
 						jointCandidates.Add (newSSE);
 						if (GuideDiscriminator != null) {
 							for (int j = 0; j < Templates.Length; j++) {

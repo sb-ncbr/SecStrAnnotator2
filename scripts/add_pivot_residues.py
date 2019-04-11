@@ -8,6 +8,7 @@ from collections import defaultdict
 from typing import Tuple
 
 import no_gap_align
+from label2auth_converter import Label2AuthConverter
 
 #  CONSTANTS  ##############################################################################
 
@@ -25,23 +26,6 @@ class LazyDict:
         return self.dictionary[key]
     def __getitem__(self, key):
         return self.get(key)
-
-class Label2AuthConverter:
-    def __init__(self, conversion_table_file):
-        self.file = conversion_table_file
-        self.table = {}
-        with open(conversion_table_file) as r:
-            for line in r:
-                if not line.lstrip().startswith('#'):
-                    chain, resi, auth_chain, auth_resi, auth_ins_code = line.strip().split('\t')
-                    self.table[(chain, int(resi))] = (auth_chain, int(auth_resi), auth_ins_code)
-        # sys.stderr.write(f'{conversion_table_file}:\n{self.table}\n')
-    def auth_chain_resi_ins(self, chain, resi):
-        # sys.stderr.write(f'{self.table}\n')
-        try:
-            return self.table[(chain, resi)]
-        except KeyError:
-            raise Exception(f'Did not find residue {chain} {resi} in {self.file}')
 
 #  PARSE ARGUMENTS  ##############################################################################
 

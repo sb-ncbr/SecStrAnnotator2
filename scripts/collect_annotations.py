@@ -6,6 +6,7 @@ import argparse
 from collections import defaultdict
 from typing import Tuple
 from os import path
+from label2auth_converter import Label2AuthConverter
 
 #  CONSTANTS  ##############################################################################
 
@@ -38,10 +39,14 @@ label2domain_sequence = defaultdict(lambda: [])
 
 for pdb, domains in input_annotations[ANNOTATIONS].items():
     dom_list = domains.values() if isinstance(domains, dict) else domains[:]
+    convert_table_file = path.join(input_directory, pdb + '.label2auth.tsv')
+    converter = Label2AuthConverter(convert_table_file) if path.isfile(convert_table_file) else None
     for domain in dom_list:
         name = ','.join((domain[PDB], domain[CHAIN], domain[RANGES]))
         with open(path.join(input_directory, name + INPUT_EXT)) as r:
             annot = json.load(r)[pdb]
+        if converter is not None:
+            domain[AUTH_CHAIN], domain[AUTH_RANGES] = converter.auth_chain_ranges(domain[CHAIN], domain[RANGES])
         domain[SSES] = annot[SSES]
         domain[CONNECTIVITY] = annot[CONNECTIVITY]
         if COMMENT in annot:

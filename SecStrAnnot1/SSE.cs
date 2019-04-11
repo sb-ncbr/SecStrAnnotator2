@@ -54,10 +54,10 @@ namespace protein
 		public String Comment { get; private set;} // Any string which is a comment for this SSE. 
 		public String Color { get; set;} // Additional info about the color used for visualization (if assigned explicitly, else null).
 		public string AuthChainID { get; private set;}
-		public int? AuthStart{ get; set;}
-		public string AuthStartInsCode{ get; set;}
-		public int? AuthEnd{ get; set;} 
-		public string AuthEndInsCode{ get; set;}
+		public int? AuthStart{ get; private set;}
+		public string AuthStartInsCode{ get; private set;}
+		public int? AuthEnd{ get; private set;} 
+		public string AuthEndInsCode{ get; private set;}
 
 		public SSE (String label, string chainID, int start, int end, char type, int? sheetId)
 		{
@@ -86,6 +86,7 @@ namespace protein
 			AuthStartInsCode = orig.AuthStartInsCode;
 			AuthEnd = orig.AuthEnd;
 			AuthEndInsCode = orig.AuthEndInsCode;
+			// Console.WriteLine(this);
 		}
 		public static SSE NewNotFound(String label){
 			SSE result= new SSE(label,NOT_FOUND_CHAIN,NOT_FOUND_START, NOT_FOUND_END,NOT_FOUND_TYPE,null);
@@ -149,19 +150,59 @@ namespace protein
 			return result;
 		}
 
-		public static SSE Join(SSE first, SSE second, String comment){
-			if (first.ChainID!=second.ChainID) throw new ArgumentException("Joined SSEs must be in the same chain!");
-			if (first.Start>second.End) throw new ArgumentException("The first SSE must start before the second SSE's end!");
-			if (first.SheetId != second.SheetId)
-				Lib.WriteWarning ("Joining two beta-strands with different sheet ID ({0} and {1})!", first.SheetId, second.SheetId);
-			SSE result = new SSE (first.Label + "_" + second.Label, first.ChainID, first.Start, second.End, first.Type == second.Type ? first.Type : SSE.MIXED_HELIX_TYPE,first.SheetId);
-			result.AddComment (first.Comment);
-			result.AddComment (second.Comment);
-			result.AddComment ("Created by joining " + first.Start + "-" + first.End + " (type " + first.Type + ") and "
-				+ second.Start + "-" + second.End + " (type " + second.Type + ")" + (comment == null ? "." : ", " + comment+"."));
-			result.AddNestedSSE (first);
-			result.AddNestedSSE (second);
-			return result;
+		// public static SSE Join(SSE first, SSE second, String comment){
+		// 	if (first.ChainID!=second.ChainID) throw new ArgumentException("Joined SSEs must be in the same chain!");
+		// 	if (first.Start>second.End) throw new ArgumentException("The first SSE must start before the second SSE's end!");
+		// 	if (first.SheetId != second.SheetId)
+		// 		Lib.WriteWarning ("Joining two beta-strands with different sheet ID ({0} and {1})!", first.SheetId, second.SheetId);
+		// 	char resultType = Setting.JoiningTypeCombining(first.Type, second.Type) ?? SSE.NOT_FOUND_TYPE;
+		// 	SSE result = new SSE (first.Label + "+" + second.Label, first.ChainID, first.Start, second.End, resultType, first.SheetId);
+		// 	result.AuthChainID = first.AuthChainID;
+		// 	result.AuthStart = first.AuthStart;
+		// 	result.AuthStartInsCode = first.AuthStartInsCode;
+		// 	result.AuthEnd = second.AuthEnd;
+		// 	result.AuthEndInsCode = second.AuthEndInsCode;
+		// 	result.AddComment (first.Comment);
+		// 	result.AddComment (second.Comment);
+		// 	result.AddComment ("Created by joining " + first.Start + "-" + first.End + " (type " + first.Type + ") and "
+		// 		+ second.Start + "-" + second.End + " (type " + second.Type + ")" + (comment == null ? "." : ", " + comment+"."));
+		// 	result.AddNestedSSE (first);
+		// 	result.AddNestedSSE (second);
+		// 	Lib.WriteWarning($"Joining SSEs {first} and {second}.");
+		// 	return result;
+		// }
+
+		public static SSE Join(params SSE[] sses){
+			if (sses.Length < 2){
+				throw new ArgumentException("The number of joined SSEs must be at least 2!");
+			}
+			var chainIDs = sses.Select(s => s.ChainID).Distinct().ToList();
+			var sheetIDs = sses.Select(s => s.SheetId).Distinct().ToList();
+			if (chainIDs.Count > 1){
+				throw new ArgumentException("Joined SSEs must be in the same chain!");
+			}
+			if (sheetIDs.Count > 1){
+				Lib.WriteWarning ("Joining beta-strands with different sheet ID ({0})!", string.Join(", ", sheetIDs));
+			}
+			string newChainID = chainIDs[0];
+			char newType = sses.Select (sse => sse.Type).Aggregate<char> ((x, y) => Setting.JoiningTypeCombining (x, y) ?? SSE.NOT_FOUND_TYPE);
+			SSE first = sses[sses.Select(sse => sse.Start).ArgMin()];
+			SSE last = sses[sses.Select(sse => sse.End).ArgMax()];
+			SSE newSSE = new SSE (string.Join("+", sses.Select(s => s.Label??"")), newChainID, first.Start, last.End, 
+				newType, first.SheetId);
+			newSSE.AuthChainID = first.AuthChainID;
+			newSSE.AuthStart = first.AuthStart;
+			newSSE.AuthStartInsCode = first.AuthStartInsCode;
+			newSSE.AuthEnd = last.AuthEnd;
+			newSSE.AuthEndInsCode = last.AuthEndInsCode;
+			newSSE.AddComment("Created by joining " + sses.Count () + " SSEs: " + sses.Select (sse => sse.Label).EnumerateWithCommas () + ".");
+			foreach (SSE sse in sses) {
+				newSSE.AddNestedSSE (sse);
+				if (sse.Comment != null){
+					newSSE.AddComment(sse.Comment);
+				}
+			}
+			return newSSE;
 		}
 
 		public void AddNestedSSE(SSE nested){

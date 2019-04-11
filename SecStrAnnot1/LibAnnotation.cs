@@ -538,7 +538,8 @@ namespace protein
 			foreach (SSEInSpace b in sses.Skip(1)) {
 				if (ShouldJoin (a, b, parameters, out criteria)) {
 					Console.WriteLine ("Joining {0} ({1}-{2}) and {3} ({4}-{5}) with gap {6} and angle {7}°.",a.Label,a.Start,a.End,b.Label,b.Start,b.End,b.Start - a.End - 1,180/Math.PI*Geom.AngleInRadians (a.EndVector - a.StartVector, b.EndVector - b.StartVector));
-					a = SSEInSpace.Join (a, b, criteria.ToString ());
+					a = SSEInSpace.Join (a, b);
+					a.AddComment(criteria.ToString ());
 				} else {
 					result.Add (a);
 					a = b;
@@ -594,7 +595,8 @@ namespace protein
 					if (checkResults [i - 1] == GeometryCheckResult.OK) {
 						Console.WriteLine ("Joining {0} ({1}-{2}) and {3} ({4}-{5}).",
 							result [result.Count - 1].Label, result [result.Count - 1].Start, result [result.Count - 1].End, chainSSEs [i].Label, chainSSEs [i].Start, chainSSEs [i].End);
-						result [result.Count - 1] = SSE.Join (result [result.Count - 1], chainSSEs [i], "Max RMSD: "+rmsds[i-1].ToString ("0.000")+" A");
+						result[result.Count - 1] = SSE.Join (result [result.Count - 1], chainSSEs [i]);
+						result[result.Count - 1].AddComment("Max RMSD: "+rmsds[i-1].ToString ("0.000")+" A");
 					} else {
 						result.Add (chainSSEs [i]);
 					}

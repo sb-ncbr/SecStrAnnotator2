@@ -24,35 +24,35 @@ SECSTRANNOTATOR_OPTIONS="--soft --label2auth"
 ALIGNED_SSE_LABELS="A,B,C,D,E,H,I,J,K,L"
 
 
-# Get domains from CATH and Pfam
-python3  $DOMAINS_FROM_PDBEAPI  --numbering label  --allow_null_domain_name  --join_domains_in_chain  1.10.630.10  >  $DATA_DIR/cyps_cath_$TODAY.simple.json 
-# Downloading https://www.ebi.ac.uk/pdbe/api/mappings/1.10.630.10
-# Found 728 PDB entries.
-python3  $DOMAINS_FROM_PDBEAPI  --numbering label  --allow_null_domain_name  --join_domains_in_chain  PF00067  >  $DATA_DIR/cyps_pfam_$TODAY.simple.json 
-# Downloading https://www.ebi.ac.uk/pdbe/api/mappings/PF00067
-# Found 883 PDB entries.
+# # Get domains from CATH and Pfam
+# python3  $DOMAINS_FROM_PDBEAPI  --numbering label  --allow_null_domain_name  --join_domains_in_chain  1.10.630.10  >  $DATA_DIR/cyps_cath_$TODAY.simple.json 
+# # Downloading https://www.ebi.ac.uk/pdbe/api/mappings/1.10.630.10
+# # Found 728 PDB entries.
+# python3  $DOMAINS_FROM_PDBEAPI  --numbering label  --allow_null_domain_name  --join_domains_in_chain  PF00067  >  $DATA_DIR/cyps_pfam_$TODAY.simple.json 
+# # Downloading https://www.ebi.ac.uk/pdbe/api/mappings/PF00067
+# # Found 883 PDB entries.
 
-# Merge domain lists and format them in SecStrAPI format
-python3  $DOMAINS_TO_SECSTRAPI_FORMAT  --api_version 1.0  \
-    CATH  1.10.630.10  $DATA_DIR/cyps_cath_$TODAY.simple.json  \
-    Pfam  PF00067  $DATA_DIR/cyps_pfam_$TODAY.simple.json  \
-    >  $DATA_DIR/cyps_all_$TODAY.json
+# # Merge domain lists and format them in SecStrAPI format
+# python3  $DOMAINS_TO_SECSTRAPI_FORMAT  --api_version 1.0  \
+#     CATH  1.10.630.10  $DATA_DIR/cyps_cath_$TODAY.simple.json  \
+#     Pfam  PF00067  $DATA_DIR/cyps_pfam_$TODAY.simple.json  \
+#     >  $DATA_DIR/cyps_all_$TODAY.json
 
-# Select nonredundant set (with best quality)
-python3  $SELECT_BEST_DOMAINS  $DATA_DIR/cyps_all_$TODAY.json  >  $DATA_DIR/cyps_best_$TODAY.json
+# # Select nonredundant set (with best quality)
+# python3  $SELECT_BEST_DOMAINS  $DATA_DIR/cyps_all_$TODAY.json  >  $DATA_DIR/cyps_best_$TODAY.json
 
-# Simplify domain lists (for SecStrAnnotator)
-python3  $SIMPLIFY_DOMAIN_LIST  $DATA_DIR/cyps_all_$TODAY.json  >  $DATA_DIR/cyps_all_$TODAY.simple.json
-python3  $SIMPLIFY_DOMAIN_LIST  $DATA_DIR/cyps_best_$TODAY.json  >  $DATA_DIR/cyps_best_$TODAY.simple.json
+# # Simplify domain lists (for SecStrAnnotator)
+# python3  $SIMPLIFY_DOMAIN_LIST  $DATA_DIR/cyps_all_$TODAY.json  >  $DATA_DIR/cyps_all_$TODAY.simple.json
+# python3  $SIMPLIFY_DOMAIN_LIST  $DATA_DIR/cyps_best_$TODAY.json  >  $DATA_DIR/cyps_best_$TODAY.simple.json
 
-# Download CIF files
-python3  $DOWNLOAD_DOMAINS  --format cif  --no_gzip  $DATA_DIR/cyps_all_$TODAY.simple.json  $DATA_DIR/structures/
+# # Download CIF files
+# python3  $DOWNLOAD_DOMAINS  --format cif  --no_gzip  $DATA_DIR/cyps_all_$TODAY.simple.json  $DATA_DIR/structures/
 
-# Annotate
-cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/
-python3  $SECSTRANNOTATOR_BATCH  --dll $SECSTRANNOTATOR_DLL \
-    --threads $N_THREADS  --options " $SECSTRANNOTATOR_OPTIONS " \
-    $DATA_DIR/structures  $TEMPLATE  $DATA_DIR/cyps_all_$TODAY.simple.json 
+# # Annotate
+# cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/
+# python3  $SECSTRANNOTATOR_BATCH  --dll $SECSTRANNOTATOR_DLL \
+#     --threads $N_THREADS  --options " $SECSTRANNOTATOR_OPTIONS " \
+#     $DATA_DIR/structures  $TEMPLATE  $DATA_DIR/cyps_all_$TODAY.simple.json 
 
 # Collect annotations and put them to SecStrAPI format
 python3  $COLLECT_ANNOTATIONS  $DATA_DIR/cyps_all_$TODAY.json  $DATA_DIR/structures/  >  $DATA_DIR/annotations_all.json

@@ -1,12 +1,54 @@
 run annotate_sec_str_extension-1.0.py
 
-annss 1bu7
+annotate_sec_str 1bu7
 
-annss 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_all/1bu7.json
-annss 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_all/1tqn.json
-annss 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_best.json
-annss 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_all.json
-annss 1BU7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_all.json, 1akd
+annotate_sec_str 1bu7, /home/adam/Workspace/
+annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_all/1tqn.json
+annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_best.json
+annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_all.json
+annotate_sec_str 1BU7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_all.json, 1akd
 
 # versions with uppercase PDBIDs (1BU7)
 # versions with 0.9 annotations (raw from SecStrAnnotator[_batch])
+
+
+annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, 1bu7
+annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_best.json, 1bu7
+annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, 1bu7A00
+annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, 1bu7xxx
+
+annotate_sec_str 1bu7, None, 1bu7
+annotate_sec_str 1bu7, None, 1bu7xxx
+annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str 1bu7_my_favourite, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str 1bu7A00, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str 1bu7A00_my_favourite, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str chain A and 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str chain A and 1bu7A00, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str xxxx, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str 1xxx, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str 1bu7, None, None
+annotate_sec_str 1bu7_my_favourite, None, None
+annotate_sec_str chain A and 1bu7, None, None
+annotate_sec_str xxxx, None, None
+annotate_sec_str 1xxx, None, None
+
+annotate_sec_str 1BU7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, 1bu7
+annotate_sec_str 1BU7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_best.json, 1bu7
+annotate_sec_str 1BU7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, 1bu7A00
+annotate_sec_str 1BU7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, 1bu7xxx
+annotate_sec_str 1BU7, None, 1bu7
+annotate_sec_str 1BU7, None, 1bu7xxx
+annotate_sec_str 1BU7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str 1BU7_my_favourite, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str 1BU7A00, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str 1BU7A00_my_favourite, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str chain A and 1BU7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str chain A and 1BU7A00, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str XXXX, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str 1XXX, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, None
+annotate_sec_str 1BU7, None, None
+annotate_sec_str 1BU7_my_favourite, None, None
+annotate_sec_str chain A and 1BU7, None, None
+annotate_sec_str XXXX, None, None
+annotate_sec_str 1XXX, None, None

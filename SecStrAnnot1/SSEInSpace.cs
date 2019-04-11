@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace protein
 {
@@ -16,7 +17,7 @@ namespace protein
 		}
 
 		public SSEInSpace (SSE sse, (Vector, Vector) startEndVectors) 
-			: this(sse, startEndVectors.Item1,startEndVectors.Item2){ }
+			: this(sse, startEndVectors.Item1, startEndVectors.Item2){ }
 
 		public static new SSEInSpace NewNotFound(String label){
 			SSE notFoundSSE= new SSE(label,NOT_FOUND_CHAIN,NOT_FOUND_START, NOT_FOUND_END,NOT_FOUND_TYPE,null);
@@ -36,8 +37,16 @@ namespace protein
 			return new SSEInSpace (base.RelabeledCopy(newLabel, newColor), StartVector, EndVector);
 		}
 
-		public static SSEInSpace Join(SSEInSpace first, SSEInSpace second, String comment){
-			return new SSEInSpace (SSE.Join(first,second,comment), first.StartVector, second.EndVector);
+		// public static SSEInSpace Join(SSEInSpace first, SSEInSpace second, String comment){
+		// 	return new SSEInSpace (SSE.Join(first,second,comment), first.StartVector, second.EndVector);
+		// }
+
+		public static SSEInSpace Join(params SSEInSpace[] sses){
+			SSEInSpace first = sses[sses.Select(sse => sse.Start).ArgMin()];
+			SSEInSpace last = sses[sses.Select(sse => sse.End).ArgMax()];
+			SSE newSSE = SSE.Join(sses);
+			SSEInSpace newSSEInSpace = new SSEInSpace(newSSE, first.StartVector, last.EndVector);
+			return newSSEInSpace;
 		}
 	}
 }
