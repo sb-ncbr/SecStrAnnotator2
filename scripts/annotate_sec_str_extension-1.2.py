@@ -6,7 +6,7 @@
 
 
 # Settings ####################################################################
-# Modify this section to change the default behaviour of this script:
+# Modify this section to change the default behaviour of the script:
 
 SEC_STR_API_URL              = 'http://webchem.ncbr.muni.cz/API/SecStr/Annotation/'  # If no annotation file is provided, annotation will be downloaded from this URL (with PDB ID added after slash).
 DEFAULT_BASE_COLOR           = 'gray80'  # This color will be used for residues without annotation, unless specified by parameter base_color.
@@ -76,11 +76,13 @@ def log(message):
 
 def warn(message):
 	# sys.stderr.write(THIS_SCRIPT + ':\n')
-	sys.stderr.write('    Warning: ' + message.replace('\n', '\n    ') + '\n')
+	# sys.stderr.write('    Warning: ' + message.replace('\n', '\n    ') + '\n')
+	print('    Warning: ' + message.replace('\n', '\n    '))
 
 def fail(message):
 	# sys.stderr.write(THIS_SCRIPT + ':\n')
-	sys.stderr.write('    Error: ' + message.replace('\n', '\n    ') + '\n')
+	# sys.stderr.write('    Error: ' + message.replace('\n', '\n    ') + '\n')
+	print('    Error: ' + message.replace('\n', '\n    '))
 	# TODO print some helpfull info
 
 def is_valid_pdbid(string):
@@ -117,7 +119,7 @@ def first_valid_pdbid(text, pdbids=None):
 			return None
 
 def fetch_structure(pdbid, domain_name=None, domain=None, force_cartoon=True):
-	print('fetch structure', force_cartoon)
+	# debug_log('fetch structure ' + str(force_cartoon))
 	if not is_valid_selection(pdbid):
 		log('Fetching ' + pdbid)
 		cmd.fetch(pdbid, async=0)
@@ -131,10 +133,10 @@ def fetch_structure(pdbid, domain_name=None, domain=None, force_cartoon=True):
 				use_auth = should_use_auth(pdbid)
 				# sel = ' or '.join( '(' + selection_from_domain(domain, use_auth) + ')' for domain in domains )
 				sel = pdbid + ' and (' + selection_from_domain(domain, use_auth) + ')'
-				if domain_name is not None:
+				if domain_name is not None and not is_valid_selection(domain_name):
 					cmd.select(domain_name, sel)
 			cmd.show(DEFAULT_REPRESENTATION, sel)
-			cmd.show(DEFAULT_HET_REPRESENTATION, '(' + sel + ') and hetatm')  # TODO when ligand is separate chain (in label_), somehow include it (use auth_asym_id)
+			cmd.show(DEFAULT_HET_REPRESENTATION, '(' + sel + ') and hetatm')
 	return True
 
 def has_domain_auth_fields(domain):
@@ -194,7 +196,7 @@ def is_from_cif(object_name):
 
 def should_use_auth(object_name):
 	try:
-		cif_use_auth = cmd.get('cif_use_auth')
+		cif_use_auth = parse_boolean(cmd.get('cif_use_auth'))
 	except:
 		cif_use_auth = True
 	return cif_use_auth or not is_from_cif(object_name)
@@ -289,7 +291,6 @@ class Annotation_0_9:
 
 def apply_annotation(selection, domains, base_color):
 	for domain in domains:
-		# TODO continue here
 		selection = '(' + selection + ')'
 		use_auth = should_use_auth(selection)
 
@@ -327,7 +328,8 @@ def apply_annotation(selection, domains, base_color):
 				cmd.select(sel_name, sel_definition)
 				cmd.color(assign_color(sse), sel_name + ' and symbol C')
 				if SHOW_LABELS:
-					label_sse(sse, sel_name)
+					label_sse(sse, sel_name, use_auth)
+			mark_pivot(sse, sel_name, use_auth)
 			cmd.deselect()
 
 def assign_color(sse):
@@ -338,14 +340,43 @@ def assign_color(sse):
 		magic_number = hash(sse[LABEL]) % 1000
 		return 's' + str(magic_number).zfill(3)
 
-def label_sse(sse, selection):  # TODO differentiate auth_ and label_, include chain!
-	middle = (sse[START_RESI] + sse[END_RESI]) // 2
-	label_selection = '(' + selection + ') and name CB and resi ' + str(middle)
+def label_sse(sse, selection, use_auth):
+	if use_auth:
+		chain = sse[AUTH_CHAIN_ID]
+		start = sse[AUTH_START_RESI]
+		end = sse[AUTH_END_RESI]
+	else:
+		chain = sse[CHAIN_ID]
+		start = sse[START_RESI]
+		end = sse[END_RESI]
+	middle = (start + end) // 2
+	label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(middle) + ' and name CB'
 	if cmd.count_atoms(label_selection)==0:
-		label_selection = '(' + selection + ') and name CA and resi ' + str(middle)
+		label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(middle) + ' and name CA'
 	cmd.label(label_selection, '"' + sse[LABEL].replace('"', '\\"') + '"')
 
-def boolean(string):
+def mark_pivot(sse, selection, use_auth):
+	if use_auth:
+		chain = sse[AUTH_CHAIN_ID]
+		pivot = sse.get(AUTH_PIVOT_RESI, None)
+		pivot_ins_code = sse.get(AUTH_PIVOT_RESI, INSERTION_CODE_NULL)
+		if pivot is not None:
+			pivot = str(pivot)
+			if pivot_ins_code != INSERTION_CODE_NULL:
+				pivot += pivot_ins_code
+	else:
+		chain = sse[CHAIN_ID]
+		pivot = sse.get(PIVOT_RESI, None)
+		if pivot is not None:
+			pivot = str(pivot)
+	if pivot is not None:
+		pivot_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + pivot
+		cmd.color('red', pivot_selection)
+		cmd.show('sticks', pivot_selection)
+
+def parse_boolean(string):
+	if not isinstance(string, str):
+		return string
 	if string.lower() in ['0', 'off', 'false']:
 		return False
 	elif string.lower() in ['1', 'on', 'true']:
@@ -353,64 +384,6 @@ def boolean(string):
 	else:
 		fail('Invalid value "' + string + '", allowed values: 0, 1, off, on, false, true')
 		raise Exception
-
-# class Annotating:
-# 	def __init__(self):
-# 		self.pdbid = None
-# 		self.domain_name = None
-# 		self.object_name = None
-# 		self.allow_download = True
-# 		self.annotation = None
-# 		self.domains = None
-# 		self.failed = False
-# 	def set_annotation_file(self, annotation_file):
-# 		annotation_text = get_annotation_from_file(annotation_file)
-# 		self.annotation = parse_annotation_text(annotation_text)
-# 		self.allow_download = False
-# 	def set_annotation_name(self, name):
-# 		if self.annotation is not None:
-# 			found_pdbids = annotation.get_pdbids()
-# 			if name in found_pdbids:
-# 				self.pdbid = name
-# 				self.domain_name = name
-# 				self.domains = annotation.get_domains_by_pdbid(self.pdbid)
-# 			else:
-# 				self.domains = annotation.get_domains_by_name(name)
-# 				if len(self.domains) == 0:
-# 					fail('Annotation for "' + name + '" not found')
-# 					raise Exception
-# 				else:
-# 					self.pdbid = domains[0][PDB]
-# 		elif self.allow_download:  # self.annotation is None
-# 			pdbid = name[0:4]
-# 			if not is_valid_pdbid(pdbid):
-# 				fail('Invalid argument name: "'+name+'" (must start with a valid PDB ID)')
-# 				raise Exception
-# 			annotation_text = get_annotation_from_internet(pdbid)
-# 			annotation = parse_annotation_text(annotation_text)
-# 			self.domains = annotation.get_domains_by_name(name)
-# 			if len(self.domains) == 0:
-# 				fail('Annotation for "' + name + '" not found')
-# 				raise Exception
-# 			#TODO set self.pdbid or remove that field
-# 		else:
-# 			raise Exception('This should never happen')  #debug
-# 	def guess_annotation_name(self, selection):
-# 		words = re.split('\W+', selection)
-# 		# debug_log(words)
-# 		try:
-# 			name = next( word for word in words if is_valid_pdbid(word) or is_valid_domain_name(word) )
-# 			# debug_log(name)
-# 			pdbid = first_valid_pdbid(name)
-# 			log('Guessed PDB ID: ' + pdbid)
-# 		except:
-# 			fail('Could not guess PDB ID from selection "' + selection + '"')
-# 			return False
-# 		annotation_text = get_annotation_from_internet(pdbid)
-# 		annotation = parse_annotation_text(annotation_text)
-# 		domains = annotation.get_domains_by_pdbid(pdbid)
-# 	def set_annotation_selection(self, selection):
-		# pass
 
 def print_help():
 	print('annotate_sec_str(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True)')
@@ -422,7 +395,6 @@ def print_help():
 	print('Examples: annotate_sec_str 1tqn')
 	print('          annotate_sec_str 1og2, my_annotation.sses.json, 1og2A00')
 	# TODO add usefull usage info
-	
 
 def test():
 	base_dir = '/home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322'
@@ -497,111 +469,116 @@ def test():
 
 def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True):
 	try:
-		force_cartoon = boolean(force_cartoon)
-	except:
-		return False
-	if selection == 'help' and annotation_file is None and name is None:
-		print_help()
-		return False
-	print(force_cartoon)
-	if annotation_file is not None and name is not None:
-		annotation_text = get_annotation_from_file(annotation_file)
-		annotation = parse_annotation_text(annotation_text)
-		found_pdbids = annotation.get_pdbids()
-		if name in found_pdbids:
-			pdbid = name
-			domains = annotation.get_domains_by_pdbid(pdbid)
-		else:
-			domains = annotation.get_domains_by_name(name)
-			if len(domains) == 0:
-				fail('Annotation for "' + name + '" not found')
-				return False
+		if selection == 'help' and annotation_file is None and name is None:
+			print_help()
+			return False
+		try:
+			force_cartoon = parse_boolean(force_cartoon)
+		except:
+			return False
+		debug_log(force_cartoon)
+		if annotation_file is not None and name is not None:
+			annotation_text = get_annotation_from_file(annotation_file)
+			annotation = parse_annotation_text(annotation_text)
+			found_pdbids = annotation.get_pdbids()
+			if name in found_pdbids:
+				pdbid = name
+				domains = annotation.get_domains_by_pdbid(pdbid)
 			else:
-				pdbid = domains[0][PDB]
-	elif annotation_file is None and name is not None:
-		pdbid = name[0:4]
-		annotation_text = get_annotation_from_internet(pdbid)
-		annotation = parse_annotation_text(annotation_text)
-		domains = annotation.get_domains_by_name(name)
-		if len(domains) == 0:
-			fail('Annotation for "' + name + '" not found')
-			return False
-	elif annotation_file is not None and name is None:
-		annotation_text = get_annotation_from_file(annotation_file)
-		annotation = parse_annotation_text(annotation_text)
-		words = re.split('\W+', selection)
-		# debug_log(words)
-		try:
-			# name = next( word for word in words if len(annotation.get_domains_by_name(word, allow_prefix=True)) > 0 )
-			name = next( word for word in words if len(annotation.get_domains_by_name(word)) > 0 )
+				domains = annotation.get_domains_by_name(name)
+				if len(domains) == 0:
+					fail('Annotation for "' + name + '" not found')
+					return False
+				else:
+					pdbid = domains[0][PDB]
+		elif annotation_file is None and name is not None:
 			pdbid = name[0:4]
-			# domains = annotation.get_domains_by_name(name, allow_prefix=True)
+			annotation_text = get_annotation_from_internet(pdbid)
+			annotation = parse_annotation_text(annotation_text)
 			domains = annotation.get_domains_by_name(name)
 			if len(domains) == 0:
 				fail('Annotation for "' + name + '" not found')
 				return False
-		except StopIteration:
+		elif annotation_file is not None and name is None:
+			annotation_text = get_annotation_from_file(annotation_file)
+			annotation = parse_annotation_text(annotation_text)
+			words = re.split('\W+', selection)
+			# debug_log(words)
 			try:
-				# name = next( word for word in words if len(annotation.get_domains_by_pdbid(word, allow_prefix=True)) > 0 )
-				name = next( word for word in words if len(annotation.get_domains_by_pdbid(word)) > 0 )
+				# name = next( word for word in words if len(annotation.get_domains_by_name(word, allow_prefix=True)) > 0 )
+				name = next( word for word in words if len(annotation.get_domains_by_name(word)) > 0 )
 				pdbid = name[0:4]
-				# domains = annotation.get_domains_by_pdbid(name, allow_prefix=True)
-				domains = annotation.get_domains_by_pdbid(name)
-			except StopIteration:
-				pdbids = annotation.get_pdbids()
-				if len(pdbids) == 1:
-					pdbid = pdbids[0]
-					name = pdbid
-					domains = annotation.get_domains_by_pdbid(pdbid)
-					warn('Could not guess annotation name from selection "' + selection + '"')
-					log('Selected PDB ID: "' + pdbid + '" (the only one in the annotation file)')
-				else:
-					fail('Could not guess annotation name from selection "' + selection + '"')
+				# domains = annotation.get_domains_by_name(name, allow_prefix=True)
+				domains = annotation.get_domains_by_name(name)
+				if len(domains) == 0:
+					fail('Annotation for "' + name + '" not found')
 					return False
-		# debug_log('Guessed PDB ID: ' + pdbid)
-	else: # annotation_file and name are None, guess pdbid using selection and download annotation
-		words = re.split('\W+', selection)
-		# debug_log(words)
-		try:
-			name = next( word for word in words if is_valid_pdbid(word) or is_valid_domain_name(word) )
-		except StopIteration:
-			fail('Could not guess PDB ID from selection "' + selection + '"')
-			return False
-		pdbid = name[0:4]
-		# log('Guessed PDB ID: ' + pdbid)
-		annotation_text = get_annotation_from_internet(pdbid)
-		annotation = parse_annotation_text(annotation_text)
-		if name == pdbid:
-			domains = annotation.get_domains_by_pdbid(pdbid)
-		else:
-			domains = annotation.get_domains_by_name(name)
-		if len(domains) == 0:
-			fail('Annotation for "' + name + '" not found')
-			return False
+			except StopIteration:
+				try:
+					# name = next( word for word in words if len(annotation.get_domains_by_pdbid(word, allow_prefix=True)) > 0 )
+					name = next( word for word in words if len(annotation.get_domains_by_pdbid(word)) > 0 )
+					pdbid = name[0:4]
+					# domains = annotation.get_domains_by_pdbid(name, allow_prefix=True)
+					domains = annotation.get_domains_by_pdbid(name)
+				except StopIteration:
+					pdbids = annotation.get_pdbids()
+					if len(pdbids) == 1:
+						pdbid = pdbids[0]
+						name = pdbid
+						domains = annotation.get_domains_by_pdbid(pdbid)
+						warn('Could not guess annotation name from selection "' + selection + '"')
+						log('Selected PDB ID: "' + pdbid + '" (the only one in the annotation file)')
+					else:
+						fail('Could not guess annotation name from selection "' + selection + '"')
+						return False
+			# debug_log('Guessed PDB ID: ' + pdbid)
+		else: # annotation_file and name are None, guess pdbid using selection and download annotation
+			words = re.split('\W+', selection)
+			# debug_log(words)
+			try:
+				name = next( word for word in words if is_valid_pdbid(word) or is_valid_domain_name(word) )
+			except StopIteration:
+				fail('Could not guess PDB ID from selection "' + selection + '"')
+				return False
+			pdbid = name[0:4]
+			# log('Guessed PDB ID: ' + pdbid)
+			annotation_text = get_annotation_from_internet(pdbid)
+			annotation = parse_annotation_text(annotation_text)
+			if name == pdbid:
+				domains = annotation.get_domains_by_pdbid(pdbid)
+			else:
+				domains = annotation.get_domains_by_name(name)
+			if len(domains) == 0:
+				fail('Annotation for "' + name + '" not found')
+				return False
+		# TODO when guessing name, don't take next, but require unambiguity
 
-	log('PDB ID: ' + pdbid + ', NAME: ' + name + ', DOMAINS: ' + str(len(domains)))
-	# debug_log('Partial OK')
-	
-	if not is_valid_selection(selection):
-		words = re.split('\W+', selection)
-		for word in words:
-			if is_valid_pdbid(word) and not is_valid_selection(word):
-				fetch_structure(word, force_cartoon=force_cartoon)
-			elif is_valid_domain_name(word) and not is_valid_selection(word):
-				pdb = word[0:4]
-				if annotation_file is None:
-					annotation_text = get_annotation_from_internet(pdb)
-					annotation = parse_annotation_text(annotation_text)
-				doms = annotation.get_domains_by_name(word)
-				if len(doms) == 1:
-					fetch_structure(pdb, domain_name=word, domain=doms[0], force_cartoon=force_cartoon)
+		log('PDB ID: ' + pdbid + ', NAME: ' + name + ', DOMAINS: ' + str(len(domains)))
+		# debug_log('Partial OK')
+		
 		if not is_valid_selection(selection):
-			fail('Invalid selection "' + selection + '"')
-			return False
+			words = re.split('\W+', selection)
+			for word in words:
+				if is_valid_pdbid(word) and not is_valid_selection(word):
+					fetch_structure(word, force_cartoon=force_cartoon)
+				elif is_valid_domain_name(word) and not is_valid_selection(word):
+					pdb = word[0:4]
+					if annotation_file is None:
+						annotation_text = get_annotation_from_internet(pdb)
+						annotation = parse_annotation_text(annotation_text)
+					doms = annotation.get_domains_by_name(word)
+					if len(doms) == 1:
+						fetch_structure(pdb, domain_name=word, domain=doms[0], force_cartoon=force_cartoon)
+			if not is_valid_selection(selection):
+				fail('Invalid selection "' + selection + '"')
+				return False
 
-	debug_log('OK')
-	apply_annotation(selection, domains, base_color)
-	return True
+		debug_log('OK')
+		apply_annotation(selection, domains, base_color)
+		return True
+	except Exception as ex:
+		fail(str(ex))
+		return False
 
 
 # The script for PyMOL ########################################################

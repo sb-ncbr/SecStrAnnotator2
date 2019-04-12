@@ -1,16 +1,4 @@
-run annotate_sec_str_extension-1.0.py
-
-annotate_sec_str 1bu7
-
-annotate_sec_str 1bu7, /home/adam/Workspace/
-annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_all/1tqn.json
-annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_best.json
-annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_all.json
-annotate_sec_str 1BU7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_all.json, 1akd
-
-# versions with uppercase PDBIDs (1BU7)
-# versions with 0.9 annotations (raw from SecStrAnnotator[_batch])
-
+run annotate_sec_str_extension-1.2.py
 
 annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, 1bu7
 annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_best.json, 1bu7
