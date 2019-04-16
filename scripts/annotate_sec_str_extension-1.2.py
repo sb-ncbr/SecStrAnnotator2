@@ -75,12 +75,12 @@ def log(message):
 	print(message)
 
 def warn(message):
-	# sys.stderr.write(THIS_SCRIPT + ':\n')
+	sys.stderr.write(THIS_SCRIPT + ':\n')
 	# sys.stderr.write('    Warning: ' + message.replace('\n', '\n    ') + '\n')
 	print('    Warning: ' + message.replace('\n', '\n    '))
 
 def fail(message):
-	# sys.stderr.write(THIS_SCRIPT + ':\n')
+	sys.stderr.write(THIS_SCRIPT + ':\n')
 	# sys.stderr.write('    Error: ' + message.replace('\n', '\n    ') + '\n')
 	print('    Error: ' + message.replace('\n', '\n    '))
 	# TODO print some helpfull info
@@ -359,7 +359,7 @@ def mark_pivot(sse, selection, use_auth):
 	if use_auth:
 		chain = sse[AUTH_CHAIN_ID]
 		pivot = sse.get(AUTH_PIVOT_RESI, None)
-		pivot_ins_code = sse.get(AUTH_PIVOT_RESI, INSERTION_CODE_NULL)
+		pivot_ins_code = sse.get(AUTH_PIVOT_RESI_INS_CODE, INSERTION_CODE_NULL)
 		if pivot is not None:
 			pivot = str(pivot)
 			if pivot_ins_code != INSERTION_CODE_NULL:
@@ -576,9 +576,11 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 		debug_log('OK')
 		apply_annotation(selection, domains, base_color)
 		return True
-	except Exception as ex:
-		fail(str(ex))
-		return False
+	# except Exception as ex:
+	# 	fail(str(ex))
+	# 	return False
+	except None:
+		pass
 
 
 # The script for PyMOL ########################################################

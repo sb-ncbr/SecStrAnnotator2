@@ -1,4 +1,4 @@
-TODAY="20190322"
+TODAY="20190416"
 API_VERSION="1.0"
 N_THREADS="8"
 
@@ -25,6 +25,7 @@ ALIGNED_SSE_LABELS="A,B,C,D,E,H,I,J,K,L"
 
 
 # # Get domains from CATH and Pfam
+# mkdir $DATA_DIR
 # python3  $DOMAINS_FROM_PDBEAPI  --numbering label  --allow_null_domain_name  --join_domains_in_chain  1.10.630.10  >  $DATA_DIR/cyps_cath_$TODAY.simple.json 
 # # Downloading https://www.ebi.ac.uk/pdbe/api/mappings/1.10.630.10
 # # Found 728 PDB entries.
@@ -48,11 +49,11 @@ ALIGNED_SSE_LABELS="A,B,C,D,E,H,I,J,K,L"
 # # Download CIF files
 # python3  $DOWNLOAD_DOMAINS  --format cif  --no_gzip  $DATA_DIR/cyps_all_$TODAY.simple.json  $DATA_DIR/structures/
 
-# # Annotate
-# cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/
-# python3  $SECSTRANNOTATOR_BATCH  --dll $SECSTRANNOTATOR_DLL \
-#     --threads $N_THREADS  --options " $SECSTRANNOTATOR_OPTIONS " \
-#     $DATA_DIR/structures  $TEMPLATE  $DATA_DIR/cyps_all_$TODAY.simple.json 
+# Annotate
+cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/
+python3  $SECSTRANNOTATOR_BATCH  --dll $SECSTRANNOTATOR_DLL \
+    --threads $N_THREADS  --options " $SECSTRANNOTATOR_OPTIONS " \
+    $DATA_DIR/structures  $TEMPLATE  $DATA_DIR/cyps_all_$TODAY.simple.json 
 
 # Collect annotations and put them to SecStrAPI format
 python3  $COLLECT_ANNOTATIONS  $DATA_DIR/cyps_all_$TODAY.json  $DATA_DIR/structures/  >  $DATA_DIR/annotations_all.json
