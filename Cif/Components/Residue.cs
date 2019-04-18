@@ -80,11 +80,13 @@ namespace Cif.Components
         public IEnumerable<Atom> GetOCarbs() => GetAtoms("O", "O");
 
 
-		private static Dictionary<string,char> namesLongToShort = new Dictionary<string,char> {
+		private static readonly Dictionary<string,char> namesLongToShort = new Dictionary<string,char> {
 			{ "ALA",'A' }, { "CYS",'C' }, { "ASP",'D' }, { "GLU",'E' }, { "PHE",'F' }, { "GLY",'G' }, { "HIS",'H' }, { "ILE",'I' },
 			{ "LYS",'K' }, { "LEU",'L' }, { "MET",'M' }, { "ASN",'N' }, { "PYL",'O' }, { "PRO",'P' }, { "GLN",'Q' }, { "ARG",'R' },
 			{ "SER",'S' }, { "THR",'T' }, { "SEC",'U' }, { "VAL",'V' }, { "TRP",'W' }, { "TYR",'Y' }
 		};
+        public static readonly string[] STANDARD_RESIDUE_3LETTER_NAMES = namesLongToShort.Keys.ToArray();
+
 		public const char UNKNOWN_RESIDUE_1_LETTER = '?';
         public char ShortName => namesLongToShort.GetValueOrDefault(this.Compound, UNKNOWN_RESIDUE_1_LETTER);
 

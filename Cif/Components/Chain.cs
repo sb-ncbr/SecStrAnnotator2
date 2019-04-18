@@ -74,5 +74,31 @@ namespace Cif.Components
         public override string ToString(){
             return $"Chain {Id}";
         }
+
+        //* Return one of protein, DNA, RNA, ligand, water, empty, unknown. */
+        public string GuessEntityType(){
+            bool empty = !this.GetResidues().Any();
+            if (empty){
+                return "empty";
+            }
+            Residue[] residues = this.GetResidues().ToArray();
+            Residue[] nonHetResidues = residues.Where(r => !r.GetAtoms().First().IsHetatm).ToArray();
+            if (nonHetResidues.Length == 0){
+                bool water = residues.All(r => r.Compound == "HOH");
+                return water ? "water" : "ligand";
+            }
+            string[] proteinResidues = Residue.STANDARD_RESIDUE_3LETTER_NAMES;
+            string[] rnaResidues = new string[]{"A", "C", "G", "T", "U"};
+            string[] dnaResidues = new string[]{"DA", "DC", "DG", "DT", "DU"};
+            if (nonHetResidues.All(r => proteinResidues.Contains(r.Compound))){
+                return "protein";
+            } else if (nonHetResidues.All(r => rnaResidues.Contains(r.Compound))){
+                return "RNA";
+            } else if (nonHetResidues.All(r => dnaResidues.Contains(r.Compound))){
+                return "DNA";
+            }
+            return "unknown";
+        }
+
     }
 }

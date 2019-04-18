@@ -267,10 +267,12 @@ namespace protein
 			string[] allTemplateChainIDs = chainMapping.Keys.ToArray ();
 			string[] allQueryChainIDs = chainMapping.Values.SelectMany (x => x).ToArray ();
 
+
 			#region Reading configuration file.
 			String configFile = Path.Combine (AppDomain.CurrentDomain.BaseDirectory, Setting.CONFIG_FILE);
 			Config config = new Config (configFile);
 			#endregion
+
 
 			#region Creating names for input and output files.
 			String fileTemplatePDB = Path.Combine (Setting.Directory, templateID + Setting.PDB_FILE_EXT);
@@ -290,45 +292,28 @@ namespace protein
 			stamp = DateTime.Now;
 			#endregion
 
+
 			#region Reading proteins from PDB files.
-			StreamReader reader;
 
 			Protein tProtein; // template
 			Protein qProtein; // query
 
 			if (!onlyDetect) {
-				tProtein = ReadProteinFromFile(fileTemplatePDB, templateChainID_, templateDomainRanges).KeepOnlyNormalResidues(true);
-				if (tProtein.GetChains().Count() == 0){
-					Lib.WriteErrorAndExit ("Template domain contains no atoms.");
-				}
-				// try {
-				// 	reader = new StreamReader (fileTemplatePDB);
-				// 	tProtein = new Protein (reader).KeepOnlyNormalResidues(true);
-				// 	if (tProtein.GetChains().Count == 0){
-				// 		Lib.WriteErrorAndExit ("Template domain contains no atoms.");
-				// 	}
-				// 	reader.Close ();
-				// } catch (IOException) {
-				// 	Lib.WriteError ("Could not open \"" + fileTemplatePDB + "\".");
-				// 	return -1;
-				// }
+				Lib.WriteInColor (ConsoleColor.Yellow, "Template protein:\n");
+				tProtein = ReadProteinFromFile(fileTemplatePDB, templateChainID_, templateDomainRanges);
 			} else {
 				tProtein = new Protein(null as Cif.Tables.Model); // dummy protein, never will be used
 			}
-			// tProtein.SaveCif(Path.Combine(Directory, "template.cif")); //debug
 
+			Lib.WriteInColor (ConsoleColor.Yellow, "Query protein:\n");
 			if (tryToReuseAlignment && File.Exists (fileQueryAlignedPDB)) {
-				qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
+				qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges);
 			} else {
-				qProtein = ReadProteinFromFile(fileQueryPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
+				qProtein = ReadProteinFromFile(fileQueryPDB, queryChainID_, queryDomainRanges);
 			}
 
 			if (printLabel2AuthTable){
 				qProtein.SaveLabel2AuthTable(fileQueryLabel2Auth);
-			}
-
-			if (qProtein.GetChains().Count() == 0){
-				Lib.WriteErrorAndExit ("Query domain contains no atoms.");
 			}
 
 			if (!onlyDetect) {
@@ -347,19 +332,13 @@ namespace protein
 			}
 			#endregion
 
+
 			#region Writing short info about the proteins to the console.
-			Console.WriteLine ();
-			if (!onlyDetect) {
-				//Lib.WriteInColor (ConsoleColor.Yellow, "Template protein:  " + fileTemplatePDB + " (" + tProtein.GetChains ().Count + " chains, " + tProtein.GetResidues ().Count + " residues, " + tProtein.GetAtoms ().Count + " atoms)\n");
-				Lib.WriteInColor (ConsoleColor.Yellow, "Template protein:  {0}, chain {1}, residues {2}\n", fileTemplatePDB, templateChainID_, FormatRanges(templateDomainRanges));
-			}
-			//Lib.WriteInColor (ConsoleColor.Yellow, "Query protein: " + fileQueryPDB + " (" + qProtein.GetChains ().Count + " chains, " + qProtein.GetResidues ().Count + " residues, " + qProtein.GetAtoms ().Count + " atoms)\n");
-			Lib.WriteInColor (ConsoleColor.Yellow, "Query protein:  {0}, chain {1}, residues {2}\n", fileQueryPDB, queryChainID_, FormatRanges(queryDomainRanges));
-			Console.WriteLine ();
 
 			times.Add (new Tuple<string, TimeSpan> ("Read files", DateTime.Now.Subtract (stamp)));
 			stamp = DateTime.Now;
 			#endregion
+
 
 			#region Reading template annotation from file.
 			SecStrAssignment templateSSA;
@@ -391,6 +370,7 @@ namespace protein
 				templateSSA = null;
 			}
 			#endregion
+
 
 			#region Secondary Structure Assignment of the query protein.
 
@@ -446,6 +426,7 @@ namespace protein
 			stamp = DateTime.Now;
 
 			#endregion
+
 
 			if (onlyDetect) {
 				if (Lib.DoWriteDebug) {
@@ -748,6 +729,7 @@ namespace protein
 			}
 			#endregion
 
+
 			if (Setting.FILTER_OUTPUT_BY_LABEL) {
 				int[] indices = annotQHelicesInSpace_AllChains.IndicesWhere (sse => Setting.OUTPUT_ONLY_THESE_LABELS.Contains (sse.Label)).ToArray ();
 				annotQHelicesInSpace_AllChains = indices.Select (i => annotQHelicesInSpace_AllChains [i]).ToList ();
@@ -758,6 +740,7 @@ namespace protein
 				metric7List_AllChains = indices.Select (i => metric7List_AllChains [i]).ToList ();
 				annotQConnectivity_AllChains = new Lib.Shuffler (indices).UpdateIndices (annotQConnectivity_AllChains).ToList();
 			}
+
 
 			#region Writing values of metric.
 			Lib.WriteInColor (ConsoleColor.Yellow, "Values of metric:\n");
@@ -777,6 +760,7 @@ namespace protein
 			Lib.WriteInColor (ConsoleColor.Yellow, "Found SSEs: {0} of {1}\n", totalFound, templateSSA.SSEs.Count);
 			Console.WriteLine ();
 			#endregion
+
 
 			#region Output of chosen SSEs into a file.
 			String comment = "Automatic annotation for " + queryID + " based on " + templateID + " template.\nProgram was called with these parameters: "
@@ -813,6 +797,7 @@ namespace protein
 				LibAnnotation.WriteAnnotationFile (fileQueryAnnotatedHelices, annotQHelicesInSpace_AllChains, comment);
 			#endregion
 
+
 			#region Running PyMOL to create .pse file.
 			if (createPymolSession) {
 				if (!Setting.JSON_OUTPUT){
@@ -836,9 +821,11 @@ namespace protein
 			stamp = DateTime.Now;
 			#endregion
 
+
 			#region Write information about times.
 			PrintTimes (times, t0);
 			#endregion
+
 
 			return 0;
 		}
@@ -865,10 +852,27 @@ namespace protein
 
 		private static Protein ReadProteinFromFile(string filename, string chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
 			try {
+				Lib.WriteInColor (ConsoleColor.Yellow, "Loading structure:  {0}, chain {1}, residues {2}\n", filename, chainId, FormatRanges(resSeqRanges));
 				Protein p;
 				(int,int)[] resSeqRangesArray = resSeqRanges.Select(tup => (tup.Item1, tup.Item2)).ToArray();
 				p = SecStrAnnot2.CifWrapperForSecStrAnnot1_New.ProteinFromCifFile(filename, chainId, resSeqRangesArray);
-				return p.KeepOnlyNormalResidues(true);
+
+				if (p.GetChains().Any()){
+					string entityType = p.GetChains().First().GuessEntityType();
+					if (entityType != "protein"){
+						Lib.WriteWarning($"Loaded structure is of type '{entityType}'");
+					}
+				} else {
+					Lib.WriteErrorAndExit ("Loaded structure contains no atoms.");
+				}
+
+				p = p.KeepOnlyNormalResidues(true);
+
+				if (!p.GetChains().Any()){
+					Lib.WriteErrorAndExit ("Loaded structure contains no normal residues.");
+				}
+
+				return p;
 			} catch (IOException) {
 				Lib.WriteErrorAndExit ("Could not open \"" + filename + "\".");
 				throw new Exception();
@@ -911,7 +915,7 @@ namespace protein
 		}
 
 
-		private static String FormatRanges(List<Tuple<int,int>> ranges){
+		private static String FormatRanges(IEnumerable<Tuple<int,int>> ranges){
 			return ranges.Select (
 				range => 
 				(range.Item1 == int.MinValue ? "" : range.Item1.ToString ())
