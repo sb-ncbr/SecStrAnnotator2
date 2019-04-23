@@ -370,7 +370,7 @@ def mark_pivot(sse, selection, use_auth):
 		if pivot is not None:
 			pivot = str(pivot)
 	if pivot is not None:
-		pivot_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + pivot
+		pivot_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + pivot + ' and name CA+CB'
 		cmd.color('red', pivot_selection)
 		cmd.show('sticks', pivot_selection)
 

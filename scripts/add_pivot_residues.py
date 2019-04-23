@@ -38,7 +38,7 @@ args = parser.parse_args()
 
 all_annotations_file = args.all_annotations_file
 alignments_dir = args.reference_alignments_directory
-labels = args.labels.split(',') if args.labels is not None else None
+labels = args.labels.split(',') if args.labels is not None and args.labels != 'all' else None
 label2auth_dir = args.label2auth_dir
 
 #  MAIN  ##############################################################################
