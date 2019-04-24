@@ -12,7 +12,7 @@ SEC_STR_API_URL              = 'http://webchem.ncbr.muni.cz/API/SecStr/Annotatio
 DEFAULT_BASE_COLOR           = 'gray80'  # This color will be used for residues without annotation, unless specified by parameter base_color.
 DEFAULT_REPRESENTATION       = 'cartoon'  # Default visual representation for newly fetched structures (does not apply objects that have already been loaded).
 DEFAULT_HET_REPRESENTATION   = 'sticks'  # Default visual representation for heteroatoms.
-SHOW_LABELS                  = True  # Indicates whether labels with SSE names should be shown.
+SHOW_LABELS                  = False #debug  # Indicates whether labels with SSE names should be shown.
 LABEL_SIZE                   = None  # Size for the labels (None = default size).
 PYMOL_REPLACEMENT_CHARACTER  = '+'  # In selection names, avoid-characters will be replaced by PYMOL_REPLACEMENT_CHARACTER (i.e. all except alphanumeric characters A-Z a-z 0-9 and characters _ . + -).
 
@@ -36,8 +36,8 @@ THIS_SCRIPT = 'annotate_sec_str_extension-1.2.py'
 API_VERSION = 'api_version'
 ANNOTATIONS = 'annotations'
 PDB = 'pdb'
-CHAIN = 'chain'
-AUTH_CHAIN = 'auth_chain'
+CHAIN = 'chain_id'
+AUTH_CHAIN = 'auth_chain_id'
 RANGES = 'ranges'
 AUTH_RANGES = 'auth_ranges'
 UNIPROT_ID = 'uniprot_id'
@@ -290,6 +290,7 @@ class Annotation_0_9:
 			return []
 
 def apply_annotation(selection, domains, base_color):
+	# then = datetime.now()
 	for domain in domains:
 		selection = '(' + selection + ')'
 		use_auth = should_use_auth(selection)
@@ -298,8 +299,8 @@ def apply_annotation(selection, domains, base_color):
 			domain_name = domain[DOMAIN]
 		else:
 			domain_name = domain[PDB] + domain[CHAIN]
-		domain_selection = selection_from_domain(domain, use_auth)
-		# debug_log('domain_name:"' + domain_name + '", domain selection: "' + domain_selection + '"')
+		domain_selection = selection + ' and ' + selection_from_domain(domain, use_auth)
+		debug_log('domain_name:"' + domain_name + '", domain selection: "' + domain_selection + '"')
 		if not is_valid_selection(domain_name):  # such object may already be defined (e.g. if domain_name == pdb)
 			cmd.select(domain_name, domain_selection)
 		group = domain_name + '.sses'
@@ -307,9 +308,11 @@ def apply_annotation(selection, domains, base_color):
 			cmd.group(group)
 
 		if base_color is not None:
-			cmd.color(base_color, selection + ' and ' + domain_selection + ' and not hetatm and symbol C')
+			cmd.color(base_color, domain_selection + ' and not hetatm and symbol C')
 		if SHOW_LABELS and LABEL_SIZE != None:
 			cmd.set('label_size', str(LABEL_SIZE))
+		
+		# debug_log('apply_annotation1: ' + str(datetime.now() - then))
 
 		sses = domain.get(SSES, [])
 		sses = sorted(sses, key=lambda sse: (sse[CHAIN_ID], sse[START_RESI]))
@@ -324,13 +327,15 @@ def apply_annotation(selection, domains, base_color):
 			chain_id = sse[CHAIN_ID]
 			sel_name = group + '.' + safe_label
 			sel_definition = selection + ' and ' + selection_from_sse(sse, use_auth)
-			if cmd.count_atoms(sel_definition) > 0:
+			# debug_log('sse:"' + sel_name + '", sse selection: "' + sel_definition + '"')
+			if True: # cmd.count_atoms(sel_definition) > 0: #debug
 				cmd.select(sel_name, sel_definition)
 				cmd.color(assign_color(sse), sel_name + ' and symbol C')
 				if SHOW_LABELS:
 					label_sse(sse, sel_name, use_auth)
-			mark_pivot(sse, sel_name, use_auth)
+			mark_pivot(sse, sel_name, use_auth, color=assign_color(sse))
 			cmd.deselect()
+	# debug_log('apply_annotation: ' + str(datetime.now() - then))
 
 def assign_color(sse):
 	sse_type = 'H' if (sse[TYPE] in 'GHIh') else 'E' if (sse[TYPE] in 'EBe') else ' '
@@ -355,7 +360,7 @@ def label_sse(sse, selection, use_auth):
 		label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(middle) + ' and name CA'
 	cmd.label(label_selection, '"' + sse[LABEL].replace('"', '\\"') + '"')
 
-def mark_pivot(sse, selection, use_auth):
+def mark_pivot(sse, selection, use_auth, color='red'):
 	if use_auth:
 		chain = sse[AUTH_CHAIN_ID]
 		pivot = sse.get(AUTH_PIVOT_RESI, None)
@@ -371,8 +376,8 @@ def mark_pivot(sse, selection, use_auth):
 			pivot = str(pivot)
 	if pivot is not None:
 		pivot_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + pivot + ' and name CA+CB'
-		cmd.color('red', pivot_selection)
 		cmd.show('sticks', pivot_selection)
+		cmd.color(color, pivot_selection)
 
 def parse_boolean(string):
 	if not isinstance(string, str):
@@ -551,6 +556,7 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 			if len(domains) == 0:
 				fail('Annotation for "' + name + '" not found')
 				return False
+		
 		# TODO when guessing name, don't take next, but require unambiguity
 
 		log('PDB ID: ' + pdbid + ', NAME: ' + name + ', DOMAINS: ' + str(len(domains)))
@@ -572,7 +578,7 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 			if not is_valid_selection(selection):
 				fail('Invalid selection "' + selection + '"')
 				return False
-
+		
 		debug_log('OK')
 		apply_annotation(selection, domains, base_color)
 		return True
