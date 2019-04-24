@@ -300,7 +300,7 @@ def apply_annotation(selection, domains, base_color):
 		else:
 			domain_name = domain[PDB] + domain[CHAIN]
 		domain_selection = selection + ' and ' + selection_from_domain(domain, use_auth)
-		debug_log('domain_name:"' + domain_name + '", domain selection: "' + domain_selection + '"')
+		# debug_log('domain_name:"' + domain_name + '", domain selection: "' + domain_selection + '"')
 		if not is_valid_selection(domain_name):  # such object may already be defined (e.g. if domain_name == pdb)
 			cmd.select(domain_name, domain_selection)
 		group = domain_name + '.sses'
@@ -481,7 +481,7 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 			force_cartoon = parse_boolean(force_cartoon)
 		except:
 			return False
-		debug_log(force_cartoon)
+		# debug_log(force_cartoon)
 		if annotation_file is not None and name is not None:
 			annotation_text = get_annotation_from_file(annotation_file)
 			annotation = parse_annotation_text(annotation_text)

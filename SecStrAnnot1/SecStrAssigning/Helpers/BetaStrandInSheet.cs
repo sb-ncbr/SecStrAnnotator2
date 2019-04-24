@@ -21,15 +21,15 @@ namespace protein.SecStrAssigning.Helpers
         private bool DFSFlag { get; set; }
 
         public BetaStrandInSheet(SSE sse, int sheetId, /*int level, */bool evenUp){
-            SSE=sse;
-            SheetId=sheetId;
-            //Level=level;
-            EvenUp=evenUp;
-            UpNeighbours=new List<BetaStrandInSheet>();
-            DownNeighbours=new List<BetaStrandInSheet>();
-            UpLadders=new List<BetaLadder>();
-            DownLadders=new List<BetaLadder>();
-            DFSFlag=false;
+            SSE = sse;
+            SheetId = sheetId;
+            //Level = level;
+            EvenUp = evenUp;
+            UpNeighbours = new List<BetaStrandInSheet>();
+            DownNeighbours = new List<BetaStrandInSheet>();
+            UpLadders = new List<BetaLadder>();
+            DownLadders = new List<BetaLadder>();
+            DFSFlag = false;
         }
 
         private void DFSAux(bool flagDiscovered, Action<BetaStrandInSheet> actionOnDiscover, Action<BetaStrandInSheet> actionOnReturn){

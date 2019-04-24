@@ -288,7 +288,7 @@ namespace protein.SecStrAssigning
         }
 
         private void LinkStrands(BetaStrandInSheet lower, BetaStrandInSheet upper, BetaLadder ladder){
-            Lib.WriteLineDebug ("Linking strands {0} ({1}) and {2} ({3}) {4}.",lower.SSE.Label, lower.SheetId,upper.SSE.Label, upper.SheetId, Ladder2String (ladder));
+            Lib.WriteLineDebug ("Linking strands {0} ({1}) and {2} ({3}) {4}.",lower.SSE.Label, lower.SheetId, upper.SSE.Label, upper.SheetId, Ladder2String (ladder));
             if (lower == upper)
                 Lib.WriteWarning ("Trying to link a beta-strand to itself.");
             if (lower.SheetId != upper.SheetId)
@@ -300,11 +300,11 @@ namespace protein.SecStrAssigning
         }
 
         private void UnlinkStrands(BetaStrandInSheet lower, BetaStrandInSheet upper){
-            if (lower == upper)
-                Lib.WriteWarning ("Trying to unlink a beta-strand from itself.");
             int i = lower.UpNeighbours.IndexOf (upper);
             int j = upper.DownNeighbours.IndexOf (lower);
             Lib.WriteLineDebug ("Unlinking: upper={0}, lower={1}", i, j);
+            if (lower == upper)
+                Lib.WriteWarning ("Trying to unlink a beta-strand from itself.");
             lower.UpNeighbours.RemoveAt (i);
             lower.UpLadders.RemoveAt (i);
             upper.DownNeighbours.RemoveAt (j);
@@ -312,7 +312,7 @@ namespace protein.SecStrAssigning
         }
 
         private void AddVertexAndPossiblyMerge(List<BetaStrandInSheet> vertices, BetaStrandInSheet newVertex){
-            Lib.WriteLineDebug ("Adding vertex {0}.",newVertex);
+            Lib.WriteLineDebug ("Adding vertex {0}.", newVertex);
             vertices.Add (newVertex);
             int iNew = vertices.Count - 1;
             for (int i = vertices.Count - 2; i >= 0; i--) {
@@ -339,7 +339,7 @@ namespace protein.SecStrAssigning
                 if (extendedStrand.EvenUp != extendingStrand.EvenUp) {
                     Lib.WriteLineDebug ("Important! Cycle with inconsistent direction would arise in beta-strand graph (around chain {0} {1}-{2})! Skipping merging strands.", chain, start, end);
                     //Lib.WriteWarning ("Important! Cycle with inconsistent direction would arise in beta-strand graph (around chain {0} {1}-{2})! Skipping merging strands.", chain, start, end);
-                    //return false;
+                    // return false;
                 } else {
                     Lib.WriteLineDebug ("Cycle detected in beta-strand graph (around chain {0} {1}-{2}).", chain, start, end);
                 }
