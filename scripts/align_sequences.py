@@ -8,13 +8,12 @@ import argparse
 from collections import defaultdict
 from typing import Tuple
 
+import lib
 import no_gap_align
 
 #  CONSTANTS  ##############################################################################
 
 from constants import *
-
-#  FUNCTIONS  ##############################################################################
 
 #  PARSE ARGUMENTS  ##############################################################################
 
@@ -38,12 +37,11 @@ with open(all_annotations_file) as r:
     all_annotations = json.load(r)
 
 pdb2domains = all_annotations[ANNOTATIONS]
-domains = [ dom for doms in pdb2domains.values() for dom in doms ]
 label2seqs = defaultdict(list)
-for domain in domains:
-    for sse in domain[SSES]:
-        name = domain[PDB] + ',' + domain[CHAIN] + ',' + domain[RANGES]
-        label2seqs[sse[LABEL]].append((name, sse[SEQUENCE]))
+for pdb, domains in pdb2domains.items():
+    for name, domain in lib.iterate_names_domains(domains):
+        for sse in domain[SSES]:
+            label2seqs[sse[LABEL]].append((name, sse[SEQUENCE]))
 
 if labels is None:
     labels = sorted(label2seqs.keys())

@@ -1,14 +1,14 @@
 #  CONSTANTS  ##############################################################################
 
 # SecStrAPI format details
-DOMAINS_IN_DICT = False
+DOMAINS_IN_DICT = True
 
 # Field names in SecStrAPI format - general and domain specification
 API_VERSION = 'api_version'
 ANNOTATIONS = 'annotations'
 PDB = 'pdb'
-CHAIN = 'chain'
-AUTH_CHAIN = 'auth_chain'
+CHAIN = 'chain_id'
+AUTH_CHAIN = 'auth_chain_id'
 RANGES = 'ranges'
 AUTH_RANGES = 'auth_ranges'
 UNIPROT_ID = 'uniprot_id'
@@ -21,12 +21,21 @@ FAMILY_ID = 'family'
 # Field names in SecStrAPI format - SSE annotation (from SecStrAnnotator format)
 SSES = 'secondary_structure_elements'
 CONNECTIVITY = 'beta_connectivity'
-COMMENT = 'comment'
+
 LABEL = 'label'
 SEQUENCE = 'sequence'
-SSE_CHAIN = 'chain_id'
+COMMENT = 'comment'
+
+CHAIN_ID = 'chain_id'
 START = 'start'
 END = 'end'
+
+AUTH_CHAIN_ID = 'auth_chain_id'
+AUTH_START = 'auth_start'
+AUTH_START_INS = 'auth_start_ins_code'
+AUTH_END = 'auth_end'
+AUTH_END_INS = 'auth_end_ins_code'
+
 PIVOT_RESIDUE = 'pivot_residue'
 AUTH_PIVOT_RESIDUE = 'auth_pivot_residue'
 AUTH_PIVOT_RESIDUE_INS_CODE = 'auth_pivot_residue_ins_code'

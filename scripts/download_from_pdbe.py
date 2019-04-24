@@ -1,7 +1,9 @@
 # This Python3 script downloads macromolecular structures in PDB format.
 
 import os
+from os import path
 import sys
+import shutil
 import json
 import requests
 import gzip
@@ -116,6 +118,16 @@ def download_pdb(pdb, file_format, output_file, use_gzip):
 	else: 
 		return False
 
+def try_copy_pdb(pdb, file_format, output_file, cache_dir):
+	if cache_dir is None:
+		return False
+	input_file = path.join(cache_dir, pdb + '.' + file_format)
+	try:
+		shutil.copyfile(input_file, output_file)
+		return True
+	except:
+		return False
+
 class ProgressBar:
 	def __init__(self, n_steps, width=100, title='', writer=sys.stdout):
 		self.n_steps = n_steps # expected number of steps
@@ -160,6 +172,7 @@ parser.add_argument('--format',
 	default='cif')
 parser.add_argument('--unique_uniprot', help='Download only the first PDB entry for each UniProtID', action='store_true')
 parser.add_argument('--no_gzip', help='Download uncompressed files instead of default gzip', action='store_true')
+parser.add_argument('--cache', help='Directory from which the structures will by preferentially copied (if not found, falls back to download)', type=str)
 args = parser.parse_args()
 
 if args.unique_uniprot and args.input_format != 'json_by_uniprot':
@@ -189,7 +202,10 @@ elif args.input_format == 'text':
 failed = []
 bar = ProgressBar(len(pdbs), title = 'Downloading ' + str(len(pdbs)) + ' PDBs').start()
 for pdb in pdbs:
-	ok = download_pdb(pdb, args.format, os.path.join(outdir, pdb + '.' + args.format), not args.no_gzip)
+	outfile = os.path.join(outdir, pdb + '.' + args.format)
+	ok = try_copy_pdb(pdb, args.format, outfile, args.cache)
+	if not ok:
+		ok = download_pdb(pdb, args.format, outfile, not args.no_gzip)
 	if not ok:
 		failed.append(pdb)
 	bar.step()

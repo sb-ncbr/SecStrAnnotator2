@@ -151,11 +151,11 @@ namespace protein
 			elem [JsNames.CHAIN_ID] = new JsonValue (sse.ChainID.ToString ());
 			elem [JsNames.START_RESI] = new JsonValue (sse.Start);
 			elem [JsNames.END_RESI] = new JsonValue (sse.End);
-			elem [JsNames.AUTH_CHAIN_ID] = new JsonValue (sse.AuthChainID);
-			elem [JsNames.AUTH_START_RESI] = sse.AuthStart != null ? new JsonValue (sse.AuthStart.Value) : new JsonValue();
-			elem [JsNames.AUTH_START_INS_CODE] = new JsonValue (sse.AuthStartInsCode);
-			elem [JsNames.AUTH_END_RESI] = sse.AuthEnd != null ? new JsonValue (sse.AuthEnd.Value) : new JsonValue();
-			elem [JsNames.AUTH_END_INS_CODE] = new JsonValue (sse.AuthEndInsCode);
+			// elem [JsNames.AUTH_CHAIN_ID] = new JsonValue (sse.AuthChainID);
+			// elem [JsNames.AUTH_START_RESI] = sse.AuthStart != null ? new JsonValue (sse.AuthStart.Value) : new JsonValue();
+			// elem [JsNames.AUTH_START_INS_CODE] = new JsonValue (sse.AuthStartInsCode);
+			// elem [JsNames.AUTH_END_RESI] = sse.AuthEnd != null ? new JsonValue (sse.AuthEnd.Value) : new JsonValue();
+			// elem [JsNames.AUTH_END_INS_CODE] = new JsonValue (sse.AuthEndInsCode);
 			elem [JsNames.TYPE] = new JsonValue (sse.Type.ToString ());
 			if (sse.SheetId != null)
 				elem [JsNames.SHEET_ID] = new JsonValue ((int)sse.SheetId);

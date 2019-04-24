@@ -2,6 +2,8 @@ import sys
 import json
 import argparse
 
+import lib
+
 #  CONSTANTS  ##############################################################################
 
 from constants import *
@@ -19,13 +21,14 @@ input_file = args.input_file
 with open(input_file) as r:
     domain_list = json.load(r)
     pdb2domains = domain_list[ANNOTATIONS]
-DOMAINS_IN_DICT = len(pdb2domains) > 0 and isinstance(next(iter(pdb2domains.values())), dict)
 
 simple_list = {}
-for pdb, doms in pdb2domains.items():
-    if DOMAINS_IN_DICT:
-        doms = doms.values()
-    simple_list[pdb] = [ (','.join((dom[PDB], dom[CHAIN], dom[RANGES])), dom[CHAIN], dom[RANGES]) for dom in doms ] 
+for pdb, domains in pdb2domains.items():
+    simple_list[pdb] = [ (name, dom[CHAIN], dom[RANGES]) for name, dom in lib.iterate_names_domains(domains) ] 
+    # if isinstance(doms, dict):
+    #     simple_list[pdb] = [ (name, dom[CHAIN], dom[RANGES]) for name, dom in doms.items() ] 
+    # else:
+    #     simple_list[pdb] = [ (','.join((dom[PDB], dom[CHAIN], dom[RANGES])), dom[CHAIN], dom[RANGES]) for dom in doms ] 
 
 json.dump(simple_list, sys.stdout, indent=4)
 print()

@@ -8,54 +8,11 @@ import argparse
 from collections import defaultdict
 from typing import Tuple
 
+import lib
+
 #  CONSTANTS  ##############################################################################
 
 from constants import *
-
-#  FUNCTIONS  ##############################################################################
-
-class UniProtManager:
-    UNIPROT = 'UniProt'
-    UNIPROT_NAME = 'name'
-    MAPPINGS = 'mappings'
-    CHAIN = 'struct_asym_id'
-    def __init__(self, source_url='http://www.ebi.ac.uk/pdbe/api/mappings/uniprot/'):
-        self.pdbchain2uniidname = {}
-        self.source_url = source_url
-    def get_uniprot_id_and_name(self, pdb, chain) -> Tuple[str, str]:  
-        if (pdb, chain) not in self.pdbchain2uniidname:
-            self._add_pdb(pdb)
-            if (pdb, chain) not in self.pdbchain2uniidname:
-                self.pdbchain2uniidname[(pdb, chain)] = (None, None)
-        return self.pdbchain2uniidname[(pdb, chain)]
-    def _add_pdb(self, pdb):
-        url = f'{self.source_url}/{pdb}'
-        r = json.loads(requests.get(url).text)
-        unip = r[pdb][self.UNIPROT]
-        for uni_id, uni_annot in unip.items():
-            uni_name = uni_annot[self.UNIPROT_NAME]
-            for mapping in uni_annot[self.MAPPINGS]:
-                chain = mapping[self.CHAIN]
-                if (pdb, chain) in self.pdbchain2uniidname and self.pdbchain2uniidname[(pdb, chain)] != (uni_id, uni_name):
-                    old_id, old_name = self.pdbchain2uniidname[(pdb, chain)]
-                    raise Exception(f'{pdb} chain {chain} has an ambiguous mapping to Uniprot: {old_id} vs {uni_id}')
-                else:
-                    self.pdbchain2uniidname[(pdb, chain)] = (uni_id, uni_name)
-
-def new_mapping(domain_name, source, family, pdb, chain, ranges):
-    mapping = { DOMAIN_NAME: domain_name, SOURCE: source, FAMILY_ID: family, PDB: pdb, CHAIN: chain, RANGES: ranges }
-    return mapping
-
-def create_domain_id(pdb, chain):
-    return pdb + chain
-
-def simplify_result(result):
-    simple_result = {}
-    for pdb, doms in result[ANNOTATIONS].items():
-        if DOMAINS_IN_DICT:
-            doms = doms.values()
-        simple_result[pdb] = [ (','.join((dom[PDB], dom[CHAIN], dom[RANGES])), dom[CHAIN], dom[RANGES]) for dom in doms ] 
-    return simple_result
 
 #  PARSE ARGUMENTS  ##############################################################################
 
@@ -77,7 +34,7 @@ if api_version is None:
 #  MAIN  ##############################################################################
 
 annotations = {}
-uniprot_manager = UniProtManager()
+uniprot_manager = lib.UniProtManager()
 
 for source, family, filename in zip(sources, families, files):
     with open(filename) as r:
@@ -91,20 +48,21 @@ for source, family, filename in zip(sources, families, files):
             else:
                 to_unify = [ dom for dom in annotations[pdb] if dom[CHAIN] == chain ]
             if len(to_unify) == 0:  # create a new domain
-                our_domain_id = create_domain_id(pdb, chain)
+                our_domain_id = lib.create_domain_id(pdb, chain)
                 dom = { PDB: pdb, CHAIN: chain, RANGES: ':' }  # Take whole chain always
                 dom[UNIPROT_ID], dom[UNIPROT_NAME] = uniprot_manager.get_uniprot_id_and_name(pdb, chain)
                 # dom[TEMPLATE] = template # TODO implement in annotation script, not here
-                dom[MAPPINGS] = [new_mapping(domain_name, source, family, pdb, chain, ranges)]
+                dom[MAPPINGS] = []
                 if DOMAINS_IN_DICT:
                     annotations[pdb][our_domain_id] = dom
                 else:
                     annotations[pdb].append(dom)
             elif len(to_unify) == 1:  # just add a mapping to an existing domain
                 dom = to_unify[0]
-                dom[MAPPINGS].append(new_mapping(domain_name, source, family, pdb, chain, ranges))
             else:
                 raise Exception(f'Domain {domain_name} ({pdb} {chain} {ranges}) can be unified with more than one other domain')
+            new_mapping = {DOMAIN_NAME: domain_name, SOURCE: source, FAMILY_ID: family, PDB: pdb, CHAIN: chain, RANGES: ranges}
+            dom[MAPPINGS].append(new_mapping)
 
 annotations = { pdb: annot for pdb, annot in sorted(annotations.items()) }
 

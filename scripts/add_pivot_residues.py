@@ -7,25 +7,12 @@ import argparse
 from collections import defaultdict
 from typing import Tuple
 
+import lib
 import no_gap_align
-from label2auth_converter import Label2AuthConverter
 
 #  CONSTANTS  ##############################################################################
 
 from constants import *
-
-#  FUNCTIONS  ##############################################################################
-
-class LazyDict:
-    def __init__(self, initializer):
-        self.initializer = initializer
-        self.dictionary = {}
-    def get(self, key):
-        if key not in self.dictionary:
-            self.dictionary[key] = self.initializer(key)
-        return self.dictionary[key]
-    def __getitem__(self, key):
-        return self.get(key)
 
 #  PARSE ARGUMENTS  ##############################################################################
 
@@ -47,13 +34,13 @@ with open(all_annotations_file) as r:
     all_annotations = json.load(r)
 
 aligner = no_gap_align.NoGapAligner()
-realigners_manager = LazyDict(lambda label: no_gap_align.Realigner(path.join(alignments_dir, label + '.fasta')))
+realigners_manager = lib.LazyDict(lambda label: no_gap_align.Realigner(path.join(alignments_dir, label + '.fasta')))
 
 api_version = all_annotations[API_VERSION]
 pdb2domains = all_annotations[ANNOTATIONS]
 for pdb, domains in pdb2domains.items():
     dom_list = domains.values() if isinstance(domains, dict) else domains[:]
-    converter = Label2AuthConverter(path.join(label2auth_dir, pdb + '.label2auth.tsv')) if label2auth_dir is not None else None
+    converter = lib.Label2AuthConverter(path.join(label2auth_dir, pdb + '.label2auth.tsv'), unknown_ins_code_as_empty_string=True) if label2auth_dir is not None else None
     for domain in dom_list:
         for sse in domain[SSES]:
             label = sse.get(LABEL, None)
@@ -68,7 +55,7 @@ for pdb, domains in pdb2domains.items():
                     # continue
                 sse[PIVOT_RESIDUE] = pivot_residue
                 if converter is not None:
-                    _, sse[AUTH_PIVOT_RESIDUE], sse[AUTH_PIVOT_RESIDUE_INS_CODE] = converter.auth_chain_resi_ins(sse[SSE_CHAIN], sse[PIVOT_RESIDUE])
+                    _, sse[AUTH_PIVOT_RESIDUE], sse[AUTH_PIVOT_RESIDUE_INS_CODE] = converter.auth_chain_resi_ins(sse[CHAIN_ID], sse[PIVOT_RESIDUE])
 
 json.dump(all_annotations, sys.stdout, indent=4)
 print()

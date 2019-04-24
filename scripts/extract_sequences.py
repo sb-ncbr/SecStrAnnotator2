@@ -8,13 +8,13 @@ from typing import Tuple
 from os import path
 import shutil
 
+import lib
+
 #  CONSTANTS  ##############################################################################
 
 from constants import *
 
 SEQUENCE_EXT = '.fasta'
-
-#  FUNCTIONS  ##############################################################################
 
 #  PARSE ARGUMENTS  ##############################################################################
 
@@ -37,9 +37,10 @@ os.makedirs(output_directory)
 label2domain_sequence = defaultdict(lambda: [])
 
 for pdb, domains in all_annotations[ANNOTATIONS].items():
-    dom_list = domains.values() if isinstance(domains, dict) else domains[:]
-    for domain in dom_list:
-        name = ','.join((domain[PDB], domain[CHAIN], domain[RANGES]))
+    # dom_list = domains.values() if isinstance(domains, dict) else domains[:]
+    # name_domain_gen = domains.items() if isinstance(domains, dict) else ( (f'{dom[PDB]},{dom[CHAIN]},{dom[RANGES]}', dom) for dom in domains )
+    for name, domain in lib.iterate_names_domains(domains):
+        # name = ','.join((domain[PDB], domain[CHAIN], domain[RANGES]))
         for sse in domain[SSES]:
             if LABEL in sse and sse[LABEL] is not None:
                 label2domain_sequence[sse[LABEL]].append((name, sse[SEQUENCE]))

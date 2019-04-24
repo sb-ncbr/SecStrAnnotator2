@@ -329,10 +329,11 @@ def run_weblogo3(alignment_file, logo_file, first_index=0):
     title = path.splitext(title)[0]
     title = 'Helix ' + title if title[0].isalpha() else 'Strand ' + title
     composition = 'equiprobable' # 'equiprobable' 'none' 'auto'
-    command = f'''{WEBLOGO3} --format png --resolution 600 --stacks-per-line 60 --fineprint "" --errorbars NO
-        --rotate-numbers YES --number-interval 1 --aspect-ratio 6 --logo-font ArialBold --title-font TimesNewRomanBold --scale-width YES
-        --sequence-type protein --composition {composition}
-        --first-index {first_index} --title "{title}" --fin "{alignment_file}" --fout "{logo_file}"
+    units = 'bits' # 'bits' 'probability'
+    command = f'''{WEBLOGO3}  --format png  --resolution 600  --stacks-per-line 60  --fineprint ""  --errorbars NO
+        --rotate-numbers YES  --number-interval 1  --aspect-ratio 6  --logo-font ArialBold  --title-font TimesNewRomanBold  --scale-width YES
+        --sequence-type protein  --units {units}  --composition {composition}
+        --first-index {first_index}  --title "{title}"  --fin "{alignment_file}"  --fout "{logo_file}"
         '''.replace('\n', ' ')
     # print(command)
     os.system(command)

@@ -7,20 +7,11 @@ from collections import defaultdict
 from typing import Tuple
 from os import path
 
+import lib
+
 #  CONSTANTS  ##############################################################################
 
 from constants import *
-
-QUALITY_API_URL = 'https://www.ebi.ac.uk/pdbe/api/validation/summary_quality_scores/entry/{pdb}'
-QUALITY = 'overall_quality'
-
-#  FUNCTIONS  ##############################################################################
-
-def get_quality(pdb):
-    url = QUALITY_API_URL.format(pdb=pdb)
-    r = json.loads(requests.get(url).text)
-    quality = r[pdb][QUALITY]
-    return quality
 
 #  PARSE ARGUMENTS  ##############################################################################
 
@@ -38,7 +29,7 @@ with open(domain_list_file) as r:
 pdb2domains = input_json[ANNOTATIONS]
 
 pdbs = pdb2domains.keys()
-pdb2quality = { pdb: get_quality(pdb) for pdb in pdbs }
+pdb2quality = { pdb: lib.get_structure_quality(pdb) for pdb in pdbs }
 
 DOMAINS_IN_DICT = len(pdb2domains) > 0 and isinstance(next(iter(pdb2domains.values())), dict)
 

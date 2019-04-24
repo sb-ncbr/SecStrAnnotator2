@@ -6,7 +6,8 @@ import argparse
 from collections import defaultdict
 from typing import Tuple
 from os import path
-from label2auth_converter import Label2AuthConverter
+
+import lib
 
 #  CONSTANTS  ##############################################################################
 
@@ -15,8 +16,6 @@ from constants import *
 INPUT_EXT = '-annotated.sses.json'
 OUTPUT_EXT = '.json'
 SEQUENCE_EXT = '.fasta'
-
-#  FUNCTIONS  ##############################################################################
 
 #  PARSE ARGUMENTS  ##############################################################################
 
@@ -35,25 +34,27 @@ with open(domain_list_file) as r:
 
 api_version = input_annotations[API_VERSION]
 
-label2domain_sequence = defaultdict(lambda: [])
-
 for pdb, domains in input_annotations[ANNOTATIONS].items():
-    dom_list = domains.values() if isinstance(domains, dict) else domains[:]
     convert_table_file = path.join(input_directory, pdb + '.label2auth.tsv')
-    converter = Label2AuthConverter(convert_table_file) if path.isfile(convert_table_file) else None
-    for domain in dom_list:
-        name = ','.join((domain[PDB], domain[CHAIN], domain[RANGES]))
+    converter = lib.Label2AuthConverter(convert_table_file, unknown_ins_code_as_empty_string=True) if path.isfile(convert_table_file) else None
+    # dom_list = domains.values() if isinstance(domains, dict) else domains[:]
+    # name_domain_gen = domains.items() if isinstance(domains, dict) else ( (f'{dom[PDB]},{dom[CHAIN]},{dom[RANGES]}', dom) for dom in domains )
+    for name, domain in lib.iterate_names_domains(domains):
         with open(path.join(input_directory, name + INPUT_EXT)) as r:
             annot = json.load(r)[pdb]
         if converter is not None:
-            domain[AUTH_CHAIN], domain[AUTH_RANGES] = converter.auth_chain_ranges(domain[CHAIN], domain[RANGES])
+            auth_chain, auth_ranges = converter.auth_chain_ranges(domain[CHAIN], domain[RANGES])
+            lib.insert_after(domain, RANGES, ((AUTH_CHAIN, auth_chain), (AUTH_RANGES, auth_ranges)))
         domain[SSES] = annot[SSES]
+        if converter is not None:
+            for sse in domain[SSES]:
+                auth_chain, auth_start, auth_start_ins = converter.auth_chain_resi_ins(sse[CHAIN_ID], sse[START])
+                auth_chain, auth_end, auth_end_ins = converter.auth_chain_resi_ins(sse[CHAIN_ID], sse[END])
+                lib.insert_after(sse, END, 
+                    ((AUTH_CHAIN_ID, auth_chain), (AUTH_START, auth_start), (AUTH_START_INS, auth_start_ins), (AUTH_END, auth_end), (AUTH_END_INS, auth_end_ins)))
         domain[CONNECTIVITY] = annot[CONNECTIVITY]
         if COMMENT in annot:
             domain[COMMENT] = annot[COMMENT]
-        for sse in domain[SSES]:
-            if LABEL in sse and sse[LABEL] is not None:
-                label2domain_sequence[sse[LABEL]].append((name, sse[SEQUENCE]))
 
 json.dump(input_annotations, sys.stdout, indent=4)
 print()

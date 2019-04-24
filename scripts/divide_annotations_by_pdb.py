@@ -14,8 +14,6 @@ from constants import *
 
 OUTPUT_EXT = '.json'
 
-#  FUNCTIONS  ##############################################################################
-
 #  PARSE ARGUMENTS  ##############################################################################
 
 parser = argparse.ArgumentParser()
