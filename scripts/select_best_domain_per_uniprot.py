@@ -53,6 +53,7 @@ for pdbs_domains_keys in uniprot2domains.values():
     else:
         pdb, domain = best
         pdb2best_domains[pdb].append(domain)
+    sys.stderr.write(f'{pdb}\t{pdb2quality[pdb]}\n')
 
 input_json[ANNOTATIONS] = { pdb: domains for (pdb, domains) in sorted(pdb2best_domains.items()) }
 

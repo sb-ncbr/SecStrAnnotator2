@@ -307,6 +307,14 @@ def get_highest_column_index(sequence_matrix):
     max_height, max_height_index = max( (height, i) for i, height in enumerate(heights) )
     return max_height_index
 
+def get_max_area_column_index(sequence_matrix):
+    heights, widths, areas = logo_heights_widths_areas(sequence_matrix)
+    max_area, max_area_index = max( (area, i) for i, area in enumerate(areas) )
+    return max_area_index
+
+def get_pivot_column_index(sequence_matrix):
+    return get_max_area_column_index(sequence_matrix)
+
 def run_weblogo2(alignment_file, logo_file, first_index=0):
     with open(alignment_file) as r:
         for line in r:
@@ -406,7 +414,7 @@ class NoGapAligner:
         # n_residues = self.alignment_matrix.shape[0]
         # heights = logo_heights(self.alignment_matrix)
         # max_height, max_height_index = max( (height, i) for i, height in enumerate(heights) )
-        max_height_index = get_widest_and_highest_column_index(self.alignment_matrix)
+        max_height_index = get_pivot_column_index(self.alignment_matrix)
         alignment_file = output_file + '.fasta.tmp'
         self.output_alignment(alignment_file)
         if use_weblogo2:
@@ -422,7 +430,7 @@ class Realigner:
         names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
         sequence_matrices = [ sequence2matrix(seq, self.letter2index) for seq in seqs ]
         self.reference_alignment_matrix = sum(sequence_matrices) / len(sequence_matrices)
-        self.pivot_index = get_widest_and_highest_column_index(self.reference_alignment_matrix)
+        self.pivot_index = get_pivot_column_index(self.reference_alignment_matrix)
         
     def aligning_shift_and_pivot(self, sequence):
         seq_matrix = sequence2matrix(sequence, self.letter2index)
@@ -468,7 +476,7 @@ def main(input_file, output_file, logo_output=None, keep_order=False, print_tree
         height = 8
         width_per_residue = 0.8
         n_residues = matAln.shape[0]
-        max_height_index = get_widest_and_highest_column_index(matAln)
+        max_height_index = get_pivot_column_index(matAln)
         # run_weblogo2(output_file, logo_output, first_index=-max_height_index)
         run_weblogo3(output_file, logo_output, first_index=-max_height_index)
             
