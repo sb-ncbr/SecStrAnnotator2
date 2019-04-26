@@ -12,7 +12,7 @@ SEC_STR_API_URL              = 'http://webchem.ncbr.muni.cz/API/SecStr/Annotatio
 DEFAULT_BASE_COLOR           = 'gray80'  # This color will be used for residues without annotation, unless specified by parameter base_color.
 DEFAULT_REPRESENTATION       = 'cartoon'  # Default visual representation for newly fetched structures (does not apply objects that have already been loaded).
 DEFAULT_HET_REPRESENTATION   = 'sticks'  # Default visual representation for heteroatoms.
-SHOW_LABELS                  = False #debug  # Indicates whether labels with SSE names should be shown.
+SHOW_LABELS                  = True #debug  # Indicates whether labels with SSE names should be shown.
 LABEL_SIZE                   = None  # Size for the labels (None = default size).
 PYMOL_REPLACEMENT_CHARACTER  = '+'  # In selection names, avoid-characters will be replaced by PYMOL_REPLACEMENT_CHARACTER (i.e. all except alphanumeric characters A-Z a-z 0-9 and characters _ . + -).
 
