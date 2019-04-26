@@ -57,7 +57,7 @@ if logos_dir is not None:
     os.makedirs(logos_dir)
 
 aligner = no_gap_align.NoGapAligner()
-for label in labels:
+for label in labels: #debug
     print(label)
     names, sequences = zip(*label2seqs[label])
     # for name, sequence in zip(names, sequences):

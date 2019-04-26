@@ -49,13 +49,18 @@ for pdb, domains in pdb2domains.items():
                 shift, pivot_index = realigner.aligning_shift_and_pivot(sse[SEQUENCE])
                 pivot_residue = sse[START] + pivot_index
                 if not sse[START] <= pivot_residue <= sse[END]:
-                    message = f'{pdb}: pivot residue of {label} ({pivot_residue}) falls out out {label} ({sse[START]}-{sse[END]})'
+                    message = f'{pdb}: pivot residue of {label} ({pivot_residue}) falls out of {label} ({sse[START]}-{sse[END]})'
                     # raise Exception(message)
-                    sys.stderr.write(f'WARNING: {message}\n')
+                    sys.stderr.write(f'    WARNING: {message}\n')
                     # continue
                 sse[PIVOT_RESIDUE] = pivot_residue
                 if converter is not None:
-                    _, sse[AUTH_PIVOT_RESIDUE], sse[AUTH_PIVOT_RESIDUE_INS_CODE] = converter.auth_chain_resi_ins(sse[CHAIN_ID], sse[PIVOT_RESIDUE])
+                    try:
+                        _, sse[AUTH_PIVOT_RESIDUE], sse[AUTH_PIVOT_RESIDUE_INS_CODE] = converter.auth_chain_resi_ins(sse[CHAIN_ID], sse[PIVOT_RESIDUE])
+                    except KeyError:
+                        message = f'{pdb}: pivot residue of {label} ({pivot_residue}) is not modelled in the structure)'
+                        sys.stderr.write(f'  WARNING: {message}\n')
+
 
 json.dump(all_annotations, sys.stdout, indent=4)
 print()

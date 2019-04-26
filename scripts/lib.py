@@ -42,6 +42,19 @@ def get_structure_quality(pdb: str) -> float:
     quality = r[pdb][QUALITY]
     return quality
 
+def single(iterable: Iterable[V]) -> V:
+    '''Return the single element of the iterable, or raise ValueError if len(iterable) is not 1'''
+    iterator = iter(iterable)
+    try:
+        value = next(iterator)
+        try:
+            _ = next(iterator)
+            raise ValueError('Iterable contains more than one element)')
+        except StopIteration:
+            return value
+    except StopIteration:
+        raise ValueError('Iterable contains no elements')
+
 
 class LazyDict:
     def __init__(self, initializer: Callable[[K], V]):
@@ -88,7 +101,7 @@ class Label2AuthConverter:
         try:
             return self.table[(chain, resi)]
         except KeyError:
-            raise Exception(f'Did not find residue {chain} {resi} in {self.file}')
+            raise KeyError(f'Did not find residue {chain} {resi} in {self.file}')
 
     def auth_chain_ranges(self, chain: str, ranges: str) -> Tuple[str, str]:
         auth_chain = self.auth_chain(chain)
