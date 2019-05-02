@@ -378,6 +378,9 @@ def mark_pivot(sse, selection, use_auth, color='red'):
 		pivot_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + pivot + ' and name CA+CB'
 		cmd.show('sticks', pivot_selection)
 		cmd.color(color, pivot_selection)
+		pivot_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + pivot + ' and name CA'
+		cmd.show('spheres', pivot_selection)
+		cmd.color('red', pivot_selection)
 
 def parse_boolean(string):
 	if not isinstance(string, str):

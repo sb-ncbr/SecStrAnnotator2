@@ -8,7 +8,7 @@ import annotate_sec_str_extension as secstr
 
 cmd.set('cif_use_auth', False)
 
-# How to run: pymol  -qcr show_all_with_pivots.pymol.py  --  ANNOTATION_FILE  STRUCTURE_DIR  CONSENSUS  OUT_SESSION
+# How to run: pymol  -qcr show_all_with_pivots.pymol.py  --  DIRECTORY  OUT_SESSION
 argument_names = 'DIRECTORY  OUT_SESSION'
 
 if len(sys.argv) != 1 + len(argument_names.split()):
@@ -104,6 +104,61 @@ if SEPARATE:
 		cmd.save(out_session + '-' + the_label + '.pse')
 
 
+# if not SEPARATE:
+# 	labels = { sse['label'] for domains in annotations.values() for domain in domains.values() for sse in domain['secondary_structure_elements'] }
+# 	# labels = "A B''' C G H".split()  # for after-align
+# 	# labels = "B B'' E F".split()  # for before-align
+
+# 	cmd.load(consensus_file, 'consensus')
+
+# 	for i, (pdb, domains) in enumerate(sorted(annotations.items())):
+# 		domain_name, domain = single(domains.items())
+# 		structure_file = path.join(structure_dir, domain_name + '-aligned.cif')
+# 		structure = pdb
+# 		print(str(100*i//n) + '%  ' + domain_name)
+# 		cmd.load(structure_file, structure)
+# 		domain_selection = pdb + ' and chain ' + domain['chain_id']
+# 		cmd.select(domain_name, domain_selection)
+# 		cmd.cealign('consensus', domain_name)
+# 		cmd.hide('everything', structure)
+# 		cmd.show('ribbon', domain_name)
+	
+# 	for the_label in sorted(labels):
+# 		print(the_label)
+# 		occurring = [ (domain_name, domain) for domains in annotations.values() for domain_name, domain in domains.items() if any( sse['label']==the_label for sse in domain['secondary_structure_elements'] ) ]
+# 		best_name, best_domain = max(occurring, key=lambda nd: qualities[nd[0][0:4]])
+# 		print(best_name)
+# 		cmd.hide('sticks')
+# 		cmd.delete('*.*')
+# 		sse = single( sse for sse in best_domain['secondary_structure_elements'] if sse['label']==the_label  )
+# 		ref_selection = best_name + ' and resi ' + str(sse['start']-extra_residues_before) + '-' + str(sse['end']+extra_residues_after)
+# 		cmd.select('ref', ref_selection)
+# 		for i, (pdb, domains) in enumerate(sorted(annotations.items())):
+# 			domain_name, domain = single(domains.items())
+# 			if any( sse['label']==the_label for sse in domain['secondary_structure_elements'] ):
+# 				print(str(100*i//n) + '%  ' + domain_name)
+# 				domain_selection = pdb + ' and chain ' + domain['chain_id']
+# 				sse = single( sse for sse in domain['secondary_structure_elements'] if sse['label']==the_label )
+# 				sse_name = domain_name + '.' + the_label.replace("'", "+")
+# 				sse_selection = domain_name + ' and resi ' + str(sse['start']) + '-' + str(sse['end'])
+# 				cmd.select(sse_name, sse_selection)
+# 				cmd.color('gray80', domain_name)
+# 				cmd.color('green', sse_name + ' and symbol C')
+# 				if 'pivot_residue' in sse:
+# 					pivot = sse['pivot_residue']
+# 					pivot_name = domain_name + '.' + the_label.replace("'", "+") + '.pivot'
+# 					pivot_selection = domain_name + ' and resi ' + str(sse['pivot_residue'])
+# 					cmd.select(pivot_name, pivot_selection)
+# 					cmd.show('sticks', pivot_name + ' and  name CA+CB')
+# 					cmd.color('red', pivot_name + ' and name CB')
+# 				mobile_selection = domain_name + ' and resi ' + str(sse['start']-extra_residues_before) + '-' + str(sse['end']+extra_residues_after)
+# 				cmd.cealign('ref', mobile_selection)
+# 		cmd.zoom('*.' + the_label.replace("'", "+"))
+# 		cmd.deselect()
+# 		cmd.set('ribbon_width', 0.5)
+# 		cmd.save(out_session + '-' + the_label + '.pse')
+
+
 
 if not SEPARATE:
 	cmd.load(consensus_file, 'consensus')
@@ -121,4 +176,5 @@ if not SEPARATE:
 		cmd.hide('nonbonded', structure)
 		cmd.show('ribbon', domain_name)
 	cmd.set('ribbon_width', 0.5)
+	cmd.set('sphere_scale', 0.2)
 	cmd.save(out_session)
