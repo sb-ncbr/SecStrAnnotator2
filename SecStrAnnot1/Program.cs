@@ -831,25 +831,6 @@ namespace protein
 		}
 
 
-		/** Version of main used to extract sequences from existing annotation files instead of creating annotation. */
-		/*public static int Main_ExtractSequences (string[] args)
-		{
-			if (args.Length != 2) {
-				Console.Error.WriteLine ("Usage: extractSequences.exe DIRECTORY PDB_ID.");
-				Console.Error.WriteLine ("  Reads protein from DIRECTORY/PDB_ID" + PDB_FILE_EXT + " and its annotation DIRECTORY/PDB_ID" + ANNOTATION_FILE_EXT);
-				Console.Error.WriteLine ("  and writes annotation with SSE  to DIRECTORY/PDB_ID" + ANNOTATION_WITH_SEQUENCES_FILE_EXT + ".");
-				return -1;
-			}
-			String directory = args [0];
-			String pdbid = args [1];
-			String pdbFile = Path.Combine (directory, pdbid + PDB_FILE_EXT);
-			String annotationFile = Path.Combine (directory, pdbid + ANNOTATION_FILE_EXT);
-			String outputFile = Path.Combine (directory, pdbid + ANNOTATION_WITH_SEQUENCES_FILE_EXT);
-			LibAnnotation.ExtractSequences (pdbFile, annotationFile, outputFile);
-			return 0;
-		}*/
-
-
 		private static Protein ReadProteinFromFile(string filename, string chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
 			try {
 				Lib.WriteInColor (ConsoleColor.Yellow, "Loading structure:  {0}, chain {1}, residues {2}\n", filename, chainId, FormatRanges(resSeqRanges));
@@ -857,6 +838,7 @@ namespace protein
 				(int,int)[] resSeqRangesArray = resSeqRanges.Select(tup => (tup.Item1, tup.Item2)).ToArray();
 				p = SecStrAnnot2.CifWrapperForSecStrAnnot1_New.ProteinFromCifFile(filename, chainId, resSeqRangesArray);
 
+				// Check entity type and emptiness of the structure
 				if (p.GetChains().Any()){
 					string entityType = p.GetChains().First().GuessEntityType();
 					if (entityType != "protein"){
@@ -871,6 +853,8 @@ namespace protein
 				if (!p.GetChains().Any()){
 					Lib.WriteErrorAndExit ("Loaded structure contains no normal residues.");
 				}
+
+				p = p.KeepOnlyOneAlternativeLocation();
 
 				return p;
 			} catch (IOException) {

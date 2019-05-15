@@ -101,6 +101,44 @@ namespace Cif.Components
             //TODO implement this somehow!
         }
 
+        /**
+         * Returns a protein containing only one alternative location (the first occurring in mmCIF file) of each atom.
+         */
+		public Protein KeepOnlyOneAlternativeLocation(){
+            var seenAtoms = new HashSet<ValueTuple<string,int,string>>(); // each tuple is (chain ID, residue index, atom name)
+            int removedAtoms = 0;
+            var keptAltLocs = new HashSet<string>();
+            var removedAltLocs = new HashSet<string>();
+            ModelBuilder builder = new ModelBuilder();
+            foreach (Entity entity in this.GetEntities()){
+                builder.StartEntity(entity.Id);
+                foreach (Chain chain in entity.GetChains()) {
+                    builder.StartChain(chain.Id, chain.AuthId);
+                    foreach (Residue residue in chain.GetResidues()) {
+                        builder.StartResidue(residue.ResidueInfo());
+                        foreach (Atom atom in residue.GetAtoms()) {
+                            var atomIdentification = (chain.Id, residue.SeqNumber, atom.Name);
+                            bool isUnseen = seenAtoms.Add(atomIdentification);
+                            if (isUnseen){
+                                builder.AddAtom(atom.Id, atom.AtomInfo());
+                                keptAltLocs.Add(atom.AltLoc);
+                            } else {
+                                removedAtoms++; // atom with same chainId, resi and name has already been added
+                                removedAltLocs.Add(atom.AltLoc);
+                            }
+                        }
+                    }
+                }
+            }
+			if (removedAtoms > 0) {
+                string kept = string.Join(", ", keptAltLocs.OrderBy(a=>a).Select(a=> $"'{a}'"));
+                string removed = string.Join(", ", removedAltLocs.OrderBy(a=>a).Select(a=> $"'{a}'"));
+				Lib.WriteWarning ($"Found some atoms with identical chain ID, residue number, and atom name -> removing redundant atoms. Kept alternative locations: {kept}; removed: {removed}");
+			}
+            Protein result = new Protein(builder, this.Model.ModelNumber);
+            return result;
+        }
+
         public string ToLongString() {
             StringBuilder b = new StringBuilder();
             b.AppendLine("Protein");

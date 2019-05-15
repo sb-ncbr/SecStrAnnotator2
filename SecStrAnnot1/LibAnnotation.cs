@@ -621,23 +621,34 @@ namespace protein
 
 		public enum GeometryCheckResult {OK, NOK, IncompleteChain};
 
-		private static bool IsAltLocOK(Atom a){
-			return a.AltLoc == Cif.Tables.AtomTable.DEFAULT_ALT_LOC || a.AltLoc == "A";
+		// private static bool IsAltLocOK(Atom a){
+		// 	return a.AltLoc == Cif.Tables.AtomTable.DEFAULT_ALT_LOC || a.AltLoc == "A";
+		// }
+
+		private static List<Atom> SelectOneOrZeroCAlphas(IEnumerable<Residue> residues){
+			return residues
+				.Select (r => r.GetCAlphas())
+				.Where(la => la.Count() > 0)
+				.Select(la => la.First())
+				.ToList ();
 		}
 
 		public static GeometryCheckResult CheckGeometry (IEnumerable<Residue> residues, char sseType, double RMSDLimit, out double maxRMSD){
 			maxRMSD = 0;
 			//Lib.WriteDebug ("Geometry check on {0} {1,3} - {2,3}: ", residues.First ().ChainID, residues.First ().ResSeq, residues.Last ().ResSeq);
 
-			List<Atom> CAlphas = residues.SelectMany (r => r.GetCAlphas()).ToList ();
+			// List<Atom> CAlphas = residues.SelectMany (r => r.GetCAlphas()).ToList ();
+			List<Atom> CAlphas = SelectOneOrZeroCAlphas(residues);
 			//Lib.WriteLineDebug ("residues: {0}, CAlphas: {1}", residues.Count(), CAlphas.Count);
-			if (CAlphas.Any (a => !IsAltLocOK(a))) {
-				if (!alternativeLocationWarningPrinted) {
-					Lib.WriteWarning ("Alternative locations found. Ignoring alternative locations except for ' ' and 'A'.");
-					alternativeLocationWarningPrinted = true;
-				}
-				CAlphas = CAlphas.Where (a => IsAltLocOK(a)).ToList ();
-			}
+
+			// Do not care about altLocs, assume they have been solved.
+			// if (CAlphas.Any (a => !IsAltLocOK(a))) {
+			// 	if (!alternativeLocationWarningPrinted) {
+			// 		Lib.WriteWarning ("Alternative locations found. Ignoring alternative locations except for ' ' and 'A'.");
+			// 		alternativeLocationWarningPrinted = true;
+			// 	}
+			// 	CAlphas = CAlphas.Where (a => IsAltLocOK(a)).ToList ();
+			// }
 
 			for (int i = 0; i <= CAlphas.Count - 4; i++) {
 				List<Atom> quad = CAlphas.GetRange (i, 4);
@@ -665,19 +676,22 @@ namespace protein
 		public static GeometryCheckResult CheckGeometryOf1Unit (IEnumerable<Residue> residues, char sseType, double RMSDLimit, out double rmsd){
 			rmsd = 0;
 			int unitLength = residues.Count();
-			List<Atom> unit = residues
-				.Select (r => r.GetCAlphas())
-				.TakeWhile(la => la.Count()>0)
-				.Select(la => la.First())
-				.ToList ();
+			List<Atom> unit = SelectOneOrZeroCAlphas(residues);
+			// List<Atom> unit = residues
+			// 	.Select (r => r.GetCAlphas())
+			// 	.Where(la => la.Count()>0)
+			// 	// .TakeWhile(la => la.Count()>0)
+			// 	.Select(la => la.First())
+			// 	.ToList ();
 				
-			if (unit.Any (a => !IsAltLocOK(a))) {
-				if (!alternativeLocationWarningPrinted) {
-					Lib.WriteWarning ("Alternative locations found. Ignoring alternative locations except for ' ' and 'A'.");
-					alternativeLocationWarningPrinted = true;
-				}
-				unit = unit.Where (a => IsAltLocOK(a)).ToList ();
-			}
+			// Do not care about altLocs, assume they have been solved.
+			// if (unit.Any (a => !IsAltLocOK(a))) {
+			// 	if (!alternativeLocationWarningPrinted) {
+			// 		Lib.WriteWarning ("Alternative locations found. Ignoring alternative locations except for ' ' and 'A'.");
+			// 		alternativeLocationWarningPrinted = true;
+			// 	}
+			// 	unit = unit.Where (a => IsAltLocOK(a)).ToList ();
+			// }
 			if (unit.Count != unitLength) {
 				return GeometryCheckResult.NOK; //some of the input residues miss CAlpha atom
 			}
