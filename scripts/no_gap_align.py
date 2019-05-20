@@ -346,6 +346,65 @@ def run_weblogo3(alignment_file, logo_file, first_index=0):
     # print(command)
     os.system(command)
 
+def run_logomaker(alignment_file, logo_file, first_index=0):
+    import logomaker
+    # generate sequence logos using Logomaker
+    # Logomaker documentation: https://logomaker.readthedocs.io/en/latest/
+    scale = 2.0
+    height = 3.0
+    width_per_residue = 0.5
+    width_extra = 0.5
+
+    title = path.split(logo_file)[1]
+    title = path.splitext(title)[0]
+    title = 'Helix ' + title if title[0].isalpha() else 'Strand ' + title
+    units = 'bits'  # 'bits' 'probability'
+    color_scheme = 'weblogo_protein'  # 'hydrophobicity' 'weblogo_protein'
+
+    inp = SeqIO.parse(alignment_file, 'fasta')
+    names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
+    counts_mat = logomaker.alignment_to_matrix(seqs, characters_to_ignore=GAP_CHAR)
+    if units == 'bits':
+        matrix = logomaker.transform_matrix(counts_mat, from_type='counts', to_type='information')
+    elif units == 'probability':
+        matrix = logomaker.transform_matrix(counts_mat, from_type='counts', to_type='probability')
+
+    matrix.index += first_index
+    # print(matrix)
+    n_residues = matrix.shape[0]
+
+    figsize = ((n_residues * width_per_residue + width_extra) * scale, height * scale)
+    logo = logomaker.Logo(matrix, figsize=figsize, vpad=0.1, color_scheme=color_scheme)
+
+    logo.ax.title.set_text(title)
+    logo.ax.title.set_fontsize(20*scale)
+    logo.ax.set_xlabel('position', labelpad=0, fontsize=14*scale)
+    logo.ax.set_ylabel(units, labelpad=0, fontsize=14*scale)
+    logo.style_xticks(spacing=1, anchor=0, rotation=90, fmt='%d', fontsize=14*scale)
+    # ytl = logo.ax.get_yticklabels()
+    # print(ytl[0])
+    # print(*ytl)
+    # logo.ax.set_yticklabels(ytl, fontsize=14*scale)
+    
+    logo.style_spines(visible=False)
+    logo.style_spines(spines=['left','bottom'], visible=True, linewidth=1)
+    # composition = 'equiprobable' # 'equiprobable' 'none' 'auto'
+    # units = 'bits' # 'bits' 'probability'
+    # command = f'''{WEBLOGO3}  --format png  --resolution 600  --stacks-per-line 60  --fineprint ""  --errorbars NO
+    #     --rotate-numbers YES  --number-interval 1  --aspect-ratio 6  --logo-font ArialBold  --title-font TimesNewRomanBold  --scale-width YES
+    #     --sequence-type protein  --units {units}  --composition {composition}
+    #     --first-index {first_index}  --title "{title}"  --fin "{alignment_file}"  --fout "{logo_file}"
+    #     '''.replace('\n', ' ')
+    # # print(command)
+    # os.system(command)
+
+    logo.fig.tight_layout()
+
+    ytl = logo.ax.get_yticklabels()
+    logo.ax.set_yticklabels(ytl, fontsize=14*scale)
+    # logo.fig.dpi = 600  # does not work 
+    logo.fig.savefig(logo_file)
+
 class PriorityQueue:
 	def __init__(self, elements_keys):
 		self.heap = list(( (key, i, elem) for (i, (elem, key)) in enumerate(elements_keys) ))
@@ -408,7 +467,8 @@ class NoGapAligner:
         aln_seqs, names = zip(*( (self.aln_seqs[i], self.names[i])  for i in reordering_from_tree(self.tree) ))
         print_aln(aln_seqs, names=names, tree=self.tree, output_file=output_file)
 
-    def output_logo(self, output_file, use_weblogo2=False):
+    def output_logo(self, output_file, tool='weblogo3'):
+        ''' tool in ['weblogo2', 'weblogo3', 'logomaker'] '''
         height = 8
         # width_per_residue = 0.8
         # n_residues = self.alignment_matrix.shape[0]
@@ -417,10 +477,14 @@ class NoGapAligner:
         max_height_index = get_pivot_column_index(self.alignment_matrix)
         alignment_file = output_file + '.fasta.tmp'
         self.output_alignment(alignment_file)
-        if use_weblogo2:
+        if tool == 'weblogo2':
             run_weblogo2(alignment_file, output_file, first_index=-max_height_index)
-        else:
+        elif tool == 'weblogo3':
             run_weblogo3(alignment_file, output_file, first_index=-max_height_index)
+        elif tool == 'logomaker':
+            run_logomaker(alignment_file, output_file, first_index=-max_height_index)
+        else:
+            raise NotImplementedError(f'Unknown tool: {tool}')
         os.remove(alignment_file)
 
 class Realigner:

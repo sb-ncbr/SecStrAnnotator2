@@ -57,7 +57,7 @@ if logos_dir is not None:
     os.makedirs(logos_dir)
 
 aligner = no_gap_align.NoGapAligner()
-for label in labels: #debug
+for label in ['L', '1.5']:  #labels: #debug
     print(label)
     names, sequences = zip(*label2seqs[label])
     # for name, sequence in zip(names, sequences):
@@ -70,4 +70,4 @@ for label in labels: #debug
     if alignments_dir is not None:
         aligner.print_tree(output_file=path.join(trees_dir, label + '.txt'))
     if logos_dir is not None:
-        aligner.output_logo(path.join(logos_dir, label + '.png'))
+        aligner.output_logo(path.join(logos_dir, label + '.png'), tool='logomaker')
