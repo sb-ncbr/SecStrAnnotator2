@@ -286,10 +286,15 @@ def draw_reordered_tree_aux(tree, root, put_root_down=False):
                 fig[i] = ' ' + fig[i]
         return fig, start
 
-def logo_heights_widths_areas(sequence_matrix):
-    gap_prob = sequence_matrix[:, 0]
-    probs = sequence_matrix[:, 1:].copy()
-    probs[probs<=0] = 1
+def logo_heights_widths_areas(sequence_matrix, first_column_is_gap=True):
+    if first_column_is_gap:
+        gap_prob = sequence_matrix[:, 0]
+        probs = sequence_matrix[:, 1:].copy()
+    else:
+        gap_prob = 1 - sequence_matrix.sum(axis=1)
+        probs = sequence_matrix.copy()
+    probs /= probs.sum(axis=1, keepdims=True)  # normalize probabilities
+    probs[probs<=0] = 1  # so that np.log2 throws no error, does not affect the result
     background_entropy = -np.log2(1/20)
     entropies = -np.sum(probs * np.log2(probs), axis=1)
     heights = background_entropy - entropies
@@ -346,64 +351,75 @@ def run_weblogo3(alignment_file, logo_file, first_index=0):
     # print(command)
     os.system(command)
 
-def run_logomaker(alignment_file, logo_file, first_index=0):
+def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits', color_scheme='weblogo_protein'):
+    '''Generate sequence logos using Logomaker.
+    units: 'bits' or 'probability', color_scheme: 'weblogo_protein', 'hydrophobicity' ...
+    # Logomaker documentation: https://logomaker.readthedocs.io/en/latest/'''
+
     import logomaker
-    # generate sequence logos using Logomaker
-    # Logomaker documentation: https://logomaker.readthedocs.io/en/latest/
-    scale = 2.0
+    from matplotlib import pyplot
+
+    scale = 1.0
     height = 3.0
-    width_per_residue = 0.5
+    width_per_residue = 0.35
     width_extra = 0.5
+    vpad = 0.05
+    hpad = 0.05
+    font_name = 'DejaVu Sans Mono'
+    y_tick_spacing = 0.5
+    y_label_spacing = 1
+    y_label_format = '{:.0f}'
 
     title = path.split(logo_file)[1]
     title = path.splitext(title)[0]
     title = 'Helix ' + title if title[0].isalpha() else 'Strand ' + title
-    units = 'bits'  # 'bits' 'probability'
-    color_scheme = 'weblogo_protein'  # 'hydrophobicity' 'weblogo_protein'
 
     inp = SeqIO.parse(alignment_file, 'fasta')
     names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
-    counts_mat = logomaker.alignment_to_matrix(seqs, characters_to_ignore=GAP_CHAR)
+    counts_mat = logomaker.alignment_to_matrix(seqs, characters_to_ignore=GAP_CHAR+UNKNOWN_CHAR)
+    prob_mat = counts_mat / len(seqs)
+    
+    heights, widths, areas = logo_heights_widths_areas(prob_mat.values, first_column_is_gap=False)
     if units == 'bits':
-        matrix = logomaker.transform_matrix(counts_mat, from_type='counts', to_type='information')
+        matrix = heights.reshape((-1, 1)) * prob_mat / prob_mat.values.sum(axis=1, keepdims=True)
     elif units == 'probability':
-        matrix = logomaker.transform_matrix(counts_mat, from_type='counts', to_type='probability')
+        matrix = prob_mat / prob_mat.values.sum(axis=1, keepdims=True)
 
     matrix.index += first_index
-    # print(matrix)
     n_residues = matrix.shape[0]
 
     figsize = ((n_residues * width_per_residue + width_extra) * scale, height * scale)
-    logo = logomaker.Logo(matrix, figsize=figsize, vpad=0.1, color_scheme=color_scheme)
+    logo = logomaker.Logo(matrix, figsize=figsize, vpad=vpad, color_scheme=color_scheme, font_name=font_name)
+    logo.fig.set_dpi(100)
+    for glyph in logo.glyph_list:
+        p = int(glyph.p)  # position
+        c = glyph.c  # character
+        logo.style_single_glyph(p, c, width=(1 - hpad) * widths[p-first_index])
 
+    logo.ax.yaxis.set_view_interval(0, np.log2(20))
     logo.ax.title.set_text(title)
     logo.ax.title.set_fontsize(20*scale)
-    logo.ax.set_xlabel('position', labelpad=0, fontsize=14*scale)
-    logo.ax.set_ylabel(units, labelpad=0, fontsize=14*scale)
+    logo.ax.title.set_fontweight('bold')
+    # logo.ax.set_xlabel('position', labelpad=0, fontsize=14*scale)
+    logo.ax.set_ylabel(units, labelpad=1.0, fontsize=14*scale)
     logo.style_xticks(spacing=1, anchor=0, rotation=90, fmt='%d', fontsize=14*scale)
-    # ytl = logo.ax.get_yticklabels()
-    # print(ytl[0])
-    # print(*ytl)
-    # logo.ax.set_yticklabels(ytl, fontsize=14*scale)
-    
     logo.style_spines(visible=False)
-    logo.style_spines(spines=['left','bottom'], visible=True, linewidth=1)
-    # composition = 'equiprobable' # 'equiprobable' 'none' 'auto'
-    # units = 'bits' # 'bits' 'probability'
-    # command = f'''{WEBLOGO3}  --format png  --resolution 600  --stacks-per-line 60  --fineprint ""  --errorbars NO
-    #     --rotate-numbers YES  --number-interval 1  --aspect-ratio 6  --logo-font ArialBold  --title-font TimesNewRomanBold  --scale-width YES
-    #     --sequence-type protein  --units {units}  --composition {composition}
-    #     --first-index {first_index}  --title "{title}"  --fin "{alignment_file}"  --fout "{logo_file}"
-    #     '''.replace('\n', ' ')
-    # # print(command)
-    # os.system(command)
+    logo.style_spines(spines=['left', 'bottom', 'top', 'right'], visible=True, linewidth=1)
 
+    logo.ax.set_yticks(np.arange(0, np.log2(20), y_tick_spacing))
     logo.fig.tight_layout()
-
     ytl = logo.ax.get_yticklabels()
+    for lab in ytl:
+        y = lab.get_position()[1]
+        if y % y_label_spacing == 0:
+            lab.set_text(y_label_format.format(y))
+        else:
+            lab.set_text('')
     logo.ax.set_yticklabels(ytl, fontsize=14*scale)
-    # logo.fig.dpi = 600  # does not work 
-    logo.fig.savefig(logo_file)
+    logo.fig.tight_layout()
+    logo.fig.savefig(logo_file, dpi=dpi)
+    pyplot.close(logo.fig)
+
 
 class PriorityQueue:
 	def __init__(self, elements_keys):
@@ -470,10 +486,6 @@ class NoGapAligner:
     def output_logo(self, output_file, tool='weblogo3'):
         ''' tool in ['weblogo2', 'weblogo3', 'logomaker'] '''
         height = 8
-        # width_per_residue = 0.8
-        # n_residues = self.alignment_matrix.shape[0]
-        # heights = logo_heights(self.alignment_matrix)
-        # max_height, max_height_index = max( (height, i) for i, height in enumerate(heights) )
         max_height_index = get_pivot_column_index(self.alignment_matrix)
         alignment_file = output_file + '.fasta.tmp'
         self.output_alignment(alignment_file)

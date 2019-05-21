@@ -70,9 +70,9 @@ ALIGNED_SSE_LABELS="all"
 # Perform no-gap sequence alignment and create sequence logos (from Set-NR)
 python3  $ALIGN_SEQUENCES  $DATA_DIR/annotations_best.json  --alignments_dir $DATA_DIR/aligments_best/  --trees_dir $DATA_DIR/trees_best/  --logos_dir $DATA_DIR/logos_best/
 
-# # Realign sequences from Set-ALL to the alignment from Set-NR and add pivot residue information
-# python3  $ADD_PIVOT_RESIDUES  $DATA_DIR/annotations_all.json  $DATA_DIR/aligments_best/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_pivots_all.json
-# python3  $ADD_PIVOT_RESIDUES  $DATA_DIR/annotations_best.json  $DATA_DIR/aligments_best/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_pivots_best.json
+# Realign sequences from Set-ALL to the alignment from Set-NR and add pivot residue information
+python3  $ADD_PIVOT_RESIDUES  $DATA_DIR/annotations_all.json  $DATA_DIR/aligments_best/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_pivots_all.json
+python3  $ADD_PIVOT_RESIDUES  $DATA_DIR/annotations_best.json  $DATA_DIR/aligments_best/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_pivots_best.json
 
-# # Divide annotations into per-PDB files
-# python3  $DIVIDE_ANNOTATIONS  $DATA_DIR/annotations_with_pivots_all.json  $DATA_DIR/annotations_all/
+# Divide annotations into per-PDB files
+python3  $DIVIDE_ANNOTATIONS  $DATA_DIR/annotations_with_pivots_all.json  $DATA_DIR/annotations_all/
