@@ -483,18 +483,21 @@ class NoGapAligner:
         aln_seqs, names = zip(*( (self.aln_seqs[i], self.names[i])  for i in reordering_from_tree(self.tree) ))
         print_aln(aln_seqs, names=names, tree=self.tree, output_file=output_file)
 
-    def output_logo(self, output_file, tool='weblogo3'):
+    def output_logo(self, output_file, tool='weblogo3', pivot_as=0):
         ''' tool in ['weblogo2', 'weblogo3', 'logomaker'] '''
         height = 8
-        max_height_index = get_pivot_column_index(self.alignment_matrix)
+        if pivot_as is not None:
+            first_index = pivot_as - get_pivot_column_index(self.alignment_matrix)
+        else:
+            first_index = 1
         alignment_file = output_file + '.fasta.tmp'
         self.output_alignment(alignment_file)
         if tool == 'weblogo2':
-            run_weblogo2(alignment_file, output_file, first_index=-max_height_index)
+            run_weblogo2(alignment_file, output_file, first_index=first_index)
         elif tool == 'weblogo3':
-            run_weblogo3(alignment_file, output_file, first_index=-max_height_index)
+            run_weblogo3(alignment_file, output_file, first_index=first_index)
         elif tool == 'logomaker':
-            run_logomaker(alignment_file, output_file, first_index=-max_height_index)
+            run_logomaker(alignment_file, output_file, first_index=first_index, color_scheme='weblogo_protein')
         else:
             raise NotImplementedError(f'Unknown tool: {tool}')
         os.remove(alignment_file)

@@ -178,7 +178,10 @@ def selection_from_sse(sse, use_auth):
 		start = str(sse[START_RESI]).replace('-', '\-')
 		end = str(sse[END_RESI]).replace('-', '\-')
 	selection = '(chain ' + chain + ' and resi ' + start + '-' + end + ')'
-	return selection
+	return selection  
+	# TODO solve insertion codes (resi 64-65A selects 64, 65, 65A, 65B, 65C!)
+	# pepseq will not work when mapping annotation onto different structure
+	# Or just say it's not my problem but problem of PyMOL.
 
 def range_to_pymol_style(the_range):
 	fro, to = the_range.split(':')
