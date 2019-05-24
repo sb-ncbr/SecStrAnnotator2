@@ -302,6 +302,14 @@ def logo_heights_widths_areas(sequence_matrix, first_column_is_gap=True):
     areas = heights * widths
     return heights, widths, areas
 
+def logo_maxprobs(sequence_matrix, first_column_is_gap=True):
+    if first_column_is_gap:
+        probs = sequence_matrix[:, 1:]
+    else:
+        probs = sequence_matrix
+    maxprobs = probs.max(axis=1)
+    return maxprobs
+
 def get_widest_and_highest_column_index(sequence_matrix):
     heights, widths, areas = logo_heights_widths_areas(sequence_matrix)
     max_width, max_height, index = max( (width, height, i) for i, (width, height) in enumerate(zip(widths, heights)) )
@@ -316,9 +324,18 @@ def get_max_area_column_index(sequence_matrix):
     heights, widths, areas = logo_heights_widths_areas(sequence_matrix)
     max_area, max_area_index = max( (area, i) for i, area in enumerate(areas) )
     return max_area_index
+    
+def get_max_maxprob_column_index(sequence_matrix):
+    maxprobs = logo_maxprobs(sequence_matrix)
+    max_mp, max_mp_index = max( (mp, i) for i, mp in enumerate(maxprobs) )
+    return max_mp_index
+    
 
-def get_pivot_column_index(sequence_matrix):
-    return get_max_area_column_index(sequence_matrix)
+def get_pivot_column_index(sequence_matrix, probability=False):
+    if probability:
+        return get_max_maxprob_column_index(sequence_matrix)
+    else:
+        return get_max_area_column_index(sequence_matrix)
 
 def run_weblogo2(alignment_file, logo_file, first_index=0):
     with open(alignment_file) as r:
@@ -396,7 +413,9 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
         c = glyph.c  # character
         logo.style_single_glyph(p, c, width=(1 - hpad) * widths[p-first_index])
 
-    logo.ax.yaxis.set_view_interval(0, np.log2(20))
+    max_y = np.log2(20) if units == 'bits' else 1.0
+
+    logo.ax.yaxis.set_view_interval(0, max_y)
     logo.ax.title.set_text(title)
     logo.ax.title.set_fontsize(20*scale)
     logo.ax.title.set_fontweight('bold')
@@ -406,7 +425,7 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
     logo.style_spines(visible=False)
     logo.style_spines(spines=['left', 'bottom', 'top', 'right'], visible=True, linewidth=1)
 
-    logo.ax.set_yticks(np.arange(0, np.log2(20), y_tick_spacing))
+    logo.ax.set_yticks(np.arange(0, max_y, y_tick_spacing))
     logo.fig.tight_layout()
     ytl = logo.ax.get_yticklabels()
     for lab in ytl:
@@ -483,11 +502,11 @@ class NoGapAligner:
         aln_seqs, names = zip(*( (self.aln_seqs[i], self.names[i])  for i in reordering_from_tree(self.tree) ))
         print_aln(aln_seqs, names=names, tree=self.tree, output_file=output_file)
 
-    def output_logo(self, output_file, tool='weblogo3', pivot_as=0):
+    def output_logo(self, output_file, tool='weblogo3', pivot_as=0, units='bits'):
         ''' tool in ['weblogo2', 'weblogo3', 'logomaker'] '''
         height = 8
         if pivot_as is not None:
-            first_index = pivot_as - get_pivot_column_index(self.alignment_matrix)
+            first_index = pivot_as - get_pivot_column_index(self.alignment_matrix, probability=(units=='probability'))
         else:
             first_index = 1
         alignment_file = output_file + '.fasta.tmp'
@@ -497,7 +516,8 @@ class NoGapAligner:
         elif tool == 'weblogo3':
             run_weblogo3(alignment_file, output_file, first_index=first_index)
         elif tool == 'logomaker':
-            run_logomaker(alignment_file, output_file, first_index=first_index, color_scheme='weblogo_protein')
+            # run_logomaker(alignment_file, output_file, first_index=first_index, color_scheme='weblogo_protein')
+            run_logomaker(alignment_file, output_file, first_index=first_index, color_scheme='weblogo_protein', units=units)
         else:
             raise NotImplementedError(f'Unknown tool: {tool}')
         os.remove(alignment_file)
