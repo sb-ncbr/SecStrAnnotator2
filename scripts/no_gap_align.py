@@ -14,7 +14,7 @@ from collections import defaultdict
 import Bio
 from Bio import AlignIO, SeqIO
 from Bio.SubsMat import MatrixInfo
-# pip3 install Biopython
+# pip3 install Biopython logomaker
 
 ################################################################################
 
