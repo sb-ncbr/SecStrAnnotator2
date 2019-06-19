@@ -174,10 +174,12 @@ namespace Cif.Components
 		public void SaveLabel2AuthTable(String outputFile)
 		{
             using(StreamWriter w = new StreamWriter(outputFile)){
-                w.WriteLine($"#{ChainTable.ID_COLUMN}\t{ResidueTable.SEQ_NUMBER_COLUMN}\t{ChainTable.AUTH_ID_COLUMN}\t{ResidueTable.AUTH_SEQ_NUMBER_COLUMN}\t{ResidueTable.AUTH_INSERTION_CODE_COLUMN}");
+                // w.WriteLine($"#{ChainTable.ID_COLUMN}\t{ResidueTable.SEQ_NUMBER_COLUMN}\t{ChainTable.AUTH_ID_COLUMN}\t{ResidueTable.AUTH_SEQ_NUMBER_COLUMN}\t{ResidueTable.AUTH_INSERTION_CODE_COLUMN}");
+                w.WriteLine($"#{ChainTable.ID_COLUMN}\t{ResidueTable.SEQ_NUMBER_COLUMN}\t{ChainTable.AUTH_ID_COLUMN}\t{ResidueTable.AUTH_SEQ_NUMBER_COLUMN}\t{ResidueTable.AUTH_INSERTION_CODE_COLUMN}\t{ResidueTable.COMPOUND_COLUMN}");
                 foreach (Residue residue in this.GetResidues())
                 {
-                    w.WriteLine($"{residue.ChainId}\t{residue.SeqNumber}\t{residue.ChainAuthId}\t{residue.AuthSeqNumber}\t{residue.AuthInsertionCode}");
+                    // w.WriteLine($"{residue.ChainId}\t{residue.SeqNumber}\t{residue.ChainAuthId}\t{residue.AuthSeqNumber}\t{residue.AuthInsertionCode}");
+                    w.WriteLine($"{residue.ChainId}\t{residue.SeqNumber}\t{residue.ChainAuthId}\t{residue.AuthSeqNumber}\t{residue.AuthInsertionCode}\t{residue.Compound}");
                 }           
             }
 		}

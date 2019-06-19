@@ -77,7 +77,7 @@ class Label2AuthConverter:
         with open(conversion_table_file) as r:
             for line in r:
                 if not line.lstrip().startswith('#'):
-                    chain, resi, auth_chain, auth_resi, auth_ins_code = line.strip().split('\t')
+                    chain, resi, auth_chain, auth_resi, auth_ins_code, label_comp_id = line.strip().split('\t')
                     if self.unknown_ins_code_as_empty_string and auth_ins_code == '?':
                         auth_ins_code = ''
                     self.table[(chain, int(resi))] = (auth_chain, int(auth_resi), auth_ins_code)

@@ -1,4 +1,4 @@
-TODAY="20190607"
+TODAY="20190520"
 API_VERSION="1.0"
 N_THREADS="8"
 
@@ -61,11 +61,11 @@ ALIGNED_SSE_LABELS="A,B,C,D,E,H,I,J,K,L"
 # python3  $DOWNLOAD_DOMAINS  $DATA_DIR/cyps_all_$TODAY.simple.json  $DATA_DIR/structures/  --format cif  --no_gzip  --cache $DATA_DIR/../cached_structures/
 # # Downloaded 916 PDB entries, failed to download 0 PDB entries
 
-# Annotate
-cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/
-python3  $SECSTRANNOTATOR_BATCH  --dll $SECSTRANNOTATOR_DLL \
-    --threads $N_THREADS  --options " $SECSTRANNOTATOR_OPTIONS " \
-    $DATA_DIR/structures  $TEMPLATE  $DATA_DIR/cyps_all_$TODAY.simple.json 
+# # Annotate
+# cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/
+# python3  $SECSTRANNOTATOR_BATCH  --dll $SECSTRANNOTATOR_DLL \
+#     --threads $N_THREADS  --options " $SECSTRANNOTATOR_OPTIONS " \
+#     $DATA_DIR/structures  $TEMPLATE  $DATA_DIR/cyps_all_$TODAY.simple.json 
 
 # Collect annotations and put them to SecStrAPI format
 python3  $COLLECT_ANNOTATIONS  $DATA_DIR/cyps_all_$TODAY.json  $DATA_DIR/structures/  >  $DATA_DIR/annotations_all.json
