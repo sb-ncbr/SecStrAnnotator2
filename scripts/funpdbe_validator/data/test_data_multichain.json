@@ -1,0 +1,71 @@
+{
+  "data_resource": "ProKinO",
+  "resource_version": "2.0",
+  "software_version": "2.0",
+  "resource_entry_url": "http://vulcan.cs.uga.edu/prokino/",
+  "release_date": "10/02/2017",
+  "pdb_id": "1yj9",
+  "chains": [
+    {
+      "residues": [
+        {
+          "pdb_res_label": "0",
+          "aa_type": "MET",
+          "site_data": [
+            {
+              "confidence_score": 1,
+              "site_id_ref": 1,
+              "confidence_classification": "high",
+              "raw_score": 1
+            }
+          ]
+        },
+        {
+          "pdb_res_label": "1",
+          "aa_type": "GLY",
+          "site_data": [
+            {
+              "confidence_score": 1,
+              "site_id_ref": 2,
+              "confidence_classification": "high",
+              "raw_score": 1
+            }
+          ]
+        },
+        {
+          "pdb_res_label": "2",
+          "aa_type": "ARG",
+          "site_data": [
+            {
+              "confidence_score": 1,
+              "site_id_ref": 2,
+              "confidence_classification": "high",
+              "raw_score": 1
+            }
+          ]
+        }
+      ],
+      "chain_label": "A"
+    }
+  ],
+  "sites": [
+    {
+      "site_id": 1,
+      "label": "HRD motif"
+    },
+    {
+      "site_id": 2,
+      "label": "HRD motif"
+    },
+    {
+      "site_id": 3,
+      "label": "HRD motif"
+    }
+  ],
+  "evidence_code_ontology": [
+    {
+      "eco_term": "computational combinatorial evidence",
+      "eco_code": "ECO_0000246"
+    }
+  ]
+}
