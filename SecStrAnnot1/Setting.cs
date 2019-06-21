@@ -1,4 +1,4 @@
-#define DEVEL // DEVEL==true for development versions (odd minor), DEVEL==false for release versions (even minor)
+// #define DEVEL // DEVEL==true for development versions (odd minor), DEVEL==false for release versions (even minor)
 
 using System;
 using System.Collections.Generic;
@@ -10,9 +10,9 @@ namespace protein
 	{ 
 		public const string NAME = "SecStrAnnotator";
 		#if DEVEL
-		public static string VERSION = "1.1" + String.Format(".{0}.{1} [{2:u}]", Lib.BuildVersion.Build, Lib.BuildVersion.Revision, Lib.BuildTime);
+		public static string VERSION = "2.1" + String.Format(".{0}.{1} [{2:u}]", Lib.BuildVersion.Build, Lib.BuildVersion.Revision, Lib.BuildTime);
 		#else
-		public static string VERSION = "1.0" + String.Format(" [{0:u}]", Lib.BuildTime);
+		public static string VERSION = "2.0" + String.Format(" [{0:u}]", Lib.BuildTime);
 		#endif
 
 		public enum AlignMethod { None, Align, Super, Cealign };
