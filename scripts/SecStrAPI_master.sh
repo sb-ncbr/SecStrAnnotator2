@@ -1,4 +1,4 @@
-TODAY="20190620"
+TODAY="20190621"
 API_VERSION="1.0"
 N_THREADS="8"
 
@@ -58,7 +58,7 @@ python3  $SIMPLIFY_DOMAIN_LIST  $DATA_DIR/cyps_all_$TODAY.json  >  $DATA_DIR/cyp
 python3  $SIMPLIFY_DOMAIN_LIST  $DATA_DIR/cyps_best_$TODAY.json  >  $DATA_DIR/cyps_best_$TODAY.simple.json
 
 # Download CIF files
-python3  $DOWNLOAD_DOMAINS  $DATA_DIR/cyps_all_$TODAY.simple.json  $DATA_DIR/structures/  --format cif  --no_gzip  --cache $DATA_DIR/../cached_structures/
+python3  $DOWNLOAD_DOMAINS  $DATA_DIR/cyps_all_$TODAY.simple.json  $DATA_DIR/structures/  --format cif  --no_gzip  #--cache $DATA_DIR/../cached_structures/
 # Downloaded 916 PDB entries, failed to download 0 PDB entries
 
 # Annotate
