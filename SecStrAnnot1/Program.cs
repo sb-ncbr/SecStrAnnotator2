@@ -407,7 +407,9 @@ namespace protein
 
 			secStrAssigner = new FilteringSecStrAssigner (secStrAssigner, acceptedSSETypes, allQueryChainIDs);
 			//secStrAssigner = new RelabellingSecStrAssigner (secStrAssigner, queryID+"_",LABEL_DETECTED_SSES_AS_NULL);
-			secStrAssigner = new RelabellingSecStrAssigner (secStrAssigner, null, Setting.LABEL_DETECTED_SSES_AS_NULL);
+			if (secStrMethod != Setting.SecStrMethod.File){
+				secStrAssigner = new RelabellingSecStrAssigner (secStrAssigner, null, Setting.LABEL_DETECTED_SSES_AS_NULL);
+			}
 			secStrAssigner = new AuthFieldsAddingSecStrAssigner(secStrAssigner, qProtein);
 			if (Setting.JSON_OUTPUT)
 				secStrAssigner = new OutputtingSecStrAssigner_Json (secStrAssigner, fileQueryDetectedHelices,queryID);

@@ -1,4 +1,4 @@
-// #define DEVEL // DEVEL==true for development versions (odd minor), DEVEL==false for release versions (even minor)
+#define DEVEL // DEVEL==true for development versions (odd minor), DEVEL==false for release versions (even minor)
 
 using System;
 using System.Collections.Generic;
