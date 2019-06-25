@@ -56,6 +56,7 @@ python3  $SELECT_BEST_DOMAINS  $DATA_DIR/cyps_all_$TODAY.json  >  $DATA_DIR/cyps
 # Simplify domain lists (for SecStrAnnotator)
 python3  $SIMPLIFY_DOMAIN_LIST  $DATA_DIR/cyps_all_$TODAY.json  >  $DATA_DIR/cyps_all_$TODAY.simple.json
 python3  $SIMPLIFY_DOMAIN_LIST  $DATA_DIR/cyps_best_$TODAY.json  >  $DATA_DIR/cyps_best_$TODAY.simple.json
+python3 extract_pdb_domain_list.py  $DATA_DIR/cyps_all_$TODAY.json  >  $DATA_DIR/AnnotationList.json
 
 # Download CIF files
 python3  $DOWNLOAD_DOMAINS  $DATA_DIR/cyps_all_$TODAY.simple.json  $DATA_DIR/structures/  --format cif  --no_gzip  #--cache $DATA_DIR/../cached_structures/
