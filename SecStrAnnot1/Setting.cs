@@ -63,6 +63,7 @@ namespace protein
 
 		public const string PDB_FILE_EXT = ".cif";
 		public const string ALIGNED_PDB_FILE_EXT = "-aligned.cif";
+		public const string RENUMBERED_PDB_FILE_EXT = "-renumbered.cif";
 		public const string TEMPLATE_ANNOTATION_FILE_EXT = "-template.sses";
 		public const string ANNOTATION_FILE_EXT = "-annotated.sses";
 		public const string ANNOTATION_WITH_SEQUENCES_FILE_EXT = "-annotated_with_sequences.sses";

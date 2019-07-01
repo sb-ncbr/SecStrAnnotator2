@@ -219,7 +219,7 @@ namespace /*SecStrAnnot2.*/Cif.Tables
         }
     
 
-        public string ToCifCategoryString() {
+        public string ToCifCategoryString(bool fillAuthFieldsWithLabelValues = false, bool fabulateOccupancyAndBFactor = false) {
             string loop = "loop_";
             string categoryName = "_atom_site.";
             string[] itemNames = {
@@ -270,15 +270,16 @@ namespace /*SecStrAnnot2.*/Cif.Tables
                                 Atoms.X[ai],
                                 Atoms.Y[ai],
                                 Atoms.Z[ai],
-                                NA, // occupancy,
-                                NA, // B_iso_or_equiv,
+                                fabulateOccupancyAndBFactor ? "1.0" : NA, // occupancy,
+                                fabulateOccupancyAndBFactor ? "0.0" : NA, // B_iso_or_equiv,
                                 NA, // pdbx_formal_charge,
-                                Residues.AuthSeqNumber[ri]?.ToString() ?? NA,
-                                Residues.AuthCompound[ri] ?? NA,
-                                Chains.AuthId[ci],
-                                NA, // auth_atom_id,
+                                fillAuthFieldsWithLabelValues ? Residues.SeqNumber[ri].ToString() : Residues.AuthSeqNumber[ri]?.ToString() ?? NA,
+                                fillAuthFieldsWithLabelValues ? Residues.Compound[ri] : Residues.AuthCompound[ri] ?? NA,
+                                fillAuthFieldsWithLabelValues ? Chains.Id[ci] : Chains.AuthId[ci], // auth_asym_id
+                                // fillAuthFieldsWithLabelValues ? (Chains.Id[ci]=="A" ? "AX" : Chains.Id[ci]) : Chains.AuthId[ci], // auth_asym_id - for debugging
+                                fillAuthFieldsWithLabelValues ? Atoms.Name[ai] : NA, // auth_atom_id,
                                 this.ModelNumber,
-                                NA, // pdbe_label_seq_id
+                                NA // pdbe_label_seq_id
                             });
                             sb.AppendLine(line);
                         }
@@ -287,5 +288,6 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             }
             return sb.ToString();
         }
+
     }
 }

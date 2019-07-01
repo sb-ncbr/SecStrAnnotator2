@@ -83,9 +83,6 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             // own properties
             this.SeqNumber = residueInfo.Select(i => i.SeqNumber).ToArray();
             this.Compound = residueInfo.Select(i => i.Compound).ToArray();
-            this.AuthSeqNumber = new MaybeValueArray<int>(residueInfo.Select(i => i.AuthSeqNumber).ToArray());
-            this.AuthInsertionCode = new MaybeClassArray<string>(residueInfo.Select(i => i.AuthInsertionCode).ToArray());
-            this.AuthCompound = new MaybeClassArray<string>(residueInfo.Select(i => i.AuthCompound).ToArray());
             // own optional properties
             this.AuthSeqNumber = new MaybeValueArray<int>(residueInfo.Select(i => i.AuthSeqNumber).ToArray());
             this.AuthInsertionCode = new MaybeClassArray<string>(residueInfo.Select(i => i.AuthInsertionCode).ToArray());

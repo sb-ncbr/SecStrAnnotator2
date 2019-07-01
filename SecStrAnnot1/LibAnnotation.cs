@@ -420,10 +420,10 @@ namespace protein
 		/** Reads DSSP output and returns a list of SSEs found in the protein structure. */
 		public static List<SSE> ReadSSEsFromDSSP(String fileName, char[] acceptedTypes){
 			try {
-				StreamReader r = new StreamReader (fileName);
-				List<SSE> helices = ReadSSEsFromDSSP (r,acceptedTypes);
-				r.Close ();
-				return helices;
+				using (StreamReader r = new StreamReader (fileName)) {
+					List<SSE> sses = ReadSSEsFromDSSP (r, acceptedTypes);
+					return sses;
+				}
 			} catch (FileNotFoundException e) {
 				Lib.WriteError ("Could not open \"{0}\".", fileName);
 				throw e;
@@ -436,6 +436,7 @@ namespace protein
 			List<SSE> SSEs = new List<SSE> ();
 			Dictionary<char,int?> dictSheetId = new Dictionary<char, int?> { { ' ',null } };
 			int sheetIdCounter = 1;
+			// TODO read beta-connections
 
 			bool reading = false;
 			String line;
@@ -447,10 +448,13 @@ namespace protein
 			while (!reader.EndOfStream) {
 				line = reader.ReadLine ();
 				if (reading) {
-					String resSeqStr = line.Substring (6, 4);
+					String resSeqStr = line.Substring (5, 5);
+					// Lib.WriteWarning("resSeqStr: '{0}'", resSeqStr);
 					if (!resSeqStr.TrimStart ().Equals ("")) {
 						int resSeq = Int32.Parse (resSeqStr);
-						string chainID = line [11].ToString();
+						// string chainID = line [11].ToString();
+						string chainID = line.Substring(153, 10).Trim();
+						// Lib.WriteWarning("chainID: '{0}'", chainID);
 						char type = line [16];
 						lastStrand1Char = (strand1Char != ' ') ? strand1Char : lastStrand1Char;
 						lastStrand2Char = (strand2Char != ' ') ? strand2Char : lastStrand2Char;

@@ -280,6 +280,7 @@ namespace protein
 
 			String fileQueryPDB = Path.Combine (Setting.Directory, queryID + Setting.PDB_FILE_EXT);
 			String fileQueryAlignedPDB = Path.Combine (Setting.Directory, queryID + Setting.ALIGNED_PDB_FILE_EXT);
+			String fileQueryRenumberedPDB = Path.Combine (Setting.Directory, queryID + Setting.RENUMBERED_PDB_FILE_EXT);
 			String fileQueryDSSP = Path.Combine (Setting.Directory, queryID + Setting.DSSP_OUTPUT_FILE_EXT);
 			String fileQueryInputHelices = Path.Combine (Setting.Directory, queryID + Setting.INPUT_SSES_FILE_EXT)+(Setting.JSON_INPUT?".json":"");
 			String fileQueryDetectedHelices = Path.Combine (Setting.Directory, queryID + Setting.DETECTED_SSES_FILE_EXT)+(Setting.JSON_OUTPUT?".json":"");
@@ -383,13 +384,13 @@ namespace protein
 					: new FileSecStrAssigner (fileQueryInputHelices, allQueryChainIDs) as ISecStrAssigner;
 				break;
 			case Setting.SecStrMethod.Dssp:
-				secStrAssigner = new DsspSecStrAssigner (config.DsspExecutable, fileQueryPDB, fileQueryDSSP, allQueryChainIDs, acceptedSSETypes);
+				secStrAssigner = new DsspSecStrAssigner (qProtein, config.DsspExecutable, fileQueryRenumberedPDB, fileQueryDSSP, allQueryChainIDs, acceptedSSETypes);
 				break;
 			case Setting.SecStrMethod.Geom:
 				secStrAssigner = new GeomSecStrAssigner (allQueryChainIDs.Select (c=>qProtein.GetChain (c)), rmsdLimit);
 				break;
 			case Setting.SecStrMethod.GeomDssp:
-				secStrAssigner = new GeomDsspSecStrAssigner (allQueryChainIDs.Select (c=>qProtein.GetChain (c)), rmsdLimit, config.DsspExecutable, fileQueryPDB, fileQueryDSSP, acceptedSSETypes);
+				secStrAssigner = new GeomDsspSecStrAssigner (qProtein, allQueryChainIDs, rmsdLimit, config.DsspExecutable, fileQueryRenumberedPDB, fileQueryDSSP, acceptedSSETypes);
 				break;
 			case Setting.SecStrMethod.Hbond:
 				secStrAssigner = new HBondSecStrAssigner (qProtein, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);

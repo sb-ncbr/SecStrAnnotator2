@@ -8,10 +8,17 @@ namespace Cif
     {
         private T[] array;
         private T?[] arrayNullable;
+        /* Create infinite MaybeValueArray with all values null. */
+        public MaybeValueArray(){
+            this.array = null;
+            this.arrayNullable = null;
+        }
+        /* Create MaybeValueArray with all values not-null. */
         public MaybeValueArray(T[] array){
             this.array = array;
             this.arrayNullable = null;
         }
+        /* Create MaybeValueArray with some values possibly null. */
         public MaybeValueArray(T?[] arrayNullable){
             this.array = null;
             this.arrayNullable = arrayNullable;

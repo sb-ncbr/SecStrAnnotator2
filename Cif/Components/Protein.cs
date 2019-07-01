@@ -155,10 +155,10 @@ namespace Cif.Components
         }
 
 		/** Print protein to a file.*/
-		public void SaveCif(String outputFile, string dataName = "structure")
+		public void SaveCif(String outputFile, string dataName = "structure", bool fillAuthFieldsWithLabelValues = false, bool fabulateOccupancyAndBFactor = false)
 		{
 			try {
-                string categoryString = this.Model.ToCifCategoryString();
+                string categoryString = this.Model.ToCifCategoryString(fillAuthFieldsWithLabelValues: fillAuthFieldsWithLabelValues, fabulateOccupancyAndBFactor: fabulateOccupancyAndBFactor);
 				StreamWriter w = new StreamWriter (outputFile);
                 w.WriteLine("data_" + dataName);
                 w.WriteLine("#");

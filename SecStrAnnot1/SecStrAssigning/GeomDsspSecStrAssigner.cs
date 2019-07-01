@@ -16,9 +16,9 @@ namespace protein.SecStrAssigning
             this.SheetAssigner=sheetAssigner;
         }
 
-        public GeomDsspSecStrAssigner(IEnumerable<Chain> chains, double rmsdLimit, String dsspExecutable, String PDBFile, String DSSPFile, char[] acceptedSSETypes){
-            this.HelixAssigner = new GeomSecStrAssigner(chains, rmsdLimit, acceptedSSETypes.Intersect (SSE.ALL_HELIX_TYPES).ToArray ());
-            this.SheetAssigner = new DsspSecStrAssigner(dsspExecutable, PDBFile, DSSPFile, chains.Select (c=>c.Id), acceptedSSETypes.Intersect (SSE.ALL_SHEET_TYPES).ToArray ());
+        public GeomDsspSecStrAssigner(Protein protein, IEnumerable<string> chainIDs,/*IEnumerable<Chain> chains,*/ double rmsdLimit, String dsspExecutable, String renumberedPDBFile, String DSSPFile, char[] acceptedSSETypes){
+            this.HelixAssigner = new GeomSecStrAssigner(chainIDs.Select(c => protein.GetChain(c)), rmsdLimit, acceptedSSETypes.Intersect (SSE.ALL_HELIX_TYPES).ToArray ());
+            this.SheetAssigner = new DsspSecStrAssigner(protein, dsspExecutable, renumberedPDBFile, DSSPFile, chainIDs, acceptedSSETypes.Intersect (SSE.ALL_SHEET_TYPES).ToArray ());
         }
 
         public SecStrAssignment GetSecStrAssignment(){
