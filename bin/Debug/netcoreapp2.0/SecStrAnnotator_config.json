@@ -5,7 +5,7 @@
 		"Unrooted paths are interpreted as starting in the directory where this configuration file is located."
 	],	
 	"PymolExecutable":    "pymol",
-	"DsspExecutable":     "/home/adam/Workspace/C#/SecStrAnnot2/scripts/dssp",
+	"DsspExecutable":     "/home/adam/Workspace/C#/SecStrAnnot2/scripts/mkdssp",
 	"PymolScriptAlign":   "/home/adam/Workspace/C#/SecStrAnnot2/scripts/script_align.py",
 	"PymolScriptSession": "/home/adam/Workspace/C#/SecStrAnnot2/scripts/script_session.py"
 }
