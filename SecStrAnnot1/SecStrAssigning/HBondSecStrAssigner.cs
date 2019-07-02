@@ -537,7 +537,7 @@ namespace protein.SecStrAssigning
             // Find H-binding motifs
             DateTime t0 = DateTime.Now;
             List<BetaLadder> ladders = new List<BetaLadder> ();
-            List<Tuple<Residue,Residue>> hBonds = new List<Tuple<Residue, Residue>> ();
+            List<(Residue, Residue)> hBonds = new List<(Residue, Residue)> ();
             for (int i = 0; i < residues.Length; i++) {
                 int nLaddersBefore = ladders.Count;
                 List<int> hAcceptors = hBondFinder.FindHAcceptors (i).Where (j => j > i)/*.Where (j => ignoreHBondsTo [i] == null || !ignoreHBondsTo [i].Contains (j))*/.ToList ();
@@ -588,8 +588,8 @@ namespace protein.SecStrAssigning
                 }
                 if (ladders.Count - nLaddersBefore > 1)
                     Lib.WriteLineDebug ("More than one beta-ladder motif found from residue {0}.", residues [i].ToString (true));
-                hBonds.AddRange (hAcceptors.Select (a => new Tuple<Residue,Residue> (residues [i], residues [a])));
-                hBonds.AddRange (hDonors.Select (d => new Tuple<Residue,Residue> (residues [d], residues [i])));
+                hBonds.AddRange (hAcceptors.Select (a => (residues [i], residues [a])));
+                hBonds.AddRange (hDonors.Select (d => (residues [d], residues [i])));
             }
             Lib.WriteLineDebug ("Time for finding H-bond patterns: " + DateTime.Now.Subtract (t0));
 
@@ -739,25 +739,25 @@ namespace protein.SecStrAssigning
                 }
             }*/
 
-            Dictionary<Tuple<string,int,int>,int> chainStartEnd2Index = new Dictionary<Tuple<string, int, int>, int> ();
+            Dictionary<(string, int, int), int> chainStartEnd2Index = new Dictionary<(string, int, int), int> ();
             for (int i = 0; i < resultSSEs.Count; i++) {
                 SSE sse = resultSSEs [i];
-                chainStartEnd2Index [new Tuple<string,int,int> (sse.ChainID, sse.Start, sse.End)] = i;
+                chainStartEnd2Index [(sse.ChainID, sse.Start, sse.End)] = i;
             }
-            List<Tuple<int,int,int>> edges = new List<Tuple<int, int,int>> ();
+            List<(int, int, int)> edges = new List<(int, int, int)> ();
             foreach (var seed in seeds) {
                 seed.DFS (u => {
-                    int vertex1 = chainStartEnd2Index [new Tuple<string,int,int> (u.SSE.ChainID, u.SSE.Start, u.SSE.End)];
+                    int vertex1 = chainStartEnd2Index [(u.SSE.ChainID, u.SSE.Start, u.SSE.End)];
                     for (int i = 0; i < u.DownNeighbours.Count; i++) {
                         var v = u.DownNeighbours [i];
                         var ladder = u.DownLadders [i];
-                        int vertex2 = chainStartEnd2Index [new Tuple<string,int,int> (v.SSE.ChainID, v.SSE.Start, v.SSE.End)];
+                        int vertex2 = chainStartEnd2Index [(v.SSE.ChainID, v.SSE.Start, v.SSE.End)];
                         int ladderType = ladder.Type == BetaLadder.LadderType.Parallel ? 1 : -1;
-                        edges.Add (new Tuple<int,int,int> (Math.Min (vertex1, vertex2), Math.Max (vertex1, vertex2), ladderType));
+                        edges.Add ((Math.Min (vertex1, vertex2), Math.Max (vertex1, vertex2), ladderType));
                     }
                     /*foreach (var v in u.DownNeighbours) {
-                        int vertex2=chainStartEnd2Index[new Tuple<char,int,int> (v.SSE.ChainID, v.SSE.Start, v.SSE.End)];
-                        edges.Add (new Tuple<int,int> (Math.Min(vertex1,vertex2),Math.Max (vertex1,vertex2)));
+                        int vertex2=chainStartEnd2Index[(v.SSE.ChainID, v.SSE.Start, v.SSE.End)];
+                        edges.Add ((Math.Min(vertex1,vertex2),Math.Max (vertex1,vertex2)));
                     }*/
                 });
             }

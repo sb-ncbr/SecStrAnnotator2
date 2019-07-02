@@ -22,10 +22,10 @@ namespace protein.SecStrAssigning
         public SecStrAssignment GetSecStrAssignment(){
             try {
                 String dump;
-                List<Tuple<int,int,int>> connectivity;
-                List<Tuple<String,int,int>> mergeable;
+                List<(int, int, int)> connectivity;
+                List<(String, int, int)> mergeable;
                 Lib.Shuffler shuffler;
-                SecStrAssignment result = new SecStrAssignment (LibAnnotation.ReadAnnotationFile_Json (SsaFile,EntryName,out dump,out connectivity,out mergeable, true).WhereAndGetShuffler (x => ChainIDs.Contains (x.ChainID), out shuffler).ToList ());
+                SecStrAssignment result = new SecStrAssignment (LibAnnotation.ReadAnnotationFile_Json (SsaFile, EntryName, out dump, out connectivity, out mergeable, true).WhereAndGetShuffler (x => ChainIDs.Contains (x.ChainID), out shuffler).ToList ());
                 connectivity=shuffler.UpdateIndices (connectivity).ToList ();
                 result.Connectivity=connectivity;
                 result.MergeableSSEs=mergeable;

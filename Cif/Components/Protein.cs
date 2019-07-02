@@ -105,7 +105,7 @@ namespace Cif.Components
          * Returns a protein containing only one alternative location (the first occurring in mmCIF file) of each atom.
          */
 		public Protein KeepOnlyOneAlternativeLocation(){
-            var seenAtoms = new HashSet<ValueTuple<string,int,string>>(); // each tuple is (chain ID, residue index, atom name)
+            var seenAtoms = new HashSet<(string, int, string)>(); // each tuple is (chain ID, residue index, atom name)
             int removedAtoms = 0;
             var keptAltLocs = new HashSet<string>();
             var removedAltLocs = new HashSet<string>();

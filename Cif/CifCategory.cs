@@ -54,9 +54,9 @@ namespace Cif
             }
         }
 
-        public Table MakeTable(params ValueTuple<string,CifValueType>[] schema) => new Table(this, schema);
+        public Table MakeTable(params (string, CifValueType)[] schema) => new Table(this, schema);
 
-        public Table MakeTable(int[] rows, params ValueTuple<string,CifValueType>[] schema) => new Table(this, rows, schema);
+        public Table MakeTable(int[] rows, params (string, CifValueType)[] schema) => new Table(this, rows, schema);
 
         public string MakeCifString() => MakeCifString(Enumerable.Range(0, RowCount).ToArray());
         public string MakeCifString(int[] rows){

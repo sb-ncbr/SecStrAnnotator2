@@ -196,12 +196,12 @@ namespace protein
 		/**Orders the IEnumerable in the same way as OrderBy() and returns the ranks of the elements of the original IEnumerable.
 		 * e.g. {a,d,b,c} --> result={a,b,c,d}, ranks={1,4,2,3}*/
 		public static IEnumerable<TSource> OrderAndGetRanks<TSource,TKey>(IEnumerable<TSource> list, Func<TSource,TKey> keySelector, out int[] ranks){
-			IEnumerable<Tuple<TSource,int>> ordered =
-				list.Select ((x, origIndex) => new Tuple<TSource,int> (x, origIndex))
+			IEnumerable<(TSource, int)> ordered =
+				list.Select ((x, origIndex) => (x, origIndex))
 					.OrderBy (t => keySelector (t.Item1));
 			ranks =
 				ordered
-					.Select ((t, orderedIndex) => new Tuple<int,int> (t.Item2, orderedIndex))
+					.Select ((t, orderedIndex) => (t.Item2, orderedIndex))
 					.OrderBy (t => t.Item1)
 					.Select (t => t.Item2)
 					.ToArray ();
@@ -212,8 +212,8 @@ namespace protein
 		public class Shuffler{
 			private int[] oldToNewIndex;
 			private int[] newToOldIndex;
-			public int MaxNewIndex{ get { return newToOldIndex.Length-1; } }
-			public int MaxOldIndex{ get { return oldToNewIndex.Length - 1; } }
+			public int MaxNewIndex => newToOldIndex.Length-1;
+			public int MaxOldIndex => oldToNewIndex.Length - 1;
 
 			private Shuffler (){}
 			public Shuffler (IEnumerable<int> oldIndices)
@@ -238,7 +238,7 @@ namespace protein
 				return m;
 			}
 
-			public static Shuffler FromMatching(IEnumerable<Tuple<int,int>> matching){
+			public static Shuffler FromMatching(IEnumerable<(int,int)> matching){
 				if (matching.Count () > 0) {
 					int maxOld = matching.Select (t => t.Item1).Max ();
 					int maxNew = matching.Select (t => t.Item2).Max ();
@@ -327,12 +327,12 @@ namespace protein
 				return ShuffleRows (ShuffleColumns (array));
 			}
 
-			public IEnumerable<Tuple<int,int>> UpdateIndices (IEnumerable<Tuple<int,int>> matching){
-				return matching.Where (t => HasNewIndex (t.Item1) && HasNewIndex (t.Item2)).Select (t => new Tuple<int,int> (NewIndex (t.Item1), NewIndex (t.Item2)));
+			public IEnumerable<(int, int)> UpdateIndices (IEnumerable<(int, int)> matching){
+				return matching.Where (t => HasNewIndex (t.Item1) && HasNewIndex (t.Item2)).Select (t => (NewIndex (t.Item1), NewIndex (t.Item2)));
 			}
 
-			public IEnumerable<Tuple<int,int,T>> UpdateIndices<T> (IEnumerable<Tuple<int,int,T>> matchingWithLabels){
-				return matchingWithLabels.Where (t => HasNewIndex (t.Item1) && HasNewIndex (t.Item2)).Select (t => new Tuple<int,int,T> (NewIndex (t.Item1), NewIndex (t.Item2), t.Item3));
+			public IEnumerable<(int, int, T)> UpdateIndices<T> (IEnumerable<(int, int, T)> matchingWithLabels){
+				return matchingWithLabels.Where (t => HasNewIndex (t.Item1) && HasNewIndex (t.Item2)).Select (t => (NewIndex (t.Item1), NewIndex (t.Item2), t.Item3));
 			}
 
 			public override string ToString ()
@@ -342,8 +342,8 @@ namespace protein
 		}
 
 		public static IEnumerable<TSource> OrderAndGetShuffler<TSource,TKey>(this IEnumerable<TSource> list, Func<TSource,TKey> keySelector, out Shuffler shuffler){
-			IEnumerable<Tuple<TSource,int>> ordered =
-				list.Select ((x, origIndex) => new Tuple<TSource,int> (x, origIndex))
+			IEnumerable<(TSource, int)> ordered =
+				list.Select ((x, origIndex) => (x, origIndex))
 					.OrderBy (t => keySelector (t.Item1));
 			shuffler = new Shuffler (ordered.Select (t => t.Item2));
 			return 
@@ -580,7 +580,7 @@ namespace protein
 			return Enumerable.Range (start, count).Select (i => array [i]);
 		}
 
-		public static bool InRanges(this IEnumerable<Tuple<int,int>> ranges, int value){
+		public static bool InRanges(this IEnumerable<(int, int)> ranges, int value){
 			foreach (var range in ranges) {
 				if (range.Item1 <= value && value <= range.Item2)
 					return true;

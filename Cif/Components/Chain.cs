@@ -42,8 +42,8 @@ namespace Cif.Components
             Model model = this.Model;
             return GetResidueIndices().Select(ri => new Residue(model, ri));
         }
-		public List<List<Residue>> GetResidues(IEnumerable<Tuple<int,int>> fromTos) { 
-			List<Tuple<int,int,int>> ranges = fromTos.Select ((t,i)=>new Tuple<int,int,int> (t.Item1,t.Item2,i)).OrderBy (t => t.Item1).ToList (); //Adding to each tuple Item3 with its index in the original fromTos, than ordering.
+		public List<List<Residue>> GetResidues(IEnumerable<(int, int)> fromTos) { 
+			List<(int, int, int)> ranges = fromTos.Select((t, i) => (t.Item1, t.Item2,i)).OrderBy(t => t.Item1).ToList (); //Adding to each tuple Item3 with its index in the original fromTos, than ordering.
 			int nextRange = 0;
 			List<int> activeRanges = new List<int> ();
 			List<List<Residue>> result = fromTos.Select (x => new List<Residue>()).ToList ();

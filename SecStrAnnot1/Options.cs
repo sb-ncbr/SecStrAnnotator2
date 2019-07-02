@@ -111,7 +111,7 @@ namespace protein
 		public String[] Names { get; private set; }
 		public int NumArgs { get; private set; }
 		public Action<IEnumerable<String>> Action;
-		public List<Tuple<Func<List<String>,bool>,String>> Constraints { get; private set; }
+		public List<(Func<List<String>, bool>, String)> Constraints { get; private set; }
 		public List<String> Parameters { get; private set; }
 		public List<String> Helps { get; private set; }
 
@@ -121,13 +121,13 @@ namespace protein
 			Names = names;
 			NumArgs = numArgs;
 			Action = action;
-			Constraints = new List<Tuple<Func<List<String>, bool>,String>> ();
+			Constraints = new List<(Func<List<String>, bool>, String)> ();
 			Parameters = new List<String> ();
 			Helps = new List<String> ();
 		}
 
 		public Option AddConstraint (Func<List<String>,bool> constraint, String errorMessage){
-			Constraints.Add (new Tuple<Func<List<String>, bool>, string> (constraint, errorMessage));
+			Constraints.Add ((constraint, errorMessage));
 			return this;
 		}
 

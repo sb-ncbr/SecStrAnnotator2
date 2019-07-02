@@ -9,10 +9,10 @@ namespace protein
 	static class Annotators
 	{
 		public interface IAnnotator{
-			List<Tuple<int,int>> GetMatching();
+			List<(int, int)> GetMatching();
 		}
 
-		public class DynProgAnnotator:IAnnotator{
+		public class DynProgAnnotator : IAnnotator{
 			public AnnotationContext Context{get; private set;}
 			public DynProgAnnotator(AnnotationContext context){
 				context.ValidateOrdering ();
@@ -22,7 +22,7 @@ namespace protein
 				return new DynProgAnnotator (context);
 			}
 
-			public List<Tuple<int,int>> GetMatching(){
+			public List<(int, int)> GetMatching(){
 				int m = Context.Templates.Length;
 				int n = Context.Candidates.Length;
 				double[,] metricMatrix = new double[m, n];
@@ -89,7 +89,7 @@ namespace protein
 				}
 
 				// Reconstruction of the best solution.
-				List<Tuple<int,int>> matching = new List<Tuple<int, int>> ();
+				List<(int, int)> matching = new List<(int, int)> ();
 				int row = m;
 				int col = n;
 				while (row != 0 || col != 0) {
@@ -104,7 +104,7 @@ namespace protein
 						break;
 					case 0:
 						// paired template and candidate SSE
-						matching.Add (new Tuple<int, int> (row - 1, col - 1));
+						matching.Add ((row - 1, col - 1));
 						row--;
 						col--;
 						break;
@@ -153,7 +153,7 @@ namespace protein
 				return new BranchAndBoundAnnotator (context);
 			}
 
-			public List<Tuple<int,int>> GetMatching(){
+			public List<(int, int)> GetMatching(){
 				int m = Context.Templates.Length;
 				int n = Context.Candidates.Length;
 				double[,] scores = new double[m, n].Fill ((i, j) => 
@@ -179,7 +179,7 @@ namespace protein
 				DateTime stamp = DateTime.Now;
 				Lib.WriteLineDebug ("BranchAndBoundAnnotator.GetAnnotation(): initialized - {0} vs. {1} vertices ({2})", m, n, stamp);
 
-				List<Tuple<int,int>> bestMatching = LibAnnotation.MaxWeightOrderedMatching (m, n, Context.TemplateConnectivity, Context.CandidateConnectivity, scores, Context.TemplateExclusivity,Context.CandidateExclusivity);
+				List<(int, int)> bestMatching = LibAnnotation.MaxWeightOrderedMatching (m, n, Context.TemplateConnectivity, Context.CandidateConnectivity, scores, Context.TemplateExclusivity,Context.CandidateExclusivity);
 
 				Lib.WriteLineDebug ("BranchAndBoundAnnotator.GetAnnotation(): found matching ({0})", DateTime.Now);
 				Lib.WriteLineDebug ("BranchAndBoundAnnotator.GetAnnotation(): time: {0}", DateTime.Now - stamp);
@@ -198,7 +198,7 @@ namespace protein
 				SoftOrderConsistency=softOrderConsistency;
 			}
 
-			public List<Tuple<int,int>> GetMatching(){
+			public List<(int, int)> GetMatching(){
 				MContext.Context.ValidateOrdering ();
 				int m = MContext.TemplateFST.Length;
 				int n = MContext.CandidateFST.Length;
@@ -242,7 +242,7 @@ namespace protein
 				DateTime stamp = DateTime.Now;
 				Lib.WriteLineDebug ("{3}.GetAnnotation(): initialized - {0} vs. {1} vertices ({2})",m, n, stamp,this.GetType ().Name);
 
-				List<Tuple<int,int>> bestMOM = LibAnnotation.MaxWeightMixedOrderedMatching (m, n,
+				List<(int, int)> bestMOM = LibAnnotation.MaxWeightMixedOrderedMatching (m, n,
 					MContext.TemplateFST.Select (t=>t.Item1).ToArray (),
 					MContext.TemplateFST.Select (t=>t.Item2).ToArray (),
 					MContext.CandidateFST.Select (t=>t.Item1).ToArray (),
@@ -252,15 +252,15 @@ namespace protein
 				Lib.WriteLineDebug ("MOMAnnotator.GetAnnotation(): found matching ({0})", DateTime.Now);
 				Lib.WriteLineDebug ("MOMAnnotator.GetAnnotation(): time: {0}", DateTime.Now - stamp);
 
-				List<Tuple<int,int>> bestMatching = new List<Tuple<int, int>> ();
-				foreach (Tuple<int,int> t in bestMOM) {
-					Tuple<int,int,int> tLadder = MContext.TemplateFST[t.Item1];
-					Tuple<int,int,int> qLadder = MContext.CandidateFST[t.Item2];
+				List<(int, int)> bestMatching = new List<(int, int)> ();
+				foreach ((int ti, int qi) in bestMOM) {
+					(int, int, int) tLadder = MContext.TemplateFST[ti];
+					(int, int, int) qLadder = MContext.CandidateFST[qi];
 					if (tLadder.Item3 == 0) {//helix
-						bestMatching.Add (new Tuple<int,int>(tLadder.Item1, qLadder.Item1));
+						bestMatching.Add ((tLadder.Item1, qLadder.Item1));
 					} else {//ladder
-						bestMatching.Add (new Tuple<int,int>(tLadder.Item1, qLadder.Item1));
-						bestMatching.Add (new Tuple<int,int>(tLadder.Item2, qLadder.Item2));
+						bestMatching.Add ((tLadder.Item1, qLadder.Item1));
+						bestMatching.Add ((tLadder.Item2, qLadder.Item2));
 					}
 				}
 
@@ -285,9 +285,9 @@ namespace protein
 				return new CombinedAnnotator (context);
 			}
 
-			public List<Tuple<int,int>> GetMatching (){
+			public List<(int, int)> GetMatching (){
 				DynProgAnnotator dynProgAn = new DynProgAnnotator (Context);
-				List<Tuple<int,int>> dynProgMatching = dynProgAn.GetMatching ();
+				List<(int, int)> dynProgMatching = dynProgAn.GetMatching ();
 				if (CheckConnectivity (Context, dynProgMatching)) {
 					return dynProgMatching;
 				} else {
@@ -306,7 +306,7 @@ namespace protein
 					bbContext.CandidateConnectivity = filteredCandidateConnectivity;
 
 					BranchAndBoundAnnotator bb = new BranchAndBoundAnnotator (bbContext);
-					List<Tuple<int,int>> guideMatching = bb.GetMatching ().Select (m => new Tuple<int,int> (tShuffler.OldIndex (m.Item1), qShuffler.OldIndex (m.Item2))).ToList ();
+					List<(int, int)> guideMatching = bb.GetMatching ().Select (m => (tShuffler.OldIndex (m.Item1), qShuffler.OldIndex (m.Item2))).ToList ();
 					bool[,] guideDiscriminator = new bool[Context.Templates.Length, Context.Candidates.Length]
 						.Fill ((i, j) => !Context.Templates [i].IsSheet && !Context.Candidates [j].IsSheet);
 					foreach (var m in guideMatching) {
@@ -331,7 +331,7 @@ namespace protein
 
 			public Lib.Shuffler TemplateMapping{ get; private set; }
 			public Lib.Shuffler CandidateMapping{ get; private set; }
-			private List<Tuple<int,int>> rememberedMatching;
+			private List<(int, int)> rememberedMatching;
 			private SSEInSpace[] rememberedAnnotatedCandidates;
 			public bool DoCheckSheetIDConsistency{ get; set; }
 			public bool DoRenameSheetIDs{ get; set; }
@@ -356,17 +356,17 @@ namespace protein
 
 			}
 
-			public List<Tuple<int,int>> GetMatching(){
+			public List<(int, int)> GetMatching(){
 				if (inner == null)
 					throw new Exception ("Inner annotator has not been initialized.");
 				if (rememberedMatching == null)
-					rememberedMatching = inner.GetMatching ().Select (m => new Tuple<int,int> (TemplateMapping.OldIndex (m.Item1), CandidateMapping.OldIndex (m.Item2))).ToList ();
+					rememberedMatching = inner.GetMatching ().Select (m => (TemplateMapping.OldIndex (m.Item1), CandidateMapping.OldIndex (m.Item2))).ToList ();
 				return rememberedMatching;
 			}
 
 			public virtual IEnumerable<SSEInSpace> GetAnnotatedCandidates(){
 				if (rememberedAnnotatedCandidates == null) {
-					List<Tuple<int,int>> matching = GetMatching ();
+					List<(int, int)> matching = GetMatching ();
 					/*Lib.WriteLineDebug ("Matching: {0}",matching.EnumerateWithCommas ());
 					Lib.WriteLineDebug ("temps: {0}", matching.Select (t => t.Item1).OrderBy (x => x).EnumerateWithCommas ());
 					Lib.WriteLineDebug ("cands: {0}", matching.Select (t => t.Item2).OrderBy (x => x).EnumerateWithCommas ());*/
@@ -404,7 +404,7 @@ namespace protein
 						}
 					}
 					if (DoCheckSheetIDConsistency || DoRenameSheetIDs) {
-						List<Tuple<int,int>> sheetIDMatching;
+						List<(int, int)> sheetIDMatching;
 						CheckSheetIDConsistency (Context, matching, out sheetIDMatching);
 						if (DoRenameSheetIDs && sheetIDMatching != null) {
 							RenameSheetIDs (rememberedAnnotatedCandidates, sheetIDMatching);
@@ -414,9 +414,9 @@ namespace protein
 				return rememberedAnnotatedCandidates;
 			}
 
-			public virtual List<Tuple<int,int,int>> GetAnnotatedConnectivity(List<Tuple<int,int,int>> connectivity){
+			public virtual List<(int, int, int)> GetAnnotatedConnectivity(List<(int, int, int)> connectivity){
 				Lib.Shuffler annotShuffler = Lib.Shuffler.FromMatching (GetMatching()).Inverted();
-				List<Tuple<int,int,int>> annotConnectivity = annotShuffler.UpdateIndices (connectivity).ToList();
+				List<(int, int, int)> annotConnectivity = annotShuffler.UpdateIndices (connectivity).ToList();
 				return annotConnectivity;
 			}
 
@@ -428,7 +428,7 @@ namespace protein
 				return SelectFromAnnotated ((t, q) => (q != null && !q.IsNotFound ()) ? Context.MetricToMin (t, q) : 0);
 			}
 
-			public void RenameSheetIDs(IEnumerable<SSEInSpace> sses, List<Tuple<int,int>> sheetIDMatching){
+			public void RenameSheetIDs(IEnumerable<SSEInSpace> sses, List<(int, int)> sheetIDMatching){
 				Lib.Shuffler shuffler = Lib.Shuffler.FromMatching (sheetIDMatching);
 				foreach (SSEInSpace sse in sses) {
 					if (sse.SheetId != null) {
@@ -438,7 +438,7 @@ namespace protein
 			}
 
 			public List<double> GetSuspiciousnessList(){
-				List<Tuple<int,int>> matching = GetMatching ();
+				List<(int, int)> matching = GetMatching ();
 				double[] result = new double[Context.Templates.Length];
 				foreach (var m in matching) {
 					SSEInSpace template = Context.Templates [m.Item1];
@@ -534,7 +534,7 @@ namespace protein
 				this.Candidates=candidates.ToArray ();
 			}
 
-			public void InitializeTemplateConnectivity(IEnumerable<Tuple<int,int,int>> templateConnections){
+			public void InitializeTemplateConnectivity(IEnumerable<(int, int, int)> templateConnections){
 				TemplateConnectivity = new int[Templates.Length, Templates.Length];
 				foreach (var connection in templateConnections) {
 					TemplateConnectivity [connection.Item1, connection.Item2] = connection.Item3;
@@ -542,7 +542,7 @@ namespace protein
 				}
 			}
 
-			public void InitializeCandidateConnectivity(IEnumerable<Tuple<int,int,int>> candidateConnections){
+			public void InitializeCandidateConnectivity(IEnumerable<(int, int, int)> candidateConnections){
 				CandidateConnectivity = new int[Candidates.Length, Candidates.Length];
 				foreach (var connection in candidateConnections) {
 					CandidateConnectivity [connection.Item1, connection.Item2] = connection.Item3;
@@ -628,9 +628,9 @@ namespace protein
 				ValidateBetaGraph ();
 
 				List<SSEInSpace> jointCandidates = new List<SSEInSpace> ();
-				List<Tuple<int,int,int>> jointConnections = new List<Tuple<int, int, int>> ();
-				List<Tuple<int,int>> conflicts = new List<Tuple<int, int>> ();
-				List<Tuple<int,int>> jointGuideAllowedMatches = new List<Tuple<int, int>>();
+				List<(int, int, int)> jointConnections = new List<(int, int, int)> ();
+				List<(int, int)> conflicts = new List<(int, int)> ();
+				List<(int, int)> jointGuideAllowedMatches = new List<(int, int)>();
 				for (int i = 0; i < Candidates.Length-1; i++) {
 					SSEInSpace s1 = Candidates [i];
 					SSEInSpace s2 = Candidates [i + 1];
@@ -645,19 +645,19 @@ namespace protein
 						if (GuideDiscriminator != null) {
 							for (int j = 0; j < Templates.Length; j++) {
 								if (GuideDiscriminator [j, i] || GuideDiscriminator [j, i + 1])
-									jointGuideAllowedMatches.Add (new Tuple<int, int> (j, index));
+									jointGuideAllowedMatches.Add ((j, index));
 							}
 						}
 						for (int j = 0; j < Candidates.Length; j++) {
 							if (CandidateConnectivity [i, j] != 0 && CandidateConnectivity [i + 1, j] != 0 && CandidateConnectivity [i, j] != CandidateConnectivity [i, j])
 								throw new Exception ("Joint strand would have both parallel and antiparallel ladder to another strand.");
 							if (CandidateConnectivity [i, j] == 1 || CandidateConnectivity [i + 1, j] == 1)
-								jointConnections.Add (new Tuple<int, int, int> (index, j, 1));
+								jointConnections.Add ((index, j, 1));
 							if (CandidateConnectivity [i, j] == -1 || CandidateConnectivity [i + 1, j] == -1)
-								jointConnections.Add (new Tuple<int, int, int> (index, j, -1));
+								jointConnections.Add ((index, j, -1));
 						}
-						conflicts.Add (new Tuple<int, int>(i,index));
-						conflicts.Add (new Tuple<int, int>(i+1,index));
+						conflicts.Add ((i, index));
+						conflicts.Add ((i+1, index));
 					}
 				}
 				SSEInSpace[] newCandidates = Candidates.Concat (jointCandidates).ToArray ();
@@ -710,14 +710,14 @@ namespace protein
 				ValidateOrdering ();
 				ValidateBetaGraph ();
 
-				List<Tuple<int,int>> joint = new List<Tuple<int, int>> ();
+				List<(int, int)> joint = new List<(int, int)> ();
 				//Allow joining only 2 strands
 				/*for (int i = 0; i < Candidates.Length - 1; i++) {
 					int j = i + 1;
 					SSEInSpace s1 = Candidates [i];
 					SSEInSpace s2 = Candidates [j];
 					if (s1.ChainID == s2.ChainID && s1.IsSheet && s2.IsSheet && s2.Start - s1.End - 1 <= maxGap && CandidateConnectivity[i,j]==0) {
-						joint.Add (new Tuple<int, int> (i, j));
+						joint.Add ((i, j));
 					}
 				}*/
 				//Allow joining more than 2 strands
@@ -726,7 +726,7 @@ namespace protein
 						SSEInSpace s1 = Candidates [i];
 						SSEInSpace s2 = Candidates [j];
 						if (s1.ChainID == s2.ChainID && s1.IsSheet && s2.IsSheet && s2.Start - s1.End - 1 <= maxGap && Enumerable.Range(i,j-i-1).All (x=>CandidateConnectivity[x,j]==0))
-							joint.Add (new Tuple<int, int> (i, j));
+							joint.Add ((i, j));
 						else
 							break;
 					}
@@ -735,12 +735,12 @@ namespace protein
 				return SoftenedTemplatesOrCandidates (joint,1).Ordered ();
 			}
 
-			public AnnotationContext WithAlternativeTemplates(List<Tuple<String,int,int>> alternatives){
+			public AnnotationContext WithAlternativeTemplates(List<(String, int, int)> alternatives){
 				//soft matching - joining templates 
 				ValidateBetaGraph ();
 
 				List<String> labels = alternatives.Select (a => a.Item1).ToList ();
-				List<Tuple<int,int>> ranges = alternatives.Select (a => new Tuple<int,int> (a.Item2, a.Item3)).ToList ();
+				List<(int, int)> ranges = alternatives.Select (a => (a.Item2, a.Item3)).ToList ();
 
 				int mOrig = this.Templates.Length;
 
@@ -752,7 +752,7 @@ namespace protein
 			}
 
 			/*, whichGraph==0 --> soften templates, whichGraph==1 --> soften candidates; no ordering apllied! */
-			private AnnotationContext SoftenedTemplatesOrCandidates(List<Tuple<int,int>> joinedRanges, int whichGraph){
+			private AnnotationContext SoftenedTemplatesOrCandidates(List<(int, int)> joinedRanges, int whichGraph){
 				bool STRICT = false;
 				SSEInSpace[] gSSEs; //unchanged
 				SSEInSpace[] hSSEs; //to be softened
@@ -790,8 +790,8 @@ namespace protein
 				hConnectivity = hConnectivity.Resized2D (nNew, nNew);
 				hExclusivity = hExclusivity?.Resized2D (nNew, nNew) ?? new bool[nNew, nNew];
 
-				List<Tuple<int,int,int>> jointConnections = new List<Tuple<int, int, int>> ();
-				List<Tuple<int,int>> conflicts = new List<Tuple<int, int>> ();
+				List<(int, int, int)> jointConnections = new List<(int, int, int)> ();
+				List<(int, int)> conflicts = new List<(int, int)> ();
 				for (int k = 0; k < joinedRanges.Count; k++) {
 					int i = joinedRanges [k].Item1;
 					int j = joinedRanges [k].Item2;
@@ -817,9 +817,9 @@ namespace protein
 						if (parConn && antiConn)
 							throw new Exception ("Joint strand would have both parallel and antiparallel ladder to another strand.");
 						if (parConn || antiConn)
-							jointConnections.Add (new Tuple<int, int, int> (index, q, parConn ? 1 : -1));
+							jointConnections.Add ((index, q, parConn ? 1 : -1));
 					}
-					conflicts.AddRange (partIndices.Select (p=>new Tuple<int,int> (p,index)));
+					conflicts.AddRange (partIndices.Select (p => (p,index)));
 				}
 
 				//Connectivity joint-joint, exclusivity joint-joint
@@ -834,9 +834,9 @@ namespace protein
 						if (parConn && antiConn)
 							throw new Exception ("Joint strand would have both parallel and antiparallel ladder to another strand.");
 						if (parConn || antiConn)
-							jointConnections.Add (new Tuple<int, int, int> (kIndex, lIndex, parConn ? 1 : -1));
+							jointConnections.Add ((kIndex, lIndex, parConn ? 1 : -1));
 						if (joinedRanges [k].Item2 >= joinedRanges [l].Item1)
-							conflicts.Add (new Tuple<int,int> (kIndex, lIndex));
+							conflicts.Add ((kIndex, lIndex));
 					}
 				}
 
@@ -893,43 +893,43 @@ namespace protein
 
 		public class MOMAnnotationContext{
 			public AnnotationContext Context{ get; private set; }
-			public Tuple<int,int,int>[] TemplateFST{ get; private set; } // tuple<First,Second,Type>
-			public Tuple<int,int,int>[] CandidateFST{ get; private set; }
+			public (int, int, int)[] TemplateFST{ get; private set; } // tuple<First,Second,Type>
+			public (int, int, int)[] CandidateFST{ get; private set; }
 			public MOMAnnotationContext(AnnotationContext inner){
 				inner.ValidateOrdering ();
 				Context=inner;
-				List<Tuple<int,int,int>> templateConnections=new List<Tuple<int, int, int>>();
+				List<(int, int, int)> templateConnections=new List<(int, int, int)>();
 				for (int i = 0; i < Context.Templates.Length; i++) {
 					for (int j = i+1; j < Context.Templates.Length; j++) {
 						if (Context.TemplateConnectivity[i,j]!=0){
-							templateConnections.Add (new Tuple<int, int, int>(i,j,Context.TemplateConnectivity[i,j]));
+							templateConnections.Add ((i, j, Context.TemplateConnectivity[i,j]));
 						}
 					}
 				}
-				List<Tuple<int,int,int>> candidateConnections=new List<Tuple<int, int, int>>();
+				List<(int, int, int)> candidateConnections = new List<(int, int, int)>();
 				for (int i = 0; i < Context.Candidates.Length; i++) {
 					for (int j = i+1; j < Context.Candidates.Length; j++) {
 						if (Context.CandidateConnectivity[i,j]!=0){
-							candidateConnections.Add (new Tuple<int, int, int>(i,j,Context.CandidateConnectivity[i,j]));
+							candidateConnections.Add ((i, j, Context.CandidateConnectivity[i,j]));
 						}
 					}
 				}
 
-				TemplateFST = Context.Templates.IndicesWhere (sse=>sse.IsHelix).Select (i=>new Tuple<int,int,int> (i,i,0)) //helix nodes
-					.Concat (templateConnections.Select (t=>new Tuple<int,int,int>(Math.Min(t.Item1,t.Item2),Math.Max(t.Item1,t.Item2),t.Item3))) //ladder nodes
+				TemplateFST = Context.Templates.IndicesWhere (sse=>sse.IsHelix).Select (i => (i,i,0)) //helix nodes
+					.Concat (templateConnections.Select (t => (Math.Min(t.Item1,t.Item2),Math.Max(t.Item1,t.Item2),t.Item3))) //ladder nodes
 					.ToArray ();
-				CandidateFST = Context.Candidates.IndicesWhere (sse=>sse.IsHelix).Select (i=>new Tuple<int,int,int> (i,i,0)) //helix nodes
-					.Concat (candidateConnections.Select (t=>new Tuple<int,int,int>(Math.Min(t.Item1,t.Item2),Math.Max(t.Item1,t.Item2),t.Item3))) //ladder nodes
+				CandidateFST = Context.Candidates.IndicesWhere (sse=>sse.IsHelix).Select (i => (i,i,0)) //helix nodes
+					.Concat (candidateConnections.Select (t => (Math.Min(t.Item1,t.Item2),Math.Max(t.Item1,t.Item2),t.Item3))) //ladder nodes
 					.ToArray ();
 			}
 		}
 
-		public static bool CheckConnectivity (AnnotationContext context, List<Tuple<int,int>> matching){
+		public static bool CheckConnectivity (AnnotationContext context, List<(int, int)> matching){
 			return matching.All (m1 => matching.All (m2 => context.TemplateConnectivity [m1.Item1, m2.Item1] == context.CandidateConnectivity [m1.Item2, m2.Item2]));
 		}
 
 		/**Return true if sheet IDs are consistent.*/
-		public static bool CheckSheetIDConsistency(AnnotationContext context, List<Tuple<int,int>> matching, out List<Tuple<int,int>> sheetIDMatching){
+		public static bool CheckSheetIDConsistency(AnnotationContext context, List<(int, int)> matching, out List<(int, int)> sheetIDMatching){
 			if (context.Templates.Any (sse => sse.IsSheet && sse.SheetId == null) 
 				|| context.Candidates.Any (sse => sse.IsSheet && sse.SheetId == null)) {
 				//skip checking (some strand miss sheet ID)
@@ -960,7 +960,7 @@ namespace protein
 					sheetIDMatching = null;
 					return false;
 				} else {
-					sheetIDMatching = dictSheetIdByTemplate.Select (kv => new Tuple<int,int> ((int)kv.Key, (int)kv.Value [0])).ToList ();
+					sheetIDMatching = dictSheetIdByTemplate.Select (kv => (kv.Key.Value, kv.Value[0].Value)).ToList();
 					return true;
 				}
 			}

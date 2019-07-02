@@ -130,8 +130,8 @@ namespace protein
 		/** Write annotation data tofile fileName in CSV format.
 			CSV format: 1. column = Label, 2. column = ChainID, 3. column = Start, 4. column = End, 5. column = Type, 6. column = Sequence. 
 						Columns are separated by SEPARATOR and comments are introduced by COMMENT_SIGN_READ. */
-		public static void WriteAnnotationFileWithSequences(String fileName, IEnumerable<Tuple<SSE,String>> sses, String comment){
-			List<List<String>> table = sses.Where(t=>t!=null).Select (t => new List<String> {
+		public static void WriteAnnotationFileWithSequences(String fileName, IEnumerable<(SSE, String)> sses, String comment){
+			List<List<String>> table = sses.Select (t => new List<String> {
 				t.Item1.Label,
 				t.Item1.ChainID.ToString (),
 				t.Item1.Start.ToString (),
@@ -202,7 +202,8 @@ namespace protein
 		}
 
 		public static void WriteAnnotationFile_Json(String fileName, String name, 
-			IEnumerable<SSE> sses, IDictionary<String,IEnumerable<object>> extras, List<Tuple<int,int,int>> betaConnectivity, List<Tuple<Residue,Residue>> hBonds, String comment){
+			IEnumerable<SSE> sses, IDictionary<String,IEnumerable<object>> extras, List<(int, int, int)> betaConnectivity, 
+			List<(Residue, Residue)> hBonds, String comment){
 
 			JsonValue ssesJson = JsonValue.MakeList ();
 			Dictionary<String,IEnumerator<object>> extraEnumerators = extras?.ToDictionary (kv => kv.Key, kv => kv.Value.GetEnumerator ());
@@ -231,20 +232,20 @@ namespace protein
 			}
 		}
 
-		public static JsonValue HBondsToJson(List<Tuple<Residue,Residue>> hBonds){
+		public static JsonValue HBondsToJson(List<(Residue, Residue)> hBonds){
 			JsonValue hBondsJson = JsonValue.MakeList ();
-			foreach (var bond in hBonds) {
+			foreach ((Residue donor, Residue acceptor) in hBonds) {
 				JsonValue bondJson = JsonValue.MakeList ();
-				bondJson.Add (new JsonValue(bond.Item1.ChainId.ToString ()));
-				bondJson.Add (new JsonValue(bond.Item1.SeqNumber));
-				bondJson.Add (new JsonValue(bond.Item2.ChainId.ToString ()));
-				bondJson.Add (new JsonValue(bond.Item2.SeqNumber));
+				bondJson.Add (new JsonValue(donor.ChainId.ToString ()));
+				bondJson.Add (new JsonValue(donor.SeqNumber));
+				bondJson.Add (new JsonValue(acceptor.ChainId.ToString ()));
+				bondJson.Add (new JsonValue(acceptor.SeqNumber));
 				hBondsJson.Add (bondJson);
 			}
 			return hBondsJson;
 		}
 
-		public static JsonValue BetaConnectivityToJson(List<Tuple<int,int,int>> betaConnectivity, IEnumerable<SSE> sses){
+		public static JsonValue BetaConnectivityToJson(List<(int, int, int)> betaConnectivity, IEnumerable<SSE> sses){
 			if (betaConnectivity == null)
 				return new JsonValue ();
 			List<String> labels = sses.Select (sse => sse.Label).ToList ();
@@ -268,13 +269,14 @@ namespace protein
 		/* Takes the first entity in the file. */
 		public static List<SSE> ReadAnnotationFile_Json(String fileName){
 			String dump;
-			List<Tuple<int,int,int>> dump2;
-			List<Tuple<String,int,int>> dump3;
+			List<(int, int, int)> dump2;
+			List<(String, int, int)> dump3;
 			return ReadAnnotationFile_Json (fileName, null, out dump, out dump2, out dump3, false);
 		}
 
 		/* If name==null, takes the first entity in the file. */
-		public static List<SSE> ReadAnnotationFile_Json(String fileName, String name, out String comment, out List<Tuple<int,int,int>> betaConnectivity, out List<Tuple<String,int,int>> merging, bool takeTheOnlyEntryEvenIfNameDoesntMatch){
+		public static List<SSE> ReadAnnotationFile_Json(String fileName, String name, out String comment, 
+				out List<(int, int, int)> betaConnectivity, out List<(String, int, int)> merging, bool takeTheOnlyEntryEvenIfNameDoesntMatch){
 			List<SSE> result = new List<SSE> ();
 			String str;
 			using (StreamReader r = new StreamReader (fileName)) {
@@ -283,7 +285,7 @@ namespace protein
 			JsonValue json;
 			try {
 				json = JsonValue.FromString (str);
-			}catch (Exception){//TODO put actual exception type here
+			} catch (Exception) { //TODO put actual exception type here
 				throw new FormatException (fileName + " is not a valid JSON.");
 			}
 				
@@ -344,7 +346,7 @@ namespace protein
 
 			// Reading beta-connectivity
 			bool labelDuplicates = result.Select (sse => sse.Label).Distinct ().Count () != result.Count;
-			betaConnectivity = new List<Tuple<int, int,int>> ();
+			betaConnectivity = new List<(int, int, int)> ();
 			if (entry.Contains (JsNames.BETA_CONNECTIVITY)) {
 				JsonValue connections = entry [JsNames.BETA_CONNECTIVITY];
 				if (connections.Type!=JsonType.List)
@@ -356,7 +358,7 @@ namespace protein
 					if (connection.Type!=JsonType.List||connection.Count!=3)
 						throw new FormatException (JsonLocationString (fileName,name,JsNames.BETA_CONNECTIVITY,i)+" is not a JSON list with three 3 elements.");
 					if (connection.All (v => v.Type == JsonType.Int)) {
-						betaConnectivity.Add (new Tuple<int, int, int> (connection [0].Int, connection [1].Int, connection [2].Int));
+						betaConnectivity.Add ((connection [0].Int, connection [1].Int, connection [2].Int));
 					} else if (connection [0].Type == JsonType.String && connection [1].Type == JsonType.String && connection [2].Type == JsonType.Int) {
 						if (labelDuplicates)
 							throw new FormatException (JsonLocationString (fileName,name,JsNames.SSES) + " contains label duplicates. Cannot unambigously read " + JsonLocationString (fileName,name,JsNames.BETA_CONNECTIVITY));
@@ -366,7 +368,7 @@ namespace protein
 							throw new FormatException (JsonLocationString (fileName,name,JsNames.BETA_CONNECTIVITY,i,0) + " is not a label found in " + JsNames.SSES + ".");
 						if (last == -1)
 							throw new FormatException (JsonLocationString (fileName,name,JsNames.BETA_CONNECTIVITY,i,1) + " is not a label found in " + JsNames.SSES + ".");
-						betaConnectivity.Add (new Tuple<int, int, int> (first, last, connection [2].Int));
+						betaConnectivity.Add ((first, last, connection[2].Int));
 					} else {
 						throw new FormatException (JsonLocationString (fileName,name,JsNames.BETA_CONNECTIVITY,i)+" must be a JSON list with three 3 elements (labels/indices of 2 SSEs and an integer for direction of the connection (1=parallel,-1=antiparallel)).");
 					}
@@ -374,7 +376,7 @@ namespace protein
 			}
 
 			// Reading mergeable SSEs
-			merging = new List<Tuple<string, int, int>>();
+			merging = new List<(string, int, int)>();
 			if (entry.Contains (JsNames.SSE_MERGING)) {
 				JsonValue mergs = entry [JsNames.SSE_MERGING];
 				if (mergs.Type!=JsonType.List)
@@ -382,20 +384,20 @@ namespace protein
 				JsonValue[] mergsList = mergs.Where (m => m.Type != JsonType.Null).ToArray (); //This null think must be here cuz the Json parser sucks.
 				for (int i = 0; i < mergsList.Length; i++) {
 					JsonValue merg = mergsList [i];
-					if (merg.Type!=JsonType.List||merg.Count!=3)
+					if (merg.Type != JsonType.List || merg.Count!=3)
 						throw new FormatException (JsonLocationString (fileName,name,JsNames.SSE_MERGING,null)+" is not a JSON list with three 3 elements.");
-					if (merg [0].Type == JsonType.String && merg [1].Type == JsonType.Int && merg [2].Type == JsonType.Int) {
-						merging.Add (new Tuple<String, int, int> (merg [0].String, merg [1].Int, merg [2].Int));
+					if (merg[0].Type == JsonType.String && merg[1].Type == JsonType.Int && merg[2].Type == JsonType.Int) {
+						merging.Add ((merg[0].String, merg[1].Int, merg[2].Int));
 					} else if (merg.All (m => m.Type == JsonType.String)) {
 						if (labelDuplicates)
 							throw new FormatException (JsonLocationString (fileName,name,JsNames.SSES) + " contains label duplicates. Cannot unambigously read " + JsonLocationString (fileName,name,JsNames.SSE_MERGING));
-						int first = result.FindIndex (sse => sse.Label == merg [1].String);
-						int last = result.FindIndex (sse => sse.Label == merg [2].String);
+						int first = result.FindIndex (sse => sse.Label == merg[1].String);
+						int last = result.FindIndex (sse => sse.Label == merg[2].String);
 						if (first == -1)
 							throw new FormatException (JsonLocationString (fileName,name,JsNames.SSE_MERGING,i,1) +" is not a label found in " + JsonLocationString (fileName,name,JsNames.SSES) + ".");
 						if (last == -1)
 							throw new FormatException (JsonLocationString (fileName,name,JsNames.SSE_MERGING,i,2) +" is not a label found in " + JsonLocationString (fileName,name,JsNames.SSES) + ".");
-						merging.Add (new Tuple<String, int, int> (merg[0].String, first, last));
+						merging.Add ((merg[0].String, first, last));
 					} else {
 						throw new FormatException (JsonLocationString (fileName,name,JsNames.SSE_MERGING,i)+" must be a JSON list with three 3 elements (1 label of merged SSE and 2 labels/indices of first and last SSE to be merge).");
 					}
@@ -494,7 +496,7 @@ namespace protein
 		// 			}
 		// 		} 
 		// 	}
-		// 	List<Tuple<int,int,int>> betaConnectivity = new List<Tuple<int, int, int>>();
+		// 	List<(int, int, int)> betaConnectivity = new List<(int, int, int)>();
 		// 	foreach (char strandChar in ladder2sses.Keys) {
 		// 		var ssesHere = ladder2sses[strandChar];
 		// 		if (ssesHere.Count == 2) {
@@ -504,7 +506,7 @@ namespace protein
 		// 			}
 		// 			int i = ssesHere.Min();
 		// 			int j = ssesHere.Max();
-		// 			betaConnectivity.Append(new Tuple<int, int, int>(i, j, orientation));
+		// 			betaConnectivity.Append((i, j, orientation));
 		// 			Lib.WriteLineDebug($"beta  {SSEs[i].Label}  {SSEs[j].Label}  {orientation}");
 		// 		} else {
 		// 			throw new Exception($"Ladder {strandChar} appears to connect {ssesHere.Count} strands (should always connect exactly 2 strands).");					
@@ -616,10 +618,10 @@ namespace protein
 			foreach (Chain chain in p.GetChains ()) {		
 				List<SSE> chainSSEs = sses.Where (x => x.ChainID == chain.Id).OrderBy (x => x.Start).ToList ();
 
-				List<Tuple<int,int>> ranges = new List<Tuple<int, int>> ();
+				List<(int, int)> ranges = new List<(int, int)> ();
 				List<char?> checkTypes = new List<char?> ();
 				for (int i = 0; i < chainSSEs.Count - 1; i++) {
-					ranges.Add (new Tuple<int,int> (chainSSEs [i].End - 3, chainSSEs [i + 1].Start + 3));
+					ranges.Add ((chainSSEs [i].End - 3, chainSSEs [i + 1].Start + 3));
 					checkTypes.Add (typeCombining (chainSSEs [i].Type, chainSSEs [i + 1].Type));
 				}
 
@@ -747,7 +749,7 @@ namespace protein
 		}
 
 		public static GeometryCheckResult CheckSSEGeometry (Protein p, SSE sse, double RMSDLimit, out double maxRMSD){
-			Tuple<int,int>[] ranges = new Tuple<int,int>[]{ new Tuple<int, int> (sse.Start, sse.End) };
+			(int, int)[] ranges = new (int, int)[]{ (sse.Start, sse.End) };
 			IEnumerable<Residue> residues = p.GetChain (sse.ChainID).GetResidues (ranges).First ();
 			return CheckGeometry (residues,sse.Type,RMSDLimit,out maxRMSD);
 		}
@@ -791,7 +793,7 @@ namespace protein
 		/**Calculate a line segment that best describes an SSE given as a list of residues. 
 		 * numExtraResidues - indicates the number of residues at both the beginning and the end of the list which are not the part of the SSE but should be used in geometrical calculations.
 		 */
-		//private static Tuple<Vector,Vector> SSEAsLineSegment_GeomVersion(IEnumerable<Residue> residues, char sseType, int numExtraResidues, out List<double> rmsdList){
+		//private static (Vector, Vector) SSEAsLineSegment_GeomVersion(IEnumerable<Residue> residues, char sseType, int numExtraResidues, out List<double> rmsdList){
 		private static (Vector, Vector) SSEAsLineSegment_GeomVersion(List<Residue> residues, SSE sse, out List<double> rmsdList){
 			rmsdList = new List<double> ();
 				
@@ -855,7 +857,7 @@ namespace protein
 		public static List<SSEInSpace> SSEsAsLineSegments_GeomVersion(Chain chain, List<SSE> sses, out List<double>[] rmsdLists){
 			if (sses.Any (x => x.ChainID != chain.Id))
 				throw new ArgumentException (System.Reflection.MethodBase.GetCurrentMethod ().Name + ": Some SSEs are not from this chain (" + chain.Id + ").");
-			IEnumerable<Tuple<int,int>> ranges = sses.Select (sse => new Tuple<int,int> (sse.Start - NumExtraResidues (sse), sse.End + NumExtraResidues (sse)));
+			IEnumerable<(int, int)> ranges = sses.Select (sse => (sse.Start - NumExtraResidues (sse), sse.End + NumExtraResidues (sse)));
 			List<List<Residue>> residueLists = chain.GetResidues (ranges).ToList ();
 			for (int i = 0; i < sses.Count; i++) {
 				if (residueLists [i].Count != sses [i].Length () + 2 * NumExtraResidues (sses [i])) {
@@ -924,8 +926,8 @@ namespace protein
 		}
 
 		public static double MetricNo6Pos(SSE sse1, SSE sse2, Chain chain1, Chain chain2){
-			Vector[] ra = chain1.GetResidues (new Tuple<int,int>[] { new Tuple<int, int> (sse1.Start, sse1.End) })[0].Select (r=>r.GetCAlphas().First().Position ()).ToArray ();
-			Vector[] rb = chain2.GetResidues (new Tuple<int,int>[] { new Tuple<int, int> (sse2.Start, sse2.End) })[0].Select (r=>r.GetCAlphas().First().Position ()).ToArray ();
+			Vector[] ra = chain1.GetResidues (new (int, int)[] { (sse1.Start, sse1.End) })[0].Select (r=>r.GetCAlphas().First().Position ()).ToArray ();
+			Vector[] rb = chain2.GetResidues (new (int, int)[] { (sse2.Start, sse2.End) })[0].Select (r=>r.GetCAlphas().First().Position ()).ToArray ();
 			int minDisplacement = -rb.Length + 1;
 			int maxDisplacement = ra.Length - 1;
 			IEnumerable<int> displacements = Enumerable.Range (minDisplacement, maxDisplacement-minDisplacement+1);
@@ -984,9 +986,9 @@ namespace protein
 			return ALPHA * Math.Abs (len1 - len2) / Math.Sqrt (len1*len2 + BETA_SQ);
 		}
 
-		/*public static int FindBestCounterpart(Tuple<Vector,Vector> myHelix, 
-			List<Tuple<Vector,Vector>> candidateHelices, 
-			Func<Tuple<Vector,Vector>,Tuple<Vector,Vector>,double> metric)
+		/*public static int FindBestCounterpart((Vector, Vector) myHelix, 
+			List<(Vector, Vector)> candidateHelices, 
+			Func<(Vector, Vector),(Vector, Vector),double> metric)
 		{
 			if (candidateHelices.Count < 1)
 				throw new InvalidDataException ("At least 1 candidate helix needed.");
@@ -1032,7 +1034,7 @@ namespace protein
 		}
 
 		/** Returns index of best counterpart in candidateHelices and the value of metric. Returns null if not found. */
-		private static Tuple<int,double> FindBestCounterpartNew(SSEInSpaceInt myHelixT,List<SSEInSpaceInt> candidateHelices, int iFrom, int iTo, Func<char,char,bool> typeMatching, Func<SSEInSpace,SSEInSpace,double> metricToMax)
+		private static (int, double)? FindBestCounterpartNew(SSEInSpaceInt myHelixT,List<SSEInSpaceInt> candidateHelices, int iFrom, int iTo, Func<char,char,bool> typeMatching, Func<SSEInSpace,SSEInSpace,double> metricToMax)
 		{
 			if (iFrom > iTo || iFrom > candidateHelices.Count - 1 || iTo < 0)
 				return null; // not found
@@ -1047,7 +1049,7 @@ namespace protein
 					}
 				}
 			}
-			return best!=-1 ? new Tuple<int, double>(best,max) : null;
+			return best!=-1 ? (best, max) :  null as (int, double)?;
 		}
 
 		/** For each SSE in templates finds the best-fitting SSE in candidates. 
@@ -1055,12 +1057,12 @@ namespace protein
 			chainMapping indicates SSEs from which template chain should be looked for in which protein chain.
 			SSEs are choose in such way that the value of metric is minimized.
 			*/
-		public static List<Tuple<SSEInSpace,double>> FindCounterpartsNew(IEnumerable<SSEInSpace> templates, IEnumerable<SSEInSpace> candidates, Dictionary<string,string> chainMapping, Func<char,char,bool> typeMatching, Func<SSEInSpace,SSEInSpace,double> metricToMax){
+		public static List<(SSEInSpace, double)> FindCounterpartsNew(IEnumerable<SSEInSpace> templates, IEnumerable<SSEInSpace> candidates, Dictionary<string,string> chainMapping, Func<char,char,bool> typeMatching, Func<SSEInSpace,SSEInSpace,double> metricToMax){
 
 			Dictionary<string,List<SSEInSpaceInt>> templatesByResseq = new Dictionary<string,List<SSEInSpaceInt>> (); // list of SSEs for each template chain sorted by starting resseq
 			Dictionary<string,List<SSEInSpaceInt>> templatesByPriority = new Dictionary<string,List<SSEInSpaceInt>> (); // list of SSEs for each template chain sorted by their order of processing
 			Dictionary<string,List<SSEInSpaceInt>> candidatesByResseq = new Dictionary<string,List<SSEInSpaceInt>> (); // list of SSEs for each template chain sorted by starting resseq
-			List<Tuple<SSEInSpace,double>> result = new List<Tuple<SSEInSpace,double>> ();
+			List<(SSEInSpace, double)> result = new List<(SSEInSpace, double)> ();
 
 			foreach (string chain in chainMapping.Keys) {
 				templatesByResseq [chain] = new List<SSEInSpaceInt> ();
@@ -1102,13 +1104,14 @@ namespace protein
 				Console.WriteLine ();
 				cands.ForEach (x => Console.Write (metric(x.SSE,t).ToString()+ "\t"));
 				Console.WriteLine ();*/
-				Tuple<int,double> match = FindBestCounterpartNew (temps [i], cands, before>=0 ? temps[before].Int + 1 : 0, after<temps.Count ? temps[after].Int - 1 : cands.Count-1, typeMatching, metricToMax);
-				if (match!=null) {
-					temps [i].Int = match.Item1;
-					cands [match.Item1].Int = i; // already annotated
-					result.Add(new Tuple<SSEInSpace,double>(cands[match.Item1].SSE.RelabeledCopy(t.Label),match.Item2));
+				(int, double)? match = FindBestCounterpartNew (temps [i], cands, before>=0 ? temps[before].Int + 1 : 0, after<temps.Count ? temps[after].Int - 1 : cands.Count-1, typeMatching, metricToMax);
+				if (match != null) {
+					(int index, double metric) = match.Value;
+					temps[i].Int = index;
+					cands[index].Int = i; // already annotated
+					result.Add((cands[index].SSE.RelabeledCopy(t.Label), metric));
 				} else {
-					result.Add (new Tuple<SSEInSpace,double>(SSEInSpace.NewNotFound(t.Label), Double.NegativeInfinity)); // counterpart not found
+					result.Add ((SSEInSpace.NewNotFound(t.Label), Double.NegativeInfinity)); // counterpart not found
 				}
 				/*Console.WriteLine ("Found at " + (match==null? "nowhere": match.Item1.ToString())+".");
 				Console.WriteLine ();*/
@@ -1117,79 +1120,7 @@ namespace protein
 			return result;
 		}
 
-		/*
-		private static Tuple<int,double> FindBestCounterpartNew<T>(T myHelixT,List<SSETint<T>> candidateHelices, int iFrom, int iTo, Func<T,T,double> metric)
-		{
-			if (iFrom > iTo || iFrom > candidateHelices.Count - 1 || iTo < 0)
-				return null; // not found
-			int best=-1; // not found
-			double max=Double.MinValue;
-			for (int i=iFrom; i<=iTo; i++) {	
-				double value = metric (myHelixT, candidateHelices [i].T);
-				if (candidateHelices[i].Int==-1 && value > max) { // so far the best and not annotated yet
-					best = i;
-					max = value;
-				}
-			}
-			return best!=-1 ? new Tuple<int, double>(best,max) : null;
-		}
-		public static List<Tuple<SSE,double>> FindCounterpartsNew<T>(IEnumerable<Tuple<SSE,T>> templates, IEnumerable<Tuple<SSE,T>>candidates, Dictionary<char,char> chainMapping, Func<T,T,double> metric){
-			//TODO Test
-
-			Dictionary<char,List<SSETint<T>>> templatesByResseq = new Dictionary<char,List<SSETint<T>>> (); // list of SSEs for each template chain sorted by starting resseq
-			Dictionary<char,List<SSETint<T>>> templatesByPriority = new Dictionary<char,List<SSETint<T>>> (); // list of SSEs for each template chain sorted by their order of processing
-			Dictionary<char,List<SSETint<T>>> candidatesByResseq = new Dictionary<char,List<SSETint<T>>> (); // list of SSEs for each template chain sorted by starting resseq
-			List<Tuple<SSE,double>> result = new List<Tuple<SSE,double>> ();
-
-			foreach (char chain in chainMapping.Keys) {
-				templatesByResseq [chain] = new List<SSETint<T>> ();
-				templatesByPriority [chain] = new List<SSETint<T>> ();
-				candidatesByResseq [chainMapping [chain]] = new List<SSETint<T>> ();
-			}
-
-			foreach (Tuple<SSE,T> template in templates)
-				if (templatesByResseq.ContainsKey (template.Item1.ChainID)) {
-					templatesByResseq [template.Item1.ChainID].Add (new SSETint<T> (template.Item1, template.Item2, -1)); //-1=no counterpart selected
-					templatesByPriority [template.Item1.ChainID].Add (new SSETint<T> (template.Item1, template.Item2, -1)); //-1=undefined
-				}
-
-			foreach (Tuple<SSE,T> candidate in candidates)
-				if (candidatesByResseq.ContainsKey (candidate.Item1.ChainID))
-					candidatesByResseq [candidate.Item1.ChainID].Add (new SSETint<T> (candidate.Item1, candidate.Item2, -1)); // -1=not annotated yet
-
-			foreach (char chain in chainMapping.Keys) {
-				templatesByResseq [chain].Sort ((x, y) => x.SSE.Start.CompareTo (y.SSE.Start));
-				candidatesByResseq [chainMapping [chain]].Sort ((x, y) => x.SSE.Start.CompareTo (y.SSE.Start));
-				//templatesByResseq [chain].ForEach (x => Console.WriteLine (x.SSE.ToString ()));
-				//candidatesByResseq [chainMapping[chain]].ForEach (x => Console.WriteLine (x.SSE.ToString ()));
-			}
-
-			foreach (SSE t in templates.Select(x=>x.Item1).Where(x=>chainMapping.ContainsKey(x.ChainID))) {
-				var temps = templatesByResseq [t.ChainID];
-				var cands = candidatesByResseq [chainMapping [t.ChainID]];
-				int i = temps.FindIndex (x => x.SSE.Equals(t));
-				int before = i;
-				int after = i;
-				while (before >= 0 && temps [before].Int == -1)
-					before--;
-				while (after < temps.Count && temps [after].Int == -1)
-					after++;
-				//temps.ForEach(x=>Console.Write ("{0}, ", x.Int));
-				//Console.WriteLine ("\ni = {0}, before = {1}, after = {2}, temps.Count = {3} \n", i,before,after,temps.Count);
-				Tuple<int,double> match = FindBestCounterpartNew (temps [i].T, cands, before>=0 ? temps[before].Int + 1 : 0, after<temps.Count ? temps[after].Int - 1 : cands.Count-1, metric);
-				if (match!=null) {
-					temps [i].Int = match.Item1;
-					cands [match.Item1].Int = i; // already annotated
-					result.Add (new Tuple<SSE,double>(new SSE (t.Label, cands [match.Item1].SSE.ChainID, cands [match.Item1].SSE.Start, cands [match.Item1].SSE.End, cands [match.Item1].SSE.Type), match.Item2));
-				} else {
-					result.Add (new Tuple<SSE,double>(new SSE (t.Label, chainMapping[t.ChainID], NotFoundStart, NotFoundEnd, NotFoundType), Double.NegativeInfinity)); // counterpart not found
-				}
-			}
-
-			return result;
-		}*/
-
-		public static List<Tuple<SSEInSpace,double>> FindCounterparts_DynProg(IList<SSEInSpace> templates, IList<SSEInSpace> candidates,  Func<char,char,bool> typeMatching, 
+		public static List<(SSEInSpace, double)> FindCounterparts_DynProg(IList<SSEInSpace> templates, IList<SSEInSpace> candidates,  Func<char,char,bool> typeMatching, 
 			Func<SSEInSpace,SSEInSpace,double> metricToMin,Func<SSEInSpace,double> skipTemplatePenalty,Func<SSEInSpace,double> skipCandidatePenalty, out List<double> suspiciousnessList){
 
 			if (templates.Select (x => x.ChainID).Distinct ().Count () > 1)
@@ -1398,70 +1329,9 @@ namespace protein
 				}
 			}
 
-			suspiciousnessList = templateRanks.Select (rank => suspiciousnessArray [rank]).ToList ();
-			return templateRanks.Select (rank => new Tuple<SSEInSpace,double> (selectedCandidateArray [rank], metricArray [rank])).ToList ();
+			suspiciousnessList = templateRanks.Select (rank => suspiciousnessArray[rank]).ToList ();
+			return templateRanks.Select (rank => (selectedCandidateArray[rank], metricArray[rank])).ToList ();
 		}
-
-		/*public static List<Tuple<SSEInSpace,double>> FindCounterparts_BetaGraphMatching(IList<SSEInSpace> templates, IList<SSEInSpace> candidates,
-			IEnumerable<Tuple<int,int>> templateNeighbours, IEnumerable<Tuple<int,int>> candidateNeighbours, Func<char,char,bool> typeMatching, 
-			Func<SSEInSpace,SSEInSpace,double> metricToMin,Func<SSEInSpace,double> skipTemplatePenalty, Func<SSEInSpace,double> skipCandidatePenalty, out List<double> suspiciousnessList){
-
-			if (templates.Select (x => x.ChainID).Distinct ().Count () > 1)
-				Lib.WriteWarning ("{0}: passed template SSEs from more than one chain.", System.Reflection.MethodBase.GetCurrentMethod ().Name);
-			if (candidates.Select (x => x.ChainID).Distinct ().Count () > 1)
-				Lib.WriteWarning ("{0}: passed candidate SSEs from more than one chain.", System.Reflection.MethodBase.GetCurrentMethod ().Name);
-			
-			int[] ranksT;
-			SSEInSpace[] verticesT = Lib.OrderAndGetRanks (templates, sse => sse.Start, out ranksT).ToArray ();
-			int[] ranksQ;
-			SSEInSpace[] verticesQ = Lib.OrderAndGetRanks (candidates, sse => sse.Start, out ranksQ).ToArray ();
-
-			int nT = verticesT.Length;
-			int nQ = verticesQ.Length;
-
-			bool[,] edgesT=new bool[nT,nT];
-			foreach (var neighbours in templateNeighbours) {
-				edgesT [ranksT [neighbours.Item1], ranksT [neighbours.Item2]] = true;
-				edgesT [ranksT [neighbours.Item2], ranksT [neighbours.Item1]] = true;
-			}
-
-			bool[,] edgesQ=new bool[nQ,nQ];
-			foreach (var neighbours in candidateNeighbours) {
-				edgesQ [ranksQ [neighbours.Item1], ranksQ [neighbours.Item2]] = true;
-				edgesQ [ranksQ [neighbours.Item2], ranksQ [neighbours.Item1]] = true;
-			}
-
-			double[,] scores = new double[nT,nQ];
-			for (int i = 0; i < nT; i++) {
-				for (int j = 0; j < nQ; j++) {
-					SSEInSpace x = verticesT [i];
-					SSEInSpace y = verticesQ [j];
-					scores [i, j] = typeMatching (x.Type, y.Type) ? 
-						skipTemplatePenalty (x) + skipCandidatePenalty (y) - metricToMin (x, y) 
-						: 0;
-				}
-			}
-
-			DateTime stamp = DateTime.Now;
-			Lib.WriteLineDebug ("FindCounterparts_BetaGraphMatching: initialized - {0} vs. {1} vertices ({2})",nT,nQ,stamp);
-
-			List<Tuple<int,int>> bestMatching = MaxWeightOrderedMatching (nT, nQ, edgesT, edgesQ, scores);
-
-			Lib.WriteLineDebug ("FindCounterparts_BetaGraphMatching: found matching ({0})",DateTime.Now);
-			Lib.WriteLineDebug ("FindCounterparts_BetaGraphMatching: time: {0}",DateTime.Now-stamp);
-
-			SSEInSpace[] selectedVerticesQ = new SSEInSpace[nT];
-			foreach (var match in bestMatching) {
-				selectedVerticesQ [match.Item1] = verticesQ [match.Item2].RelabeledCopy (verticesT [match.Item1].Label);
-			}
-
-			suspiciousnessList = templates.Select (x => Double.NaN).ToList ();
-			return ranksT
-				.Where (rank=>selectedVerticesQ [rank] != null)
-				.Select (rank =>new Tuple<SSEInSpace,double> (selectedVerticesQ [rank], metricToMin (verticesT [rank], selectedVerticesQ [rank])))
-				.ToList ();
-		}*/
-
 
 		public static (List<int>,List<int>) AlignmentToPositions (List<(int?,int?,double)> alignment){
 			List<int> tPositions = new List<int> ();
@@ -1749,38 +1619,11 @@ namespace protein
 		public static List<String> GetSequences(Chain ch, IEnumerable<SSE> sses){
 			if (sses.Any (sse => sse.ChainID != ch.Id))
 				throw new Exception ("Some SSEs belong to another chain");
-			return ch.GetResidues (sses.Select (s => new Tuple<int,int> (s.Start, s.End)))
+			return ch.GetResidues (sses.Select (s => (s.Start, s.End)))
 				.Select (s => String.Concat (s.Select (r => r.ShortName))).ToList ();
 		}
-
-		/*public static void ExtractSequences(String pdbFile, String annotationFile, String outputFile){
-			Protein p = new Protein (pdbFile);
-			List<SSE> sses = ReadAnnotationFile (annotationFile);
-			IEnumerable<char> chains = sses.Where (sse=>!sse.IsNotFound ()).Select (sse=>sse.ChainID).Distinct ();
-
-			List<Tuple<SSE,String>> ssesWithSequences;
-			if (chains.Count () == 0) {
-				ssesWithSequences = sses.Select (sse => new Tuple<SSE,String> (sse, "")).ToList ();
-			} else if (chains.Count () == 1) {
-				List<Tuple<int,int>> ranges = sses.Select (sse => sse.IsNotFound () ? new Tuple<int,int> (0, -1) : new Tuple<int,int> (sse.Start, sse.End)).ToList ();
-				//ranges.Insert (0, new Tuple<int,int> (9, 12));
-				List<List<Residue>> residues = p.GetChain (chains.First ()).GetResidues (ranges);
-				ssesWithSequences = new List<Tuple<SSE,String>> ();
-				for (int i = 0; i < sses.Count; i++) {
-					String sequence = residues [i].Aggregate ("", (s, r) => s + r.ShortName);
-					if (sses [i].Length () != sequence.Length) {
-						Lib.WriteWarning ("This SSEs might contain missing residues: {0} (sequence: {1}).", sses [i], sequence);
-					}
-					ssesWithSequences.Add (new Tuple<SSE,String> (sses [i], sequence));
-				}
-			} else {
-				throw new NotImplementedException (System.Reflection.MethodBase.GetCurrentMethod ().Name + ": This function is not implemented for SSEs from more than one chain.");
-			}
-			WriteAnnotationFileWithSequences (outputFile,ssesWithSequences,null);
-		}*/
 	
-		public static List<List<Tuple<int,int>>> FindMaximalMatchings(int nG, List<Tuple<int,int>> edgesG,int nH, List<Tuple<int,int>> edgesH, Func<int,int,bool> subsequentInG, Func<int,int,bool> subsequentInH){
-			
+		public static List<List<(int, int)>> FindMaximalMatchings(int nG, List<(int, int)> edgesG,int nH, List<(int, int)> edgesH, Func<int,int,bool> subsequentInG, Func<int,int,bool> subsequentInH){		
 			//TODO put only pairs with low metric to modular product graph
 			//TODO sort modular product graph vertices by metric
 			//TODO use branch and bound in finding the best clique
@@ -1823,7 +1666,7 @@ namespace protein
 				}
 			}
 			List<List<int>> cliques = ListMaximalCliques (nM, M);
-			return cliques.Select (c => c.Select (v => new Tuple<int,int> (v / nH, v % nH)).ToList ()).ToList ();
+			return cliques.Select (c => c.Select (v => (v / nH, v % nH)).ToList ()).ToList ();
 		}
 
 		public static List<List<int>> ListMaximalCliques(int n, bool[,] neibMatrix){
@@ -1858,7 +1701,7 @@ namespace protein
 			nG, nH - number of vertices of G, H
 			edgesG, edgesH - adjacency matrices of G, H (0 = no edge, 1 = edge; if other values are used, they serve as edge labels - only edges with same label can be matched)
 			score[i,j] - score for matching i-th vertex of G to j-th vertex of H*/
-		public static List<Tuple<int,int>> MaxWeightOrderedMatching(int nG, int nH, int[,] edgesG, int[,] edgesH, double[,] score, bool[,] conflictsG, bool[,] conflictsH){
+		public static List<(int, int)> MaxWeightOrderedMatching(int nG, int nH, int[,] edgesG, int[,] edgesH, double[,] score, bool[,] conflictsG, bool[,] conflictsH){
 			if (edgesG.GetLength (0) != nG || edgesG.GetLength (1) != nG)
 				throw new Exception ("Incorrect size of parameter edgesG.");
 			if (edgesH.GetLength (0) != nH || edgesH.GetLength (1) != nH)
@@ -1883,10 +1726,10 @@ namespace protein
 			int maxExpectedMatchingSize = Math.Min (nG, nH);
 
 			List<int> maxWeightClique = MaxWeightClique (nM, edgesM, w, maxExpectedMatchingSize);
-			return maxWeightClique.Select (u => new Tuple<int,int> (u / nH, u % nH)).ToList ();
+			return maxWeightClique.Select (u => (u / nH, u % nH)).ToList ();
 		}
 
-		public static List<Tuple<int,int>> MaxWeightMixedOrderedMatching(int nG, int nH, 
+		public static List<(int, int)> MaxWeightMixedOrderedMatching(int nG, int nH, 
 			int[] rank0G, int[] rank1G, int[] rank0H, int[] rank1H,
 			double[,] score, bool softOrderConsistence /*, bool[,] conflictsG, bool[,] conflictsH*/)
 		{
@@ -1931,7 +1774,7 @@ namespace protein
 			int maxExpectedMatchingSize = Math.Min (nG, nH);
 
 			List<int> maxWeightClique = MaxWeightClique (nM, edgesM, w, maxExpectedMatchingSize);
-			return maxWeightClique.Select (u => new Tuple<int,int> (u / nH, u % nH)).ToList ();
+			return maxWeightClique.Select (u => (u / nH, u % nH)).ToList ();
 		}
 
 		/** Returns inclusion-maximal clique with maximal total w. 

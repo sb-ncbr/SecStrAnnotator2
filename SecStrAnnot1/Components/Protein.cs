@@ -49,7 +49,7 @@ namespace protein.Components
 			InitializeThis (atoms);
 		}
 
-		public Protein(StreamReader reader, string[] chainIDs, IEnumerable<Tuple<int,int>> resSeqRanges)
+		public Protein(StreamReader reader, string[] chainIDs, IEnumerable<(int, int)> resSeqRanges)
 		{
 			List<Residue> modifiedResidues;
 			IEnumerable<Atom> atoms = ReadAtomsFromPDB (reader);

@@ -161,7 +161,7 @@ namespace protein.SecStrAssigning
 					}
 				} 
 			}
-			List<Tuple<int,int,int>> betaConnectivity = new List<Tuple<int, int, int>>();
+			List<(int, int, int)> betaConnectivity = new List<(int, int, int)>();
 			foreach (char strandChar in ladder2sses.Keys) {
 				var ssesHere = ladder2sses[strandChar];
 				if (ssesHere.Count == 2) {
@@ -171,7 +171,7 @@ namespace protein.SecStrAssigning
 					}
 					int i = ssesHere.Min();
 					int j = ssesHere.Max();
-					betaConnectivity.Add(new Tuple<int, int, int>(i, j, orientation));
+					betaConnectivity.Add((i, j, orientation));
 					Lib.WriteLineDebug($"beta  {SSEs[i].Label}  {SSEs[j].Label}  {orientation}");
 				} else {
 					throw new Exception($"Ladder {strandChar} appears to connect {ssesHere.Count} strands (should always connect exactly 2 strands).");					

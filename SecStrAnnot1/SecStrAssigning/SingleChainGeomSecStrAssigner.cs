@@ -102,7 +102,7 @@ namespace protein.SecStrAssigning
 
             if (SheetsAllowed) {
                 // Deleting sheets that have no hydrogen bonds
-                List<List<Residue>> sheets = Chain.GetResidues (result.Where (sse => sse.Type == sheetType).Select (sse => new Tuple<int,int> (sse.Start, sse.End)));
+                List<List<Residue>> sheets = Chain.GetResidues (result.Where (sse => sse.Type == sheetType).Select (sse => (sse.Start, sse.End)));
                 IEnumerable<Atom> atomsN = sheets.SelectMany (sse => sse.SelectMany (r => r.GetNAmides()));
                 IEnumerable<Atom> atomsO = sheets.SelectMany (sse => sse.SelectMany (r => r.GetOCarbs()));
                 double maxDistanceForHydrogenBond = 3.5; //TODO Get a rational value for this number (distance N-O). This value is just a guess.

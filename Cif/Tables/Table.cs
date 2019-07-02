@@ -48,7 +48,7 @@ namespace /*SecStrAnnot2.*/Cif.Tables
         }
 
 
-        public Table (CifCategory cifCategory, params ValueTuple<string,CifValueType>[] schema) { 
+        public Table (CifCategory cifCategory, params (string, CifValueType)[] schema) { 
             ColumnCount = schema.Length;
             ColumnNames = new string[ColumnCount];
             columnArray = new object[ColumnCount];
@@ -71,7 +71,7 @@ namespace /*SecStrAnnot2.*/Cif.Tables
             }
         }
 
-        public Table (CifCategory cifCategory, int[] rows, params ValueTuple<string,CifValueType>[] schema) { 
+        public Table (CifCategory cifCategory, int[] rows, params (string, CifValueType)[] schema) { 
             ColumnCount = schema.Length;
             ColumnNames = new string[ColumnCount];
             columnArray = new object[ColumnCount];

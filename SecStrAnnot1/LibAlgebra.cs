@@ -106,7 +106,7 @@ namespace protein
 
 
 		/**Returns the eigenvectors and their corresponding eigenvalues of 3x3 matrix A with rows v1, v2, v3. */
-		public static List<Tuple<Vector,double>> Eigenvectors(Matrix A){
+		public static List<(Vector, double)> Eigenvectors(Matrix A){
 
 			// Scaling so that we will work with numbers close to 1
 			double scale = Math.Sqrt (A.SumSq); 
@@ -124,7 +124,7 @@ namespace protein
 			//lambdas.ForEach (x => Console.WriteLine ("lambda = {0}", x));
 
 
-			List<Tuple<Vector,double>> result = new List<Tuple<Vector, double>> ();
+			List<(Vector, double)> result = new List<(Vector, double)> ();
 
 			//rows of the matrix B = A-lambda*E
 			for (int i = 0; i < 3; i++) {
@@ -135,11 +135,11 @@ namespace protein
 				Vector[] eigenVecs = SolveHomo3 (B);
 				//Console.WriteLine ("For lambda {0} we found {1} eigenvectors.", lambdas [i], eigenVecs.Length);
 				foreach (Vector v in eigenVecs) {
-					result.Add (new Tuple<Vector,double> (v, lambdas [i]));
+					result.Add ((v, lambdas [i]));
 				}
 			}
 
-			return result.Select (x => new Tuple<Vector,double> (x.Item1, scale * x.Item2)).ToList(); //Reversing the scaling
+			return result.Select (x => (x.Item1, scale * x.Item2)).ToList(); //Reversing the scaling
 		}
 
 		/**Solves homogenous system of 3 linear equations with 3 variables. */
@@ -190,8 +190,8 @@ namespace protein
 		}
 
 		/**Performs Singular Value Decomposition of a n*3 matrix Y and returns U, S, and V such that U*S*V=Y. */
-		public static Tuple<Matrix,Matrix.DiagMatrix,Matrix> SVD(Matrix Y){
-			List<Tuple<Vector,double>> eigenVecs = Eigenvectors (Y.Transpose()*Y);
+		public static (Matrix, Matrix.DiagMatrix, Matrix) SVD(Matrix Y){
+			List<(Vector, double)> eigenVecs = Eigenvectors (Y.Transpose()*Y);
 			if (eigenVecs.Any(x => x.Item2 < 0)) {
 				Lib.WriteWarning($"SVD: Negative eigenvalue of covariance matrix: {eigenVecs.Select(x => x.Item2).EnumerateWithCommas()}");
 			}
@@ -200,7 +200,7 @@ namespace protein
 			// so far so good
 			Matrix U = Y * V.Transpose () * S.Inverse();
 			// Console.WriteLine ($"V = {V}\nV transpose = {V.Transpose()}\nS = {S}\nS inverse = {S.Inverse()}\nU = {U}\nEigenvecs = {eigenVecs.EnumerateWithCommas()}");
-			return new Tuple<Matrix, Matrix.DiagMatrix,Matrix> (U, S, V);
+			return (U, S, V);
 		}
 
 		public static Matrix FitRotation (Matrix Mobile, Matrix Target){
@@ -210,9 +210,7 @@ namespace protein
 				throw new ArgumentException ("Matrices must have the same number of rows.");
 			
 			Matrix H = Mobile.Transpose () * Target;
-			Tuple<Matrix,Matrix.DiagMatrix,Matrix> USV = SVD (H);
-			Matrix U = USV.Item1;
-			Matrix V = USV.Item3;
+			(Matrix U, Matrix.DiagMatrix S, Matrix V) = SVD (H);
 			Matrix R = U*V;
 			// Lib.WriteLineDebug($"U: {U}, V: {V}");
 			if (R.Determinant3 () < 0) { 

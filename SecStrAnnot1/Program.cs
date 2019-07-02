@@ -25,7 +25,7 @@ namespace protein
 			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 			Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
-			List<Tuple<String,TimeSpan>> times = new List<Tuple<String, TimeSpan>> ();
+			List<(String, TimeSpan)> times = new List<(String, TimeSpan)> ();
 			DateTime t0 = DateTime.Now;
 			DateTime stamp = DateTime.Now;
 
@@ -37,8 +37,8 @@ namespace protein
 			string templateChainID_ = Setting.DEFAULT_CHAIN_ID;
 			string queryChainID_ = Setting.DEFAULT_CHAIN_ID;
 
-			List<Tuple<int,int>> templateDomainRanges = null;
-			List<Tuple<int,int>> queryDomainRanges = null;
+			List<(int, int)> templateDomainRanges = null;
+			List<(int, int)> queryDomainRanges = null;
 
 			Setting.AlignMethod alignMethod = Setting.DEFAULT_ALIGN_METHOD;
 			bool tryToReuseAlignment = false;
@@ -289,7 +289,7 @@ namespace protein
 			String fileQueryRmsds = Path.Combine (Setting.Directory, queryID + Setting.RMSDS_FILE_EXT);
 			String fileQueryLabel2Auth = Path.Combine (Setting.Directory, queryID + Setting.LABEL2AUTH_FILE_EXT);
 
-			times.Add (new Tuple<string, TimeSpan> ("Process options, arguments, create file names.", DateTime.Now.Subtract (stamp)));
+			times.Add (("Process options, arguments, create file names.", DateTime.Now.Subtract (stamp)));
 			stamp = DateTime.Now;
 			#endregion
 
@@ -336,7 +336,7 @@ namespace protein
 
 			#region Writing short info about the proteins to the console.
 
-			times.Add (new Tuple<string, TimeSpan> ("Read files", DateTime.Now.Subtract (stamp)));
+			times.Add (("Read files", DateTime.Now.Subtract (stamp)));
 			stamp = DateTime.Now;
 			#endregion
 
@@ -424,7 +424,7 @@ namespace protein
 				return -1;
 			}
 
-			times.Add (new Tuple<string, TimeSpan> ("Secondary structure assignment", DateTime.Now.Subtract (stamp)));
+			times.Add (("Secondary structure assignment", DateTime.Now.Subtract (stamp)));
 			stamp = DateTime.Now;
 
 			#endregion
@@ -449,7 +449,7 @@ namespace protein
     		}
 
 			List <SSEInSpace> annotQHelicesInSpace_AllChains = new List<SSEInSpace> ();
-			List <Tuple<int,int,int>> annotQConnectivity_AllChains = new List<Tuple<int, int, int>> ();
+			List <(int, int, int)> annotQConnectivity_AllChains = new List<(int, int, int)> ();
 			List<double> metricList_AllChains = new List<double>();
 			List<double> suspiciousnessList_AllChains = new List<double>();
 			List<List<double>> rmsdLists_AllChains = new List<List<double>>();
@@ -493,15 +493,15 @@ namespace protein
 							throw new Exception (alignMethod + " has no assigned name in alignMethodNames.");
 						}
 					}
-					times.Add (new Tuple<string, TimeSpan> ("Alignment", DateTime.Now.Subtract (stamp)));
+					times.Add (("Alignment", DateTime.Now.Subtract (stamp)));
 					stamp = DateTime.Now;
 					#endregion
 
 					Lib.Shuffler shuffler;
 					List<SSE> tSSEs=templateSSA.SSEs.WhereAndGetShuffler (sse => sse.ChainID == templateChainID, out shuffler).ToList ();
-					List<Tuple<int,int,int>> tConnectivity = shuffler.UpdateIndices (templateSSA.Connectivity).ToList ();
+					List<(int, int, int)> tConnectivity = shuffler.UpdateIndices (templateSSA.Connectivity).ToList ();
 					List<SSE> qSSEs=querySSA.SSEs.WhereAndGetShuffler (sse => sse.ChainID == queryChainID, out shuffler).ToList ();
-					List<Tuple<int,int,int>> qConnectivity = shuffler.UpdateIndices (querySSA.Connectivity).ToList ();
+					List<(int, int, int)> qConnectivity = shuffler.UpdateIndices (querySSA.Connectivity).ToList ();
 					List<SSEInSpace> tSSEsInSpace;
 					List<SSEInSpace> qSSEsInSpace;
 
@@ -529,7 +529,7 @@ namespace protein
 							}
 							wRMSD.Close ();
 
-							times.Add (new Tuple<string, TimeSpan> ("Calculate RMSDs for whole chain", DateTime.Now.Subtract (stamp)));
+							times.Add (("Calculate RMSDs for whole chain", DateTime.Now.Subtract (stamp)));
 							stamp = DateTime.Now;
 						}
 						#endregion
@@ -549,7 +549,7 @@ namespace protein
 							qSSEsInSpace = qSSEs.Select(sse => sse as SSEInSpace).ToList();
 						}
 
-						times.Add (new Tuple<string, TimeSpan> ("Calculate line segments", DateTime.Now.Subtract (stamp)));
+						times.Add (("Calculate line segments", DateTime.Now.Subtract (stamp)));
 						stamp = DateTime.Now;
 						#endregion
 
@@ -564,7 +564,7 @@ namespace protein
 						tSSEsInSpace = LibAnnotation.HelicesAsLineSegments (tProtein.GetChain (templateChainID), tSSEs.Where (sse=>sse.ChainID==templateChainID).ToList ());
 						qSSEsInSpace = LibAnnotation.HelicesAsLineSegments (qProtein.GetChain (queryChainID), qSSEs.Where (sse=>sse.ChainID==queryChainID).ToList ());
 
-						times.Add (new Tuple<string, TimeSpan> ("Calculate line segments", DateTime.Now.Subtract (stamp)));
+						times.Add (("Calculate line segments", DateTime.Now.Subtract (stamp)));
 						stamp = DateTime.Now;
 						#endregion
 
@@ -579,7 +579,7 @@ namespace protein
 								+ ".\nThen the helices were joined using this settings:\n" + joiningParameters.ToString ());
 						}
 
-						times.Add (new Tuple<string, TimeSpan> ("Join helices", DateTime.Now.Subtract (stamp)));
+						times.Add (("Join helices", DateTime.Now.Subtract (stamp)));
 						stamp = DateTime.Now;
 						#endregion
 
@@ -672,7 +672,7 @@ namespace protein
 					DateTime t_BB_0 =  DateTime.Now;
 					List <SSEInSpace> annotQHelicesInSpace = annotator.GetAnnotatedCandidates().ToList();
 					Lib.WriteLineDebug ("Annotated: {0}", annotQHelicesInSpace.EnumerateWithSeparators ("\n\t"));
-					List<Tuple<int,int,int>> annotQConnectivity = annotator.GetAnnotatedConnectivity(qConnectivity);
+					List<(int, int, int)> annotQConnectivity = annotator.GetAnnotatedConnectivity(qConnectivity);
 					IEnumerable<double> metricList = annotator.GetMetricList ();
 					IEnumerable<double> suspiciousnessList = annotator.GetSuspiciousnessList ();
 					foreach(var sse in annotator.GetAnnotatedCandidates ()){
@@ -685,7 +685,7 @@ namespace protein
 						}
 					}
 					List<String> qSseSequences = qProtein.GetChain (queryChainID)
-						.GetResidues (annotQHelicesInSpace.Select (s => new Tuple<int,int> (s.Start-extraResiduesInSequence, s.End+extraResiduesInSequence)))
+						.GetResidues (annotQHelicesInSpace.Select (s => (s.Start-extraResiduesInSequence, s.End+extraResiduesInSequence)))
 						.Select (s => String.Concat (s.Select (r => r.ShortName))).ToList ();
 					
 
@@ -702,8 +702,8 @@ namespace protein
 					// metric3List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric3(t,q)));
 					// metric7List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric7(t,q)));
 					if (allTemplateChainIDs.Length==1 && allQueryChainIDs.Length==1) {
-						IEnumerable<Tuple<string,string>> labelPairs = annotator.GetMatching ().Select (t=>
-							new Tuple<string,string> (annotator.Context.Templates[t.Item1].Label,annotator.Context.Candidates[t.Item2].Label));
+						IEnumerable<(string, string)> labelPairs = annotator.GetMatching ().Select (t=>
+							(annotator.Context.Templates[t.Item1].Label, annotator.Context.Candidates[t.Item2].Label));
 						if (Lib.DoWriteDebug){
 							using (StreamWriter w = new StreamWriter (Path.Combine (Setting.Directory, "matching-"+templateID+"-"+queryID+".tsv"))) {
 								w.WriteLine ("{0}\t{1}",templateID,queryID);
@@ -717,13 +717,13 @@ namespace protein
 					}
 
 					List<String> detQSseSequences = qProtein.GetChain (queryChainID)
-						.GetResidues (qSSEsInSpace.Select (s => new Tuple<int,int> (s.Start, s.End)))
+						.GetResidues (qSSEsInSpace.Select (s => (s.Start, s.End)))
 						.Select (s => String.Concat (s.Select (r => r.ShortName))).ToList ();
 					detQSsesInSpace_AllChains.AddRange (qSSEsInSpace);
 					detQSseSequences_AllChains.AddRange(detQSseSequences);
 					annotQConnectivity_AllChains.AddRange(annotQConnectivity);
 
-					times.Add (new Tuple<string, TimeSpan> ("Matching", DateTime.Now-stamp));
+					times.Add (("Matching", DateTime.Now-stamp));
 					stamp = DateTime.Now;
 					#endregion
 
@@ -819,7 +819,7 @@ namespace protein
 					return -1;
 			}
 
-			times.Add (new Tuple<string, TimeSpan> ("Create PyMOL session", DateTime.Now.Subtract (stamp)));
+			times.Add (("Create PyMOL session", DateTime.Now.Subtract (stamp)));
 			stamp = DateTime.Now;
 			#endregion
 
@@ -833,7 +833,7 @@ namespace protein
 		}
 
 
-		private static Protein ReadProteinFromFile(string filename, string chainId, IEnumerable<Tuple<int,int>> resSeqRanges) {
+		private static Protein ReadProteinFromFile(string filename, string chainId, IEnumerable<(int, int)> resSeqRanges) {
 			try {
 				Lib.WriteInColor (ConsoleColor.Yellow, "Loading structure:  {0}, chain {1}, residues {2}\n", filename, chainId, FormatRanges(resSeqRanges));
 				Protein p;
@@ -866,7 +866,7 @@ namespace protein
 		}	
 
 
-		private static void PrintTimes(List<Tuple<String,TimeSpan>> times, DateTime t0){
+		private static void PrintTimes(List<(String, TimeSpan)> times, DateTime t0){
 			Console.WriteLine ();
 			Lib.WriteInColor (ConsoleColor.Yellow, "Times [miliseconds]:\n");
 			times.ForEach (x => Console.WriteLine ("> {0,6}   {1}", x.Item2.TotalMilliseconds.ToString ("0"), x.Item1));
@@ -876,8 +876,8 @@ namespace protein
 		}
 
 
-		private static List<Tuple<int, int>> ParseRanges(String rangeString){
-			List<Tuple<int,int>> result = new List<Tuple<int, int>> ();
+		private static List<(int, int)> ParseRanges(String rangeString){
+			List<(int, int)> result = new List<(int, int)>();
 			foreach (String subrange in rangeString.Split (',')){
 				string[] fromTo = subrange.Split (':').ToArray ();
 				if (fromTo.Length != 2) 
@@ -895,13 +895,13 @@ namespace protein
 					throw new FormatException ("Could not parse \"" + fromTo[1] + "\" as integer");
 				}
 				//toI = fromTo[1] != "" ? int.Parse (fromTo[1]) : int.MaxValue;
-				result.Add (new Tuple<int,int> (fromI, toI));
+				result.Add ((fromI, toI));
 			}
 			return result;
 		}
 
 
-		private static String FormatRanges(IEnumerable<Tuple<int,int>> ranges){
+		private static String FormatRanges(IEnumerable<(int, int)> ranges){
 			return ranges.Select (
 				range => 
 				(range.Item1 == int.MinValue ? "" : range.Item1.ToString ())
@@ -911,7 +911,7 @@ namespace protein
 		}
 
 
-		private static void ParseDomainSpecification(String domain, out String pdb, out string chain, out List<Tuple<int,int>> ranges){
+		private static void ParseDomainSpecification(String domain, out String pdb, out string chain, out List<(int, int)> ranges){
 			String[] parts = domain.Split (new char[]{','}, 3);
 
 			pdb = parts [0];
