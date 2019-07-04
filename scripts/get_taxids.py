@@ -33,14 +33,4 @@ for pdb, pdb_annot in input_annotations.items():
 			sys.stderr.write('WARNING: ' + pdb + ' has non-unique taxon ID: ' + ', '.join([str(t) for t in taxids]) + '\n')
 		print(domain, taxids[0], sep='\t')
 
-
-# for pdb in pdb_list:
-# 	response = json.loads(requests.get(URL + pdb).text)
-# 	chains = set(pdb_list[pdb])
-# 	entities = [entity for entity in response[pdb] if chains & set(entity['in_chains'])] 
-# 	taxids = [source['tax_id'] for entity in entities for source in entity.get('source',[])]
-# 	if len(set(taxids))!=1:
-# 		sys.stderr.write('WARNING: ' + pdb + ' has non-unique taxon ID: ' + ', '.join([str(t) for t in taxids]) + '\n')
-# 	print(pdb, taxids[0])
-
 exit()
