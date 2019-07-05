@@ -31,6 +31,11 @@ pdb2domains = input_json[ANNOTATIONS]
 pdbs = pdb2domains.keys()
 pdb2quality = { pdb: lib.get_structure_quality(pdb) for pdb in pdbs }
 
+# for pdb, domains in pdb2domains.items():
+#     for domain in domains.keys():
+#         print(domain, pdb2quality[pdb], sep='\t')
+# exit(0)
+
 DOMAINS_IN_DICT = len(pdb2domains) > 0 and isinstance(next(iter(pdb2domains.values())), dict)
 
 uniprot2domains = defaultdict(list)
