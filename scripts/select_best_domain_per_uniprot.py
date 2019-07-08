@@ -46,7 +46,8 @@ for pdb, domains in pdb2domains.items():
         pdbs_domains_keys = [ (pdb, domain) for domain in domains ]
     for pdb_dom_key in pdbs_domains_keys:
         uniprot = pdb_dom_key[1][UNIPROT_ID]
-        uniprot2domains[uniprot].append(pdb_dom_key)
+        if uniprot is not None:
+            uniprot2domains[uniprot].append(pdb_dom_key)
 
 pdb2best_domains = defaultdict(dict) if DOMAINS_IN_DICT else defaultdict(list)
 

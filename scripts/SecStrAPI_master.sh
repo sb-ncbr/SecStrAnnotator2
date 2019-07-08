@@ -19,8 +19,8 @@ ALIGN_SEQUENCES="$SCRIPT_DIR/align_sequences.py"
 ADD_PIVOT_RESIDUES="$SCRIPT_DIR/add_pivot_residues.py"
 
 TEMPLATE="1og2,A,:"
-TEMPLATE_ANNOTATION_FILE="$DATA_DIR/../1og2-template.sses.json"
-SECSTRANNOTATOR_OPTIONS="--soft --label2auth"  # Use with --verbose for CYP Anatomy analyses, without --verbose for SecStrAPI
+TEMPLATE_ANNOTATION_FILE="$DATA_DIR/../1og2-template-all.sses.json"
+SECSTRANNOTATOR_OPTIONS="--soft --label2auth --verbose"  # Use with --verbose for CYP Anatomy analyses, without --verbose for SecStrAPI
 ALIGNED_SSE_LABELS="A,B,C,D,E,H,I,J,K,L"
 # ALIGNED_SSE_LABELS="all"
 # ALIGNED_SSE_LABELS="A,B,C,D,E,F,G,H,I,J,K,L"
@@ -59,11 +59,11 @@ python3  $SIMPLIFY_DOMAIN_LIST  $DATA_DIR/cyps_best_$TODAY.json  >  $DATA_DIR/cy
 python3 extract_pdb_domain_list.py  $DATA_DIR/cyps_all_$TODAY.json  >  $DATA_DIR/AnnotationList.json
 
 # Download CIF files
-python3  $DOWNLOAD_DOMAINS  $DATA_DIR/cyps_all_$TODAY.simple.json  $DATA_DIR/structures/  --format cif  --no_gzip  #--cache $DATA_DIR/../cached_structures/
+python3  $DOWNLOAD_DOMAINS  $DATA_DIR/cyps_all_$TODAY.simple.json  $DATA_DIR/structures/  --format cif  --no_gzip  --cache $DATA_DIR/../cached_structures/
 # Downloaded 916 PDB entries, failed to download 0 PDB entries
 
 # Annotate
-cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/
+cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/${TEMPLATE:0:4}-template.sses.json
 python3  $SECSTRANNOTATOR_BATCH  --dll $SECSTRANNOTATOR_DLL \
     --threads $N_THREADS  --options " $SECSTRANNOTATOR_OPTIONS " \
     $DATA_DIR/structures  $TEMPLATE  $DATA_DIR/cyps_all_$TODAY.simple.json 
