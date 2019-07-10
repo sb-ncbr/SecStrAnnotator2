@@ -15,10 +15,12 @@ from constants import *
 parser = argparse.ArgumentParser()
 parser.add_argument('publication_info', help='JSON file from get_publication_info.py', type=str)
 parser.add_argument('--condensed', help='Merge result by article name', action='store_true')
+parser.add_argument('--primary', help='Take only the primary citation (first listed) for each PDB', action='store_true')
 args = parser.parse_args()
 
 publinfo_file = args.publication_info
 condensed = args.condensed
+primary = args.primary
 
 #  MAIN  ##############################################################################
 
@@ -42,6 +44,8 @@ by_title = defaultdict(lambda: [])
 print('PDB', 'Year', 'Author', 'Title', 'DOI', sep='\t')
 
 for pdb, pubs in publinfo.items():
+	if primary:
+		pubs = pubs[:1]
 	for pub in pubs:
 		title = pub['title'].replace('\n', ' ').replace('\t', ' ')
 		year = pub['journal_info']['year']
