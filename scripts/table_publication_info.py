@@ -4,6 +4,7 @@ import json
 import requests
 import argparse
 from collections import defaultdict
+import lib
 
 #  CONSTANTS  ##############################################################################
 
@@ -16,11 +17,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('publication_info', help='JSON file from get_publication_info.py', type=str)
 parser.add_argument('--condensed', help='Merge result by article name', action='store_true')
 parser.add_argument('--primary', help='Take only the primary citation (first listed) for each PDB', action='store_true')
+parser.add_argument('--domain_list', help='JSON file with the list of domains in SecStrAPI format (from merge_domain_lists.py) to include UniProt names in output', type=str, default=None)
 args = parser.parse_args()
 
 publinfo_file = args.publication_info
 condensed = args.condensed
 primary = args.primary
+domain_list_file = args.domain_list
 
 #  MAIN  ##############################################################################
 
@@ -39,9 +42,22 @@ def only_alnum(string):
 with open(publinfo_file, 'r') as r:
 	publinfo = json.load(r)
 
+if domain_list_file is not None:
+	with open(domain_list_file, 'r') as r:
+		domain_list = json.load(r)
+	pdb2uni = {}
+	for pdb, doms in domain_list['annotations'].items():
+		uni = next(iter(doms.values()))['uniprot_name']
+		pdb2uni[pdb] = uni
+else:
+	pdb2uni = None
+
 by_title = defaultdict(lambda: [])
 
-print('PDB', 'Year', 'Author', 'Title', 'DOI', sep='\t')
+columns = ['PDB', 'Year', 'Author', 'Title', 'DOI']
+if pdb2uni is not None:
+	columns.append('UniProtName')
+print(*columns, sep='\t')
 
 for pdb, pubs in publinfo.items():
 	if primary:
@@ -54,7 +70,10 @@ for pdb, pubs in publinfo.items():
 			author =  pub['author_list'][0]['full_name']
 		doi = pub['doi']
 		if not condensed:
-			print(pdb, year, author, title, doi, sep='\t')
+			outs = [pdb, year, author, title, doi]
+			if pdb2uni is not None:
+				outs.append(pdb2uni[pdb])
+			print(*outs, sep='\t')
 		by_title[only_alnum(title).upper()].append((pdb, year, author, title, doi))
 
 if condensed:
@@ -66,7 +85,7 @@ if condensed:
 			doi = dois[0]
 		else:
 			sys.stderr.write(f'Ambiguous DOI: {dois}\n')
-			doi = doi[0]
+			doi = dois[0]
 			# raise Exception(f'Ambiguous DOI: {dois}')
 		if len(years) == 0:
 			year = None
@@ -76,4 +95,12 @@ if condensed:
 			raise Exception(f'Ambiguous year: {years}')
 		title = titles[0]
 		author = min(authors, key=len)
-		print( ','.join(pdbs), year, author, title, doi, sep='\t')
+		outs = [','.join(pdbs), year, author, title, doi]
+		if pdb2uni is not None:
+			unis = set( pdb2uni[pdb] for pdb in pdbs )
+			unis.discard(None)
+			unis = sorted(unis)
+			if len(unis) !=1:
+				sys.stderr.write(f'More UniProts in one paper: {pdbs} -> {unis}\n')
+			outs.append(','.join(unis))				
+		print(*outs, sep='\t')
