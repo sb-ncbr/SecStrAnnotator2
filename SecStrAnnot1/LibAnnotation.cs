@@ -979,6 +979,7 @@ namespace protein
 		}
 
 		public static double LengthDiffPenalty(SSE sse1, SSE sse2){
+			// TODO implement distinction between helices and strands (e.g. count H-bonds instead of residues)
 			const double ALPHA = 10;
 			const double BETA_SQ = 9;
 			double len1 = sse1.End - sse1.Start + 1;

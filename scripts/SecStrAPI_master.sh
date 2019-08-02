@@ -19,7 +19,7 @@ ALIGN_SEQUENCES="$SCRIPT_DIR/align_sequences.py"
 ADD_PIVOT_RESIDUES="$SCRIPT_DIR/add_pivot_residues.py"
 
 TEMPLATE="2nnj,A,:"
-TEMPLATE_ANNOTATION_FILE="$DATA_DIR/../2nnj-template-all.sses.json"
+TEMPLATE_ANNOTATION_FILE="$DATA_DIR/../2nnj-template-extra.sses.json"
 SECSTRANNOTATOR_OPTIONS="--soft --label2auth --verbose"  # Use with --verbose for CYP Anatomy analyses, without --verbose for SecStrAPI
 ALIGNED_SSE_LABELS="A,B,C,D,E,H,I,J,K,L"
 # ALIGNED_SSE_LABELS="all"
