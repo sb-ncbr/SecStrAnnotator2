@@ -78,6 +78,8 @@ namespace protein
 			Func<SSEInSpace,double> skipTemplatePenalty = (sse => maxmetric[0] + maxmetric[1]*(sse.EndVector - sse.StartVector).Size);
 			Func<SSEInSpace,double> skipCandidatePenalty = (sse => maxmetric[2]*(sse.EndVector - sse.StartVector).Size);
 
+			double? momTimeoutSeconds = null;
+
 			bool printLabel2AuthTable = false;
 
 			#endregion
@@ -175,6 +177,10 @@ namespace protein
 				.AddParameter ("K0[,K1,K2]")
 				.AddHelp("Specify maximum allowed metric value K for matching template SSE S1 to query SSE S2.")
 				.AddHelp("K = K0 + K1*L1 + K2*L2, where L1, L2 are lengths of S1, S2 in Angstroms; default: " + maxmetric.EnumerateWithSeparators(","))
+			);
+			options.AddOption (Option.DoubleOption(new string[]{"-f", "--fallback"}, v => { momTimeoutSeconds = v; })
+				.AddParameter ("LIMIT")
+				.AddHelp("Specify time limit (in seconds) for MOM algorithm; in case of timeout falls back to DP algorithm")
 			);
 			options.AddOption (Option.SwitchOption(new string[]{"-i", "--ignoreinsertions"}, v => { Setting.IgnoreInsertions = v; })
 				.AddHelp("Ignore residues with insertion code, if such are present in the input file.")
@@ -642,7 +648,7 @@ namespace protein
 					Func<Annotators.AnnotationContext,Annotators.IAnnotator> createAnnotator;
 					switch (selectionMethod){
 					case Setting.SelectionMethod.DynProg: 
-						createAnnotator=Annotators.DynProgAnnotator.New;
+						createAnnotator = Annotators.DynProgAnnotator.New;
 						break;
 					case Setting.SelectionMethod.BB: 
 						if (alternativeMatching)
@@ -652,7 +658,15 @@ namespace protein
 						createAnnotator=Annotators.BranchAndBoundAnnotator.New;
 						break;
 					case Setting.SelectionMethod.MOM: 
-						createAnnotator = cont => new Annotators.MOMAnnotator(cont,softMatching);
+						if (momTimeoutSeconds.HasValue){
+							createAnnotator = cont => new Annotators.FallbackAnnotator(
+								new Annotators.MOMAnnotator(cont, softMatching),
+								momTimeoutSeconds.Value,
+								"MOM annotator timeout, falling back to DP annotator",
+								new Annotators.DynProgAnnotator(cont));
+						} else {
+							createAnnotator = cont => new Annotators.MOMAnnotator(cont,softMatching);
+						}
 						break;
 					case Setting.SelectionMethod.Combined: 
 						if (alternativeMatching)

@@ -9,7 +9,13 @@
                 "build",
                 "${workspaceFolder}/SecStrAnnot2.csproj"
             ],
+            "dependsOn": "write_buildtime",
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "write_buildtime",
+            "command": "date --utc +'%F %T' > ${workspaceFolder}/buildtime",
+            "type": "shell"
         }
     ]
 }

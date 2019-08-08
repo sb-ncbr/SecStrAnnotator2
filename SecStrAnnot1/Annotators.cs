@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using Cif.Components;
+using System.Threading.Tasks;
 
 namespace protein
 {
@@ -225,6 +226,17 @@ namespace protein
 						: LADDER_SCORE_SCALE * (score (MContext.TemplateFST [i].Item1, MContext.CandidateFST [j].Item1) + score (MContext.TemplateFST [i].Item2, MContext.CandidateFST [j].Item2))
 					)
 					: 0);
+					// double[,] scoreScales = new double[m, n].Fill ((i, j) => 
+					// MContext.TemplateFST [i].Item3 == MContext.CandidateFST [j].Item3
+				    //                && typeMatch (MContext.TemplateFST [i].Item1, MContext.CandidateFST [j].Item1)
+				    //                && typeMatch (MContext.TemplateFST [i].Item2, MContext.CandidateFST [j].Item2)
+				    //                && guideDis (MContext.TemplateFST [i].Item1, MContext.CandidateFST [j].Item1)
+				    //                && guideDis (MContext.TemplateFST [i].Item2, MContext.CandidateFST [j].Item2) ?
+					// (templateIsHelix(i) ? 
+					// 	1
+					// 	: LADDER_SCORE_SCALE
+					// )
+					// : 1);
 				if (Lib.DoWriteDebug) {
 					PrintMatrix (
 						MContext.TemplateFST.Select (t => MContext.Context.Templates [t.Item1].Label + "-" + MContext.Context.Templates [t.Item2].Label).ToArray (),
@@ -247,7 +259,7 @@ namespace protein
 					MContext.TemplateFST.Select (t=>t.Item2).ToArray (),
 					MContext.CandidateFST.Select (t=>t.Item1).ToArray (),
 					MContext.CandidateFST.Select (t=>t.Item2).ToArray (),
-					scores,SoftOrderConsistency).OrderBy (x=>x).ToList ();
+					scores, SoftOrderConsistency).OrderBy (x=>x).ToList ();
 
 				Lib.WriteLineDebug ("MOMAnnotator.GetAnnotation(): found matching ({0})", DateTime.Now);
 				Lib.WriteLineDebug ("MOMAnnotator.GetAnnotation(): time: {0}", DateTime.Now - stamp);
@@ -321,6 +333,35 @@ namespace protein
 				}
 			}
 		}
+
+		/** Run primary annotator; if it runs longer than timeoutSeconds, show warning and run backup annotator. */
+		public class FallbackAnnotator : IAnnotator {
+			public IAnnotator PrimaryAnnotator;
+			public double TimeoutSeconds;
+			public string Warning;
+			public IAnnotator BackupAnnotator;
+
+			public FallbackAnnotator(IAnnotator primaryAnnotator, double timeoutSeconds, string timeoutWarning, IAnnotator backupAnnotator) {
+				PrimaryAnnotator = primaryAnnotator;
+				TimeoutSeconds = timeoutSeconds;
+				Warning = timeoutWarning;
+				BackupAnnotator = backupAnnotator;
+			}
+
+			public List<(int, int)> GetMatching(){
+				var task = Task.Run(() => PrimaryAnnotator.GetMatching());
+				if (task.Wait(TimeSpan.FromSeconds(TimeoutSeconds))) {
+					return task.Result;
+				} else {
+					if (Warning != null) {
+						Lib.WriteWarning(Warning);
+					}
+					return BackupAnnotator.GetMatching();
+				}
+			}
+		}
+
+		
 
 		public class NiceAnnotatorWrapper{
 			const double SUSPICIOUSNESS_THRESHOLD = 1.0;

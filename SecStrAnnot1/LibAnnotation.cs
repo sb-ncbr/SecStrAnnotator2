@@ -1732,7 +1732,7 @@ namespace protein
 
 		public static List<(int, int)> MaxWeightMixedOrderedMatching(int nG, int nH, 
 			int[] rank0G, int[] rank1G, int[] rank0H, int[] rank1H,
-			double[,] score, bool softOrderConsistence /*, bool[,] conflictsG, bool[,] conflictsH*/)
+			double[,] score, bool softOrderConsistence /*, bool[,] conflictsG, bool[,] conflictsH*/ /*, int? maxModularProductVertices, double[,] scoreScales*/)
 		{
 
 			if (rank0G.Length!= nG)
@@ -1761,6 +1761,20 @@ namespace protein
 			}
 			int nM = nG * nH;
 			double[] w = Enumerable.Range (0, nM).Select (u => score [u / nH, u % nH]).ToArray ();
+			// int nM_active = w.Where(x => x > 0).Count();
+			// if (maxModularProductVertices.HasValue && nM_active > maxModularProductVertices.Value){
+			// 	if (scoreScales == null) {
+			// 		double decrease = w.OrderByDescending(x=>x).Skip(maxModularProductVertices.Value).First();
+			// 		for (int i = 0; i < w.Length; i++) {
+			// 			w[i] = w[i] - decrease;
+			// 		}
+			// 	} else {
+			// 		throw new NotImplementedException();
+			// 		// double[] wUnscaled = (scoreScales == null) ? w : Enumerable.Range(0, nM).Select(u => w[u] / scoreScales[u / nH, u % nH]).ToArray();
+			// 		// double decrease = wUnscaled.OrderByDescending(x=>x).Skip(maxModularProductVertices).First();
+			// 		// for (int i = 0; i < w.Length; i++)...
+			// 	}
+			// }
 			Func<int,int,bool> edgesM = 
 				(u, v) => 
 				(u / nH == v / nH) == (u % nH == v % nH) //identity consistence
@@ -1780,7 +1794,7 @@ namespace protein
 
 		/** Returns inclusion-maximal clique with maximal total w. 
 			Uses branch-and-bound algorithm.*/
-		private static List<int> MaxWeightClique(int nM, Func<int,int,bool> edgesM, double[] w, int maxExpectedSize) {
+		private static List<int> MaxWeightClique(int nM, Func<int,int,bool> edgesM, double[] w, int maxExpectedSize /*, double? timeoutSeconds = null*/) {
 			if (w.Length != nM)
 				throw new Exception ("Incorrect size of parameter w.");
 
@@ -1798,6 +1812,9 @@ namespace protein
 			int p = 0; //index of current vertex
 			bool forward = true; //direction of backtracking
 			int iterationCounter = 0;
+			
+			int nM_active = w.Where(x => x>0).Count();
+			DateTime startTime = DateTime.Now;
 
 			while (p >= 0) {
 				//Lib.WriteLineDebug ("{5} S[p]: {0}, Current: [{1}], ExpAdded: {2}, ExpScore: {3}, BestScore: {4}", p<nM?S [p]:-1, J.Select (u=>"("+u/12+","+u%12+")").EnumerateWithCommas (), maxExpAdded, maxExpScore, wK, forward?">":"<");
@@ -1855,8 +1872,12 @@ namespace protein
 					}
 				}
 				iterationCounter++;
+				// if (iterationCounter % 10000 == 0 && timeoutSeconds.HasValue && (DateTime.Now - startTime).TotalSeconds > timeoutSeconds.Value){
+				// 	throw new TimeoutException($"MaxWeightClique() exceeded time limit {timeoutSeconds.Value} s");
+				// }
 			}
-			Lib.WriteLineDebug ("MaxWeightClique: {0} iterations.", iterationCounter);
+			TimeSpan time = DateTime.Now - startTime;
+			Lib.WriteLineDebug ($"MaxWeightClique: {nM_active} vertices, {iterationCounter} iterations, {time.TotalSeconds} seconds");
 			return K.Select (i => S [i]).ToList ();
 		}
 

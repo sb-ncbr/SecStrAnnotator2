@@ -176,21 +176,42 @@ namespace protein
 			Console.ForegroundColor = orig;
 		}
 
-		public static Version BuildVersion{
-			get{
+		public static Version BuildVersion {
+			get {
+				return TimeToBuildVersion(RealBuildTime);
 				return Assembly.GetExecutingAssembly ().GetName ().Version;
+			}
+		}
+
+		public static DateTime RealBuildTime {
+			get {
+				var assembly = typeof(Lib).GetTypeInfo().Assembly;
+				string assemblyName = assembly.GetName().Name;
+				Stream resource = assembly.GetManifestResourceStream($"{assemblyName}.buildtime");
+				string time;
+				using (StreamReader r = new StreamReader(resource)){
+					time = r.ReadToEnd();
+				}
+				resource.Close();
+				return DateTime.Parse(time);
 			}
 		}
 
 		public static DateTime BuildTime{
 			get{
-				Version version = BuildVersion;
-				TimeSpan span = new TimeSpan (
-					               TimeSpan.TicksPerDay * version.Build + // days since 1 January 2000
-					               TimeSpan.TicksPerSecond * 2 * version.Revision);
-				DateTime buildTime = new DateTime (2000, 1, 1).Add (span);
-				return buildTime;
+				return RealBuildTime;
+				// Version version = BuildVersion;
+				// TimeSpan span = new TimeSpan (
+				// 	               TimeSpan.TicksPerDay * version.Build + // days since 1 January 2000
+				// 	               TimeSpan.TicksPerSecond * 2 * version.Revision);
+				// DateTime buildTime = new DateTime (2000, 1, 1).Add (span);
+				// return buildTime;
 			}
+		}
+
+		private static Version TimeToBuildVersion(DateTime time){
+			TimeSpan since2000 = time.Date - new DateTime(2000, 1, 1);
+			return new Version(0, 0, (int) since2000.TotalDays, (int) time.TimeOfDay.TotalSeconds % 100000);
 		}
 
 		/**Orders the IEnumerable in the same way as OrderBy() and returns the ranks of the elements of the original IEnumerable.

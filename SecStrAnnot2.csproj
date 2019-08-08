@@ -5,4 +5,12 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Content Remove="buildtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="buildtime" />
+  </ItemGroup>
+
 </Project>
