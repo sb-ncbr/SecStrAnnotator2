@@ -286,6 +286,7 @@ namespace protein
 
 			String fileQueryPDB = Path.Combine (Setting.Directory, queryID + Setting.PDB_FILE_EXT);
 			String fileQueryAlignedPDB = Path.Combine (Setting.Directory, queryID + Setting.ALIGNED_PDB_FILE_EXT);
+			String fileQueryAlignment = Path.Combine (Setting.Directory, queryID + Setting.ALIGNMENT_FILE_EXT);
 			String fileQueryRenumberedPDB = Path.Combine (Setting.Directory, queryID + Setting.RENUMBERED_PDB_FILE_EXT);
 			String fileQueryDSSP = Path.Combine (Setting.Directory, queryID + Setting.DSSP_OUTPUT_FILE_EXT);
 			String fileQueryInputHelices = Path.Combine (Setting.Directory, queryID + Setting.INPUT_SSES_FILE_EXT)+(Setting.JSON_INPUT?".json":"");
@@ -446,6 +447,7 @@ namespace protein
 						null, //extras
 						querySSA.Connectivity,
 						querySSA.HBonds, 
+						null,
 						null);
 					// string outStr = qSSEsInSpace.Select(sse => sse.ToString() + sse.StartVector.ToString() + sse.EndVector.ToString()).EnumerateWithSeparators("\n");
 					// Lib.WriteLineDebug($"qSSEs in space: {outStr}");
@@ -466,6 +468,7 @@ namespace protein
 			List<SSEInSpace> detQSsesInSpace_AllChains = new List<SSEInSpace>();
 			List<String> detQSseSequences_AllChains = new List<string> ();
 
+			JsonValue rotationMatrix = null;
 
 			#region Superimposition and annotation for each chain.
 			foreach (string templateChainID in allTemplateChainIDs) {
@@ -494,6 +497,8 @@ namespace protein
 							}))
 								return -1;
 							qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
+							rotationMatrix = LibAnnotation.ReadRotationMatrixFromAlignmentFile(fileQueryAlignment);
+							Console.WriteLine(rotationMatrix);
 							#endregion
 						} else {
 							throw new Exception (alignMethod + " has no assigned name in alignMethodNames.");
@@ -807,6 +812,7 @@ namespace protein
 					extras, 
 					annotQConnectivity_AllChains, // null, //TODO output beta_connectivity
 					querySSA.HBonds, 
+					rotationMatrix,
 					comment);
 			}
 			else

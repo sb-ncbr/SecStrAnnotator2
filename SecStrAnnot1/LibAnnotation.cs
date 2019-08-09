@@ -49,6 +49,7 @@ namespace protein
 			public const string TOTAL_METRIC = "total_metric_value";
 			public const string SSES = "secondary_structure_elements";
 			public const string BETA_CONNECTIVITY = "beta_connectivity";
+			public const string ROTATION_MATRIX = "rotation_matrix";
 			public const string H_BONDS = "hydrogen_bonds";
 			public const string SSE_MERGING = "sse_merging";
 			//public const string MERGED_LABEL = "label";
@@ -203,7 +204,7 @@ namespace protein
 
 		public static void WriteAnnotationFile_Json(String fileName, String name, 
 			IEnumerable<SSE> sses, IDictionary<String,IEnumerable<object>> extras, List<(int, int, int)> betaConnectivity, 
-			List<(Residue, Residue)> hBonds, String comment){
+			List<(Residue, Residue)> hBonds, JsonValue rotationMatrix, String comment){
 
 			JsonValue ssesJson = JsonValue.MakeList ();
 			Dictionary<String,IEnumerator<object>> extraEnumerators = extras?.ToDictionary (kv => kv.Key, kv => kv.Value.GetEnumerator ());
@@ -222,11 +223,14 @@ namespace protein
 			if (WRITE_METRIC && extras!=null && extras.ContainsKey (JsNames.METRIC))
 				json [name] [JsNames.TOTAL_METRIC] = new JsonValue (extras[JsNames.METRIC].Select (x=> RoundDouble((double)x)).Where (x=>!Double.IsInfinity (x)&& !Double.IsNaN (x)).Sum ());
 			json [name] [JsNames.SSES] = ssesJson;
-			if (Lib.DoWriteDebug && hBonds != null)
-				json [name] [JsNames.H_BONDS] = HBondsToJson (hBonds);
 			if (betaConnectivity != null)
 				json [name] [JsNames.BETA_CONNECTIVITY] = BetaConnectivityToJson (betaConnectivity, sses);
-
+			if (Lib.DoWriteDebug && hBonds != null)
+				json [name] [JsNames.H_BONDS] = HBondsToJson (hBonds);
+			if (rotationMatrix != null)
+				json [name] [JsNames.ROTATION_MATRIX] = rotationMatrix;
+			
+			
 			using (StreamWriter w = new StreamWriter (fileName)) {
 				w.Write (json.ToString(Setting.JSON_OUTPUT_MAX_INDENT_LEVEL));
 			}
@@ -272,6 +276,20 @@ namespace protein
 			List<(int, int, int)> dump2;
 			List<(String, int, int)> dump3;
 			return ReadAnnotationFile_Json (fileName, null, out dump, out dump2, out dump3, false);
+		}
+
+		public static JsonValue ReadRotationMatrixFromAlignmentFile(string fileName){
+			string str;
+			using (StreamReader r = new StreamReader (fileName)) {
+				str = r.ReadToEnd ();
+			}
+			JsonValue json;
+			try {
+				json = JsonValue.FromString (str);
+			} catch (Exception) { //TODO put actual exception type here
+				throw new FormatException (fileName + " is not a valid JSON.");
+			}
+			return json["rotation_matrix"];
 		}
 
 		/* If name==null, takes the first entity in the file. */

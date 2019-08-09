@@ -26,7 +26,8 @@ namespace protein.SecStrAssigning
                 result.SSEs,
                 null, 
                 result.Connectivity,
-                result.HBonds,
+                result.HBonds, 
+                null,
                 "Helix info obtained by " + InnerAssigner.GetDescription() + "."
             );
             //TODO write out connectivity and hbonds

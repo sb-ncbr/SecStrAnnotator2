@@ -34,6 +34,10 @@ STRUCTURE_EXT = '.cif' if USE_CIF else '.pdb'
 ALIGNED_STRUCTURE_EXT = '-aligned.cif' if USE_CIF else '-aligned.pdb'
 ALIGNMENT_OBJECT = 'aln'
 
+PASSED_VAR = 'stored.passed_var'  # dev
+ALIGNMENT_FILE = path.join(directory, query_id + '-alignment.json')  # dev
+ALIGNED_RESIDUES = 'aligned_residues'  # dev
+
 
 # Auxiliary functions
 
@@ -51,6 +55,7 @@ def selection_expression(object_name, chain, ranges, symbol=None):
 
 def aligned_residues_from_alignment_object(alignment_object_name):
 	"""Returns a list of paired residues as 4-tuples (template_chain, template_resi, query_chain, query_resi)."""
+	from pymol import stored
 	raw_aln = cmd.get_raw_alignment(alignment_object_name)
 	cr_aln = []
 	for idx1, idx2 in raw_aln:
@@ -91,6 +96,16 @@ def perform_alignment(method, directory, template_id, template_chain, template_r
 		cmd.super(sel_q, sel_t)
 	elif method == 'cealign':
 		aln_result = cmd.cealign(sel_t, sel_q, object=ALIGNMENT_OBJECT)
+		try:  # dev
+			import json
+			aln_result[ALIGNED_RESIDUES] = aligned_residues_from_alignment_object(ALIGNMENT_OBJECT)
+			with open(ALIGNMENT_FILE, 'w') as f:
+				json.dump(aln_result, f, indent=4)
+		except Exception as e:
+			print('WARNING: Could not save alignment in a file')
+			print('         ' + type(e).__name__ + ' raised: ' + str(e))
+		except ValueError:
+			pass
 	else:
 		print('ERROR: Unknown structural alignment method: '+method)
 		cmd.quit(1)
@@ -106,5 +121,5 @@ try:
 	perform_alignment(method, directory, template_id, template_chain, template_range, query_id, query_chain, query_range)
 	cmd.quit(0)
 except Exception as e:
-	print('ERROR: Exception raised: ' + str(e))
+	print('ERROR: ' + type(e).__name__ + ' raised: ' + str(e))
 	cmd.quit(1)

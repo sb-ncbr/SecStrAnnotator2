@@ -47,6 +47,7 @@ DOMAIN = 'domain'
 SOURCE = 'source'
 FAMILY_ID = 'family'
 SSES = 'secondary_structure_elements'
+ROTATION_MATRIX = 'rotation_matrix'
 
 # Per-SSE field names 
 LABEL = 'label'
@@ -137,6 +138,7 @@ def fetch_structure(pdbid, domain_name=None, domain=None, force_cartoon=True):
 					cmd.select(domain_name, sel)
 			cmd.show(DEFAULT_REPRESENTATION, sel)
 			cmd.show(DEFAULT_HET_REPRESENTATION, '(' + sel + ') and hetatm')
+			cmd.zoom(sel)
 	return True
 
 def has_domain_auth_fields(domain):
@@ -292,7 +294,7 @@ class Annotation_0_9:
 		else:
 			return []
 
-def apply_annotation(selection, domains, base_color):
+def apply_annotation(selection, domains, base_color, apply_rotation=False):
 	# then = datetime.now()
 	for domain in domains:
 		selection = '(' + selection + ')'
@@ -309,6 +311,13 @@ def apply_annotation(selection, domains, base_color):
 		group = domain_name + '.sses'
 		if not is_valid_selection(group):
 			cmd.group(group)
+
+		if apply_rotation and ROTATION_MATRIX in domain:
+			print('Applying rotation for domain ' + domain_name)  # debug
+			pdb = domain[PDB]
+			matrix = domain[ROTATION_MATRIX]
+			cmd.set_object_ttt(pdb, matrix)
+			cmd.zoom(domain_name)
 
 		if base_color is not None:
 			cmd.color(base_color, domain_selection + ' and not hetatm and symbol C')
@@ -487,6 +496,8 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 			force_cartoon = parse_boolean(force_cartoon)
 		except:
 			return False
+		fetched = False
+		force_rotation = True
 		# debug_log(force_cartoon)
 		if annotation_file is not None and name is not None:
 			annotation_text = get_annotation_from_file(annotation_file)
@@ -573,6 +584,7 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 			for word in words:
 				if is_valid_pdbid(word) and not is_valid_selection(word):
 					fetch_structure(word, force_cartoon=force_cartoon)
+					fetched = True
 				elif is_valid_domain_name(word) and not is_valid_selection(word):
 					pdb = word[0:4]
 					if annotation_file is None:
@@ -581,12 +593,13 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 					doms = annotation.get_domains_by_name(word)
 					if len(doms) == 1:
 						fetch_structure(pdb, domain_name=word, domain=doms[0], force_cartoon=force_cartoon)
+						fetched = True
 			if not is_valid_selection(selection):
 				fail('Invalid selection "' + selection + '"')
 				return False
 		
 		debug_log('OK')
-		apply_annotation(selection, domains, base_color)
+		apply_annotation(selection, domains, base_color, apply_rotation=fetched and force_rotation)
 		return True
 	# except Exception as ex:
 	# 	fail(str(ex))
