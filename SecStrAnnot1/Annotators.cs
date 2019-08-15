@@ -213,7 +213,7 @@ namespace protein
 				Func<int,int,bool> guideDis = (i, j) =>
 					MContext.Context.GuideDiscriminator == null || MContext.Context.GuideDiscriminator [i, j];
 
-				double LADDER_SCORE_SCALE = 1.0;
+				double LADDER_SCORE_SCALE = 0.5;
 
 				double[,] scores = new double[m, n].Fill ((i, j) => 
 					MContext.TemplateFST [i].Item3 == MContext.CandidateFST [j].Item3

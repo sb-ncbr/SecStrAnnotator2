@@ -247,7 +247,7 @@ def merge_outputs(thread):
 clear_file(output)
 clear_file(output_err)
 
-progress_bar = ProgressBar(n_found_domains, title='Running SecStrAnnotator on '+str(n_found_domains)+' domains', width=70)
+progress_bar = ProgressBar(len(found_pdbs), title='Running SecStrAnnotator on '+str(n_found_domains)+' domains', width=70)
 
 # Run SecStrAnnotator in parallel threads
 run_in_threads(process_pdb, found_pdbs, n_threads, progress_bar=progress_bar, initialize_thread_sync=clear_outputs, finalize_thread_sync=merge_outputs)
