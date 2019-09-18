@@ -1,18 +1,19 @@
-# This file contains a PyMOL script that adds a new command 'annotate_sec_str'.
-# To run this script once, type 'run FILENAME' into PyMOL (where FILENAME is the exact location of this file).
-# To run this script every time you launch PyMOL, add line 'run FILENAME' into your pymolrc file (on Linux and MacOS X: ~/.pymolrc, on Windows: C:\Program Files\DeLano Scientific\PyMOL\pymolrc or similar).
-# Version: 1.2 (2019/04/11)
-# Further information about SecStrAPI is available at http://webchem.ncbr.muni.cz/API/SecStr/
+# This is a PyMOL extension which adds a new command 'annotate_sec_str'.
+# To run once, type 'run THIS_FILE' into PyMOL (where THIS_FILE is the exact location of this file).
+# To run every time you launch PyMOL, install via Plugin Manager in PyMOL or add line 'run THIS_FILE' into your pymolrc file.
+# Further information will be available after installation by typing 'help annotate_sec_str'.
+# Information about SecStrAPI is available at http://webchem.ncbr.muni.cz/API/SecStr/
+# Version: 1.2 (2019/09/18)
 
 
 # Settings ####################################################################
-# Modify this section to change the default behaviour of the script:
+# Modify this section to change the default behaviour:
 
 SEC_STR_API_URL              = 'http://webchem.ncbr.muni.cz/API/SecStr/Annotation/'  # If no annotation file is provided, annotation will be downloaded from this URL (with PDB ID added after slash).
 DEFAULT_BASE_COLOR           = 'gray80'  # This color will be used for residues without annotation, unless specified by parameter base_color.
 DEFAULT_REPRESENTATION       = 'cartoon'  # Default visual representation for newly fetched structures (does not apply objects that have already been loaded).
 DEFAULT_HET_REPRESENTATION   = 'sticks'  # Default visual representation for heteroatoms.
-SHOW_LABELS                  = True #debug  # Indicates whether labels with SSE names should be shown.
+SHOW_LABELS                  = True  # Indicates whether labels with SSE names should be shown.
 LABEL_SIZE                   = None  # Size for the labels (None = default size).
 PYMOL_REPLACEMENT_CHARACTER  = '+'  # In selection names, avoid-characters will be replaced by PYMOL_REPLACEMENT_CHARACTER (i.e. all except alphanumeric characters A-Z a-z 0-9 and characters _ . + -).
 
@@ -397,24 +398,24 @@ def mark_pivot(sse, selection, use_auth, color='red'):
 def parse_boolean(string):
 	if not isinstance(string, str):
 		return string
-	if string.lower() in ['0', 'off', 'false']:
+	if string.lower() in ['0', 'off', 'false', 'no']:
 		return False
-	elif string.lower() in ['1', 'on', 'true']:
+	elif string.lower() in ['1', 'on', 'true', 'yes']:
 		return True
 	else:
 		fail('Invalid value "' + string + '", allowed values: 0, 1, off, on, false, true')
 		raise Exception
 
-def print_help():
-	print('annotate_sec_str(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True)')
-	print('Usage: annotate_sec_str selection [, annotation_file [, name [, base_color [, force_cartoon ]]]]')
-	print('    default annotation_file: None (downloaded from SecStrAPI ' + SEC_STR_API_URL + ')')
-	print('    default name: None (will be guessed from selection)')
-	print('    default base_color: ' + DEFAULT_BASE_COLOR)
-	print('    default force_cartoon: True')
-	print('Examples: annotate_sec_str 1tqn')
-	print('          annotate_sec_str 1og2, my_annotation.sses.json, 1og2A00')
-	# TODO add usefull usage info
+# def print_help():
+# 	print('annotate_sec_str(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True)')
+# 	print('Usage: annotate_sec_str selection [, annotation_file [, name [, base_color [, force_cartoon ]]]]')
+# 	print('    default annotation_file: None (downloaded from SecStrAPI ' + SEC_STR_API_URL + ')')
+# 	print('    default name: None (will be guessed from selection)')
+# 	print('    default base_color: ' + DEFAULT_BASE_COLOR)
+# 	print('    default force_cartoon: True')
+# 	print('Examples: annotate_sec_str 1tqn')
+# 	print('          annotate_sec_str 1og2, my_annotation.sses.json, 1og2A00')
+# 	# TODO add usefull usage info
 
 def test():
 	base_dir = '/home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322'
@@ -488,10 +489,37 @@ def test():
 # Main function ###############################################################
 
 def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True):
+	'''
+DESCRIPTION
+
+	"annotate_sec_str" visualizes protein secondary structure annotation.
+
+USAGE
+
+	annotate_sec_str selection, [, annotation_file [, name [, base_color [, force_cartoon ]]]]
+
+ARGUMENTS
+
+	selection = string: selection-expression. If it is not a valid selection-expression, the command will try to fetch the missing structures.
+
+	annotation_file = string: name of the file with secondary structure annotation (in SecStrAPI format). If not specified, the annotation will be downloaded from SecStrAPI (the PDB ID will be guessed from the "name" argument).
+
+	name = string: PDB ID or domain name specifying a protein domain(s) within the annotation file. If not specified, the PDB ID and the domain name will be guessed from the "selection" argument.
+
+	base_color = string: color to use for non-annotated atoms {default: gray80}
+
+	force_cartoon = 0/1: apply default cartoon representation for all newly fetched structures {default: 1}
+
+NOTES
+
+EXAMPLES
+
+	annotate_sec_str 1tqn
+	annotate_sec_str 1og2, my_annotation.sses.json, 1og2A00
+
+	'''
+
 	try:
-		if selection == 'help' and annotation_file is None and name is None:
-			print_help()
-			return False
 		try:
 			force_cartoon = parse_boolean(force_cartoon)
 		except:
@@ -612,6 +640,8 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 
 # test()
 cmd.extend('annotate_sec_str', annotate_sec_str)
-print('Command "annotate_sec_str" has been added. Type "annotate_sec_str help" for more information.')
+print('Command "annotate_sec_str" has been added. Type "help annotate_sec_str" for more information.')
+
+#TODO rename pivot to reference, make mark_pivot optional
 
 
