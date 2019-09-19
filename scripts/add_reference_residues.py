@@ -46,19 +46,19 @@ for pdb, domains in pdb2domains.items():
             label = sse.get(LABEL, None)
             if label is not None and (labels is None or label in labels):
                 realigner = realigners_manager[label]
-                shift, pivot_index = realigner.aligning_shift_and_pivot(sse[SEQUENCE])
-                pivot_residue = sse[START] + pivot_index
-                if not sse[START] <= pivot_residue <= sse[END]:
-                    message = f'{pdb}: pivot residue of {label} ({pivot_residue}) falls out of {label} ({sse[START]}-{sse[END]})'
+                shift, ref_index = realigner.aligning_shift_and_pivot(sse[SEQUENCE])
+                ref_residue = sse[START] + ref_index
+                if not sse[START] <= ref_residue <= sse[END]:
+                    message = f'{pdb}: reference residue of {label} ({ref_residue}) falls out of {label} ({sse[START]}-{sse[END]})'
                     # raise Exception(message)
                     sys.stderr.write(f'    WARNING: {message}\n')
                     # continue
-                sse[PIVOT_RESIDUE] = pivot_residue
+                sse[PIVOT_RESIDUE] = ref_residue
                 if converter is not None:
                     try:
                         _, sse[AUTH_PIVOT_RESIDUE], sse[AUTH_PIVOT_RESIDUE_INS_CODE] = converter.auth_chain_resi_ins(sse[CHAIN_ID], sse[PIVOT_RESIDUE])
                     except KeyError:
-                        message = f'{pdb}: pivot residue of {label} ({pivot_residue}) is not modelled in the structure)'
+                        message = f'{pdb}: reference residue of {label} ({ref_residue}) is not modelled in the structure)'
                         sys.stderr.write(f'  WARNING: {message}\n')
 
 
@@ -68,4 +68,4 @@ print()
 n_pdbs = len(all_annotations[ANNOTATIONS])
 n_domains = sum( len(doms) for doms in all_annotations[ANNOTATIONS].values() )
 n_labels = len(realigners_manager.dictionary)
-sys.stderr.write(f'Added pivot residues for {n_domains} domains in {n_pdbs} PDB entries ({n_labels} labels)\n')
+sys.stderr.write(f'Added reference residues for {n_domains} domains in {n_pdbs} PDB entries ({n_labels} labels)\n')

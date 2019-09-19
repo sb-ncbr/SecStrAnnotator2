@@ -58,9 +58,9 @@ AUTH_START_RESI_INS_CODE = 'auth_start_ins_code'
 END_RESI = 'end'
 AUTH_END_RESI = 'auth_end'
 AUTH_END_RESI_INS_CODE = 'auth_end_ins_code'
-PIVOT_RESI = 'pivot_residue'
-AUTH_PIVOT_RESI = 'auth_pivot_residue'
-AUTH_PIVOT_RESI_INS_CODE = 'auth_pivot_residue_ins_code'
+REFERENCE_RESI = 'reference_residue'
+AUTH_REFERENCE_RESI = 'auth_reference_residue'
+AUTH_REFERENCE_RESI_INS_CODE = 'auth_reference_residue_ins_code'
 CHAIN_ID = 'chain_id'
 AUTH_CHAIN_ID = 'auth_chain_id'
 TYPE = 'type'
@@ -95,12 +95,11 @@ def is_valid_domain_name(string):
 	
 def is_valid_selection(selection):
 	try:
-		# debug_log('is_valid_selection(' + selection + ') ...')
 		cmd.count_atoms(selection)
-		# debug_log('is_valid_selection(' + selection + ') Yes')
+		# debug_log('is_valid_selection(' + selection + ') == True')
 		return True
 	except:
-		# debug_log('is_valid_selection(' + selection + ') No')
+		# debug_log('is_valid_selection(' + selection + ') == False')
 		return False
 
 def first_valid_pdbid(text, pdbids=None):
@@ -346,7 +345,7 @@ def apply_annotation(selection, domains, base_color, apply_rotation=False):
 				cmd.color(assign_color(sse), sel_name + ' and symbol C')
 				if SHOW_LABELS:
 					label_sse(sse, sel_name, use_auth)
-			mark_pivot(sse, sel_name, use_auth, color=assign_color(sse))
+			mark_reference_residue(sse, sel_name, use_auth, color=assign_color(sse))
 			cmd.deselect()
 	# debug_log('apply_annotation: ' + str(datetime.now() - then))
 
@@ -373,27 +372,27 @@ def label_sse(sse, selection, use_auth):
 		label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(middle) + ' and name CA'
 	cmd.label(label_selection, '"' + sse[LABEL].replace('"', '\\"') + '"')
 
-def mark_pivot(sse, selection, use_auth, color='red'):
+def mark_reference_residue(sse, selection, use_auth, color='red'):
 	if use_auth:
 		chain = sse[AUTH_CHAIN_ID]
-		pivot = sse.get(AUTH_PIVOT_RESI, None)
-		pivot_ins_code = sse.get(AUTH_PIVOT_RESI_INS_CODE, INSERTION_CODE_NULL)
-		if pivot is not None:
-			pivot = str(pivot)
-			if pivot_ins_code != INSERTION_CODE_NULL:
-				pivot += pivot_ins_code
+		ref = sse.get(AUTH_REFERENCE_RESI, None)
+		ref_ins_code = sse.get(AUTH_REFERENCE_RESI_INS_CODE, INSERTION_CODE_NULL)
+		if ref is not None:
+			ref = str(ref)
+			if ref_ins_code != INSERTION_CODE_NULL:
+				ref += ref_ins_code
 	else:
 		chain = sse[CHAIN_ID]
-		pivot = sse.get(PIVOT_RESI, None)
-		if pivot is not None:
-			pivot = str(pivot)
-	if pivot is not None:
-		pivot_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + pivot + ' and name CA+CB'
-		cmd.show('sticks', pivot_selection)
-		cmd.color(color, pivot_selection)
-		pivot_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + pivot + ' and name CA'
-		cmd.show('spheres', pivot_selection)
-		cmd.color('red', pivot_selection)
+		ref = sse.get(REFERENCE_RESI, None)
+		if ref is not None:
+			ref = str(ref)
+	if ref is not None:
+		ref_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + ref + ' and name CA+CB'
+		cmd.show('sticks', ref_selection)
+		cmd.color(color, ref_selection)
+		ref_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + ref + ' and name CA'
+		cmd.show('spheres', ref_selection)
+		cmd.color('red', ref_selection)
 
 def parse_boolean(string):
 	if not isinstance(string, str):
@@ -406,19 +405,8 @@ def parse_boolean(string):
 		fail('Invalid value "' + string + '", allowed values: 0, 1, off, on, false, true')
 		raise Exception
 
-# def print_help():
-# 	print('annotate_sec_str(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True)')
-# 	print('Usage: annotate_sec_str selection [, annotation_file [, name [, base_color [, force_cartoon ]]]]')
-# 	print('    default annotation_file: None (downloaded from SecStrAPI ' + SEC_STR_API_URL + ')')
-# 	print('    default name: None (will be guessed from selection)')
-# 	print('    default base_color: ' + DEFAULT_BASE_COLOR)
-# 	print('    default force_cartoon: True')
-# 	print('Examples: annotate_sec_str 1tqn')
-# 	print('          annotate_sec_str 1og2, my_annotation.sses.json, 1og2A00')
-# 	# TODO add usefull usage info
-
 def test():
-	base_dir = '/home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322'
+	base_dir = '/home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190814-for_SecStrAPI'
 	def run_test(expect_success, *args, **kwargs):
 		log('---------------------------------------------------')
 		log('TEST annotate_sec_str ' + ', '.join(str(arg) for arg in args) + ', ' + ', '.join(k + '=' + v for k, v in kwargs.items()) )
@@ -430,53 +418,53 @@ def test():
 			raise Exception()
 	log('---------------------------------------------------')
 	# annot.file, name
-	run_test(True, '1bu7', path.join(base_dir, 'annotations_with_pivots_all.json'), '1bu7')
-	run_test(False, '1bu7', path.join(base_dir, 'annotations_with_pivots_best.json'), '1bu7')
-	run_test(True, '1bu7', path.join(base_dir, 'annotations_with_pivots_all.json'), '1bu7A00')
-	run_test(False, '1bu7', path.join(base_dir, 'annotations_with_pivots_all.json'), '1bu7xxx')
+	run_test(True, '1bu7', path.join(base_dir, 'annotations_with_reference_residues_all.json'), '1bu7')
+	run_test(False, '1bu7', path.join(base_dir, 'annotations_with_reference_residues_best.json'), '1bu7')
+	run_test(True, '1bu7', path.join(base_dir, 'annotations_with_reference_residues_all.json'), '1bu7A00')
+	run_test(False, '1bu7', path.join(base_dir, 'annotations_with_reference_residues_all.json'), '1bu7xxx')
 	# no annot.file, name
 	run_test(True, '1bu7', None, '1bu7')
-	# run_test(True, '1bu7', None, '1bu7A00')  # uncomment when annotations 1.0 are online
+	run_test(True, '1bu7', None, '1bu7A00')  # uncomment when annotations 1.0 are online
 	run_test(False, '1bu7', None, '1bu7xxx')
 	# annot.file, no name
-	run_test(True, '1bu7', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(False, '1bu7_my_favourite', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(True, '1bu7A00', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(False, '1bu7A00_my_favourite', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(True, 'chain A and 1bu7', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(True, 'chain A and 1bu7A00', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(False, 'xxxx', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(False, '1xxx', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
+	run_test(True, '1bu7', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(False, '1bu7_my_favourite', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(True, '1bu7A00', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(False, '1bu7A00_my_favourite', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(True, 'chain A and 1bu7', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(True, 'chain A and 1bu7A00', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(False, 'xxxx', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(False, '1xxx', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
 	# no annot.file, no name
 	run_test(True, '1bu7', None, None)
 	run_test(False, '1bu7_my_favourite', None, None)
-	# run_test(True, '1bu7A00', None, None)  # uncomment when annotations 1.0 are online
+	run_test(True, '1bu7A00', None, None)  # uncomment when annotations 1.0 are online
 	run_test(True, 'chain A and 1bu7', None, None)
 	run_test(False, 'xxxx', None, None)
 	run_test(False, '1xxx', None, None)
 
 	# annot.file, name
-	run_test(True, '1BU7', path.join(base_dir, 'annotations_with_pivots_all.json'), '1bu7')
-	run_test(False, '1BU7', path.join(base_dir, 'annotations_with_pivots_best.json'), '1bu7')
-	run_test(True, '1BU7', path.join(base_dir, 'annotations_with_pivots_all.json'), '1bu7A00')
-	run_test(False, '1BU7', path.join(base_dir, 'annotations_with_pivots_all.json'), '1bu7xxx')
+	run_test(True, '1BU7', path.join(base_dir, 'annotations_with_reference_residues_all.json'), '1bu7')
+	run_test(False, '1BU7', path.join(base_dir, 'annotations_with_reference_residues_best.json'), '1bu7')
+	run_test(True, '1BU7', path.join(base_dir, 'annotations_with_reference_residues_all.json'), '1bu7A00')
+	run_test(False, '1BU7', path.join(base_dir, 'annotations_with_reference_residues_all.json'), '1bu7xxx')
 	# no annot.file, name
 	run_test(True, '1BU7', None, '1bu7')
-	# run_test(True, '1bu7', None, '1bu7A00')  # uncomment when annotations 1.0 are online
+	run_test(True, '1bu7', None, '1bu7A00')  # uncomment when annotations 1.0 are online
 	run_test(False, '1BU7', None, '1bu7xxx')
 	# annot.file, no name
-	run_test(True, '1BU7', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(False, '1BU7_my_favourite', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(False, '1BU7A00', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(False, '1BU7A00_my_favourite', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(True, 'chain A and 1BU7', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(False, 'chain A and 1BU7A00', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(False, 'XXXX', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
-	run_test(False, '1XXX', path.join(base_dir, 'annotations_with_pivots_all.json'), None)
+	run_test(True, '1BU7', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(False, '1BU7_my_favourite', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(False, '1BU7A00', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(False, '1BU7A00_my_favourite', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(True, 'chain A and 1BU7', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(False, 'chain A and 1BU7A00', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(False, 'XXXX', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
+	run_test(False, '1XXX', path.join(base_dir, 'annotations_with_reference_residues_all.json'), None)
 	# no annot.file, no name
 	run_test(True, '1BU7', None, None)
 	run_test(False, '1BU7_my_favourite', None, None)
-	# run_test(True, '1bu7A00', None, None)  # uncomment when annotations 1.0 are online
+	run_test(True, '1bu7A00', None, None)  # uncomment when annotations 1.0 are online
 	run_test(True, 'chain A and 1BU7', None, None)
 	run_test(False, 'XXXX', None, None)
 	run_test(False, '1XXX', None, None)
@@ -500,7 +488,7 @@ USAGE
 
 ARGUMENTS
 
-	selection = string: selection-expression. If it is not a valid selection-expression, the command will try to fetch the missing structures.
+	selection = string: selection-expression.
 
 	annotation_file = string: name of the file with secondary structure annotation (in SecStrAPI format). If not specified, the annotation will be downloaded from SecStrAPI (the PDB ID will be guessed from the "name" argument).
 
@@ -512,10 +500,15 @@ ARGUMENTS
 
 NOTES
 
+	The command will try to fetch the missing structures in case that the "selection" argument is not currently a valid selection-expression.
+
 EXAMPLES
 
-	annotate_sec_str 1tqn
-	annotate_sec_str 1og2, my_annotation.sses.json, 1og2A00
+	annotate_sec_str 1og2   (Fetches 1og2 (if not loaded), downloads its annotation from SecStrAPI, annotates all domains (i.e. 1og2A, 1og2B).)
+
+	annotate_sec_str 1og2A  (Fetches 1og2 (if not loaded), downloads its annotation from SecStrAPI, annotates domains 1og2A.)
+
+	annotate_sec_str my_structure, my_annotation.sses.json, 1og2A   (Annotates my_structure)
 
 	'''
 
@@ -642,6 +635,8 @@ EXAMPLES
 cmd.extend('annotate_sec_str', annotate_sec_str)
 print('Command "annotate_sec_str" has been added. Type "help annotate_sec_str" for more information.')
 
-#TODO rename pivot to reference, make mark_pivot optional
-
-
+#TODO make mark_reference_residue optional
+#TODO save_annotation?
+#TODO do not download annotation twice (viz annotate_sec_str 1tqnA)
+#TODO enable messages from SecStrAPI (version-targeted)
+#TODO SecStrAPI document the format by example with hints, like PDBe API

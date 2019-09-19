@@ -16,7 +16,7 @@ COLLECT_ANNOTATIONS="$SCRIPT_DIR/collect_annotations.py"
 DIVIDE_ANNOTATIONS="$SCRIPT_DIR/divide_annotations_by_pdb.py"
 EXTRACT_SEQUENCES="$SCRIPT_DIR/extract_sequences.py"
 ALIGN_SEQUENCES="$SCRIPT_DIR/align_sequences.py"
-ADD_PIVOT_RESIDUES="$SCRIPT_DIR/add_pivot_residues.py"
+ADD_REFERENCE_RESIDUES="$SCRIPT_DIR/add_reference_residues.py"
 
 TEMPLATE="2nnj,A,:"
 TEMPLATE_ANNOTATION_FILE="$DATA_DIR/../2nnj-template-strict.sses.json"
@@ -77,9 +77,9 @@ python3  $EXTRACT_SEQUENCES  $DATA_DIR/annotations_NR.json  $DATA_DIR/sequences_
 # Perform no-gap sequence alignment and create sequence logos (from Set-NR)
 python3  $ALIGN_SEQUENCES  $DATA_DIR/annotations_NR.json  --alignments_dir $DATA_DIR/aligments_NR/  --trees_dir $DATA_DIR/trees_NR/  --logos_dir $DATA_DIR/logos_NR/
 
-# Realign sequences from Set-ALL to the alignment from Set-NR and add pivot residue information
-python3  $ADD_PIVOT_RESIDUES  $DATA_DIR/annotations_ALL.json  $DATA_DIR/aligments_NR/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_pivots_ALL.json
-python3  $ADD_PIVOT_RESIDUES  $DATA_DIR/annotations_NR.json  $DATA_DIR/aligments_NR/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_pivots_NR.json
+# Realign sequences from Set-ALL to the alignment from Set-NR and add reference residue information
+python3  $ADD_REFERENCE_RESIDUES  $DATA_DIR/annotations_ALL.json  $DATA_DIR/aligments_NR/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_reference_residues_ALL.json
+python3  $ADD_REFERENCE_RESIDUES  $DATA_DIR/annotations_NR.json  $DATA_DIR/aligments_NR/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_reference_residues_NR.json
 
 # Divide annotations into per-PDB files
-python3  $DIVIDE_ANNOTATIONS  $DATA_DIR/annotations_with_pivots_ALL.json  $DATA_DIR/annotations_ALL/
+python3  $DIVIDE_ANNOTATIONS  $DATA_DIR/annotations_with_reference_residues_ALL.json  $DATA_DIR/annotations_ALL/  --min_dir $DATA_DIR/annotations_ALL_min/
