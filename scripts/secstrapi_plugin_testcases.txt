@@ -1,4 +1,4 @@
-run annotate_sec_str_extension-1.2.py
+run secstrapi_plugin-1.2.py
 
 annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_all.json, 1bu7
 annotate_sec_str 1bu7, /home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20190322/annotations_with_pivots_best.json, 1bu7

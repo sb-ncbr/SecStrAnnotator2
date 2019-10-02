@@ -1,21 +1,25 @@
-# This is a PyMOL extension which adds a new command 'annotate_sec_str'.
-# To run once, type 'run THIS_FILE' into PyMOL (where THIS_FILE is the exact location of this file).
-# To run every time you launch PyMOL, install via Plugin Manager in PyMOL or add line 'run THIS_FILE' into your pymolrc file.
-# Further information will be available after installation by typing 'help annotate_sec_str'.
-# Information about SecStrAPI is available at http://webchem.ncbr.muni.cz/API/SecStr/
-# Version: 1.2 (2019/09/18)
+"""
+SecStrAPI plugin for PyMOL
+Version: 1.2 (2019/10/02)
 
+More information at http://webchem.ncbr.muni.cz/API/SecStr/
+
+This PyMOL plugin adds a new command 'annotate_sec_str'.
+To run once, type 'run THIS_FILE' into PyMOL (where THIS_FILE is the exact location of this file).
+To run every time you launch PyMOL, install via Plugin Manager in PyMOL or add line 'run THIS_FILE' into your pymolrc file.
+Further information will be available after installation by typing 'help annotate_sec_str'.
+"""
 
 # Settings ####################################################################
 # Modify this section to change the default behaviour:
 
-SEC_STR_API_URL              = 'http://webchem.ncbr.muni.cz/API/SecStr/Annotation/'  # If no annotation file is provided, annotation will be downloaded from this URL (with PDB ID added after slash).
+SEC_STR_API_URL              = 'http://webchem.ncbr.muni.cz/API/SecStr/Annotation/'  # If no annotation file is provided, annotation will be downloaded from this URL (with PDB ID added after the slash).
 DEFAULT_BASE_COLOR           = 'gray80'  # This color will be used for residues without annotation, unless specified by parameter base_color.
 DEFAULT_REPRESENTATION       = 'cartoon'  # Default visual representation for newly fetched structures (does not apply objects that have already been loaded).
 DEFAULT_HET_REPRESENTATION   = 'sticks'  # Default visual representation for heteroatoms.
 SHOW_LABELS                  = True  # Indicates whether labels with SSE names should be shown.
 LABEL_SIZE                   = None  # Size for the labels (None = default size).
-PYMOL_REPLACEMENT_CHARACTER  = '+'  # In selection names, avoid-characters will be replaced by PYMOL_REPLACEMENT_CHARACTER (i.e. all except alphanumeric characters A-Z a-z 0-9 and characters _ . + -).
+PYMOL_REPLACEMENT_CHARACTER  = '+'  # In selection names, avoid-characters will be replaced by PYMOL_REPLACEMENT_CHARACTER (i.e. all characters except letters A-Z a-z, digits 0-9, and characters _ . + -).
 
 
 # Imports #####################################################################
@@ -25,13 +29,13 @@ import json
 import requests
 import re
 from os import path
-from collections import OrderedDict
 from pymol import cmd
 
 
 # Constants ###################################################################
 
-THIS_SCRIPT = 'annotate_sec_str_extension-1.2.py'
+THIS_SCRIPT = 'secstrapi_plugin-1.2.py'
+SCRIPT_VERSION = '1.2'
 
 # Field names in SecStrAPI format 
 API_VERSION = 'api_version'
@@ -50,7 +54,7 @@ FAMILY_ID = 'family'
 SSES = 'secondary_structure_elements'
 ROTATION_MATRIX = 'rotation_matrix'
 
-# Per-SSE field names 
+# Per-SSE field names in SecStrAPI format 
 LABEL = 'label'
 START_RESI = 'start'
 AUTH_START_RESI = 'auth_start'
@@ -70,10 +74,10 @@ INSERTION_CODE_NULL = '?'
 
 # Auxiliary functions #########################################################
 
-def debug_log(message):
+def log(message):
 	print(message)
 
-def log(message):
+def debug_log(message):
 	print(message)
 
 def warn(message):
@@ -96,10 +100,10 @@ def is_valid_domain_name(string):
 def is_valid_selection(selection):
 	try:
 		cmd.count_atoms(selection)
-		# debug_log('is_valid_selection(' + selection + ') == True')
+		# debug_log('is_valid_selection(' + selection + ') == True')  #DEBUG
 		return True
 	except:
-		# debug_log('is_valid_selection(' + selection + ') == False')
+		# debug_log('is_valid_selection(' + selection + ') == False')  #DEBUG
 		return False
 
 def first_valid_pdbid(text, pdbids=None):
@@ -120,7 +124,7 @@ def first_valid_pdbid(text, pdbids=None):
 			return None
 
 def fetch_structure(pdbid, domain_name=None, domain=None, force_cartoon=True):
-	# debug_log('fetch structure ' + str(force_cartoon))
+	# debug_log('fetch structure ' + str(force_cartoon))  #DEBUG
 	if not is_valid_selection(pdbid):
 		log('Fetching ' + pdbid)
 		cmd.fetch(pdbid, async=0)
@@ -152,7 +156,7 @@ def selection_from_domain(domain, use_auth):
 		chain = domain.get(CHAIN, None)
 		ranges = domain.get(RANGES, None)
 	if chain is not None and ranges is not None:
-		return '(chain ' + chain + ' and resi ' + ranges_to_pymol_style(ranges) + ')'
+		return '(chain ' + chain + ' and resi ' + resi_ranges_str(ranges) + ')'
 	elif chain is not None:
 		return '(chain ' + chain + ')'
 	else:
@@ -185,14 +189,21 @@ def selection_from_sse(sse, use_auth):
 	# pepseq will not work when mapping annotation onto different structure
 	# Or just say it's not my problem but problem of PyMOL.
 
-def range_to_pymol_style(the_range):
-	fro, to = the_range.split(':')
-	return fro.replace('-', '\-') + '-' + to.replace('-', '\-')
+def resi_str(number):
+	"""Convert residue number from int or str to PyMOL-style string, e.g. -5 -> '\-5'."""
+	return str(number).replace('-', '\-')
 
-def ranges_to_pymol_style(ranges):
-	return '+'.join( range_to_pymol_style(rang) for rang in ranges.split(',') )
+def resi_range_str(the_range):
+	"""Convert residue range to PyMOL-style string, e.g. '-5:10' -> '\-5-10'."""
+	fro, to = the_range.split(':')
+	return resi_str(fro) + '-' + resi_str(to)
+
+def resi_ranges_str(ranges):
+	"""Convert residue ranges to PyMOL-style string, e.g. '-5:10,100:200' -> '\-5-10+100-200'."""
+	return '+'.join( resi_range_str(rang) for rang in ranges.split(',') )
 
 def is_from_cif(object_name):
+	"""Find out whether an object has been loaded from CIF file."""
 	try:
 		n_cif_atoms = cmd.count_atoms('(' + object_name + ') and not segi ""')
 		return n_cif_atoms > 0
@@ -200,6 +211,7 @@ def is_from_cif(object_name):
 		return False
 
 def should_use_auth(object_name):
+	"""Find out whether auth_ numbering (instead of label_) is used for an object."""
 	try:
 		cif_use_auth = parse_boolean(cmd.get('cif_use_auth'))
 	except:
@@ -207,6 +219,7 @@ def should_use_auth(object_name):
 	return cif_use_auth or not is_from_cif(object_name)
 
 def pymol_safe_name(name):
+	"""Replace all special-meaning characters by PYMOL_REPLACEMENT_CHARACTER."""
 	chars = set(name)
 	for char in chars:
 		if not (char.isalnum() or char in '_.+-'):
@@ -214,24 +227,26 @@ def pymol_safe_name(name):
 	return name
 
 def get_annotation_from_file(filename):
-	'''Reads annotation file in JSON format.'''
+	"""Read annotation file."""
 	with open(filename,'r') as f:
 		annotation = f.read()
 	return annotation
 
 def get_annotation_from_internet(pdbid):
+	"""Download annotation file from SecStrAPI."""
 	pdbid = pdbid.lower()
 	url = SEC_STR_API_URL + pdbid
 	log('Downloading annotation for PDB entry ' + pdbid + '\n  [' + url + ']')
 	try:
 		annotation_text = requests.get(url).text
-		# debug_log(annotation_text[0:70] + '...')
+		# debug_log(annotation_text[0:70] + '...')  #DEBUG
 		return annotation_text
 	except:
 		fail('Failed to download annotation for ' + pdbid)
 		return None
 
 def parse_annotation_text(text):
+	"""Create an annotation object from a string."""
 	try:
 		js = json.loads(text)
 	except:
@@ -243,7 +258,7 @@ def parse_annotation_text(text):
 	elif version == '1.0':
 		return Annotation_1_0(js)
 	else:
-		fail('The annotation file is of a newer version (' + version + ') than this script supports (1.0). Please download the updated version of this script from SecStrAPI website http://webchem.ncbr.muni.cz/API/SecStr.')
+		fail('The annotation file is of a newer version (' + version + ') than this plugin supports (1.0). Please download the updated version of SecStrAPI plugin from SecStrAPI website http://webchem.ncbr.muni.cz/API/SecStr.')
 		raise NotImplementedError()
 
 class Annotation_1_0:
@@ -294,8 +309,40 @@ class Annotation_0_9:
 		else:
 			return []
 
-def apply_annotation(selection, domains, base_color, apply_rotation=False):
-	# then = datetime.now()
+def version_str_to_tuple(version_string):
+	version = tuple( int(i) for i in version_string.split('.') )
+	return version
+
+def check_version(version, version_constraint):
+	version = version_str_to_tuple(version)
+	if version_constraint.startswith('<='):
+		return version <= version_str_to_tuple(version_constraint[2:])
+	elif version_constraint.startswith('>='):
+		return version >= version_str_to_tuple(version_constraint[2:])
+	elif version_constraint.startswith('=='):
+		return version == version_str_to_tuple(version_constraint[2:])
+	elif version_constraint.startswith('!='):
+		return version != version_str_to_tuple(version_constraint[2:])
+	elif version_constraint.startswith('<'):
+		return version < version_str_to_tuple(version_constraint[1:])
+	elif version_constraint.startswith('>'):
+		return version > version_str_to_tuple(version_constraint[1:])
+	else:
+		return version == version_str_to_tuple(version_constraint)
+	#TODO test!
+	#TODO add try-except and return False if version constraint is not parsable
+
+def print_messages(annotation):
+	messages = annotation.get('messages', [])
+	for message in messages:
+		if isinstance(message, str):
+			log('SECSTRAPI MESSAGE: ' + message)
+		elif isinstance(message, tuple):
+			version_constraint, message, *_ = message
+			if check_version(SCRIPT_VERSION, version_constraint):
+				log('SECSTRAPI MESSAGE: ' + message)
+
+def apply_annotation(selection, domains, base_color, apply_rotation=False, show_reference_residues=False):
 	for domain in domains:
 		selection = '(' + selection + ')'
 		use_auth = should_use_auth(selection)
@@ -305,7 +352,7 @@ def apply_annotation(selection, domains, base_color, apply_rotation=False):
 		else:
 			domain_name = domain[PDB] + domain[CHAIN]
 		domain_selection = selection + ' and ' + selection_from_domain(domain, use_auth)
-		# debug_log('domain_name:"' + domain_name + '", domain selection: "' + domain_selection + '"')
+		# debug_log('domain_name:"' + domain_name + '", domain selection: "' + domain_selection + '"')  #DEBUG
 		if not is_valid_selection(domain_name):  # such object may already be defined (e.g. if domain_name == pdb)
 			cmd.select(domain_name, domain_selection)
 		group = domain_name + '.sses'
@@ -313,7 +360,7 @@ def apply_annotation(selection, domains, base_color, apply_rotation=False):
 			cmd.group(group)
 
 		if apply_rotation and ROTATION_MATRIX in domain:
-			print('Applying rotation for domain ' + domain_name)  # debug
+			debug_log('Applying rotation for domain ' + domain_name) #DEBUG
 			pdb = domain[PDB]
 			matrix = domain[ROTATION_MATRIX]
 			cmd.set_object_ttt(pdb, matrix)
@@ -324,8 +371,6 @@ def apply_annotation(selection, domains, base_color, apply_rotation=False):
 		if SHOW_LABELS and LABEL_SIZE != None:
 			cmd.set('label_size', str(LABEL_SIZE))
 		
-		# debug_log('apply_annotation1: ' + str(datetime.now() - then))
-
 		sses = domain.get(SSES, [])
 		sses = sorted(sses, key=lambda sse: (sse[CHAIN_ID], sse[START_RESI]))
 		if use_auth and not all( has_sse_auth_fields(sse) for sse in sses ):
@@ -339,15 +384,15 @@ def apply_annotation(selection, domains, base_color, apply_rotation=False):
 			chain_id = sse[CHAIN_ID]
 			sel_name = group + '.' + safe_label
 			sel_definition = selection + ' and ' + selection_from_sse(sse, use_auth)
-			# debug_log('sse:"' + sel_name + '", sse selection: "' + sel_definition + '"')
-			if True: # cmd.count_atoms(sel_definition) > 0: #debug
+			# debug_log('sse:"' + sel_name + '", sse selection: "' + sel_definition + '"')  #DEBUG
+			if cmd.count_atoms(sel_definition) > 0:
 				cmd.select(sel_name, sel_definition)
 				cmd.color(assign_color(sse), sel_name + ' and symbol C')
 				if SHOW_LABELS:
 					label_sse(sse, sel_name, use_auth)
-			mark_reference_residue(sse, sel_name, use_auth, color=assign_color(sse))
+			if show_reference_residues:
+				mark_reference_residue(sse, sel_name, use_auth, color=assign_color(sse))
 			cmd.deselect()
-	# debug_log('apply_annotation: ' + str(datetime.now() - then))
 
 def assign_color(sse):
 	sse_type = 'H' if (sse[TYPE] in 'GHIh') else 'E' if (sse[TYPE] in 'EBe') else ' '
@@ -473,18 +518,17 @@ def test():
 	log('ALL TESTS OK')
 	return True
 
-
 # Main function ###############################################################
 
-def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True):
-	'''
+def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True, force_rotation=True, reference_residues=False):
+	"""
 DESCRIPTION
 
 	"annotate_sec_str" visualizes protein secondary structure annotation.
 
 USAGE
 
-	annotate_sec_str selection, [, annotation_file [, name [, base_color [, force_cartoon ]]]]
+	annotate_sec_str selection, [, annotation_file [, name [, base_color [, force_cartoon [, force_rotation [, reference_residues]]]]]]
 
 ARGUMENTS
 
@@ -494,9 +538,14 @@ ARGUMENTS
 
 	name = string: PDB ID or domain name specifying a protein domain(s) within the annotation file. If not specified, the PDB ID and the domain name will be guessed from the "selection" argument.
 
+
 	base_color = string: color to use for non-annotated atoms {default: gray80}
 
 	force_cartoon = 0/1: apply default cartoon representation for all newly fetched structures {default: 1}
+
+	force_rotation = 0/1: apply standard rotation to all newly fetched structures {default: 1}
+
+	reference_residues = 0/1: mark the reference residue for each SSE (if available) by a red sphere {default: 0}
 
 NOTES
 
@@ -504,22 +553,23 @@ NOTES
 
 EXAMPLES
 
-	annotate_sec_str 1og2   (Fetches 1og2 (if not loaded), downloads its annotation from SecStrAPI, annotates all domains (i.e. 1og2A, 1og2B).)
+	annotate_sec_str 1og2   (Fetches 1og2 if not loaded, downloads its annotation from SecStrAPI, annotates all domains (i.e. 1og2A, 1og2B).)
 
-	annotate_sec_str 1og2A  (Fetches 1og2 (if not loaded), downloads its annotation from SecStrAPI, annotates domains 1og2A.)
+	annotate_sec_str 1og2A  (Fetches 1og2 if not loaded, downloads its annotation from SecStrAPI, annotates domain 1og2A.)
 
 	annotate_sec_str my_structure, my_annotation.sses.json, 1og2A   (Annotates my_structure)
 
-	'''
+	"""
 
 	try:
 		try:
 			force_cartoon = parse_boolean(force_cartoon)
+			force_rotation = parse_boolean(force_rotation)
+			reference_residues = parse_boolean(reference_residues)
 		except:
 			return False
 		fetched = False
-		force_rotation = True
-		# debug_log(force_cartoon)
+		# debug_log(force_cartoon)  #DEBUG
 		if annotation_file is not None and name is not None:
 			annotation_text = get_annotation_from_file(annotation_file)
 			annotation = parse_annotation_text(annotation_text)
@@ -546,7 +596,7 @@ EXAMPLES
 			annotation_text = get_annotation_from_file(annotation_file)
 			annotation = parse_annotation_text(annotation_text)
 			words = re.split('\W+', selection)
-			# debug_log(words)
+			# debug_log(words)  #DEBUG
 			try:
 				# name = next( word for word in words if len(annotation.get_domains_by_name(word, allow_prefix=True)) > 0 )
 				name = next( word for word in words if len(annotation.get_domains_by_name(word)) > 0 )
@@ -574,17 +624,17 @@ EXAMPLES
 					else:
 						fail('Could not guess annotation name from selection "' + selection + '"')
 						return False
-			# debug_log('Guessed PDB ID: ' + pdbid)
+			# debug_log('Guessed PDB ID: ' + pdbid)  #DEBUG
 		else: # annotation_file and name are None, guess pdbid using selection and download annotation
 			words = re.split('\W+', selection)
-			# debug_log(words)
+			# debug_log(words)  #DEBUG
 			try:
 				name = next( word for word in words if is_valid_pdbid(word) or is_valid_domain_name(word) )
 			except StopIteration:
 				fail('Could not guess PDB ID from selection "' + selection + '"')
 				return False
 			pdbid = name[0:4]
-			# log('Guessed PDB ID: ' + pdbid)
+			# log('Guessed PDB ID: ' + pdbid)  #DEBUG
 			annotation_text = get_annotation_from_internet(pdbid)
 			annotation = parse_annotation_text(annotation_text)
 			if name == pdbid:
@@ -598,7 +648,7 @@ EXAMPLES
 		# TODO when guessing name, don't take next, but require unambiguity
 
 		log('PDB ID: ' + pdbid + ', NAME: ' + name + ', DOMAINS: ' + str(len(domains)))
-		# debug_log('Partial OK')
+		# debug_log('Partial OK')  #DEBUG
 		
 		if not is_valid_selection(selection):
 			words = re.split('\W+', selection)
@@ -619,8 +669,8 @@ EXAMPLES
 				fail('Invalid selection "' + selection + '"')
 				return False
 		
-		debug_log('OK')
-		apply_annotation(selection, domains, base_color, apply_rotation=fetched and force_rotation)
+		debug_log('OK')  #DEBUG
+		apply_annotation(selection, domains, base_color, apply_rotation=fetched and force_rotation, show_reference_residues=reference_residues)
 		return True
 	# except Exception as ex:
 	# 	fail(str(ex))
@@ -631,12 +681,11 @@ EXAMPLES
 
 # The script for PyMOL ########################################################
 
-# test()
+# test()   #DEBUG
 cmd.extend('annotate_sec_str', annotate_sec_str)
 print('Command "annotate_sec_str" has been added. Type "help annotate_sec_str" for more information.')
 
-#TODO make mark_reference_residue optional
-#TODO save_annotation?
+#TODO save_annotation?   #DEBUG
 #TODO do not download annotation twice (viz annotate_sec_str 1tqnA)
 #TODO enable messages from SecStrAPI (version-targeted)
 #TODO SecStrAPI document the format by example with hints, like PDBe API

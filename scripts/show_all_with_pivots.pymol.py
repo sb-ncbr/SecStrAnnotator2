@@ -4,7 +4,7 @@ from os import path
 import sys
 from pymol import cmd
 
-import annotate_sec_str_extension as secstr
+import secstrapi_plugin as secstr
 
 cmd.set('cif_use_auth', False)
 
