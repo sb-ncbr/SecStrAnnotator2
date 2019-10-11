@@ -252,6 +252,7 @@ def parse_annotation_text(text):
 	except:
 		fail('Could not parse annotation (not a valid JSON)')
 		raise
+	print_messages(js)
 	version = js.get(API_VERSION, '0.9')
 	if version == '0.9':
 		return Annotation_0_9(js)
@@ -315,7 +316,9 @@ def version_str_to_tuple(version_string):
 
 def check_version(version, version_constraint):
 	version = version_str_to_tuple(version)
-	if version_constraint.startswith('<='):
+	if version_constraint is None or version_constraint == '':
+		return True
+	elif version_constraint.startswith('<='):
 		return version <= version_str_to_tuple(version_constraint[2:])
 	elif version_constraint.startswith('>='):
 		return version >= version_str_to_tuple(version_constraint[2:])
@@ -329,18 +332,23 @@ def check_version(version, version_constraint):
 		return version > version_str_to_tuple(version_constraint[1:])
 	else:
 		return version == version_str_to_tuple(version_constraint)
-	#TODO test!
-	#TODO add try-except and return False if version constraint is not parsable
 
-def print_messages(annotation):
-	messages = annotation.get('messages', [])
+def print_messages(annotation_json_object):
+	messages = annotation_json_object.get('messages', [])
 	for message in messages:
-		if isinstance(message, str):
-			log('SECSTRAPI MESSAGE: ' + message)
-		elif isinstance(message, tuple):
-			version_constraint, message, *_ = message
-			if check_version(SCRIPT_VERSION, version_constraint):
-				log('SECSTRAPI MESSAGE: ' + message)
+		if isinstance(message, (str, unicode)):
+			do_print = True
+			message_text = message
+		else:
+			try:
+				version_constraint = message[0]
+				do_print = check_version(SCRIPT_VERSION, version_constraint)
+				message_text = message[1]
+			except:
+				do_print = True
+				message_text = message
+		if do_print:
+			log('SecStrAPI message: ' + message_text)
 
 def apply_annotation(selection, domains, base_color, apply_rotation=False, show_reference_residues=False):
 	for domain in domains:
@@ -687,5 +695,4 @@ print('Command "annotate_sec_str" has been added. Type "help annotate_sec_str" f
 
 #TODO save_annotation?   #DEBUG
 #TODO do not download annotation twice (viz annotate_sec_str 1tqnA)
-#TODO enable messages from SecStrAPI (version-targeted)
 #TODO SecStrAPI document the format by example with hints, like PDBe API
