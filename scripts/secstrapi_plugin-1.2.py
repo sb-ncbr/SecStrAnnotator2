@@ -1,6 +1,6 @@
 """
 SecStrAPI plugin for PyMOL
-Version: 1.2 (2019/10/02)
+Version: 1.2 (2019/10/11)
 
 More information at http://webchem.ncbr.muni.cz/API/SecStr/
 
@@ -81,15 +81,11 @@ def debug_log(message):
 	print(message)
 
 def warn(message):
-	sys.stderr.write(THIS_SCRIPT + ':\n')
-	# sys.stderr.write('    Warning: ' + message.replace('\n', '\n    ') + '\n')
-	print('    Warning: ' + message.replace('\n', '\n    '))
+	print('Warning: ' + message.replace('\n', '\n    '))
 
 def fail(message):
-	sys.stderr.write(THIS_SCRIPT + ':\n')
-	# sys.stderr.write('    Error: ' + message.replace('\n', '\n    ') + '\n')
-	print('    Error: ' + message.replace('\n', '\n    '))
-	# TODO print some helpfull info
+	print('SecStrAPI plugin:')
+	print('  Error: ' + message.replace('\n', '\n    '))
 
 def is_valid_pdbid(string):
 	return len(string) == 4 and string.isalnum() and string[0].isdigit()
@@ -185,9 +181,6 @@ def selection_from_sse(sse, use_auth):
 		end = str(sse[END_RESI]).replace('-', '\-')
 	selection = '(chain ' + chain + ' and resi ' + start + '-' + end + ')'
 	return selection  
-	# TODO solve insertion codes (resi 64-65A selects 64, 65, 65A, 65B, 65C!)
-	# pepseq will not work when mapping annotation onto different structure
-	# Or just say it's not my problem but problem of PyMOL.
 
 def resi_str(number):
 	"""Convert residue number from int or str to PyMOL-style string, e.g. -5 -> '\-5'."""
@@ -265,7 +258,7 @@ def parse_annotation_text(text):
 class Annotation_1_0:
 	def __init__(self, json_object):
 		if 'error' in json_object:
-			warn('Annotation file reports an error: ' + json_object['error'])
+			warn('Annotation file reports error "' + json_object['error'] + '".')
 			self.pdb2domains = {}
 			return
 		self.pdb2domains = {}
@@ -293,7 +286,7 @@ class Annotation_1_0:
 class Annotation_0_9:
 	def __init__(self, json_object):
 		if 'error' in json_object:
-			warn('Annotation file reports an error: ' + json_object['error'])
+			warn('Annotation file reports error "' + json_object['error'] + '"')
 			self.domain_dict = {}
 			return
 		self.domain_dict = json_object
@@ -577,6 +570,7 @@ EXAMPLES
 		except:
 			return False
 		fetched = False
+		cached_annotations_by_pdbid = {}
 		# debug_log(force_cartoon)  #DEBUG
 		if annotation_file is not None and name is not None:
 			annotation_text = get_annotation_from_file(annotation_file)
@@ -587,61 +581,49 @@ EXAMPLES
 				domains = annotation.get_domains_by_pdbid(pdbid)
 			else:
 				domains = annotation.get_domains_by_name(name)
-				if len(domains) == 0:
-					fail('Annotation for "' + name + '" not found')
-					return False
+				pdbids = [ dom[PDB] for dom in domains if PDB in dom ]
+				if len(pdbids) == 1:
+					pdbid = pdbids[0]
 				else:
-					pdbid = domains[0][PDB]
+					pdbid = '?'
 		elif annotation_file is None and name is not None:
 			pdbid = name[0:4]
 			annotation_text = get_annotation_from_internet(pdbid)
 			annotation = parse_annotation_text(annotation_text)
 			domains = annotation.get_domains_by_name(name)
-			if len(domains) == 0:
-				fail('Annotation for "' + name + '" not found')
-				return False
 		elif annotation_file is not None and name is None:
 			annotation_text = get_annotation_from_file(annotation_file)
 			annotation = parse_annotation_text(annotation_text)
 			words = re.split('\W+', selection)
 			# debug_log(words)  #DEBUG
-			try:
-				# name = next( word for word in words if len(annotation.get_domains_by_name(word, allow_prefix=True)) > 0 )
-				name = next( word for word in words if len(annotation.get_domains_by_name(word)) > 0 )
+			names_domains = ( (word, annotation.get_domains_by_name(word)) for word in words )
+			candidates = [ (name, doms) for (name, doms) in names_domains if len(doms) > 0 ]
+			if len(candidates) > 1:
+				fail('Could not guess annotation name from selection "' + selection + '". Please specify argument "name".')
+				return False
+			elif len(candidates) == 1:
+				name, domains = candidates[0]
 				pdbid = name[0:4]
-				# domains = annotation.get_domains_by_name(name, allow_prefix=True)
-				domains = annotation.get_domains_by_name(name)
-				if len(domains) == 0:
-					fail('Annotation for "' + name + '" not found')
+			else:  # len(candidates) == 0
+				pdbs_domains = ( (word, annotation.get_domains_by_pdbid(word)) for word in words )
+				candidates = [ (pdb, doms) for (pdb, doms) in pdbs_domains if len(doms) > 0 ]
+				if len(candidates) == 1:
+					pdbid, domains = candidates[0]
+					name = pdbid
+				else:
+					fail('Could not guess annotation name from selection "' + selection + '". Please specify argument "name".')
 					return False
-			except StopIteration:
-				try:
-					# name = next( word for word in words if len(annotation.get_domains_by_pdbid(word, allow_prefix=True)) > 0 )
-					name = next( word for word in words if len(annotation.get_domains_by_pdbid(word)) > 0 )
-					pdbid = name[0:4]
-					# domains = annotation.get_domains_by_pdbid(name, allow_prefix=True)
-					domains = annotation.get_domains_by_pdbid(name)
-				except StopIteration:
-					pdbids = annotation.get_pdbids()
-					if len(pdbids) == 1:
-						pdbid = pdbids[0]
-						name = pdbid
-						domains = annotation.get_domains_by_pdbid(pdbid)
-						warn('Could not guess annotation name from selection "' + selection + '"')
-						log('Selected PDB ID: "' + pdbid + '" (the only one in the annotation file)')
-					else:
-						fail('Could not guess annotation name from selection "' + selection + '"')
-						return False
 			# debug_log('Guessed PDB ID: ' + pdbid)  #DEBUG
-		else: # annotation_file and name are None, guess pdbid using selection and download annotation
+		else: # annotation_file is None and name is None, guess pdbid using selection and download annotation
 			words = re.split('\W+', selection)
 			# debug_log(words)  #DEBUG
-			try:
-				name = next( word for word in words if is_valid_pdbid(word) or is_valid_domain_name(word) )
-			except StopIteration:
-				fail('Could not guess PDB ID from selection "' + selection + '"')
+			candidates = [ word for word in words if is_valid_pdbid(word) or is_valid_domain_name(word) ]
+			if len(candidates) == 1:
+				name = candidates[0]
+				pdbid = name[0:4]
+			else:
+				fail('Could not guess annotation name from selection "' + selection + '". Please specify argument "name".')
 				return False
-			pdbid = name[0:4]
 			# log('Guessed PDB ID: ' + pdbid)  #DEBUG
 			annotation_text = get_annotation_from_internet(pdbid)
 			annotation = parse_annotation_text(annotation_text)
@@ -649,13 +631,13 @@ EXAMPLES
 				domains = annotation.get_domains_by_pdbid(pdbid)
 			else:
 				domains = annotation.get_domains_by_name(name)
-			if len(domains) == 0:
-				fail('Annotation for "' + name + '" not found')
-				return False
-		
-		# TODO when guessing name, don't take next, but require unambiguity
-
-		log('PDB ID: ' + pdbid + ', NAME: ' + name + ', DOMAINS: ' + str(len(domains)))
+		cached_annotations_by_pdbid[pdbid] = annotation
+				
+		log('NAME: ' + name + ', PDB ID: ' + pdbid + ', DOMAINS: ' + str(len(domains)))
+		if len(domains) == 0:
+			file_spec = (' in file "' + annotation_file + '"') if annotation_file is not None else ''
+			fail('Could not find annotation for "' + name + '"' + file_spec + '.')
+			return False
 		# debug_log('Partial OK')  #DEBUG
 		
 		if not is_valid_selection(selection):
@@ -667,8 +649,11 @@ EXAMPLES
 				elif is_valid_domain_name(word) and not is_valid_selection(word):
 					pdb = word[0:4]
 					if annotation_file is None:
-						annotation_text = get_annotation_from_internet(pdb)
-						annotation = parse_annotation_text(annotation_text)
+						if pdb in cached_annotations_by_pdbid:
+							annotation = cached_annotations_by_pdbid[pdb]
+						else:
+							annotation_text = get_annotation_from_internet(pdb)
+							annotation = parse_annotation_text(annotation_text)
 					doms = annotation.get_domains_by_name(word)
 					if len(doms) == 1:
 						fetch_structure(pdb, domain_name=word, domain=doms[0], force_cartoon=force_cartoon)
@@ -678,7 +663,7 @@ EXAMPLES
 				return False
 		
 		debug_log('OK')  #DEBUG
-		apply_annotation(selection, domains, base_color, apply_rotation=fetched and force_rotation, show_reference_residues=reference_residues)
+		apply_annotation(selection, domains, base_color, apply_rotation=(fetched and force_rotation), show_reference_residues=reference_residues)
 		return True
 	# except Exception as ex:
 	# 	fail(str(ex))
@@ -693,6 +678,4 @@ EXAMPLES
 cmd.extend('annotate_sec_str', annotate_sec_str)
 print('Command "annotate_sec_str" has been added. Type "help annotate_sec_str" for more information.')
 
-#TODO save_annotation?   #DEBUG
-#TODO do not download annotation twice (viz annotate_sec_str 1tqnA)
-#TODO SecStrAPI document the format by example with hints, like PDBe API
+#TODO SecStrAPI website - document the format by example with hints, like PDBe API
