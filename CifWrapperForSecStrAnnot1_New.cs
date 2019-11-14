@@ -8,7 +8,7 @@ using Cif.Tables;
 using Cif.Filtering;
 using Cif.Components;
 
-namespace SecStrAnnot2
+namespace SecStrAnnotator2
 {
     public static class CifWrapperForSecStrAnnot1_New {
         private const string EXCEPTION_MESSAGE = "Cannot fit CIF data to PDB data model: ";

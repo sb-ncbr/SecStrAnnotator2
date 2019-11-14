@@ -5,7 +5,7 @@ using Cif;
 using Cif.Tables;
 using Cif.Filtering;
 
-namespace SecStrAnnot2
+namespace SecStrAnnotator2
 {
     class Program
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Cif.Libraries;
 
-namespace /*SecStrAnnot2.*/Cif.Tables
+namespace Cif.Tables
 {
     public class Model
     {

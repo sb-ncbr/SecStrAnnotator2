@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace SecStrAnnot2
+namespace SecStrAnnotator2
 {
     public static class Lib
     {

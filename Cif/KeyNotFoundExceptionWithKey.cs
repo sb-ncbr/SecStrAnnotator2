@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace /*SecStrAnnot2.*/Cif
+namespace Cif
 {
     public class KeyNotFoundExceptionWithKey<TKey> : KeyNotFoundException
     {

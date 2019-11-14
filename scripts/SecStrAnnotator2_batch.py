@@ -19,7 +19,7 @@ parser.add_argument('template', help='template domain specification (argument TE
 parser.add_argument('queries', help='JSON file with the list of domains to be annotated (in format {PDB:[[domain_name,chain,ranges]]}, will be processed to QUERY arguments for SecStrAnnotator)', type=str)
 parser.add_argument('--options', help='Any options that are to be passed to SecStrAnnotator (must be enclosed in quotes and contain spaces, not to be confused with Python arguments, e.g. --options \'--ssa dssp --soft\' or \' --soft\')', type=str, default='')
 parser.add_argument('--threads', help='Number of parallel threads (default: 1)', type=int, default=1)
-parser.add_argument('--dll', help='Path to the SecStrAnnotator DLL (default: SecStrAnnot2.dll)', type=str, default='SecStrAnnot2.dll')
+parser.add_argument('--dll', help='Path to the SecStrAnnotator DLL (default: SecStrAnnotator2.dll)', type=str, default='SecStrAnnotator2.dll')
 args = parser.parse_args()
 
 options = [opt for opt in args.options.split(' ') if opt != '']

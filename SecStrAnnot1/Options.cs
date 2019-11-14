@@ -77,7 +77,8 @@ namespace protein
 		public void PrintHelp(){
 			Console.WriteLine (GlobalHelp);
 
-			Console.WriteLine ("\nUsage: \n" +OPTION_INDENT + System.AppDomain.CurrentDomain.FriendlyName + " [OPTIONS] " + ArgumentList.Select(a => a.Name).EnumerateWithSeparators(" "));
+			Console.WriteLine ("\nUsage:");
+			Console.WriteLine (OPTION_INDENT + "dotnet " + System.AppDomain.CurrentDomain.FriendlyName + ".dll [OPTIONS] " + ArgumentList.Select(a => a.Name).EnumerateWithSeparators(" "));
 			Console.WriteLine ("\nArguments:");
 			foreach (Argument argument in ArgumentList) {
 				String line = OPTION_INDENT + argument.Name;
@@ -102,7 +103,7 @@ namespace protein
 
 		public static void PrintError(String message, params object[] args){
 			Lib.WriteError (String.Format(message, args)
-				+ "\nRun  " + System.AppDomain.CurrentDomain.FriendlyName + " --help  for usage");
+				+ "\nRun   dotnet " + System.AppDomain.CurrentDomain.FriendlyName + ".dll --help   for usage information.");
 		}
 	}
 

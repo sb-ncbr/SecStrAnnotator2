@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using /*SecStrAnnot2.*/Cif.Raw;
+using Cif.Raw;
 
-namespace /*SecStrAnnot2.*/Cif
+namespace Cif
 {
     public class CifItem
     {

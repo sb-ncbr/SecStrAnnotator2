@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-// using SecStrAnnot2.Cif.Tables;
 
 namespace protein.Components
 {

@@ -858,7 +858,7 @@ namespace protein
 				Lib.WriteInColor (ConsoleColor.Yellow, "Loading structure:  {0}, chain {1}, residues {2}\n", filename, chainId, FormatRanges(resSeqRanges));
 				Protein p;
 				(int,int)[] resSeqRangesArray = resSeqRanges.Select(tup => (tup.Item1, tup.Item2)).ToArray();
-				p = SecStrAnnot2.CifWrapperForSecStrAnnot1_New.ProteinFromCifFile(filename, chainId, resSeqRangesArray);
+				p = SecStrAnnotator2.CifWrapperForSecStrAnnot1_New.ProteinFromCifFile(filename, chainId, resSeqRangesArray);
 
 				// Check entity type and emptiness of the structure
 				if (p.GetChains().Any()){

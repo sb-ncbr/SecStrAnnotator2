@@ -1,6 +1,6 @@
 """
 SecStrAPI plugin for PyMOL
-Version: 1.2 (2019/10/11)
+Version: 1.2 (2019/11/14)
 
 More information at http://webchem.ncbr.muni.cz/API/SecStr/
 

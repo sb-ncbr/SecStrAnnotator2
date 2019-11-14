@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace /*SecStrAnnot2.*/Cif.Tables
+namespace Cif.Tables
 {
     public class EntityTable
     {

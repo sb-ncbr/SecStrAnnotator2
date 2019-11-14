@@ -1,6 +1,6 @@
 using System;
 
-namespace /*SecStrAnnot2.*/Cif
+namespace Cif
 {
     public class CifException : Exception
     {

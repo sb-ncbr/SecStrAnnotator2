@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Cif.Libraries;
 
-namespace /*SecStrAnnot2.*/Cif
+namespace Cif
 {
     public class Benchmark
     {
