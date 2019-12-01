@@ -7,7 +7,7 @@ using Cif.Components;
 
 namespace protein.SecStrAssigning.Helpers
 {
-    class BetaLadder {
+    class BetaLadder : IBulgeOrLadder{
         public enum LadderType { Parallel, Antiparallel }
         public LadderType Type { get; private set; }
 
@@ -25,22 +25,22 @@ namespace protein.SecStrAssigning.Helpers
         public int End1 { get; set; }
 
         // Z is defined as follows: Z=3*resi for backbone NH group, Z=3*resi+2 for backbone CO group
-        public int ZStart0{ get { return 3 * Start0 + (FirstHBondDirection == HBondDirection.From1To0 ? 2 : 0); } }
-        public int ZEnd0{ get { return 3 * End0 + (LastHBondDirection == HBondDirection.From1To0 ? 2 : 0); } }
+        public int ZStart0{ get { return 3 * Start0 +(FirstHBondDirection == HBondDirection.From1To0 ? 2 : 0); } }
+        public int ZEnd0{ get { return 3 * End0 +(LastHBondDirection == HBondDirection.From1To0 ? 2 : 0); } }
         public int ZStart1 {
             get { 
                 if (Type == LadderType.Parallel)
-                    return 3 * Start1 + (FirstHBondDirection == HBondDirection.From0To1 ? 2 : 0);
+                    return 3 * Start1 +(FirstHBondDirection == HBondDirection.From0To1 ? 2 : 0);
                 else
-                    return 3 * Start1 + (LastHBondDirection == HBondDirection.From0To1 ? 2 : 0); 
+                    return 3 * Start1 +(LastHBondDirection == HBondDirection.From0To1 ? 2 : 0); 
             }
         }
         public int ZEnd1 {
             get { 
                 if (Type == LadderType.Parallel)
-                    return 3 * End1 + (LastHBondDirection == HBondDirection.From0To1 ? 2 : 0);
+                    return 3 * End1 +(LastHBondDirection == HBondDirection.From0To1 ? 2 : 0);
                 else
-                    return 3 * End1 + (FirstHBondDirection == HBondDirection.From0To1 ? 2 : 0); 
+                    return 3 * End1 +(FirstHBondDirection == HBondDirection.From0To1 ? 2 : 0); 
             }
         }
 
@@ -78,9 +78,9 @@ namespace protein.SecStrAssigning.Helpers
         }
 
         public BetaLadder Inverted(){
-            HBondDirection invFirstDir = (Type == LadderType.Antiparallel) ? InvertedDirection (LastHBondDirection) : InvertedDirection (FirstHBondDirection);
-            HBondDirection invLastDir = (Type == LadderType.Antiparallel) ? InvertedDirection (FirstHBondDirection) : InvertedDirection (LastHBondDirection);
-            return new BetaLadder (Type, Start1, End1, Start0, End0, invFirstDir,invLastDir);
+            HBondDirection invFirstDir = (Type == LadderType.Antiparallel) ? InvertedDirection(LastHBondDirection) : InvertedDirection(FirstHBondDirection);
+            HBondDirection invLastDir = (Type == LadderType.Antiparallel) ? InvertedDirection(FirstHBondDirection) : InvertedDirection(LastHBondDirection);
+            return new BetaLadder(Type, Start1, End1, Start0, End0, invFirstDir,invLastDir);
         }
 
     }	

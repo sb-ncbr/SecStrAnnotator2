@@ -15,7 +15,7 @@ namespace protein
 		private const ConsoleColor ERROR_COLOR = ConsoleColor.Red;
 		private const ConsoleColor WARNING_COLOR = ConsoleColor.Red; // ConsoleColor.Magenta;
 		private const ConsoleColor DEBUG_COLOR = ConsoleColor.Blue;
-		public static bool DoWriteDebug = false;
+		public static bool DoWriteDebug = true; //#debug
 
 		/** Reads a CSV-formatted table from StreamReader r. 
 			The table must have numColumns columns, lines are separated by '\n', fields in lines are separated by separator.
