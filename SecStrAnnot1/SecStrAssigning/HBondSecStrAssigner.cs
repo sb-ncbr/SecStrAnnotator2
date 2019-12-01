@@ -48,7 +48,7 @@ namespace protein.SecStrAssigning
         private String Ladder2String(BetaLadder ladder){
             char fd = ladder.FirstHBondDirection == BetaLadder.HBondDirection.From0To1 ? 'v' : '^';
             char ld = ladder.LastHBondDirection == BetaLadder.HBondDirection.From0To1 ? 'v' : '^';
-            return String.Format("[{0} {1}-{2} : {3} {4}-{5} {6}{7}]", residues [ladder.Start0].ChainId, residues [ladder.Start0].SeqNumber, residues [ladder.End0].SeqNumber, residues [ladder.Start1].ChainId, residues [ladder.Start1].SeqNumber, residues [ladder.End1].SeqNumber,fd,ld);
+            return String.Format("[{0} {1}-{2} : {3} {4}-{5} {6}{7}]", residues[ladder.Start0].ChainId, residues[ladder.Start0].SeqNumber, residues[ladder.End0].SeqNumber, residues[ladder.Start1].ChainId, residues[ladder.Start1].SeqNumber, residues[ladder.End1].SeqNumber,fd,ld);
         }
 
         private int Residue2After(int i){
@@ -62,28 +62,56 @@ namespace protein.SecStrAssigning
         private int ResidueXAfter(int resIndex, int x){
             if (x < 0)
                 return ResidueXBefore(resIndex, -x);
-            for (int i = x; i >= 0; i--) {
-                if (resIndex + i < residues.Length && residues [resIndex + i].ChainId == residues [resIndex].ChainId && residues [resIndex + i].SeqNumber == residues [resIndex].SeqNumber + x)
-                    return resIndex + i;
+            if (resIndex < 0) 
+                return -1; //does not exist
+            int candidateIndex = resIndex + x;
+            if (candidateIndex < residues.Length 
+                    && residues[candidateIndex].ChainId == residues[resIndex].ChainId 
+                    && residues[candidateIndex].SeqNumber == residues[resIndex].SeqNumber + x){
+                return candidateIndex;
+            } else {
+                return -1; //does not exist
             }
-            return -1; //does not exist
+            // for (int i = x; i >= 0; i--) {
+            //     if (resIndex + i < residues.Length 
+            //             && residues[resIndex + i].ChainId == residues[resIndex].ChainId 
+            //             && residues[resIndex + i].SeqNumber == residues[resIndex].SeqNumber + x){
+            //         return resIndex + i;
+            //     }
+            // }
+            // return -1; //does not exist
         }
 
         private int ResidueXBefore(int resIndex, int x){
             if (x < 0)
                 return ResidueXAfter(resIndex, -x);
-            for (int i = x; i >= 0; i--) {
-                if (resIndex - i >=0 && residues [resIndex - i].ChainId == residues [resIndex].ChainId && residues [resIndex - i].SeqNumber == residues [resIndex].SeqNumber - x)
-                    return resIndex - i;
+            if (resIndex < 0) 
+                return -1; //does not exist
+            int candidateIndex = resIndex - x;
+            if (candidateIndex >= 0 
+                    && residues[candidateIndex].ChainId == residues[resIndex].ChainId 
+                    && residues[candidateIndex].SeqNumber == residues[resIndex].SeqNumber - x){
+                return candidateIndex;
+            } else {
+                return -1; //does not exist
             }
-            return -1; //does not exist
+            // for (int i = x; i >= 0; i--) {
+            //     if (resIndex - i >= 0 
+            //             && residues[resIndex - i].ChainId == residues[resIndex].ChainId 
+            //             && residues[resIndex - i].SeqNumber == residues[resIndex].SeqNumber - x){
+            //         return resIndex - i;
+            //     }
+            // }
+            // return -1; //does not exist
         }
 
         private bool CanExtendLadder(BetaLadder ladder){
             if (ladder.Type == BetaLadder.LadderType.Antiparallel) {
                 // Antiparallel
                 if (ladder.LastHBondDirection == BetaLadder.HBondDirection.From0To1) {
-                    return hBondFinder.IsHBond(ladder.Start1, ladder.End0) &&(ladder.Start1 > ResidueXAfter(ladder.End0,2));
+                    int res2afterEnd0 = ResidueXAfter(ladder.End0, 2);
+                    return hBondFinder.IsHBond(ladder.Start1, ladder.End0) && ladder.Start1 > res2afterEnd0 && res2afterEnd0 > 0;
+                    // return hBondFinder.IsHBond(ladder.Start1, ladder.End0) && (ladder.Start1 > ResidueXAfter(ladder.End0, 2));
                 } else {
                     int i = Residue2After(ladder.End0);
                     int j = Residue2Before(ladder.Start1);
@@ -110,32 +138,32 @@ namespace protein.SecStrAssigning
         private void IgnoreRedundantMotifs(BetaLadder ladder){
             if (ladder.Type == BetaLadder.LadderType.Antiparallel) {
                 if (ladder.FirstHBondDirection == BetaLadder.HBondDirection.From0To1)
-                    AddSafely(ref ignoreHBondsTo_Antiparallel [ladder.Start0], ladder.End1);
+                    AddSafely(ref ignoreHBondsTo_Antiparallel[ladder.Start0], ladder.End1);
                 for (int i = 2; i <= ladder.End0 - ladder.Start0; i += 2)
-                    AddSafely(ref ignoreHBondsTo_Antiparallel [ladder.Start0 + i], ladder.End1 - i);
+                    AddSafely(ref ignoreHBondsTo_Antiparallel[ladder.Start0 + i], ladder.End1 - i);
                 for (int i = 0; i < ladder.End0 - ladder.Start0; i += 2)
-                    AddSafely(ref ignoreHBondsFrom_Antiparallel [ladder.Start0 + i], ladder.End1 - i);
+                    AddSafely(ref ignoreHBondsFrom_Antiparallel[ladder.Start0 + i], ladder.End1 - i);
                 if (ladder.LastHBondDirection == BetaLadder.HBondDirection.From1To0)
-                    AddSafely(ref ignoreHBondsFrom_Antiparallel [ladder.End0], ladder.Start1);
+                    AddSafely(ref ignoreHBondsFrom_Antiparallel[ladder.End0], ladder.Start1);
             } else { //Parallel
                 if (ladder.FirstHBondDirection == BetaLadder.HBondDirection.From0To1) {
                     for (int i = 0; i <=ladder.End0-ladder.Start0 ; i += 2) {
-                        AddSafely(ref ignoreHBondsTo_Parallel [ladder.Start0 + i], ladder.Start1 + i);
+                        AddSafely(ref ignoreHBondsTo_Parallel[ladder.Start0 + i], ladder.Start1 + i);
                     }
                     for (int i = 0; i <ladder.End0-ladder.Start0 ; i += 2) {
-                        AddSafely(ref ignoreHBondsFrom_Parallel [ladder.Start0 + i], ladder.Start1 + 2 + i);
+                        AddSafely(ref ignoreHBondsFrom_Parallel[ladder.Start0 + i], ladder.Start1 + 2 + i);
                     }
                     if (ladder.LastHBondDirection == BetaLadder.HBondDirection.From1To0)
-                        AddSafely(ref ignoreHBondsFrom_Parallel [ladder.End0], ladder.End1);
+                        AddSafely(ref ignoreHBondsFrom_Parallel[ladder.End0], ladder.End1);
                 } else {
                     for (int i = 2; i <=ladder.End0-ladder.Start0 ; i += 2) {
-                        AddSafely(ref ignoreHBondsTo_Parallel [ladder.Start0 + i], ladder.Start1 - 2 + i);
+                        AddSafely(ref ignoreHBondsTo_Parallel[ladder.Start0 + i], ladder.Start1 - 2 + i);
                     }
                     for (int i = 0; i <ladder.End0-ladder.Start0 ; i += 2) {
-                        AddSafely(ref ignoreHBondsFrom_Parallel [ladder.Start0 + i], ladder.Start1 + i);
+                        AddSafely(ref ignoreHBondsFrom_Parallel[ladder.Start0 + i], ladder.Start1 + i);
                     }
                     if (ladder.LastHBondDirection == BetaLadder.HBondDirection.From1To0)
-                        AddSafely(ref ignoreHBondsFrom_Parallel [ladder.End0], ladder.End1);
+                        AddSafely(ref ignoreHBondsFrom_Parallel[ladder.End0], ladder.End1);
                 }
             }
         }
@@ -205,7 +233,7 @@ namespace protein.SecStrAssigning
         }
         /** Tries to build a beta-bulge so than the la.Strand0 and lb.Strand0 form the SHORT side of the bulge. */
         private BetaBulge BuildBetaBulgeWithFirstLadderFirst(BetaLadder la,BetaLadder lb){
-            if (residues [la.Start1].ChainId == residues [lb.Start1].ChainId) {
+            if (residues[la.Start1].ChainId == residues[lb.Start1].ChainId) {
                 if (la.Type == BetaLadder.LadderType.Antiparallel && lb.Type == BetaLadder.LadderType.Antiparallel) {
                     //Antiparallel types
                     if (lb.Start0 == la.End0 && la.Start1 == ResidueXAfter(lb.End1, 1)) {
@@ -316,8 +344,8 @@ namespace protein.SecStrAssigning
             vertices.Add(newVertex);
             int iNew = vertices.Count - 1;
             for (int i = vertices.Count - 2; i >= 0; i--) {
-                if (DoOverlap(vertices [i], vertices [iNew]) || AreShortSideOfBetaBulge(vertices [i], vertices [iNew]) || AreLongSideOfBetaBulge(vertices [i], vertices [iNew])) {
-                    bool merged = TryMergeSheetsByStrands(vertices [i], vertices [iNew]);
+                if (DoOverlap(vertices[i], vertices[iNew]) || AreShortSideOfBetaBulge(vertices[i], vertices[iNew]) || AreLongSideOfBetaBulge(vertices[i], vertices[iNew])) {
+                    bool merged = TryMergeSheetsByStrands(vertices[i], vertices[iNew]);
                     if (merged) {
                         vertices.RemoveAt(iNew);
                         iNew = i;
@@ -362,20 +390,20 @@ namespace protein.SecStrAssigning
             Lib.WriteLineDebug("Extended: {0}",extendedStrand.SSE);
             Lib.WriteLineDebug("Extending: {0}",extendingStrand.SSE);
             for (int i = 0; i < oldUpNeighbours.Length; i++) {
-                UnlinkStrands(extendingStrand, oldUpNeighbours [i]);
-                LinkStrands(extendedStrand, oldUpNeighbours [i], oldUpLadders [i]);
+                UnlinkStrands(extendingStrand, oldUpNeighbours[i]);
+                LinkStrands(extendedStrand, oldUpNeighbours[i], oldUpLadders[i]);
             }
             for (int i = 0; i < oldDownNeighbours.Length; i++) {
-                UnlinkStrands(oldDownNeighbours [i], extendingStrand);
-                LinkStrands(oldDownNeighbours [i], extendedStrand, oldDownLadders [i].Inverted());
+                UnlinkStrands(oldDownNeighbours[i], extendingStrand);
+                LinkStrands(oldDownNeighbours[i], extendedStrand, oldDownLadders[i].Inverted());
             }
             return true;
         }
 
         private SSE GetStrand0(BetaLadder ladder){
-            string chainId = residues [ladder.Start0].ChainId;
-            int start = residues [ladder.Start0].SeqNumber;
-            int end = residues [ladder.End0].SeqNumber;
+            string chainId = residues[ladder.Start0].ChainId;
+            int start = residues[ladder.Start0].SeqNumber;
+            int end = residues[ladder.End0].SeqNumber;
             if (STRANDS_BY_ALPHA) {
                 if (ladder.FirstHBondDirection == BetaLadder.HBondDirection.From1To0)
                     start++;
@@ -386,9 +414,9 @@ namespace protein.SecStrAssigning
         }
 
         private SSE GetStrand1(BetaLadder ladder){
-            string chainId = residues [ladder.Start1].ChainId;
-            int start = residues [ladder.Start1].SeqNumber;
-            int end = residues [ladder.End1].SeqNumber;
+            string chainId = residues[ladder.Start1].ChainId;
+            int start = residues[ladder.Start1].SeqNumber;
+            int end = residues[ladder.End1].SeqNumber;
             if (STRANDS_BY_ALPHA) {
                 if (ladder.Type == BetaLadder.LadderType.Antiparallel) {
                     if (ladder.FirstHBondDirection == BetaLadder.HBondDirection.From1To0)
@@ -412,25 +440,25 @@ namespace protein.SecStrAssigning
             } else {
                 switch(bulge.Type) {
                 case BetaBulge.BulgeType.Classic:
-                    return new SSE(null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_CLASSIC_SHORT_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSE.BULGE_CLASSIC_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Wide:
-                    return new SSE(null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_WIDE_SHORT_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSE.BULGE_WIDE_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel22:
-                    return new SSE(null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL22_SHORT_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL22_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel33:
-                    return new SSE(null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL33_SHORT_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL33_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel15:
-                    return new SSE(null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL15_SHORT_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL15_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel23:
-                    return new SSE(null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL23_SHORT_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSE.BULGE_ANTIPARALLEL23_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel14:
-                    return new SSE(null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL14_SHORT_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL14_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel32:
-                    return new SSE(null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL32_SHORT_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL32_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel13:
-                    return new SSE(null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL13_SHORT_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL13_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel33:
-                    return new SSE(null, residues [bulge.StartShort].ChainId, residues [bulge.StartShort].SeqNumber, residues [bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL33_SHORT_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSE.BULGE_PARALLEL33_SHORT_SIDE_TYPE, null);
                 default:
                     throw new NotImplementedException();
                 }
@@ -443,25 +471,25 @@ namespace protein.SecStrAssigning
             } else {
                 switch(bulge.Type) {
                 case BetaBulge.BulgeType.Classic:
-                    return new SSE(null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_CLASSIC_LONG_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSE.BULGE_CLASSIC_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Wide:
-                    return new SSE(null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_WIDE_LONG_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSE.BULGE_WIDE_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel22:
-                    return new SSE(null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL22_LONG_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL22_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel33:
-                    return new SSE(null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL33_LONG_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL33_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel15:
-                    return new SSE(null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL15_LONG_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL15_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel23:
-                    return new SSE(null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL23_LONG_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSE.BULGE_ANTIPARALLEL23_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel14:
-                    return new SSE(null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL14_LONG_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL14_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel32:
-                    return new SSE(null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL32_LONG_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL32_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel13:
-                    return new SSE(null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL13_LONG_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL13_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel33:
-                    return new SSE(null, residues [bulge.StartLong].ChainId, residues [bulge.StartLong].SeqNumber, residues [bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL33_LONG_SIDE_TYPE, null);
+                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSE.BULGE_PARALLEL33_LONG_SIDE_TYPE, null);
                 default:
                     throw new NotImplementedException();
                 }
@@ -471,7 +499,7 @@ namespace protein.SecStrAssigning
         private char LadderSSEType(BetaLadder ladder){
             if (ladder.Start0 == ladder.Start1) {
                 // C7 motif
-                if (residues [ladder.End0].SeqNumber - residues [ladder.Start0].SeqNumber != 2)
+                if (residues[ladder.End0].SeqNumber - residues[ladder.Start0].SeqNumber != 2)
                     throw new  SecStrAssignmentException("C7 turn with more than 1 stabilizing H-bond.");
                 else
                     return SSE.TURN_C7_TYPE;
@@ -522,9 +550,9 @@ namespace protein.SecStrAssigning
                     //finish or reject helix
                     if (i - currentStart >= MIN_HBONDS_PER_HELIX) {
                         helices.Add(new SSE(null, 
-                            residues [currentStart].ChainId, 
-                            residues [currentStart].SeqNumber +(HELICES_BY_ALPHA ? 1 : 0), 
-                            residues [currentEnd].SeqNumber -(HELICES_BY_ALPHA ? 1 : 0), 
+                            residues[currentStart].ChainId, 
+                            residues[currentStart].SeqNumber +(HELICES_BY_ALPHA ? 1 : 0), 
+                            residues[currentEnd].SeqNumber -(HELICES_BY_ALPHA ? 1 : 0), 
                             assignedType, null));
                     }
                     currentStart = -1;
@@ -593,10 +621,10 @@ namespace protein.SecStrAssigning
             List<(Residue, Residue)> hBonds = new List<(Residue, Residue)>();
             for (int i = 0; i < residues.Length; i++) {
                 int nLaddersBefore = ladders.Count;
-                List<int> hAcceptors = hBondFinder.FindHAcceptors(i).Where(j => j > i)/*.Where(j => ignoreHBondsTo [i] == null || !ignoreHBondsTo [i].Contains(j))*/.ToList();
+                List<int> hAcceptors = hBondFinder.FindHAcceptors(i).Where(j => j > i)/*.Where(j => ignoreHBondsTo[i] == null || !ignoreHBondsTo[i].Contains(j))*/.ToList();
                 foreach (int j in hAcceptors) {
                     // try motif A
-                    if ((ignoreHBondsTo_Antiparallel [i] == null || !ignoreHBondsTo_Antiparallel [i].Contains(j)) && hBondFinder.IsHBond(j, i)) {
+                    if ((ignoreHBondsTo_Antiparallel[i] == null || !ignoreHBondsTo_Antiparallel[i].Contains(j)) && hBondFinder.IsHBond(j, i)) {
                         BetaLadder ladder = new BetaLadder(BetaLadder.LadderType.Antiparallel, i, j, BetaLadder.HBondDirection.From0To1);
                         ladder.AddOneHBond();
                         while (CanExtendLadder(ladder))
@@ -606,7 +634,7 @@ namespace protein.SecStrAssigning
                         ladders.Add(ladder);
                     }						
                     // try motif C
-                    if ((ignoreHBondsTo_Parallel [i] == null || !ignoreHBondsTo_Parallel [i].Contains(j)) && hBondFinder.IsHBond(Residue2After(j), i)) {
+                    if ((ignoreHBondsTo_Parallel[i] == null || !ignoreHBondsTo_Parallel[i].Contains(j)) && hBondFinder.IsHBond(Residue2After(j), i)) {
                         BetaLadder ladder = new BetaLadder(BetaLadder.LadderType.Parallel, i, j, BetaLadder.HBondDirection.From0To1);
                         ladder.AddOneHBond();
                         while (CanExtendLadder(ladder))
@@ -616,10 +644,10 @@ namespace protein.SecStrAssigning
                         ladders.Add(ladder);
                     }		
                 }
-                List<int> hDonors = hBondFinder.FindHDonors(i).Where(j => j > i)/*.Where(j => ignoreHBondsFrom [i] == null || !ignoreHBondsFrom [i].Contains(j))*/.ToList();
+                List<int> hDonors = hBondFinder.FindHDonors(i).Where(j => j > i)/*.Where(j => ignoreHBondsFrom[i] == null || !ignoreHBondsFrom[i].Contains(j))*/.ToList();
                 foreach (int j in hDonors) {
                     // try motif B
-                    if ((ignoreHBondsFrom_Antiparallel [i] == null || !ignoreHBondsFrom_Antiparallel [i].Contains(j)) && hBondFinder.IsHBond(Residue2After(i), Residue2Before(j))) {
+                    if ((ignoreHBondsFrom_Antiparallel[i] == null || !ignoreHBondsFrom_Antiparallel[i].Contains(j)) && hBondFinder.IsHBond(Residue2After(i), Residue2Before(j))) {
                         BetaLadder ladder = new BetaLadder(BetaLadder.LadderType.Antiparallel, i, j, BetaLadder.HBondDirection.From1To0);
                         ladder.AddOneHBond();
                         while (CanExtendLadder(ladder))
@@ -629,7 +657,7 @@ namespace protein.SecStrAssigning
                         ladders.Add(ladder);
                     }				
                     // try motif D
-                    if ((ignoreHBondsFrom_Parallel [i] == null || !ignoreHBondsFrom_Parallel [i].Contains(j)) && hBondFinder.IsHBond(Residue2After(i), j)) {
+                    if ((ignoreHBondsFrom_Parallel[i] == null || !ignoreHBondsFrom_Parallel[i].Contains(j)) && hBondFinder.IsHBond(Residue2After(i), j)) {
                         BetaLadder ladder = new BetaLadder(BetaLadder.LadderType.Parallel, i, j, BetaLadder.HBondDirection.From1To0);
                         ladder.AddOneHBond();
                         while (CanExtendLadder(ladder))
@@ -640,20 +668,20 @@ namespace protein.SecStrAssigning
                     }
                 }
                 if (ladders.Count - nLaddersBefore > 1)
-                    Lib.WriteLineDebug("More than one beta-ladder motif found from residue {0}.", residues [i].ToString(true));
-                hBonds.AddRange(hAcceptors.Select(a =>(residues [i], residues [a])));
-                hBonds.AddRange(hDonors.Select(d =>(residues [d], residues [i])));
+                    Lib.WriteLineDebug("More than one beta-ladder motif found from residue {0}.", residues[i].ToString(true));
+                hBonds.AddRange(hAcceptors.Select(a =>(residues[i], residues[a])));
+                hBonds.AddRange(hDonors.Select(d =>(residues[d], residues[i])));
             }
             Lib.WriteLineDebug("Time for finding H-bond patterns: " + DateTime.Now.Subtract(t0));
 
             foreach (BetaLadder l in ladders)
                 if (l.Start0 == l.Start1 &&(l.End0 - l.Start0) > 2)
-                    Lib.WriteWarning("Strange secondary structure in chain {0} {1}-{2}.", residues [l.Start0].ChainId, residues [l.Start0].SeqNumber, residues [l.End0].SeqNumber);
+                    Lib.WriteWarning("Strange secondary structure in chain {0} {1}-{2}.", residues[l.Start0].ChainId, residues[l.Start0].SeqNumber, residues[l.End0].SeqNumber);
 
             List<SSE> c7Turns = ladders
                 .Where(l => l.Start0 == l.Start1)
                 .OrderBy(l => l.Start0)
-                .Select(l => GetStrand0(l)/*new SSE("x", residues [l.Start0].ChainID, residues [l.Start0].ResSeq, residues [l.End0].ResSeq, SSE.TURN_C7_TYPE,null)*/)
+                .Select(l => GetStrand0(l)/*new SSE("x", residues[l.Start0].ChainID, residues[l.Start0].ResSeq, residues[l.End0].ResSeq, SSE.TURN_C7_TYPE,null)*/)
                 .ToList();
 
             // Build C7 turns and wiggles
@@ -759,7 +787,7 @@ namespace protein.SecStrAssigning
             BetaLadder[] bothSideRealLadders = realLadders.Union(realLadders.Select(l => l.Inverted())).ToArray();
             for (int i = 0; i < bothSideRealLadders.Length; i++) {
                 for (int j = i + 1; j < bothSideRealLadders.Length; j++) {
-                    BetaBulge bulge = BuildBetaBulge(bothSideRealLadders [i], bothSideRealLadders [j]);
+                    BetaBulge bulge = BuildBetaBulge(bothSideRealLadders[i], bothSideRealLadders[j]);
                     if (bulge != null)
                         bulges.Add(bulge);
                 }
@@ -777,8 +805,8 @@ namespace protein.SecStrAssigning
                     if (includingStrands.Length != 1) {
                         throw new InvalidOperationException("One side of a beta-bulge belongs to more than one beta-strand(this should never happen)!");
                     } else {
-                        side.SheetId = includingStrands [0].SheetId;
-                        includingStrands [0].AddNestedSSE(side);
+                        side.SheetId = includingStrands[0].SheetId;
+                        includingStrands[0].AddNestedSSE(side);
                         bulgeSides.Add(side);
                     }
                 }
@@ -791,24 +819,24 @@ namespace protein.SecStrAssigning
                 int e = ResidueXAfter(sse.End, 1);
                 if (s == -1 || e == -1) {
                     sse.AddComment("Edge of chain. ");
-                } else if (Enumerable.Range(s, e - s + 1).Any(i => residues [i].GetAtoms().Any(a => a.AltLoc != ' '))){
+                } else if (Enumerable.Range(s, e - s + 1).Any(i => residues[i].GetAtoms().Any(a => a.AltLoc != ' '))){
                     sse.AddComment("Alternative locations. ");
                 }
             }*/
 
             Dictionary<(string, int, int), int> chainStartEnd2Index = new Dictionary<(string, int, int), int>();
             for (int i = 0; i < resultSSEs.Count; i++) {
-                SSE sse = resultSSEs [i];
-                chainStartEnd2Index [(sse.ChainID, sse.Start, sse.End)] = i;
+                SSE sse = resultSSEs[i];
+                chainStartEnd2Index[(sse.ChainID, sse.Start, sse.End)] = i;
             }
             List<(int, int, int)> edges = new List<(int, int, int)>();
             foreach (var seed in seeds) {
                 seed.DFS(u => {
-                    int vertex1 = chainStartEnd2Index [(u.SSE.ChainID, u.SSE.Start, u.SSE.End)];
+                    int vertex1 = chainStartEnd2Index[(u.SSE.ChainID, u.SSE.Start, u.SSE.End)];
                     for (int i = 0; i < u.DownNeighbours.Count; i++) {
-                        var v = u.DownNeighbours [i];
-                        var ladder = u.DownLadders [i];
-                        int vertex2 = chainStartEnd2Index [(v.SSE.ChainID, v.SSE.Start, v.SSE.End)];
+                        var v = u.DownNeighbours[i];
+                        var ladder = u.DownLadders[i];
+                        int vertex2 = chainStartEnd2Index[(v.SSE.ChainID, v.SSE.Start, v.SSE.End)];
                         int ladderType = ladder.Type == BetaLadder.LadderType.Parallel ? 1 : -1;
                         edges.Add((Math.Min(vertex1, vertex2), Math.Max(vertex1, vertex2), ladderType));
                     }

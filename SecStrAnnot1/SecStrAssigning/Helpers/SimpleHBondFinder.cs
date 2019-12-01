@@ -54,7 +54,8 @@ namespace protein.SecStrAssigning.Helpers
             }
         }
 
-        public double DsspEnergy(int donor, int acceptor){
+        /** Return DSSP energy between donor's NH and acceptor's CO. Return null, if some important atoms are missing and the energy cannot be calculated. */
+        public double? DsspEnergy(int donor, int acceptor){
             if (canBeDonor [donor] && canBeAcceptor [acceptor]) {
                 Vector n = vecN [donor];
                 Vector h = vecH [donor];
@@ -62,7 +63,7 @@ namespace protein.SecStrAssigning.Helpers
                 Vector o = vecO [acceptor];
                 return 0.084 * 332 * (1 / (o - n).Size + 1 / (c - h).Size - 1 / (o - h).Size - 1 / (c - n).Size);
             } else {
-                throw new InvalidOperationException ("Some residues miss atoms which are important for calculation of DSSP energy.");
+                return null;
             }
         }
 
@@ -72,9 +73,10 @@ namespace protein.SecStrAssigning.Helpers
             if (residues [donor].ChainId == residues [acceptor].ChainId && Math.Abs (residues [donor].SeqNumber - residues [acceptor].SeqNumber) <= 1) {
                 return false;
             }
-            try {
-                return DsspEnergy (donor,acceptor) <= energyCutoff;
-            } catch (InvalidOperationException) {
+            double? dsspEnergy = DsspEnergy (donor,acceptor);
+            if (dsspEnergy != null){
+                return dsspEnergy.Value <= energyCutoff;
+            } else {
                 //some residues do not contain needed atoms
                 return false;
             }
