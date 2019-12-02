@@ -6,6 +6,7 @@ using System.Reflection;
 using Cif.Components;
 using protein.SecStrAssigning.Helpers;
 using Cif.Tables;
+using SecStrAnnotator2;
 
 namespace protein.SecStrAssigning
 {
@@ -22,12 +23,15 @@ namespace protein.SecStrAssigning
         public HBondSecStrAssigner2(Protein protein, double hBondEnergyCutoff){
             // this.DetectSheets=true;
             // this.DetectHelices=true;
+            MyStopwatch watch = new MyStopwatch();
             var hydrogenAdder = new HydrogenAdders.DsspLikeAmideHydrogenAdder();
             protein = hydrogenAdder.AddHydrogens(protein); // removing residues without C-alpha is probably not needed here
             this.model = protein.Model;
             this.residues = protein.GetResidues().ToArray();
-            var hBondFinder = new BoxingHBondFinder(this.residues, hBondEnergyCutoff);
             this.nResidues = model.Residues.Count;
+            MyStopwatch watchHBF = new MyStopwatch();
+            var hBondFinder = new BoxingHBondFinder(this.residues, hBondEnergyCutoff);
+            watchHBF.Stop("new BoxingHbondFinder");
             this.hBonds = new HashSet<(int donor, int acceptor)>();
             this.acceptorsOf = new Dictionary<int,List<int>>();
             for (int don = 0; don < nResidues; don++){
@@ -37,6 +41,8 @@ namespace protein.SecStrAssigning
                     hBonds.Add((don, acc));
                 }
             }
+            watchHBF.Stop("Found H-bonds");
+            watch.Stop("new HBondSecStrAssigner2()");
         }
 
         public String GetDescription(){
@@ -45,7 +51,9 @@ namespace protein.SecStrAssigning
 
         public SecStrAssignment GetSecStrAssignment()
         {
+            MyStopwatch watch = new MyStopwatch();
             BuildBetaGraph();
+            watch.Stop("BuildBetaGraph()");
             throw new NotImplementedException();
         }
 
@@ -82,7 +90,9 @@ namespace protein.SecStrAssigning
             var sheet_macroladders = new List<List<int>>();
             int sheet_count = 0;
 
+            MyStopwatch watch = new MyStopwatch();
             List<Ladder> ladders = FindLadders();
+            watch.Stop("FindLadders()");
             Ladder[] parallelLadders = ladders.Where(l => l.type0 == MicrostrandType.REGULAR_PARALEL).ToArray();
             Ladder[] antiparallelLadders = ladders.Where(l => l.type0 == MicrostrandType.REGULAR_ANTIPARALEL).ToArray();
             List<Ladder> parallelLaddersAndBulges = IncludeParallelBulges(parallelLadders);
@@ -174,7 +184,9 @@ namespace protein.SecStrAssigning
                 Lib.WriteLineDebug(Lib.EnumerateWithSeparators(macroladders, "\n"));
             }
             var edges = macroladders.Select(mal => (mal.macrostrand0, mal.macrostrand1)).ToList();
+            MyStopwatch watchComp = new MyStopwatch();
             var sheets = ConnectedComponents(edges);
+            watchComp.Stop("ConnecteComponents()");
             if (Lib.DoWriteDebug){
                 Lib.WriteLineDebug("Sheets:");
                 foreach (var sheet in sheets){
@@ -182,6 +194,7 @@ namespace protein.SecStrAssigning
                 }
                 Lib.WriteLineDebug("");
             }
+            watch.Stop("rest of BuildBetaGraph()");
             // TODO continue here
             // TODO test on 2axt,EA
             

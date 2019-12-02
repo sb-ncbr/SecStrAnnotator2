@@ -3,19 +3,19 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Diagnostics;
 using System.Resources;
 using System.Threading;
 using System.Globalization;
 using Cif.Components;
 using protein.SecStrAssigning;
+using SecStrAnnotator2;
 
 namespace protein
 {
 	class MainClass
 	{ 
 		/// <summary>
-		/// The entry point of the program, where the program control starts and ends.
+		/// The entry point of the program, where the program control starts and ends.7
 		/// </summary>
 		/// <param name="args">The command-line arguments.</param>
 		/// <returns>The exit code that is given to the operating system after the program ends.</returns>
@@ -385,8 +385,10 @@ namespace protein
 			// #debug:
 			if (Lib.DoWriteDebug){
 				try {
+					MyStopwatch watch = new MyStopwatch();
 					HBondSecStrAssigner2 hba2 = new HBondSecStrAssigner2(qProtein, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
 					hba2.GetSecStrAssignment();
+					watch.Stop("Time for HBondSecStrAssigner2");
 				} catch (NotImplementedException){
 					//nothing
 				}
