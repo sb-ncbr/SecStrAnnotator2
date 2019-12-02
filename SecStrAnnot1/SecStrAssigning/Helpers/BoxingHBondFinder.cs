@@ -70,10 +70,6 @@ namespace protein.SecStrAssigning.Helpers
             return GetNeighborBox (res).Where (s => IsHBond (res, s)).ToList ();
         }
 
-        /*public virtual List<int> FindHDonors(Residue r){
-            return Lib.IndicesWhere(residues, s => IsHBond(s,r));
-        }*/
-
         public override List<int> FindHDonors(int res){
             return GetNeighborBox (res).Where (s => IsHBond (s, res)).ToList ();
         }

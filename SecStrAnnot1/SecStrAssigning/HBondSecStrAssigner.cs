@@ -9,15 +9,15 @@ using protein.SecStrAssigning.Helpers;
 namespace protein.SecStrAssigning
 {
     public class HBondSecStrAssigner : ISecStrAssigner{
-        public const int MIN_HBONDS_PER_LADDER = 2;
-        public const int MIN_HBONDS_PER_HELIX = 2; //1;
-        public const int MIN_OVERLAP_FOR_JOINING = 0; // condition for joining 2 beta-strands: end0 >= start1 + MIN_OVERLAP et vice versa
-        public const bool STRANDS_BY_ALPHA = true; // if true then residues are assigned to a strand if they have C-alpha included in a cycle(DSSP-style), if false then residues are assigned to a strand if they have any atom included in a cycle(HERA-style)
-        public const bool BULGES_BY_ALPHA = false;
-        public const bool HELICES_BY_ALPHA = true;
-        // To use DSSP-style joining, set MIN_Z_OVERLAP_FOR_JOINING = 3*MIN_OVERLAP_FOR_JOINING+2
-        public const int MIN_Z_OVERLAP_FOR_JOINING = 1; // 3*MIN_OVERLAP_FOR_JOINING+2; // condition for joining 2 beta-strands: Z(end0) >= Z(start1) + MIN_OVERLAP et vice versa
-        public const bool ALLOW_BULGE_A33 = true;  // antiparallel beta-bulge defined as only 1 missing H-bond from regular beta-ladder(in 2qad chain B ~ resi 15)
+        // public const int MIN_HBONDS_PER_LADDER = 2;
+        // public const int MIN_HBONDS_PER_HELIX = 2; //1;
+        // public const int MIN_OVERLAP_FOR_JOINING = 0; // condition for joining 2 beta-strands: end0 >= start1 + MIN_OVERLAP et vice versa
+        // public const bool STRANDS_BY_ALPHA = true; // if true then residues are assigned to a strand if they have C-alpha included in a cycle(DSSP-style), if false then residues are assigned to a strand if they have any atom included in a cycle(HERA-style)
+        // public const bool BULGES_BY_ALPHA = false;
+        // public const bool HELICES_BY_ALPHA = true;
+        // // To use DSSP-style joining, set MIN_Z_OVERLAP_FOR_JOINING = 3*MIN_OVERLAP_FOR_JOINING+2
+        // public const int MIN_Z_OVERLAP_FOR_JOINING = 1; // 3*MIN_OVERLAP_FOR_JOINING+2; // condition for joining 2 beta-strands: Z(end0) >= Z(start1) + MIN_OVERLAP et vice versa
+        // public const bool ALLOW_BULGE_A33 = true;  // antiparallel beta-bulge defined as only 1 missing H-bond from regular beta-ladder(in 2qad chain B ~ resi 15)
 
         public bool DetectSheets { get; set; }
         public bool DetectHelices { get; set; }
@@ -196,7 +196,7 @@ namespace protein.SecStrAssigning
             if (a.SSE.ChainID == b.SSE.ChainID) {
                 foreach (BetaLadder la in a.UpLadders.Union(a.DownLadders))
                     foreach (BetaLadder lb in b.UpLadders.Union(b.DownLadders))
-                        if (la.ZEnd0 - lb.ZStart0 >= MIN_Z_OVERLAP_FOR_JOINING && lb.ZEnd0 - la.ZStart0 >= MIN_Z_OVERLAP_FOR_JOINING)
+                        if (la.ZEnd0 - lb.ZStart0 >= HBondSSAConstants.MIN_Z_OVERLAP_FOR_JOINING && lb.ZEnd0 - la.ZStart0 >= HBondSSAConstants.MIN_Z_OVERLAP_FOR_JOINING)
                             return true;
             }
             return false;
@@ -250,7 +250,7 @@ namespace protein.SecStrAssigning
                         // bulge-not-bulge a-b(type A22) found in 1gei
                         return new BetaBulge(BetaBulge.BulgeType.Antiparallel22, la.End0, lb.Start0, lb.End1, la.Start1);
                     }
-                    if (ALLOW_BULGE_A33 && lb.Start0 == ResidueXAfter(la.End0, 2) && la.Start1 == ResidueXAfter(lb.End1, 2)
+                    if (HBondSSAConstants.ALLOW_BULGE_A33 && lb.Start0 == ResidueXAfter(la.End0, 2) && la.Start1 == ResidueXAfter(lb.End1, 2)
                         && la.LastHBondDirection == BetaLadder.HBondDirection.From0To1 && lb.FirstHBondDirection == BetaLadder.HBondDirection.From0To1) {
                         // bulge-not-bulge a-b(type A33)
                         return new BetaBulge(BetaBulge.BulgeType.Antiparallel33, la.End0, lb.Start0, lb.End1, la.Start1);
@@ -404,7 +404,7 @@ namespace protein.SecStrAssigning
             string chainId = residues[ladder.Start0].ChainId;
             int start = residues[ladder.Start0].SeqNumber;
             int end = residues[ladder.End0].SeqNumber;
-            if (STRANDS_BY_ALPHA) {
+            if (HBondSSAConstants.STRANDS_BY_ALPHA) {
                 if (ladder.FirstHBondDirection == BetaLadder.HBondDirection.From1To0)
                     start++;
                 if (ladder.LastHBondDirection == BetaLadder.HBondDirection.From0To1)
@@ -417,7 +417,7 @@ namespace protein.SecStrAssigning
             string chainId = residues[ladder.Start1].ChainId;
             int start = residues[ladder.Start1].SeqNumber;
             int end = residues[ladder.End1].SeqNumber;
-            if (STRANDS_BY_ALPHA) {
+            if (HBondSSAConstants.STRANDS_BY_ALPHA) {
                 if (ladder.Type == BetaLadder.LadderType.Antiparallel) {
                     if (ladder.FirstHBondDirection == BetaLadder.HBondDirection.From1To0)
                         end--;
@@ -435,7 +435,7 @@ namespace protein.SecStrAssigning
         }
 
         private SSE GetShortStrand(BetaBulge bulge){
-            if (BULGES_BY_ALPHA) {
+            if (HBondSSAConstants.BULGES_BY_ALPHA) {
                 throw new NotImplementedException();
             } else {
                 switch(bulge.Type) {
@@ -466,7 +466,7 @@ namespace protein.SecStrAssigning
         }
     
         private SSE GetLongStrand(BetaBulge bulge){
-            if (BULGES_BY_ALPHA) {
+            if (HBondSSAConstants.BULGES_BY_ALPHA) {
                 throw new NotImplementedException();
             } else {
                 switch(bulge.Type) {
@@ -548,11 +548,11 @@ namespace protein.SecStrAssigning
                     currentEnd = j;
                 } else if (currentStart >= 0 && !hBondFinder.IsHBond(j, i)) {
                     //finish or reject helix
-                    if (i - currentStart >= MIN_HBONDS_PER_HELIX) {
+                    if (i - currentStart >= HBondSSAConstants.MIN_HBONDS_PER_HELIX) {
                         helices.Add(new SSE(null, 
                             residues[currentStart].ChainId, 
-                            residues[currentStart].SeqNumber +(HELICES_BY_ALPHA ? 1 : 0), 
-                            residues[currentEnd].SeqNumber -(HELICES_BY_ALPHA ? 1 : 0), 
+                            residues[currentStart].SeqNumber +(HBondSSAConstants.HELICES_BY_ALPHA ? 1 : 0), 
+                            residues[currentEnd].SeqNumber -(HBondSSAConstants.HELICES_BY_ALPHA ? 1 : 0), 
                             assignedType, null));
                     }
                     currentStart = -1;
@@ -588,30 +588,6 @@ namespace protein.SecStrAssigning
             foreach ((int i,int j) in microstrands){
 
             }
-        }
-
-        private void BuildBetaGraph_NewNew(List<BetaLadder> ladders){
-            var microstrand_firstZ = new List<int>();
-            var microstrand_lastZ = new List<int>();
-            var microstrand_microladder = new List<int>();
-            var microstrand_type = new List<MicrostrandType>();
-            var microstrand_macrostrand = new List<int>();
-            int microstrand_count = 0;
-
-            var microladder_microstrand0 = new List<int>();
-            var microladder_microstrand1 = new List<int>();
-            var microladder_type0 = new List<MicrostrandType>();
-            var microladder_macroladder = new List<int>();
-            var microladder_count = 0;
-
-            var macrostrand_firstZ = new List<int>();
-            var macrostrand_lastZ = new List<int>();
-            var macrostrand_microstrands = new List<List<int>>();
-            var macrostrand_macroladders = new List<List<int>>();
-            
-        // macroStrands: { microStrands: number[][], macroLadders: number[][], firstZ: number[], lastZ: number[], fragment: number[], sheet: number[], count: number } 
-        // macroLadders: { microLadders: number[][], macroStrand0: number[], macroStrand1: number[], pattern: Pattern[], type: MacroLadderType[], count: number }
-        // sheets: { macroStrands: number[][], macroLadders: number[][], count: number }
         }
 
         private SecStrAssignment GetSheets(){
@@ -719,11 +695,11 @@ namespace protein.SecStrAssigning
             }
 
             // Build beta-sheet graph - NEW VERSION
-            List<BetaLadder> realLadders1 = ladders.Where(l => l.Start0 != l.Start1).Where(l => CheckLadderAndCountHBonds(l) >= MIN_HBONDS_PER_LADDER).ToList();
+            List<BetaLadder> realLadders1 = ladders.Where(l => l.Start0 != l.Start1).Where(l => CheckLadderAndCountHBonds(l) >= HBondSSAConstants.MIN_HBONDS_PER_LADDER).ToList();
             BuildBetaGraph_New(realLadders1);
 
             // Build beta-sheet graph
-            List<BetaLadder> realLadders = ladders.Where(l => l.Start0 != l.Start1).Where(l => CheckLadderAndCountHBonds(l) >= MIN_HBONDS_PER_LADDER).ToList();
+            List<BetaLadder> realLadders = ladders.Where(l => l.Start0 != l.Start1).Where(l => CheckLadderAndCountHBonds(l) >= HBondSSAConstants.MIN_HBONDS_PER_LADDER).ToList();
             List<BetaStrandInSheet> vertices = new List<BetaStrandInSheet>();
             int sheetCounter = 0;
             foreach (BetaLadder ladder in realLadders) {
@@ -855,7 +831,7 @@ namespace protein.SecStrAssigning
         }
 
         public String GetDescription(){
-            return "hydrogen-bond-based method(similar to DSSP, accepted types: E)";
+            return "hydrogen-bond-based method (similar to DSSP)";
         }
 
     }	

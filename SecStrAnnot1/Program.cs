@@ -382,6 +382,16 @@ namespace protein
 
 			#region Secondary Structure Assignment of the query protein.
 
+			// #debug:
+			if (Lib.DoWriteDebug){
+				try {
+					HBondSecStrAssigner2 hba2 = new HBondSecStrAssigner2(qProtein, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
+					hba2.GetSecStrAssignment();
+				} catch (NotImplementedException){
+					//nothing
+				}
+			}
+
 			ISecStrAssigner secStrAssigner;
 
 			switch (secStrMethod) {
