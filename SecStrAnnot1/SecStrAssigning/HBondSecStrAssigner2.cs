@@ -58,37 +58,39 @@ namespace protein.SecStrAssigning
         }
 
         private void BuildBetaGraph(){
-            var microstrand_firstZ = new List<int>();
-            var microstrand_lastZ = new List<int>();
-            var microstrand_fragment = new List<int>();
-            var microstrand_microladder = new List<int>();
-            var microstrand_type = new List<MicrostrandType>();
-            var microstrand_macrostrand = new List<int>();
-            int microstrand_count = 0;
+            #region blablabla
+            // var microstrand_firstZ = new List<int>();
+            // var microstrand_lastZ = new List<int>();
+            // var microstrand_fragment = new List<int>();
+            // var microstrand_microladder = new List<int>();
+            // var microstrand_type = new List<MicrostrandType>();
+            // var microstrand_macrostrand = new List<int>();
+            // int microstrand_count = 0;
 
-            var microladder_microstrand0 = new List<int>();
-            var microladder_microstrand1 = new List<int>();
-            var microladder_type0 = new List<MicrostrandType>();
-            var microladder_macroladder = new List<int>();
-            var microladder_count = 0;
+            // var microladder_microstrand0 = new List<int>();
+            // var microladder_microstrand1 = new List<int>();
+            // var microladder_type0 = new List<MicrostrandType>();
+            // var microladder_macroladder = new List<int>();
+            // var microladder_count = 0;
 
-            var macrostrand_firstZ = new List<int>();
-            var macrostrand_lastZ = new List<int>();
-            var macrostrand_fragment = new List<int>();
-            var macrostrand_microstrands = new List<List<int>>();
-            var macrostrand_macroladders = new List<List<int>>();
-            var macrostrand_sheet = new List<int>();
-            var macrostrand_count = 0;
+            // var macrostrand_firstZ = new List<int>();
+            // var macrostrand_lastZ = new List<int>();
+            // var macrostrand_fragment = new List<int>();
+            // var macrostrand_microstrands = new List<List<int>>();
+            // var macrostrand_macroladders = new List<List<int>>();
+            // var macrostrand_sheet = new List<int>();
+            // var macrostrand_count = 0;
             
-            var macroladder_microladders = new List<List<int>>();
-            var macroladder_macrostrand0 = new List<int>();
-            var macroladder_macrostrand1 = new List<int>();
-            var macroladder_type = new List<MacroladderType>();
-            var macroladder_count = 0;
+            // var macroladder_microladders = new List<List<int>>();
+            // var macroladder_macrostrand0 = new List<int>();
+            // var macroladder_macrostrand1 = new List<int>();
+            // var macroladder_type = new List<MacroladderType>();
+            // var macroladder_count = 0;
 
-            var sheet_macrostrands = new List<List<int>>();
-            var sheet_macroladders = new List<List<int>>();
-            int sheet_count = 0;
+            // var sheet_macrostrands = new List<List<int>>();
+            // var sheet_macroladders = new List<List<int>>();
+            // int sheet_count = 0;
+            #endregion
 
             MyStopwatch watch = new MyStopwatch();
             List<Ladder> ladders = FindLadders();
@@ -186,18 +188,44 @@ namespace protein.SecStrAssigning
             var edges = macroladders.Select(mal => (mal.macrostrand0, mal.macrostrand1)).ToList();
             MyStopwatch watchComp = new MyStopwatch();
             var sheets = ConnectedComponents(edges);
+            int nSheets = sheets.Count;
             watchComp.Stop("ConnecteComponents()");
+            var macrostrand2sheet = new int[nMacrostrands];
+            for (int iSheet = 0; iSheet < nSheets; iSheet++){
+                foreach (int iMacrostrand in sheets[iSheet]){
+                    macrostrand2sheet[iMacrostrand] = iSheet;
+                }
+            }
             if (Lib.DoWriteDebug){
                 Lib.WriteLineDebug("Sheets:");
                 foreach (var sheet in sheets){
                     Lib.WriteLineDebug(Lib.EnumerateWithCommas(sheet));
                 }
+                Lib.WriteLineDebug("Macrostrand2sheet:");
+                Lib.WriteLineDebug(Lib.EnumerateWithCommas(macrostrand2sheet));
                 Lib.WriteLineDebug("");
             }
             watch.Stop("rest of BuildBetaGraph()");
             // TODO continue here
             // TODO test on 2axt,EA
-            
+
+            List<SSE> resultSSEs = new List<SSE>(capacity: nMacrostrands);            
+            for (int i = 0; i < nMacrostrands; i++) {
+                var str = macrostrands[i];
+                (int startResIdx, int endResIdx) = ZRangeToResidueIndexRange(str.startZeta, str.endZeta, HBondSSAConstants.STRANDS_BY_ALPHA);
+                string chainId = model.Chains.Id[model.Residues.ChainIndex[startResIdx]];
+                int startSeqId = model.Residues.SeqNumber[startResIdx];
+                int endSeqId = model.Residues.SeqNumber[endResIdx];
+                char type = (startResIdx == endResIdx) ? SSE.ISOLATED_BETA_BRIDGE_TYPE : SSE.SHEET_TYPE;
+                int sheetId = macrostrand2sheet[i];
+                SSE sse = new SSE($"E{i}", chainId, startSeqId, endSeqId, type, sheetId);
+                resultSSEs.Add(sse);
+            }
+
+            SecStrAssignment assignment = new SecStrAssignment(resultSSEs);
+            assignment.HBonds = HBondsAsResidueTuples(this.hBonds);
+            // assignment.Connectivity = ...; // TODO
+            // return assignment; // TODO
             
 
 
@@ -256,6 +284,9 @@ namespace protein.SecStrAssigning
             return $"{type}[{chain0} {start0}-{end0} : {chain1} {start1}-{end1}]";
         }
 
+        private List<(Residue, Residue)> HBondsAsResidueTuples(IEnumerable<(int donor, int acceptor)> hbonds){
+            return hbonds.OrderBy(hb => hb).Select(hb => (residues[hb.donor], residues[hb.acceptor])).ToList();
+        }
         private List<Ladder> IncludeParallelBulges(Ladder[] parallelLadders){  // Ladders must have strand0 in lower residue index and must sorted wrt strand0 residue index!
             int n = parallelLadders.Length;
             List<Ladder> result = new List<Ladder>(capacity: n);
@@ -369,9 +400,19 @@ namespace protein.SecStrAssigning
         // private int ZDonor(int donor) => 3*donor + DONOR_Z_CHANGE;
         // private int ZAcceptor(int acceptor) => 3*acceptor + ACCEPTOR_Z_CHANGE;
 
-        // private bool ZIsDonor(int z) => z % 3 != ACCEPTOR_Z_CHANGE;
-        // private bool ZIsAcceptor(int z) => z % 3 == ACCEPTOR_Z_CHANGE;
         private int ZToResidueIndex(int z) => (z-DONOR_Z_CHANGE) / 3;
+        private bool ZIsDonor(int z) => z % 3 != ACCEPTOR_Z_CHANGE; // Doesn't take into account alpha-carbon (not donor nor acceptor)!
+        private bool ZIsAcceptor(int z) => z % 3 == ACCEPTOR_Z_CHANGE; // Doesn't take into account alpha-carbon (not donor nor acceptor)!
+
+        private (int, int) ZRangeToResidueIndexRange(int startZeta, int endZeta, bool byAlpha){
+            if (byAlpha){
+                int startResIdx = ZIsAcceptor(startZeta) ? ZToResidueIndex(startZeta) + 1 : ZToResidueIndex(startZeta);
+                int endResIdx = ZIsAcceptor(endZeta) ? ZToResidueIndex(endZeta) : ZToResidueIndex(endZeta) - 1;
+                return (startResIdx, endResIdx);
+            } else {
+                return (ZToResidueIndex(startZeta), ZToResidueIndex(endZeta));
+            }
+        }
 
         private int Move(int residueIndex, int move){
             int candidateIndex = residueIndex + move;
@@ -381,6 +422,7 @@ namespace protein.SecStrAssigning
                 return NONEXISTING_RESIDUE_INDEX;
             }
         }
+        
         private struct Hbond {
             public int r0;  // residue index
             public int r1;  // residue index
@@ -394,6 +436,7 @@ namespace protein.SecStrAssigning
             public int Zeta0 => 3*r0 + (opposite ? ACCEPTOR_Z_CHANGE : DONOR_Z_CHANGE);
             public int Zeta1 => 3*r1 + (opposite ? DONOR_Z_CHANGE : ACCEPTOR_Z_CHANGE);
         }
+        
         private struct Ladder {
             public Hbond firstHbond;
             public Hbond lastHbond;
@@ -404,6 +447,7 @@ namespace protein.SecStrAssigning
                 this.type0 = type0;
             }
         }
+        
         private Hbond NextAntiparallel(Hbond hbond){
             if (hbond.opposite){
                 return new Hbond(Move(hbond.r0, +2), Move(hbond.r1, -2), false);

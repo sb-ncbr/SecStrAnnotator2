@@ -13,5 +13,6 @@ namespace protein.SecStrAssigning.Helpers
         public const bool ALLOW_BULGE_A33 = true;  // antiparallel beta-bulge defined as only 1 missing H-bond from regular beta-ladder(in 2qad chain B ~ resi 15)
         public const int MAX_Z_SHIFT_ON_SHORT_BULGE_SIDE = 4;
         public const int MAX_Z_SHIFT_ON_LONG_BULGE_SIDE = 13;
+        public const int SHEET_NUMBERING_FROM = 1;
     }
 }
