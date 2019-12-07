@@ -9,9 +9,9 @@ namespace protein.SecStrAssigning
 {
 	public class SecStrAssignment {
 		public List<SSE> SSEs { get; set; }
-		public List<(int, int, int)> Connectivity { get; set; } //each element is a triple <strand1,strand2,ladderType>, where ladderType = 1 for parallel, ladderType = -1 for antiparallel
-		public List<(Residue, Residue)> HBonds { get; set; }
-		public List<(String, int, int)> MergeableSSEs { get; set; } //each element is a triple <label,sse1,sse2> where sse1/sse2 are indices of the first/last SSE to be merged and label is the label of resulting merged SSE
+		public List<(int strand0, int strand1, int type)> Connectivity { get; set; } //each element is a triple <strand1,strand2,ladderType>, where ladderType = 1 for parallel, ladderType = -1 for antiparallel
+		public List<(Residue donor, Residue acceptor)> HBonds { get; set; }
+		public List<(String mergedLabel, int first, int last)> MergeableSSEs { get; set; } //each element is a triple <label,sse1,sse2> where sse1/sse2 are indices of the first/last SSE to be merged and label is the label of resulting merged SSE
 
 		public SecStrAssignment(IEnumerable<SSE> sses){
 			this.SSEs=sses.ToList ();

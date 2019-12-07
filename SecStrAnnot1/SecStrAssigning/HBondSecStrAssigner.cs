@@ -823,11 +823,11 @@ namespace protein.SecStrAssigning
                     }*/
                 });
             }
-            edges = edges.Distinct().ToList();  // a ladder contained a bulge, there would be listed two edges connecting the strands; this removes the duplicite edges
+            edges = edges.Distinct().OrderBy(e => e).ToList();  // a ladder contained a bulge, there would be listed two edges connecting the strands; this removes the duplicite edges
 
             SecStrAssignment result = new SecStrAssignment(resultSSEs);
             result.Connectivity = edges;
-            result.HBonds = hBonds;
+            result.HBonds = hBonds.OrderBy(hb => (hb.Item1.ResidueIndex, hb.Item2.ResidueIndex)).ToList();
             watch.Stop("HBondSecStrAssigner.GetSheets()");
             return result;
         }

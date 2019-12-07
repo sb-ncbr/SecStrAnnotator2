@@ -383,42 +383,48 @@ namespace protein
 			#region Secondary Structure Assignment of the query protein.
 
 			// #debug:
-			if (Lib.DoWriteDebug){
-				try {
-					MyStopwatch watch = new MyStopwatch();
-					HBondSecStrAssigner2 hba2 = new HBondSecStrAssigner2(qProtein, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
-					hba2.GetSecStrAssignment();
-					watch.Stop("Time for HBondSecStrAssigner2");
-				} catch (NotImplementedException){
-					//nothing
-				}
-			}
+			// if (Lib.DoWriteDebug){
+			// 	try {
+			// 		MyStopwatch watch = new MyStopwatch();
+			// 		HBondSecStrAssigner2 hba2 = new HBondSecStrAssigner2(qProtein, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
+			// 		hba2.GetSecStrAssignment();
+			// 		watch.Stop("Time for HBondSecStrAssigner2");
+			// 	} catch (NotImplementedException){
+			// 		//nothing
+			// 	}
+			// }
 
 			ISecStrAssigner secStrAssigner;
 
 			switch (secStrMethod) {
 			case Setting.SecStrMethod.File:
 				secStrAssigner = Setting.JSON_INPUT ? 
-					new FileSecStrAssigner_Json (fileQueryInputHelices,queryID, allQueryChainIDs)
-					: new FileSecStrAssigner (fileQueryInputHelices, allQueryChainIDs) as ISecStrAssigner;
+					new FileSecStrAssigner_Json(fileQueryInputHelices,queryID, allQueryChainIDs)
+					: new FileSecStrAssigner(fileQueryInputHelices, allQueryChainIDs) as ISecStrAssigner;
 				break;
 			case Setting.SecStrMethod.Dssp:
-				secStrAssigner = new DsspSecStrAssigner (qProtein, config.DsspExecutable, fileQueryRenumberedPDB, fileQueryDSSP, allQueryChainIDs, acceptedSSETypes);
+				secStrAssigner = new DsspSecStrAssigner(qProtein, config.DsspExecutable, fileQueryRenumberedPDB, fileQueryDSSP, allQueryChainIDs, acceptedSSETypes);
 				break;
 			case Setting.SecStrMethod.Geom:
-				secStrAssigner = new GeomSecStrAssigner (allQueryChainIDs.Select (c=>qProtein.GetChain (c)), rmsdLimit);
+				secStrAssigner = new GeomSecStrAssigner(allQueryChainIDs.Select (c=>qProtein.GetChain (c)), rmsdLimit);
 				break;
 			case Setting.SecStrMethod.GeomDssp:
-				secStrAssigner = new GeomDsspSecStrAssigner (qProtein, allQueryChainIDs, rmsdLimit, config.DsspExecutable, fileQueryRenumberedPDB, fileQueryDSSP, acceptedSSETypes);
+				secStrAssigner = new GeomDsspSecStrAssigner(qProtein, allQueryChainIDs, rmsdLimit, config.DsspExecutable, fileQueryRenumberedPDB, fileQueryDSSP, acceptedSSETypes);
 				break;
 			case Setting.SecStrMethod.Hbond:
-				secStrAssigner = new HBondSecStrAssigner (qProtein, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
+				secStrAssigner = new HBondSecStrAssigner(qProtein, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
 				break;
 			case Setting.SecStrMethod.GeomHbond:
 				secStrAssigner = new GeomHbondSecStrAssigner(qProtein, rmsdLimit, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
 				break;
+			case Setting.SecStrMethod.Hbond2:
+				secStrAssigner = new HBondSecStrAssigner2(qProtein, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
+				break;
+			case Setting.SecStrMethod.GeomHbond2:
+				secStrAssigner = new GeomHbondSecStrAssigner2(qProtein, rmsdLimit, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
+				break;
 			default:
-				throw new Exception ("Unknown secondary structure detection method.");
+				throw new Exception("Unknown secondary structure detection method.");
 			}
 
 			if (GEOM_VERSION && joinHelices) {

@@ -19,10 +19,12 @@ namespace protein.SecStrAssigning
         private int nResidues;
         private HashSet<(int donor, int acceptor)> hBonds;
         private Dictionary<int,List<int>> acceptorsOf;
+        public bool DetectHelices;
+        public bool DetectSheets;
 
         public HBondSecStrAssigner2(Protein protein, double hBondEnergyCutoff){
-            // this.DetectSheets=true;
-            // this.DetectHelices=true;
+            this.DetectSheets = true;
+            this.DetectHelices = true;
             MyStopwatch watch = new MyStopwatch();
             var hydrogenAdder = new HydrogenAdders.DsspLikeAmideHydrogenAdder();
             protein = hydrogenAdder.AddHydrogens(protein); // removing residues without C-alpha is probably not needed here
@@ -51,46 +53,81 @@ namespace protein.SecStrAssigning
 
         public SecStrAssignment GetSecStrAssignment()
         {
-            MyStopwatch watch = new MyStopwatch();
-            BuildBetaGraph();
-            watch.Stop("BuildBetaGraph()");
-            throw new NotImplementedException();
+            SecStrAssignment assignment = new SecStrAssignment(new List<SSE>());
+            assignment.HBonds = HBondsAsResidueTuples(this.hBonds);
+            if (DetectSheets){
+                (List<SSE> strands, var connectivity) = GetStrands();
+                assignment.SSEs.AddRange(strands);
+                assignment.Connectivity = connectivity;
+            }
+            if (DetectHelices){
+                List<SSE> helices = GetHelices();
+                assignment.SSEs.AddRange(helices);
+            }
+            return assignment;
         }
 
-        private void BuildBetaGraph(){
-            #region blablabla
-            // var microstrand_firstZ = new List<int>();
-            // var microstrand_lastZ = new List<int>();
-            // var microstrand_fragment = new List<int>();
-            // var microstrand_microladder = new List<int>();
-            // var microstrand_type = new List<MicrostrandType>();
-            // var microstrand_macrostrand = new List<int>();
-            // int microstrand_count = 0;
+        private List<SSE> GetHelices(){
+            List<Ladder> ladders = new List<Ladder>();
+            for (int don = 0; don < nResidues; don++){
+                foreach (int acc in acceptorsOf[don]){
+                    MicrostrandType type;
+                    if (don == Move(acc, +3))
+                        type = MicrostrandType.REGULAR_G_HELIX;
+                    else if (don == Move(acc, +4))
+                        type = MicrostrandType.REGULAR_H_HELIX;
+                    else if (don == Move(acc, +5))
+                        type = MicrostrandType.REGULAR_I_HELIX;
+                    else
+                        continue;
+                    Hbond current = new Hbond(don, acc, false);
+                    Hbond previous = PreviousHelix(current);
+                    Hbond next = NextHelix(current);
+                    bool startsHelix = Exists(next) && !Exists(previous);
+                    if (startsHelix){
+                        Ladder newLadder = ExtendHelix(current, next, type);
+                        ladders.Add(newLadder);
+                    }
+                }
+            }
+            List<SSE> helices = new List<SSE>(capacity: ladders.Count);
+            for (int i = 0; i < ladders.Count; i++){
+                Ladder ladder = ladders[i];
+                int startZeta = ladder.firstHbond.Zeta1;
+                int endZeta = ladder.lastHbond.Zeta0;
+                (int startResIdx, int endResIdx) = ZRangeToResidueIndexRange(startZeta, endZeta, HBondSSAConstants.HELICES_BY_ALPHA);
+                (string chainId, int startSeqId, int endSeqId) = ChainStartEnd(startResIdx, endResIdx);
+                char type = 
+                    ladder.type0 == MicrostrandType.REGULAR_H_HELIX ? SSE.HELIX_H_TYPE
+                    : ladder.type0 == MicrostrandType.REGULAR_G_HELIX ? SSE.HELIX_G_TYPE 
+                    : SSE.HELIX_I_TYPE;
+                SSE sse = new SSE(null/*$"{type}{i}"*/, chainId, startSeqId, endSeqId, type, null);
+                helices.Add(sse);
+            }            
+            return helices;
+        }
 
-            // var microladder_microstrand0 = new List<int>();
-            // var microladder_microstrand1 = new List<int>();
-            // var microladder_type0 = new List<MicrostrandType>();
-            // var microladder_macroladder = new List<int>();
-            // var microladder_count = 0;
-
-            // var macrostrand_firstZ = new List<int>();
-            // var macrostrand_lastZ = new List<int>();
-            // var macrostrand_fragment = new List<int>();
-            // var macrostrand_microstrands = new List<List<int>>();
-            // var macrostrand_macroladders = new List<List<int>>();
-            // var macrostrand_sheet = new List<int>();
-            // var macrostrand_count = 0;
+        private (List<SSE> strands, List<(int strand0, int strand1, int type)> connectivity) GetStrands(){
+            MyStopwatch watch = new MyStopwatch();
+            BetaGraph betaGraph = BuildBetaGraph();
+            watch.Stop("BuildBetaGraph()");
             
-            // var macroladder_microladders = new List<List<int>>();
-            // var macroladder_macrostrand0 = new List<int>();
-            // var macroladder_macrostrand1 = new List<int>();
-            // var macroladder_type = new List<MacroladderType>();
-            // var macroladder_count = 0;
+            int nStrands = betaGraph.macrostrands.Count;
+            List<SSE> strands = new List<SSE>(capacity: nStrands);
+            for (int i = 0; i < nStrands; i++) {
+                var strand = betaGraph.macrostrands[i];
+                (int startResIdx, int endResIdx) = ZRangeToResidueIndexRange(strand.startZeta, strand.endZeta, HBondSSAConstants.STRANDS_BY_ALPHA);
+                (string chainId, int startSeqId, int endSeqId) = ChainStartEnd(startResIdx, endResIdx);
+                char type = (startResIdx == endResIdx) ? SSE.ISOLATED_BETA_BRIDGE_TYPE : SSE.SHEET_TYPE;
+                int sheetId = HBondSSAConstants.SHEET_NUMBERING_FROM + strand.sheet;
+                SSE sse = new SSE(null/*$"{type}{i}"*/, chainId, startSeqId, endSeqId, type, sheetId);
+                strands.Add(sse);
+            }
+            var connectivity = betaGraph.macroladders.Select(t => (t.macrostrand0, t.macrostrand1, t.type == MacroladderType.PARALLEL ? 1 : -1)).ToList();
+            return (strands, connectivity);
+        }
 
-            // var sheet_macrostrands = new List<List<int>>();
-            // var sheet_macroladders = new List<List<int>>();
-            // int sheet_count = 0;
-            #endregion
+        private BetaGraph BuildBetaGraph(){
 
             MyStopwatch watch = new MyStopwatch();
             List<Ladder> ladders = FindLadders();
@@ -99,7 +136,7 @@ namespace protein.SecStrAssigning
             Ladder[] antiparallelLadders = ladders.Where(l => l.type0 == MicrostrandType.REGULAR_ANTIPARALEL).ToArray();
             List<Ladder> parallelLaddersAndBulges = IncludeParallelBulges(parallelLadders);
             List<Ladder> antiparallelLaddersAndBulges = IncludeAntiparallelBulges(antiparallelLadders);
-            Ladder[] microladders = parallelLaddersAndBulges.Concat(antiparallelLaddersAndBulges).ToArray();
+            List<Ladder> microladders = parallelLaddersAndBulges.Concat(antiparallelLaddersAndBulges).ToList();
             
             if (Lib.DoWriteDebug){
                 Lib.WriteLineDebug("Microladders:");
@@ -133,6 +170,7 @@ namespace protein.SecStrAssigning
                     Lib.WriteLineDebug(ms.ToString());
                 }
             }
+            
             // Building macrostrands
             var macrostrands = new List<(int startZeta, int endZeta, List<int> microstrands)>(capacity: nMicrostrands);
             for (int i = 0; i < nMicrostrands; i++){
@@ -171,6 +209,7 @@ namespace protein.SecStrAssigning
             if (Lib.DoWriteDebug){
                 Lib.WriteLineDebug(Lib.EnumerateWithCommas(microstrand2macrostrand));
             }
+            
             var macroladders = new List<(int macrostrand0, int macrostrand1, MacroladderType type)>();
             for (int i = 0; i < nMicroladders; i++){
                 bool parallel = i < nParallel;
@@ -181,6 +220,7 @@ namespace protein.SecStrAssigning
                 int mas1 = microstrand2macrostrand[mis1];
                 macroladders.Add((mas0, mas1, type));
             }
+            macroladders = macroladders.Distinct().OrderBy(mal => mal).ToList();
             if (Lib.DoWriteDebug){
                 Lib.WriteLineDebug("Macroladders:");
                 Lib.WriteLineDebug(Lib.EnumerateWithSeparators(macroladders, "\n"));
@@ -206,29 +246,15 @@ namespace protein.SecStrAssigning
                 Lib.WriteLineDebug("");
             }
             watch.Stop("rest of BuildBetaGraph()");
-            // TODO continue here
-            // TODO test on 2axt,EA
 
-            List<SSE> resultSSEs = new List<SSE>(capacity: nMacrostrands);            
-            for (int i = 0; i < nMacrostrands; i++) {
-                var str = macrostrands[i];
-                (int startResIdx, int endResIdx) = ZRangeToResidueIndexRange(str.startZeta, str.endZeta, HBondSSAConstants.STRANDS_BY_ALPHA);
-                string chainId = model.Chains.Id[model.Residues.ChainIndex[startResIdx]];
-                int startSeqId = model.Residues.SeqNumber[startResIdx];
-                int endSeqId = model.Residues.SeqNumber[endResIdx];
-                char type = (startResIdx == endResIdx) ? SSE.ISOLATED_BETA_BRIDGE_TYPE : SSE.SHEET_TYPE;
-                int sheetId = macrostrand2sheet[i];
-                SSE sse = new SSE($"E{i}", chainId, startSeqId, endSeqId, type, sheetId);
-                resultSSEs.Add(sse);
-            }
+            BetaGraph bg = new BetaGraph();
+            bg.microstrands = Enumerable.Zip(microstrands, microstrand2macrostrand, (m, m2m) => (m.startZeta, m.endZeta, m.ladderIndex, m.side, m2m)).ToList();
+            bg.microladders = microladders;
+            bg.macrostrands = Enumerable.Zip(macrostrands, macrostrand2sheet, (m, m2s) => (m.startZeta, m.endZeta, m.microstrands, m2s)).ToList();
+            bg.macroladders = macroladders;
+            bg.sheets = sheets;
 
-            SecStrAssignment assignment = new SecStrAssignment(resultSSEs);
-            assignment.HBonds = HBondsAsResidueTuples(this.hBonds);
-            // assignment.Connectivity = ...; // TODO
-            // return assignment; // TODO
-            
-
-
+            return bg;
         }
 
         private List<Ladder> FindLadders(){
@@ -397,12 +423,9 @@ namespace protein.SecStrAssigning
         private const int DONOR_Z_CHANGE = -1;
         private const int ACCEPTOR_Z_CHANGE = 1;
 
-        // private int ZDonor(int donor) => 3*donor + DONOR_Z_CHANGE;
-        // private int ZAcceptor(int acceptor) => 3*acceptor + ACCEPTOR_Z_CHANGE;
-
-        private int ZToResidueIndex(int z) => (z-DONOR_Z_CHANGE) / 3;
-        private bool ZIsDonor(int z) => z % 3 != ACCEPTOR_Z_CHANGE; // Doesn't take into account alpha-carbon (not donor nor acceptor)!
-        private bool ZIsAcceptor(int z) => z % 3 == ACCEPTOR_Z_CHANGE; // Doesn't take into account alpha-carbon (not donor nor acceptor)!
+        private static int ZToResidueIndex(int z) => (z-DONOR_Z_CHANGE) / 3;
+        private static bool ZIsDonor(int z) => z % 3 != ACCEPTOR_Z_CHANGE; // Doesn't take into account alpha-carbon (not donor nor acceptor)!
+        private static bool ZIsAcceptor(int z) => z % 3 == ACCEPTOR_Z_CHANGE; // Doesn't take into account alpha-carbon (not donor nor acceptor)!
 
         private (int, int) ZRangeToResidueIndexRange(int startZeta, int endZeta, bool byAlpha){
             if (byAlpha){
@@ -412,6 +435,13 @@ namespace protein.SecStrAssigning
             } else {
                 return (ZToResidueIndex(startZeta), ZToResidueIndex(endZeta));
             }
+        }
+
+        private (string chainId, int startSeqId, int endSeqId) ChainStartEnd(int startResidueIndex, int endResidueIndex){
+            string chainId = model.Chains.Id[model.Residues.ChainIndex[startResidueIndex]];
+            int startSeqId = model.Residues.SeqNumber[startResidueIndex];
+            int endSeqId = model.Residues.SeqNumber[endResidueIndex];
+            return (chainId, startSeqId, endSeqId);
         }
 
         private int Move(int residueIndex, int move){
@@ -424,28 +454,37 @@ namespace protein.SecStrAssigning
         }
         
         private struct Hbond {
-            public int r0;  // residue index
-            public int r1;  // residue index
-            public bool opposite;  // if r1 is donor
+            public readonly int r0;  // residue index
+            public readonly int r1;  // residue index
+            public readonly bool opposite;  // if r1 is donor
             public Hbond(int r0, int r1, bool opposite){
                 this.r0 = r0;
                 this.r1 = r1;
                 this.opposite = opposite;
             }
-            public (int donor, int acceptor) Tuple => opposite ? (r1, r0) : (r0, r1);
+            public (int donor, int acceptor) DonorAcceptor => opposite ? (r1, r0) : (r0, r1);
             public int Zeta0 => 3*r0 + (opposite ? ACCEPTOR_Z_CHANGE : DONOR_Z_CHANGE);
             public int Zeta1 => 3*r1 + (opposite ? DONOR_Z_CHANGE : ACCEPTOR_Z_CHANGE);
         }
         
         private struct Ladder {
-            public Hbond firstHbond;
-            public Hbond lastHbond;
-            public MicrostrandType type0;
+            public readonly Hbond firstHbond;
+            public readonly Hbond lastHbond;
+            public readonly MicrostrandType type0;
             public Ladder(Hbond firstHbond, Hbond lastHbond, MicrostrandType type0){
                 this.firstHbond = firstHbond;
                 this.lastHbond = lastHbond;
                 this.type0 = type0;
             }
+        }
+
+        private struct BetaGraph {
+            public List<(int startZeta, int endZeta, int microladder, int side, int macrostrand)> microstrands;
+            public List<Ladder> microladders;
+            public int nParallelMicroladders;  // First nParallelMicroladders microladders are parallel, the rest is antiparallel
+            public List<(int startZeta, int endZeta, List<int> microstrands, int sheet)> macrostrands;
+            public List<(int macrostrand0, int macrostrand1, MacroladderType type)> macroladders;
+            public List<List<int>> sheets;
         }
         
         private Hbond NextAntiparallel(Hbond hbond){
@@ -476,8 +515,14 @@ namespace protein.SecStrAssigning
                 return new Hbond(Move(hbond.r0, -2), hbond.r1, true);
             }
         }
+        private Hbond NextHelix(Hbond hbond){
+            return new Hbond(Move(hbond.r0, +1), Move(hbond.r1, +1), hbond.opposite);
+        }
+        private Hbond PreviousHelix(Hbond hbond){
+            return new Hbond(Move(hbond.r0, -1), Move(hbond.r1, -1), hbond.opposite);
+        }
         private bool Exists(Hbond hbond){
-            return this.hBonds.Contains(hbond.Tuple);
+            return this.hBonds.Contains(hbond.DonorAcceptor);
         }
         private Ladder ExtendAntiparallelLadder(Hbond first, Hbond last){
             while (true){
@@ -499,6 +544,16 @@ namespace protein.SecStrAssigning
                     break;
             }
             return new Ladder(first, last, MicrostrandType.REGULAR_PARALEL);
+        }
+        private Ladder ExtendHelix(Hbond first, Hbond last, MicrostrandType type){
+            while (true){
+                Hbond next = NextHelix(last);
+                if (Exists(next))
+                    last = next;
+                else
+                    break;
+            }
+            return new Ladder(first, last, type);
         }
         
         private bool DoOverlap(int startZeta1, int endZeta1, int startZeta2, int endZeta2){

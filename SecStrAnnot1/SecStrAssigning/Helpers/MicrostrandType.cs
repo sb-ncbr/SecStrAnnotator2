@@ -4,6 +4,9 @@ namespace protein.SecStrAssigning.Helpers
     enum MicrostrandType{		
         REGULAR_PARALEL,  // 'E';
         REGULAR_ANTIPARALEL,  // 'E';
+		REGULAR_G_HELIX,  // 'G'
+		REGULAR_H_HELIX,  // 'H'
+		REGULAR_I_HELIX,  // 'I'
 
 		BULGE_UNSPECIFIED_PARALLEL_SHORT_SIDE,
 		BULGE_UNSPECIFIED_PARALLEL_LONG_SIDE,
