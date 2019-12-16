@@ -456,17 +456,31 @@ namespace protein
 
 
 			if (onlyDetect) {
+				if (createPymolSession) {
+					if (!Setting.JSON_OUTPUT){
+						throw new NotImplementedException ("Creating PyMOL session is implemented only for JSON output.");
+					}
+					Lib.WriteInColor (ConsoleColor.Yellow, "Running PyMOL:\n");
+					if ( !Lib.RunPyMOLScriptWithCommandLineArguments (config.PymolExecutable, config.PymolScriptSession, new string[]{ 
+						"cif",
+						Setting.Directory,
+						$"{queryID},{chainMapping[templateChainID_].Last()},{FormatRanges(queryDomainRanges)}",
+						"--detected",
+						}) )
+						return -1;
+				}
 				if (Lib.DoWriteDebug) {
 					List<double>[] dump;
 					var qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion (qProtein.GetChain (queryChainID_), querySSA.SSEs, out dump);
 
-					LibAnnotation.WriteAnnotationFile_Json (fileQueryDetectedHelices, queryID,
+					LibAnnotation.WriteAnnotationFile_Json(fileQueryDetectedHelices, queryID,
 						qSSEsInSpace,
 						null, //extras
 						querySSA.Connectivity,
 						querySSA.HBonds, 
 						null,
 						null);
+
 					// string outStr = qSSEsInSpace.Select(sse => sse.ToString() + sse.StartVector.ToString() + sse.EndVector.ToString()).EnumerateWithSeparators("\n");
 					// Lib.WriteLineDebug($"qSSEs in space: {outStr}");
 				}
@@ -847,12 +861,8 @@ namespace protein
 				if ( !Lib.RunPyMOLScriptWithCommandLineArguments (config.PymolExecutable, config.PymolScriptSession, new string[]{ 
 					"cif",
 					Setting.Directory,
-					templateID,
-					templateChainID_.ToString (), 
-					FormatRanges(templateDomainRanges),
-					queryID,
-					chainMapping[templateChainID_].Last ().ToString (),
-					FormatRanges(queryDomainRanges)
+					$"{templateID},{templateChainID_},{FormatRanges(templateDomainRanges)}",
+					$"{queryID},{chainMapping[templateChainID_].Last()},{FormatRanges(queryDomainRanges)}",
 					}) )
 					return -1;
 			}

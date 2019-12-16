@@ -1,7 +1,7 @@
 # PymolScriptSession for SecStrAnnotator 1.0
 # Creates and saves a session with superimposed template and query structures and with selected and colored SSEs.
 # Usage: 
-#     pymol -qcyr script_session.py -- file_format directory [ --hbonds ] [ template_pdbid,template_chain,template_ranges ] query_pdbid,query_chain,query_ranges
+#     pymol -qcyr script_session.py -- file_format directory [ template_pdbid template_chain template_ranges ] query_pdbid query_chain query_ranges --hbonds
 
 
 # Modifiable constants
@@ -30,16 +30,15 @@ N_PSEUDOARGUMENTS = 1
 arguments = sys.argv[N_PSEUDOARGUMENTS:]
 options = [arg for arg in arguments if arg.startswith('-')]
 arguments = [arg for arg in arguments if not arg.startswith('-')]
-# print(arguments)
-if len(arguments) == 4:
-	file_format, directory, template, query = arguments
-elif len(arguments) == 3:
-	file_format, directory, query = arguments
-	template = None
+if len(arguments) == 8:
+	file_format, directory, template_id, template_chain, template_range, query_id, query_chain, query_range = arguments
+	with_template = True
+elif len(arguments) == 5:
+	file_format, directory, query_id, query_chain, query_range = arguments
+	with_template = False
 else:
-	print('ERROR: Exactly 3 or 4 command line arguments required, ' + str(len(arguments)) + ' given: ' + ' '.join(arguments))
+	print('ERROR: Exactly 8 command line arguments required, ' + str(len(arguments)) + ' given: ' + ' '.join(arguments))
 	cmd.quit(1)
-detected = '--detected' in options
 show_hbonds = '--hbonds' in options  # TODO implement
 
 
@@ -62,10 +61,10 @@ SHEET_ID = 'sheet_id'
 COLOR='color'
 
 TEMPLATE_STRUCT_EXT = '.cif' if USE_CIF else '.pdb'
-QUERY_STRUCT_EXT = ('-aligned' if template is not None else '') +  ('.cif' if USE_CIF else '.pdb')
+QUERY_STRUCT_EXT = '-aligned.cif' if USE_CIF else '-aligned.pdb'
 TEMPLATE_ANNOT_EXT = '-template.sses.json'
-QUERY_ANNOT_EXT = '-detected.sses.json' if detected else '-annotated.sses.json'
-SESSION_EXT = '-detected.pse' if detected else '-annotated.pse'
+QUERY_ANNOT_EXT = '-annotated.sses.json'
+SESSION_EXT = '-annotated.pse'
 TEMPLATE_OBJECT_PREFIX = 'T_'
 TEMPLATE_SELECTION_PREFIX = TEMPLATE_OBJECT_PREFIX
 QUERY_OBJECT_PREFIX = ''
@@ -150,41 +149,28 @@ def apply_representations(selection, protein_reprs=[], ligand_reprs=[]):
 	for repr in ligand_reprs:
 		cmd.show(repr, ligand_sel)
 
-def create_session(directory, template, query):
+def create_session(directory, template_id, template_chain, template_range, query_id, query_chain, query_range):
 	"""Creates and saves a session with superimposed template and query and selected and colored SSEs."""
-	files = []
-
-	if template is not None:
-		template_id, template_chain, template_range = template.split(',', 2)
-		template_struct_file = path.join(directory, template_id + TEMPLATE_STRUCT_EXT)
-		template_annot_file = path.join(directory, template_id + TEMPLATE_ANNOT_EXT)
-		files.append(template_struct_file)
-		files.append(template_annot_file)
-	
-	query_id, query_chain, query_range = query.split(',', 2)
+	template_struct_file = path.join(directory, template_id + TEMPLATE_STRUCT_EXT)
 	query_struct_file = path.join(directory, query_id + QUERY_STRUCT_EXT)
+	template_annot_file = path.join(directory, template_id + TEMPLATE_ANNOT_EXT)
 	query_annot_file = path.join(directory, query_id + QUERY_ANNOT_EXT)
 	session_file = path.join(directory, query_id + SESSION_EXT)
-	files.append(query_struct_file)
-	files.append(query_annot_file)
-	
-	for filename in files:
+	for filename in [template_struct_file, query_struct_file, template_annot_file, query_annot_file]:
 		if not path.isfile(filename):
 			print('ERROR: File not found: ' + filename)
 			cmd.quit(1)
 	
-	if template is not None:
-		template_object = TEMPLATE_OBJECT_PREFIX + template_id
-		cmd.load(template_struct_file, template_object)
-		color_by_annotation(template_id, selection_expression(template_object, template_chain, ':'), TEMPLATE_BASE_COLOR, template_annot_file, selection_prefix=TEMPLATE_SELECTION_PREFIX)
+	template_object = TEMPLATE_OBJECT_PREFIX + template_id
+	cmd.load(template_struct_file, template_object)
+	color_by_annotation(template_id, selection_expression(template_object, template_chain, ':'), TEMPLATE_BASE_COLOR, template_annot_file, selection_prefix=TEMPLATE_SELECTION_PREFIX)
 	
 	query_object = QUERY_OBJECT_PREFIX + query_id
 	cmd.load(query_struct_file, query_object)
 	color_by_annotation(query_id, selection_expression(query_object, query_chain, ':'), QUERY_BASE_COLOR, query_annot_file, selection_prefix=QUERY_SELECTION_PREFIX)
 
 	cmd.hide('everything', 'all')
-	if template is not None:
-		apply_representations(selection_expression(template_object, template_chain, ':'), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
+	apply_representations(selection_expression(template_object, template_chain, ':'), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
 	apply_representations(selection_expression(query_object, query_chain, ':'), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
 	cmd.dss()
 	cmd.zoom('vis')
@@ -196,8 +182,7 @@ def create_session(directory, template, query):
 try:
 	if USE_CIF:
 		cmd.set('cif_use_auth', False)
-	# print(directory, template, query)
-	create_session(directory, template, query)
+	create_session(directory, template_id, template_chain, template_range, query_id, query_chain, query_range)
 	cmd.quit(0)
 except Exception as e:
 	print('ERROR: Exception raised: ' + str(e))
