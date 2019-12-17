@@ -466,6 +466,7 @@ namespace protein
 						Setting.Directory,
 						$"{queryID},{chainMapping[templateChainID_].Last()},{FormatRanges(queryDomainRanges)}",
 						"--detected",
+						"--hbonds",
 						}) )
 						return -1;
 				}

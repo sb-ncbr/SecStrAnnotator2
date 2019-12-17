@@ -10,6 +10,7 @@ TEMPLATE_BASE_COLOR       = 'wheat'  # This color will be used for template resi
 QUERY_BASE_COLOR          = 'white'  # This color will be used for query residues without annotation.
 PROTEIN_REPRESENTATIONS   = ['cartoon', 'labels']  # Default visual representations for polymer.
 LIGAND_REPRESENTATIONS    = ['sticks', 'labels']  # Default visual representations for heteroatoms.
+BOND_REPRESENTATIONS      = ['dashes']  # Default visual representations for hydrogen bonds.
 SHOW_LABELS               = True  # Indicates whether labels with SSE names will be shown.
 LABEL_SIZE                = 30  # Size for the labels (None = default size).
 LABEL_OUTLINE_COLOR       = None  # Outline color for the labels (None = default).
@@ -53,6 +54,7 @@ else:
 	raise Exception('Unknown file format: ' + file_format)
 
 SSES = 'secondary_structure_elements'
+HBONDS = 'hydrogen_bonds'
 LABEL = 'label'
 START_RESI = 'start'
 END_RESI = 'end'
@@ -70,6 +72,7 @@ TEMPLATE_OBJECT_PREFIX = 'T_'
 TEMPLATE_SELECTION_PREFIX = TEMPLATE_OBJECT_PREFIX
 QUERY_OBJECT_PREFIX = ''
 QUERY_SELECTION_PREFIX = QUERY_OBJECT_PREFIX
+HBONDS_OBJECT_NAME = 'hbonds'
 
 
 # Auxiliary functions
@@ -79,14 +82,15 @@ def read_annotation_file_json(filename, pdb_id):
 	with open(filename,'r') as f:
 		annotation = json.load(f)
 	if pdb_id in annotation:
-		return annotation[pdb_id].get(SSES, [])
+		return annotation[pdb_id]  #.get(SSES, [])
 	else:
 		print('\''+filename+'\' does not contain annotation for '+pdb_id)
-		return []
+		return {}  # []
 
 def color_by_annotation(pdb_id, selection, base_color, annotation_file, selection_prefix=''):
 	"""Obtains annotation from an annotation file and use it to color the structure."""
-	sses = read_annotation_file_json(annotation_file, pdb_id)
+	annotation = read_annotation_file_json(annotation_file, pdb_id)
+	sses = annotation.get(SSES, [])
 	cmd.color(base_color, selection + ' & not het & symbol c')
 	if SHOW_LABELS and LABEL_SIZE != None:
 		cmd.set('label_size', str(LABEL_SIZE))
@@ -105,7 +109,15 @@ def color_by_annotation(pdb_id, selection, base_color, annotation_file, selectio
 			cmd.color(assign_color(sse), sel_name)
 			if SHOW_LABELS:
 				label_sse(sse, selection)
-		cmd.deselect()
+	if show_hbonds:
+		hbonds = annotation.get(HBONDS, [])
+		distance_name = selection_prefix + HBONDS_OBJECT_NAME
+		for donor_chain, donor_resi, acceptor_chain, acceptor_resi in hbonds:
+			donor = '(%s) and chain %s and resi %s and name N' % (selection, donor_chain, donor_resi)
+			acceptor = '(%s) and chain %s and resi %s and name O' % (selection, acceptor_chain, acceptor_resi)
+			# print(donor)
+			cmd.distance(distance_name, donor, acceptor)
+	cmd.deselect()
 
 def assign_color(sse):
 	"""Assigns a color to, SSE based on 'color' field or generated from the label."""
@@ -140,7 +152,7 @@ def selection_expression(object_name, chain, ranges, symbol=None):
 	# print(' & '.join(parts) + ' ')
 	return ' & '.join(parts) + ' '
 
-def apply_representations(selection, protein_reprs=[], ligand_reprs=[]):
+def apply_representations(selection, protein_reprs=[], ligand_reprs=[], bonds_reprs=[]):
 	"""Hides everything of selection and shows given representations for HET and NOT HET atoms."""
 	protein_sel = '(' + selection + ') & not het'
 	ligand_sel = '(' + selection + ') & het'
@@ -149,6 +161,14 @@ def apply_representations(selection, protein_reprs=[], ligand_reprs=[]):
 		cmd.show(repr, protein_sel)
 	for repr in ligand_reprs:
 		cmd.show(repr, ligand_sel)
+	for repr in bonds_reprs:
+		cmd.show(repr, '*'+HBONDS_OBJECT_NAME)
+
+def show_hbond():
+	# cmd.distance(distance_name, 'start', 'end')
+	# cmd.color(color, distance_name)
+	# cmd.set('dash_radius', radius, distance_name)
+	pass
 
 def create_session(directory, template, query):
 	"""Creates and saves a session with superimposed template and query and selected and colored SSEs."""
@@ -185,7 +205,7 @@ def create_session(directory, template, query):
 	cmd.hide('everything', 'all')
 	if template is not None:
 		apply_representations(selection_expression(template_object, template_chain, ':'), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
-	apply_representations(selection_expression(query_object, query_chain, ':'), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
+	apply_representations(selection_expression(query_object, query_chain, ':'), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS, bonds_reprs=BOND_REPRESENTATIONS)
 	cmd.dss()
 	cmd.zoom('vis')
 	cmd.save(session_file)
