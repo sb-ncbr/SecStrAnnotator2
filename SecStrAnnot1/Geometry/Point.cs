@@ -17,7 +17,7 @@ namespace protein.Geometry
             Vector = new Vector(x, y, z);
         }
 
-        public static Point operator +(Point a, Vector v) => new Point(a.Vector - v);
+        public static Point operator +(Point a, Vector v) => new Point(a.Vector + v);
 
         public static Vector operator -(Point a, Point b) => a.Vector - b.Vector;
 
