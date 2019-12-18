@@ -22,7 +22,7 @@ namespace protein.SecStrAssigning.Helpers
             corner = new Point(vecCA.Select(v => v.X).Min(), vecCA.Select(v => v.Y).Min(), vecCA.Select(v => v.Z).Min());
             Point otherCorner = new Point(vecCA.Select(v => v.X).Max(), vecCA.Select(v => v.Y).Max(), vecCA.Select(v => v.Z).Max());
             Vector relativeSize = (otherCorner - corner) / BOX_SIZE;
-            nBoxes = new int[] { (int)Math.Floor(relativeSize.X), (int)Math.Floor(relativeSize.Y), (int)Math.Floor(relativeSize.Z) };
+            nBoxes = new int[] { (int)Math.Floor(relativeSize.X) + 1, (int)Math.Floor(relativeSize.Y) + 1, (int)Math.Floor(relativeSize.Z) + 1 };
             // nBoxes = new int[3];
             // for (int i = 0; i < 3; i++)
             // {

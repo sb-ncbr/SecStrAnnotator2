@@ -34,7 +34,7 @@ namespace protein.Geometry
 
         public static Vector operator -(Vector v) => new Vector(-v.X, -v.Y, -v.Z);
 
-        public static Vector operator -(Vector u, Vector v) => u + (-v);
+        public static Vector operator -(Vector u, Vector v) => new Vector(u.X - v.X, u.Y - v.Y, u.Z - v.Z);
 
         public static Vector operator *(double a, Vector v) => new Vector(a * v.X, a * v.Y, a * v.Z);
 

@@ -70,7 +70,9 @@ namespace protein.SecStrAssigning.Helpers
                 Point h = vecH[donor];
                 Point c = vecC[acceptor];
                 Point o = vecO[acceptor];
-                return 0.084 * 332 * (1 / (o - n).Size + 1 / (c - h).Size - 1 / (o - h).Size - 1 / (c - n).Size);
+                double energy = 0.084 * 332 * (1 / (o - n).Size + 1 / (c - h).Size - 1 / (o - h).Size - 1 / (c - n).Size);
+                // Console.WriteLine($"{residues[donor]} -> {residues[acceptor]}:  {energy}");
+                return energy;
             }
             else
             {
