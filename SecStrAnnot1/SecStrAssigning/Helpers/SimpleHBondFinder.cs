@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using Cif.Components;
 
+using protein.Geometry;
+
 namespace protein.SecStrAssigning.Helpers
 {
     class SimpleHBondFinder : IHBondFinder

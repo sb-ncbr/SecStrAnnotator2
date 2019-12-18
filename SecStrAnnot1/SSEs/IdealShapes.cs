@@ -2,27 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace protein
+namespace protein.SSEs
 {
 	/**This static class provides "ideal" geometries of alpha-helix and beta-sheet obtained from 1OG2 and 5ACM respectively.
 	 * These are defined in IdealShapes.InitializeDictionary().*/
 	public static class IdealShapes
 	{
 		private static Dictionary<char,Shape> idealShapeDictionary;
-
-		public class Shape{
-			public Matrix Points { get; private set; }
-			public Matrix Origin { get; private set; }
-			public Matrix Axis { get; private set; }
-			public Matrix SecondaryAxis { get; private set; }
-			public Shape (Matrix points, Matrix origin, Matrix axis, Matrix secondaryAxis)
-			{
-				this.Points=points;
-				this.Origin=origin;
-				this.Axis=axis;
-				this.SecondaryAxis=secondaryAxis;
-			}
-		}
 
 		public static Shape GetShape (char type) {
 			if (idealShapeDictionary == null) {

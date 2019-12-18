@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace protein
+using protein.Geometry;
+
+namespace protein.Libraries
 {
 	public static class LibAlgebra
 	{
@@ -59,7 +61,7 @@ namespace protein
 
 			for (int j=0; j<=1; j++) {
 				double abs = Math.Pow (w3Re [j] * w3Re [j] + w3Im [j] * w3Im [j], 1.0 / 6.0);
-				double phase = Math.Sign (w3Im [j]) * Geom.AngleInRadians (new Vector (w3Re [j], w3Im [j], 0), new Vector (1.0, 0, 0)) / 3;
+				double phase = Math.Sign (w3Im [j]) * LibGeometry.AngleInRadians (new Vector (w3Re [j], w3Im [j], 0), new Vector (1.0, 0, 0)) / 3;
 				wRe [3 * j] = abs * Math.Cos (phase);	wIm [3 * j] = abs * Math.Sin (phase);
 				wRe [3 * j + 1] = -0.5 * wRe [3 * j] - 0.5 * Math.Sqrt (3.0) * wIm [3 * j];
 				wIm [3 * j + 1] = -0.5 * wIm [3 * j] + 0.5 * Math.Sqrt (3.0) * wRe [3 * j];

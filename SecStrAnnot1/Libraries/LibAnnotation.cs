@@ -3,10 +3,13 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
+
 using Cif.Components;
 using Cif.Tables;
+using protein.SSEs;
+using protein.Geometry;
 
-namespace protein
+namespace protein.Libraries
 {
 	public static class LibAnnotation
 	{
@@ -595,7 +598,7 @@ namespace protein
 			SSEInSpace a = sses [0];
 			foreach (SSEInSpace b in sses.Skip(1)) {
 				if (ShouldJoin (a, b, parameters, out criteria)) {
-					Console.WriteLine ("Joining {0} ({1}-{2}) and {3} ({4}-{5}) with gap {6} and angle {7}°.",a.Label,a.Start,a.End,b.Label,b.Start,b.End,b.Start - a.End - 1,180/Math.PI*Geom.AngleInRadians (a.EndVector - a.StartVector, b.EndVector - b.StartVector));
+					Console.WriteLine ("Joining {0} ({1}-{2}) and {3} ({4}-{5}) with gap {6} and angle {7}°.",a.Label,a.Start,a.End,b.Label,b.Start,b.End,b.Start - a.End - 1,180/Math.PI*LibGeometry.AngleInRadians (a.EndVector - a.StartVector, b.EndVector - b.StartVector));
 					a = SSEInSpace.Join (a, b);
 					a.AddComment(criteria.ToString ());
 				} else {
@@ -619,7 +622,7 @@ namespace protein
 			}
 
 			int gap = sse2.Start - sse1.End - 1;
-			double angle = Geom.AngleInDegrees (sse1.LineSegment.Direction, sse2.LineSegment.Direction);
+			double angle = LibGeometry.AngleInDegrees (sse1.LineSegment.Direction, sse2.LineSegment.Direction);
 			double stagger = Stagger (sse1, sse2);
 			criteria = new JoiningCriteriaValues (gap, angle, stagger);
 
@@ -665,16 +668,16 @@ namespace protein
 
 		/** Calculates the "stagger" metric for two helices, which is a measure of their continuity. The value is in Angstroms. */
 		private static double Stagger (SSEInSpace sse1, SSEInSpace sse2){
-			Geom.Point A = new Geom.Point (sse1.StartVector);
-			Geom.Point B = new Geom.Point (sse1.EndVector);
-			Geom.Point C = new Geom.Point (sse2.StartVector);
-			Geom.Point D = new Geom.Point (sse2.EndVector);
-			Geom.Plane rho = new Geom.Plane (Geom.Middle (B,C), D.Vector-A.Vector);
-			Geom.Point P = Geom.Intersection (new Geom.Line(A,B), rho);
-			Geom.Point Q = Geom.Intersection (new Geom.Line(C,D), rho);
+			Point A = new Point (sse1.StartVector);
+			Point B = new Point (sse1.EndVector);
+			Point C = new Point (sse2.StartVector);
+			Point D = new Point (sse2.EndVector);
+			Plane rho = new Plane (LibGeometry.Middle (B,C), D.Vector-A.Vector);
+			Point P = LibGeometry.Intersection (new Line(A,B), rho);
+			Point Q = LibGeometry.Intersection (new Line(C,D), rho);
 			if (P == null || Q == null)
 				return Double.PositiveInfinity; // a special case where one of the SSEs is (almost) parallel to the plane
-			return Geom.Distance (P, Q);
+			return LibGeometry.Distance (P, Q);
 		}
 
 		public enum GeometryCheckResult {OK, NOK, IncompleteChain};

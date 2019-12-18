@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 
+using protein.Libraries;
+
 namespace protein
 {
 	public class Config

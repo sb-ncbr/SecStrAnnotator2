@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace protein
+using protein.Libraries;
+using protein.Geometry;
+
+namespace protein.SSEs
 {
 	public class SSEInSpace : SSE
 	{
-		public protein.Vector StartVector{ get; private set; }
-		public protein.Vector EndVector{ get; private set; }
+		public Vector StartVector{ get; private set; }
+		public Vector EndVector{ get; private set; }
 
-		public SSEInSpace (SSE sse, protein.Vector startVector, protein.Vector endVector) 
+		public SSEInSpace (SSE sse, Vector startVector, Vector endVector) 
 			: base(sse)
 		{
 			StartVector = startVector;
@@ -25,7 +28,7 @@ namespace protein
 			return new SSEInSpace (notFoundSSE, Vector.ZERO, Vector.ZERO);
 		}
 
-		public Geom.LineSegment LineSegment{get{ return new Geom.LineSegment(StartVector,EndVector); }}
+		public LineSegment LineSegment{get{ return new LineSegment(StartVector,EndVector); }}
 
 		/** Return an identical SSEInSpace, but with a different label. */
 		public new SSEInSpace RelabeledCopy (String newLabel)

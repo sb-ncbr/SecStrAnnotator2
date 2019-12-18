@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
+using protein.Libraries;
+
 namespace protein.Components
 {
     public class Protein
@@ -43,14 +45,12 @@ namespace protein.Components
 
 		public Protein(StreamReader reader)
 		{
-			List<Residue> modifiedResidues;
 			IEnumerable<Atom> atoms = ReadAtomsFromPDB (reader);
 			InitializeThis (atoms);
 		}
 
 		public Protein(StreamReader reader, string[] chainIDs, IEnumerable<(int, int)> resSeqRanges)
 		{
-			List<Residue> modifiedResidues;
 			IEnumerable<Atom> atoms = ReadAtomsFromPDB (reader);
 			if (chainIDs != null) {
 				atoms = atoms.Where (a => chainIDs.Contains (a.ChainID));

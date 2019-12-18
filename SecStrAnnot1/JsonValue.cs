@@ -773,7 +773,7 @@ namespace protein
 					} else {
 						// Non-empty array
 						stringBuilder.Append ('[');
-						bool isFirst = true;
+						// bool isFirst = true;
 						for (int i = 0; i < list.Count; i++) {
 							if (i > 0) {
 								stringBuilder.Append (',');

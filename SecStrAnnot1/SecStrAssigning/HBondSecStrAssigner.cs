@@ -3,9 +3,11 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+
+using SecStrAnnotator2.Utils;
 using Cif.Components;
 using protein.SecStrAssigning.Helpers;
-using SecStrAnnotator2;
+using protein.SSEs;
 
 namespace protein.SecStrAssigning
 {
@@ -295,7 +297,7 @@ namespace protein.SecStrAssigning
         }
 
         private void InvertSheetLevels(BetaStrandInSheet strand){
-            Lib.WriteLineDebug("Invert sheet: {0}.",strand.SheetId);
+            Lib2.WriteLineDebug("Invert sheet: {0}.",strand.SheetId);
             strand.DFS(s => {
                 //s.Level = -s.Level;
                 s.EvenUp = !s.EvenUp;
@@ -309,17 +311,17 @@ namespace protein.SecStrAssigning
         }
 
         private void SetIdToSheet(BetaStrandInSheet strand, int newID){
-            Lib.WriteLineDebug("Set ID: {0} to {1}.",strand.SheetId,newID);
+            Lib2.WriteLineDebug("Set ID: {0} to {1}.",strand.SheetId,newID);
             strand.DFS(s => {
                 s.SheetId = newID;
             });
-            Lib.WriteLineDebug("");
+            Lib2.WriteLineDebug("");
         }
 
         private void LinkStrands(BetaStrandInSheet lower, BetaStrandInSheet upper, BetaLadder ladder){
-            Lib.WriteLineDebug("Linking strands {0}({1}) and {2}({3}) {4}.",lower.SSE.Label, lower.SheetId, upper.SSE.Label, upper.SheetId, Ladder2String(ladder));
+            Lib2.WriteLineDebug("Linking strands {0}({1}) and {2}({3}) {4}.",lower.SSE.Label, lower.SheetId, upper.SSE.Label, upper.SheetId, Ladder2String(ladder));
             if (lower == upper)
-                Lib.WriteWarning("Trying to link a beta-strand to itself.");
+                Lib2.WriteWarning("Trying to link a beta-strand to itself.");
             if (lower.SheetId != upper.SheetId)
                 throw new ArgumentException(); 
             lower.UpNeighbours.Add(upper);
@@ -331,9 +333,9 @@ namespace protein.SecStrAssigning
         private void UnlinkStrands(BetaStrandInSheet lower, BetaStrandInSheet upper){
             int i = lower.UpNeighbours.IndexOf(upper);
             int j = upper.DownNeighbours.IndexOf(lower);
-            Lib.WriteLineDebug("Unlinking: upper={0}, lower={1}", i, j);
+            Lib2.WriteLineDebug("Unlinking: upper={0}, lower={1}", i, j);
             if (lower == upper)
-                Lib.WriteWarning("Trying to unlink a beta-strand from itself.");
+                Lib2.WriteWarning("Trying to unlink a beta-strand from itself.");
             lower.UpNeighbours.RemoveAt(i);
             lower.UpLadders.RemoveAt(i);
             upper.DownNeighbours.RemoveAt(j);
@@ -341,7 +343,7 @@ namespace protein.SecStrAssigning
         }
 
         private void AddVertexAndPossiblyMerge(List<BetaStrandInSheet> vertices, BetaStrandInSheet newVertex){
-            Lib.WriteLineDebug("Adding vertex {0}.", newVertex);
+            Lib2.WriteLineDebug("Adding vertex {0}.", newVertex);
             vertices.Add(newVertex);
             int iNew = vertices.Count - 1;
             for (int i = vertices.Count - 2; i >= 0; i--) {
@@ -356,7 +358,7 @@ namespace protein.SecStrAssigning
         }
 
         private bool TryMergeSheetsByStrands(BetaStrandInSheet extendedStrand, BetaStrandInSheet extendingStrand){
-            Lib.WriteLineDebug("Merging strands {0}({1}) and {2}({3}).", extendedStrand.SSE.Label, extendedStrand.SheetId, extendingStrand.SSE.Label, extendingStrand.SheetId);
+            Lib2.WriteLineDebug("Merging strands {0}({1}) and {2}({3}).", extendedStrand.SSE.Label, extendedStrand.SheetId, extendingStrand.SSE.Label, extendingStrand.SheetId);
             if (extendedStrand == extendingStrand)
                 throw new ArgumentException();
             string chain = extendedStrand.SSE.ChainID;
@@ -366,11 +368,11 @@ namespace protein.SecStrAssigning
             if (extendedStrand.SheetId == extendingStrand.SheetId) {
                 // in the same sheet
                 if (extendedStrand.EvenUp != extendingStrand.EvenUp) {
-                    Lib.WriteLineDebug("Important! Cycle with inconsistent direction would arise in beta-strand graph(around chain {0} {1}-{2})! Skipping merging strands.", chain, start, end);
+                    Lib2.WriteLineDebug("Important! Cycle with inconsistent direction would arise in beta-strand graph(around chain {0} {1}-{2})! Skipping merging strands.", chain, start, end);
                     //Lib.WriteWarning("Important! Cycle with inconsistent direction would arise in beta-strand graph(around chain {0} {1}-{2})! Skipping merging strands.", chain, start, end);
                     // return false;
                 } else {
-                    Lib.WriteLineDebug("Cycle detected in beta-strand graph(around chain {0} {1}-{2}).", chain, start, end);
+                    Lib2.WriteLineDebug("Cycle detected in beta-strand graph(around chain {0} {1}-{2}).", chain, start, end);
                 }
                 /*if (extendedStrand.Level != extendingStrand.Level) {
                     Lib.WriteWarning("Cycle with inconsistent level(might be a barrel) detected in beta-strand graph(around chain {0} {1}-{2})! Skipping merging strands.", extendedStrand.SSE.ChainID, Math.Min(extendedStrand.SSE.Start, extendingStrand.SSE.Start), Math.Max(extendedStrand.SSE.End, extendingStrand.SSE.End));
@@ -388,8 +390,8 @@ namespace protein.SecStrAssigning
             BetaLadder[] oldUpLadders = extendingStrand.UpLadders.ToArray();
             BetaStrandInSheet[] oldDownNeighbours = extendingStrand.DownNeighbours.ToArray();
             BetaLadder[] oldDownLadders = extendingStrand.DownLadders.ToArray();
-            Lib.WriteLineDebug("Extended: {0}",extendedStrand.SSE);
-            Lib.WriteLineDebug("Extending: {0}",extendingStrand.SSE);
+            Lib2.WriteLineDebug("Extended: {0}",extendedStrand.SSE);
+            Lib2.WriteLineDebug("Extending: {0}",extendingStrand.SSE);
             for (int i = 0; i < oldUpNeighbours.Length; i++) {
                 UnlinkStrands(extendingStrand, oldUpNeighbours[i]);
                 LinkStrands(extendedStrand, oldUpNeighbours[i], oldUpLadders[i]);
@@ -645,7 +647,7 @@ namespace protein.SecStrAssigning
                     }
                 }
                 if (ladders.Count - nLaddersBefore > 1)
-                    Lib.WriteLineDebug("More than one beta-ladder motif found from residue {0}.", residues[i].ToString(true));
+                    Lib2.WriteLineDebug("More than one beta-ladder motif found from residue {0}.", residues[i].ToString(true));
                 hBonds.AddRange(hAcceptors.Select(a =>(residues[i], residues[a])));
                 hBonds.AddRange(hDonors.Select(d =>(residues[d], residues[i])));
             }
@@ -653,7 +655,7 @@ namespace protein.SecStrAssigning
 
             foreach (BetaLadder l in ladders)
                 if (l.Start0 == l.Start1 &&(l.End0 - l.Start0) > 2)
-                    Lib.WriteWarning("Strange secondary structure in chain {0} {1}-{2}.", residues[l.Start0].ChainId, residues[l.Start0].SeqNumber, residues[l.End0].SeqNumber);
+                    Lib2.WriteWarning("Strange secondary structure in chain {0} {1}-{2}.", residues[l.Start0].ChainId, residues[l.Start0].SeqNumber, residues[l.End0].SeqNumber);
 
             List<SSE> c7Turns = ladders
                 .Where(l => l.Start0 == l.Start1)
@@ -685,13 +687,13 @@ namespace protein.SecStrAssigning
             }
 
             // DEBUG: Write some info about the ladders
-            if (Lib.DoWriteDebug) {
+            if (Lib2.DoWriteDebug) {
                 foreach (BetaLadder ladder in ladders) {
                     if (ladder.Start0 != ladder.Start1)
-                        Lib.WriteInColor(ConsoleColor.Cyan, "*");
+                        Lib2.WriteInColor(ConsoleColor.Cyan, "*");
                     else
-                        Lib.WriteInColor(ConsoleColor.Red, "*");
-                    Lib.WriteLineDebug(Ladder2String(ladder));
+                        Lib2.WriteInColor(ConsoleColor.Red, "*");
+                    Lib2.WriteLineDebug(Ladder2String(ladder));
                 }
             }
 

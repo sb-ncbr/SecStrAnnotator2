@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Globalization;
 
+using protein.Geometry;
+
 namespace protein.Components
 {
     public class Atom : IComparable<Atom>

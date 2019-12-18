@@ -1,4 +1,3 @@
-
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -6,9 +5,12 @@ using System.Linq;
 using System.Resources;
 using System.Threading;
 using System.Globalization;
+
+using SecStrAnnotator2.Utils;
 using Cif.Components;
 using protein.SecStrAssigning;
-using SecStrAnnotator2;
+using protein.SSEs;
+using protein.Libraries;
 
 namespace protein
 {
@@ -357,9 +359,9 @@ namespace protein
 					: new FileSecStrAssigner (fileTemplateAnnotatedHelices, allTemplateChainIDs) as ISecStrAssigner;
 				try {
 					templateSSA = templateSecStrAssigner.GetSecStrAssignment ();
-				} catch (SecStrAssignmentException e){
+				} catch (SecStrAssignmentException){
 					return  -1;
-				} catch (Exception e){
+				} catch (Exception){
 					Lib.WriteErrorAndExit ("Reading template annotation failed.");
 					return  -1;
 				}
@@ -849,7 +851,9 @@ namespace protein
 					comment);
 			}
 			else
+			{
 				LibAnnotation.WriteAnnotationFile (fileQueryAnnotatedHelices, annotQHelicesInSpace_AllChains, comment);
+			}
 			#endregion
 
 

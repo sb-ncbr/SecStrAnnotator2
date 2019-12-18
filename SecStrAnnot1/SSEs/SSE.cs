@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cif.Components;
 
-namespace protein
+using Cif.Components;
+using protein.Libraries;
+
+namespace protein.SSEs
 {
 	public class SSE :IComparable<SSE>
 	{
@@ -46,18 +48,18 @@ namespace protein
 
 		public String Label { get; private set;} // Arbitrary name for the SSE.
 		public string ChainID { get; private set;} // ID of the chain in which it is located.
-		public int Start{ get; set;} // Sequence number of the first residue.
-		public int End{ get; set;} // Sequence number of the last residue.
-		public char Type{ get; set;} // Type of SSE according to DSSP abbreviations (H = alpha helix, G = 3_10 helix...)
-		public int? SheetId{get;set;} // ID number of the beta-sheet that this beta-strand belong to. The value should be null for helices.
-		public List<SSE> NestedSSEs{get; private set;}
+		public int Start { get; set;} // Sequence number of the first residue.
+		public int End { get; set;} // Sequence number of the last residue.
+		public char Type { get; set;} // Type of SSE according to DSSP abbreviations (H = alpha helix, G = 3_10 helix...)
+		public int? SheetId {get;set;} // ID number of the beta-sheet that this beta-strand belong to. The value should be null for helices.
+		public List<SSE> NestedSSEs {get; private set;}
 		public String Comment { get; private set;} // Any string which is a comment for this SSE. 
 		public String Color { get; set;} // Additional info about the color used for visualization (if assigned explicitly, else null).
 		public string AuthChainID { get; private set;}
-		public int? AuthStart{ get; private set;}
-		public string AuthStartInsCode{ get; private set;}
-		public int? AuthEnd{ get; private set;} 
-		public string AuthEndInsCode{ get; private set;}
+		public int? AuthStart { get; private set;}
+		public string AuthStartInsCode { get; private set;}
+		public int? AuthEnd { get; private set;} 
+		public string AuthEndInsCode { get; private set;}
 
 		public SSE (String label, string chainID, int start, int end, char type, int? sheetId)
 		{

@@ -31,7 +31,7 @@ namespace Cif.Components
         public string EntityId => Model.Entities.Id[Model.Atoms.EntityIndex[AtomIndex]];
 
 
-        public protein.Vector Position() => new protein.Vector (X, Y, Z);
+        public protein.Geometry.Vector Position() => new protein.Geometry.Vector (X, Y, Z);
         public AtomInfo AtomInfo() => new AtomInfo(Name, Element, AltLoc, IsHetatm, X, Y, Z);
         
         static readonly CultureInfo CULTURE_INFO = new CultureInfo("en-US");

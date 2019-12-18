@@ -3,10 +3,13 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+
+using SecStrAnnotator2.Utils;
 using Cif.Components;
-using protein.SecStrAssigning.Helpers;
 using Cif.Tables;
-using SecStrAnnotator2;
+using protein.SecStrAssigning.Helpers;
+using protein.SSEs;
+using protein.Libraries;
 
 namespace protein.SecStrAssigning
 {
@@ -250,6 +253,7 @@ namespace protein.SecStrAssigning
             BetaGraph bg = new BetaGraph();
             bg.microstrands = Enumerable.Zip(microstrands, microstrand2macrostrand, (m, m2m) => (m.startZeta, m.endZeta, m.ladderIndex, m.side, m2m)).ToList();
             bg.microladders = microladders;
+            bg.nParallelMicroladders = nParallel;
             bg.macrostrands = Enumerable.Zip(macrostrands, macrostrand2sheet, (m, m2s) => (m.startZeta, m.endZeta, m.microstrands, m2s)).ToList();
             bg.macroladders = macroladders;
             bg.sheets = sheets;

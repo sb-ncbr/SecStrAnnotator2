@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace protein
+namespace protein.Geometry
 {
 	public struct Vector
 	{

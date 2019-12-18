@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+
 using Cif;
 using Cif.Tables;
 using Cif.Filtering;
+using SecStrAnnotator2.Utils;
 
 namespace SecStrAnnotator2
 {
@@ -24,7 +26,7 @@ namespace SecStrAnnotator2
                 // Console.Error.WriteLine("\n" + filename);
                 Cif.Components.Protein p = CifWrapperForSecStrAnnot1_New.ProteinFromCifFile(filename);
                 // p.Save(filename + "-converted.pdb");
-                Lib.WriteLineDebug("Read and pseudoconverted " + filename);
+                Lib2.WriteLineDebug("Read and pseudoconverted " + filename);
                 // continue;
 
                 try {
@@ -143,16 +145,16 @@ namespace SecStrAnnotator2
 
                     Func<TimeSpan,string> Format = span => span.TotalSeconds.ToString("0.000");
 
-                    Lib.WriteLineDebug("Read:    " + Format(t1-t0));
-                    Lib.WriteLineDebug("Parse:   " + Format(t2-t1));
-                    Lib.WriteLineDebug("    Set text:   " + Format(pack.Parser.TimeStamps.SetTextDone-t1));
-                    Lib.WriteLineDebug("    Lexical:    " + Format(pack.Parser.TimeStamps.LexicalAnalysisDone-pack.Parser.TimeStamps.SetTextDone));
-                    Lib.WriteLineDebug("    Names:      " + Format(pack.Parser.TimeStamps.ExtractNamesDone-pack.Parser.TimeStamps.LexicalAnalysisDone));
-                    Lib.WriteLineDebug("    Syntactic:  " + Format(pack.Parser.TimeStamps.SyntacticAnalysisDone-pack.Parser.TimeStamps.ExtractNamesDone));
-                    Lib.WriteLineDebug("    ?:          " + Format(t2-pack.Parser.TimeStamps.SyntacticAnalysisDone));
-                    Lib.WriteLineDebug("Extract: " + Format(t3-t2));
+                    Lib2.WriteLineDebug("Read:    " + Format(t1-t0));
+                    Lib2.WriteLineDebug("Parse:   " + Format(t2-t1));
+                    Lib2.WriteLineDebug("    Set text:   " + Format(pack.Parser.TimeStamps.SetTextDone-t1));
+                    Lib2.WriteLineDebug("    Lexical:    " + Format(pack.Parser.TimeStamps.LexicalAnalysisDone-pack.Parser.TimeStamps.SetTextDone));
+                    Lib2.WriteLineDebug("    Names:      " + Format(pack.Parser.TimeStamps.ExtractNamesDone-pack.Parser.TimeStamps.LexicalAnalysisDone));
+                    Lib2.WriteLineDebug("    Syntactic:  " + Format(pack.Parser.TimeStamps.SyntacticAnalysisDone-pack.Parser.TimeStamps.ExtractNamesDone));
+                    Lib2.WriteLineDebug("    ?:          " + Format(t2-pack.Parser.TimeStamps.SyntacticAnalysisDone));
+                    Lib2.WriteLineDebug("Extract: " + Format(t3-t2));
                 } catch (CifException e) {
-                    Lib.WriteErrorAndExit(e.Message);
+                    Lib2.WriteErrorAndExit(e.Message);
                 }
             }
             return 0;
