@@ -41,7 +41,7 @@ namespace protein
 
 
 
-        public static Matrix FromRowVectors(IEnumerable<Vector> vectors)
+        public static Matrix FromRows(IEnumerable<Vector> vectors)
         {
             Matrix result = new Matrix(vectors.Count(), 3);
             int i = 0;
@@ -50,6 +50,20 @@ namespace protein
                 result[i, 0] = v.X;
                 result[i, 1] = v.Y;
                 result[i, 2] = v.Z;
+                i++;
+            }
+            return result;
+        }
+
+        public static Matrix FromRows(IEnumerable<Point> points)
+        {
+            Matrix result = new Matrix(points.Count(), 3);
+            int i = 0;
+            foreach (Point p in points)
+            {
+                result[i, 0] = p.X;
+                result[i, 1] = p.Y;
+                result[i, 2] = p.Z;
                 i++;
             }
             return result;

@@ -45,12 +45,12 @@ namespace protein.Geometry
         }
 
         /** Returns a point that is common to two given geometrical objects, or null if such point does not exist. */
-        public static Point Intersection(Line line, Plane plane)
+        public static Point? Intersection(Line line, Plane plane)
         {
             if (AreParallel(line, plane))
                 return null;
             double t = ((plane.FixedPoint - line.FixedPoint) * plane.Normal) / (line.Direction * plane.Normal);
-            return new Point(line.FixedPoint + t * line.Direction);
+            return line.FixedPoint + t * line.Direction;
         }
 
         /* Returns the point that is in the middle between two points.*/

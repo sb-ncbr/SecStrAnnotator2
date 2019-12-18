@@ -8,7 +8,8 @@ namespace Cif.Components
         public Model Model { get; private set; }
         public int AtomIndex { get; private set; }
 
-        public Atom(Model model, int atomIndex){
+        public Atom(Model model, int atomIndex)
+        {
             this.Model = model;
             this.AtomIndex = atomIndex;
         }
@@ -17,7 +18,7 @@ namespace Cif.Components
         public string Id => Model.Atoms.Id[AtomIndex];
         public string Name => Model.Atoms.Name[AtomIndex];
         public string Element => Model.Atoms.Element[AtomIndex];
-        public bool IsHetatm => Model.Atoms.IsHetatm[AtomIndex];        
+        public bool IsHetatm => Model.Atoms.IsHetatm[AtomIndex];
         public string AltLoc => Model.Atoms.AltLoc[AtomIndex];
         public double X => Model.Atoms.X[AtomIndex];
         public double Y => Model.Atoms.Y[AtomIndex];
@@ -31,13 +32,13 @@ namespace Cif.Components
         public string EntityId => Model.Entities.Id[Model.Atoms.EntityIndex[AtomIndex]];
 
 
-        public protein.Geometry.Vector Position() => new protein.Geometry.Vector (X, Y, Z);
+        public protein.Geometry.Point Position() => new protein.Geometry.Point(X, Y, Z);
         public AtomInfo AtomInfo() => new AtomInfo(Name, Element, AltLoc, IsHetatm, X, Y, Z);
-        
+
         static readonly CultureInfo CULTURE_INFO = new CultureInfo("en-US");
         public override string ToString()
         {
-			return (IsHetatm?"HETATM":"ATOM  ")
+            return (IsHetatm ? "HETATM" : "ATOM  ")
                 + Id.ToString().PadLeft(5)
                 + " "
                 + Name.PadRight(4)

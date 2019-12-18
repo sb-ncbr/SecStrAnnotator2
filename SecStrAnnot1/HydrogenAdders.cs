@@ -68,10 +68,10 @@ namespace protein
 				if (nAtom==null || cAtom==null || oAtom==null){
 					return null;
 				}
-				Vector n = ((Atom)nAtom).Position();
-				Vector c = ((Atom)cAtom).Position();
-				Vector o = ((Atom)oAtom).Position();
-				Vector h = n + NH_BOND_LENGTH * (c - o).Normalize ();
+				Point n = ((Atom)nAtom).Position();
+				Point c = ((Atom)cAtom).Position();
+				Point o = ((Atom)oAtom).Position();
+				Point h = n + NH_BOND_LENGTH * (c - o).Normalize ();
 
 				return new AtomInfo(Atom.NAME_H_AMIDE, Atom.ELEMENT_H, ((Atom)nAtom).AltLoc, ((Atom)nAtom).IsHetatm, h.X, h.Y, h.Z );
 			}
