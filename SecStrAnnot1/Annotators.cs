@@ -843,7 +843,7 @@ namespace protein
 					int[] partIndices = Enumerable.Range (i, j - i + 1).ToArray ();
 					IEnumerable<SSEInSpace> parts = hSSEs.Skip (i).Take (j - i + 1);
 					SSEInSpace newSSE = new SSEInSpace (new SSE (parts.Select (p=>p.Label).EnumerateWithSeparators ("_"), parts.First ().ChainID,parts.First ().Start,parts.Last ().End, 'E', null),
-						parts.First ().StartVector, parts.Last ().EndVector);
+						parts.First ().StartPoint, parts.Last ().EndPoint);
 					newSSE.AddComment ("Created by joining " + parts.EnumerateWithSeparators (" and ") + ".");
 					foreach (var p in parts) {
 						newSSE.AddNestedSSE (p);
@@ -1013,7 +1013,7 @@ namespace protein
 		private static void PrintMetricMatrix<T>(AnnotationContext context, T[,] matrix, String filename){
 			PrintMatrix (context.Templates.Select (sse => sse.Label).ToArray (), 
 				context.Candidates.Select (sse => sse.Label).ToArray (), 
-				context.Templates.Select (sse => (sse.EndVector - sse.StartVector).Size).ToArray (),
+				context.Templates.Select (sse => (sse.EndPoint - sse.StartPoint).Size).ToArray (),
 				matrix, filename);
 		}
 

@@ -15,25 +15,20 @@ namespace protein.SecStrAssigning.Helpers
         private List<int>[,,] boxes;
         private List<int>[,,] neighborBoxes;
         private Point corner;
-        private int[] nBoxes; // TODO change to ValueTuple!
+        private readonly (int inX, int inY, int inZ) nBoxes;
         public BoxingHBondFinder(IEnumerable<Residue> residues_, double dsspEnergyCutoff)
             : base(residues_, dsspEnergyCutoff)
         {
             corner = new Point(vecCA.Select(v => v.X).Min(), vecCA.Select(v => v.Y).Min(), vecCA.Select(v => v.Z).Min());
             Point otherCorner = new Point(vecCA.Select(v => v.X).Max(), vecCA.Select(v => v.Y).Max(), vecCA.Select(v => v.Z).Max());
             Vector relativeSize = (otherCorner - corner) / BOX_SIZE;
-            nBoxes = new int[] { (int)Math.Floor(relativeSize.X) + 1, (int)Math.Floor(relativeSize.Y) + 1, (int)Math.Floor(relativeSize.Z) + 1 };
-            // nBoxes = new int[3];
-            // for (int i = 0; i < 3; i++)
-            // {
-            //     nBoxes[i] = (int)Math.Floor((otherCorner[i] - corner[i]) / BOX_SIZE) + 1;
-            // }
-            boxes = new List<int>[nBoxes[0], nBoxes[1], nBoxes[2]];
-            for (int i = 0; i < nBoxes[0]; i++)
+            nBoxes = ((int)Math.Floor(relativeSize.X) + 1, (int)Math.Floor(relativeSize.Y) + 1, (int)Math.Floor(relativeSize.Z) + 1);
+            boxes = new List<int>[nBoxes.inX, nBoxes.inY, nBoxes.inZ];
+            for (int i = 0; i < nBoxes.inX; i++)
             {
-                for (int j = 0; j < nBoxes[1]; j++)
+                for (int j = 0; j < nBoxes.inY; j++)
                 {
-                    for (int k = 0; k < nBoxes[2]; k++)
+                    for (int k = 0; k < nBoxes.inZ; k++)
                     {
                         boxes[i, j, k] = new List<int>();
                     }
@@ -43,47 +38,41 @@ namespace protein.SecStrAssigning.Helpers
             {
                 GetBox(i).Add(i);
             }
-            neighborBoxes = new List<int>[nBoxes[0], nBoxes[1], nBoxes[2]];
-            for (int i = 0; i < nBoxes[0]; i++)
+            neighborBoxes = new List<int>[nBoxes.inX, nBoxes.inY, nBoxes.inZ];
+            for (int i = 0; i < nBoxes.inX; i++)
             {
-                for (int j = 0; j < nBoxes[1]; j++)
+                for (int j = 0; j < nBoxes.inY; j++)
                 {
-                    for (int k = 0; k < nBoxes[2]; k++)
+                    for (int k = 0; k < nBoxes.inZ; k++)
                     {
-                        neighborBoxes[i, j, k] = MergeNeighborBoxes(new int[] { i, j, k });
+                        neighborBoxes[i, j, k] = MergeNeighborBoxes(i, j, k);
                     }
                 }
             }
         }
-        private int[] GetBoxIndices(int res)
+        private (int xIndex, int yIndex, int zIndex) GetBoxIndices(int res)
         {
             Vector relativePosition = (vecCA[res] - corner) / BOX_SIZE;
-            return new int[] { (int)Math.Floor(relativePosition.X), (int)Math.Floor(relativePosition.Y), (int)Math.Floor(relativePosition.Z) };
-
-            // int[] indices = new int[3];
-            // double[] pos = vecCA[res].AsArray();
-            // for (int i = 0; i < 3; i++)
-            //     indices[i] = (int)Math.Floor((pos[i] - corner[i]) / BOX_SIZE);
-            // return indices;
+            return ((int)Math.Floor(relativePosition.X), (int)Math.Floor(relativePosition.Y), (int)Math.Floor(relativePosition.Z));
         }
         private List<int> GetBox(int res)
         {
-            int[] indices = GetBoxIndices(res);
-            return boxes[indices[0], indices[1], indices[2]];
+            (int xIndex, int yIndex, int zIndex) = GetBoxIndices(res);
+            return boxes[xIndex, yIndex, zIndex];
         }
         private List<int> GetNeighborBox(int res)
         {
-            int[] indices = GetBoxIndices(res);
-            return neighborBoxes[indices[0], indices[1], indices[2]];
+            (int xIndex, int yIndex, int zIndex) = GetBoxIndices(res);
+            return neighborBoxes[xIndex, yIndex, zIndex];
         }
-        private List<int> MergeNeighborBoxes(int[] indices)
+        private List<int> MergeNeighborBoxes(int xIndex, int yIndex, int zIndex)
         {
             List<List<int>> result = new List<List<int>>();
-            for (int i = Math.Max(0, indices[0] - 1); i <= Math.Min(nBoxes[0] - 1, indices[0] + 1); i++)
+            for (int i = Math.Max(0, xIndex - 1); i <= Math.Min(nBoxes.inX - 1, xIndex + 1); i++)
             {
-                for (int j = Math.Max(0, indices[1] - 1); j <= Math.Min(nBoxes[1] - 1, indices[1] + 1); j++)
+                for (int j = Math.Max(0, yIndex - 1); j <= Math.Min(nBoxes.inY - 1, yIndex + 1); j++)
                 {
-                    for (int k = Math.Max(0, indices[2] - 1); k <= Math.Min(nBoxes[2] - 1, indices[2] + 1); k++)
+                    for (int k = Math.Max(0, zIndex - 1); k <= Math.Min(nBoxes.inZ - 1, zIndex + 1); k++)
                     {
                         result.Add(boxes[i, j, k]);
                     }

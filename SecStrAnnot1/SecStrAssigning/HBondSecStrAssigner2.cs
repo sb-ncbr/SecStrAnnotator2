@@ -35,8 +35,7 @@ namespace protein.SecStrAssigning
             this.residues = protein.GetResidues().ToArray();
             this.nResidues = model.Residues.Count;
             MyStopwatch watchHBF = new MyStopwatch();
-            // var hBondFinder = new BoxingHBondFinder(this.residues, hBondEnergyCutoff);
-            var hBondFinder = new SimpleHBondFinder(this.residues, hBondEnergyCutoff); // #debug
+            var hBondFinder = new BoxingHBondFinder(this.residues, hBondEnergyCutoff);
             watchHBF.Stop("new BoxingHbondFinder");
             this.hBonds = new HashSet<(int donor, int acceptor)>();
             this.acceptorsOf = new Dictionary<int,List<int>>();

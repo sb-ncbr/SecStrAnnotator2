@@ -77,8 +77,8 @@ namespace protein
 
 			Setting.MetricMethod metricMethod = Setting.DEFAULT_METRIC_METHOD;
 			double[] maxmetric = Setting.DEFAULT_MAXMETRIC;
-			Func<SSEInSpace,double> skipTemplatePenalty = (sse => maxmetric[0] + maxmetric[1]*(sse.EndVector - sse.StartVector).Size);
-			Func<SSEInSpace,double> skipCandidatePenalty = (sse => maxmetric[2]*(sse.EndVector - sse.StartVector).Size);
+			Func<SSEInSpace,double> skipTemplatePenalty = (sse => maxmetric[0] + maxmetric[1]*(sse.EndPoint - sse.StartPoint).Size);
+			Func<SSEInSpace,double> skipCandidatePenalty = (sse => maxmetric[2]*(sse.EndPoint - sse.StartPoint).Size);
 
 			double? momTimeoutSeconds = null;
 

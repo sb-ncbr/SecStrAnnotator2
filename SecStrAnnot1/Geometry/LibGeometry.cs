@@ -59,7 +59,7 @@ namespace protein.Geometry
             return new Point(0.5 * (a.Vector + b.Vector));
         }
 
-        public static Vector ProjectPointOnLine(Vector r, Vector linePoint, Vector lineDirection)
+        public static Point ProjectPointOnLine(Point r, Point linePoint, Vector lineDirection)
         {
             lineDirection = lineDirection.Normalize();
             return linePoint + ((r - linePoint) * lineDirection) * lineDirection;
@@ -68,7 +68,7 @@ namespace protein.Geometry
         /** Returns the distance between two objects. */
         public static double Distance(Point a, Point b)
         {
-            return (a.Vector - b.Vector).Size;
+            return (a- b).Size;
         }
     }
 }

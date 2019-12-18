@@ -301,8 +301,8 @@ namespace protein.Components
             return this.Serial - other.Serial;
         }
         
-		public Vector Position(){
-			return new Vector (X, Y, Z);
+		public Point Position(){
+			return new Point (X, Y, Z);
 		}
 		
 		public const String NAME_N_AMIDE = "N";

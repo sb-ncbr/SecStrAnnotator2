@@ -184,8 +184,8 @@ namespace protein.Libraries
                 elem[JsNames.COLOR] = new JsonValue(sse.Color);
             if (WRITE_VECTORS && sse is SSEInSpace)
             {
-                elem[JsNames.START_VECTOR] = new JsonValue((sse as SSEInSpace).StartVector.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
-                elem[JsNames.END_VECTOR] = new JsonValue((sse as SSEInSpace).EndVector.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
+                elem[JsNames.START_VECTOR] = new JsonValue((sse as SSEInSpace).StartPoint.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
+                elem[JsNames.END_VECTOR] = new JsonValue((sse as SSEInSpace).EndPoint.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
             }
             if (extraEnumerators != null)
             {
@@ -677,7 +677,7 @@ namespace protein.Libraries
             {
                 if (ShouldJoin(a, b, parameters, out criteria))
                 {
-                    Console.WriteLine("Joining {0} ({1}-{2}) and {3} ({4}-{5}) with gap {6} and angle {7}°.", a.Label, a.Start, a.End, b.Label, b.Start, b.End, b.Start - a.End - 1, 180 / Math.PI * LibGeometry.AngleInRadians(a.EndVector - a.StartVector, b.EndVector - b.StartVector));
+                    Console.WriteLine("Joining {0} ({1}-{2}) and {3} ({4}-{5}) with gap {6} and angle {7}°.", a.Label, a.Start, a.End, b.Label, b.Start, b.End, b.Start - a.End - 1, 180 / Math.PI * LibGeometry.AngleInRadians(a.EndPoint - a.StartPoint, b.EndPoint - b.StartPoint));
                     a = SSEInSpace.Join(a, b);
                     a.AddComment(criteria.ToString());
                 }
@@ -761,10 +761,10 @@ namespace protein.Libraries
         /** Calculates the "stagger" metric for two helices, which is a measure of their continuity. The value is in Angstroms. */
         private static double Stagger(SSEInSpace sse1, SSEInSpace sse2)
         {
-            Point A = sse1.StartVector;
-            Point B = sse1.EndVector;
-            Point C = sse2.StartVector;
-            Point D = sse2.EndVector;
+            Point A = sse1.StartPoint;
+            Point B = sse1.EndPoint;
+            Point C = sse2.StartPoint;
+            Point D = sse2.EndPoint;
             Plane rho = new Plane(LibGeometry.Middle(B, C), D - A);
             Point? P = LibGeometry.Intersection(new Line(A, B), rho);
             Point? Q = LibGeometry.Intersection(new Line(C, D), rho);
@@ -1032,24 +1032,24 @@ namespace protein.Libraries
         public static double MetricNo3Pos(SSEInSpace sse1, SSEInSpace sse2)
         {
             //this metric is to be minimized
-            return (sse1.StartVector - sse2.StartVector).Size
-                + (sse1.EndVector - sse2.EndVector).Size;
+            return (sse1.StartPoint - sse2.StartPoint).Size
+                + (sse1.EndPoint - sse2.EndPoint).Size;
         }
 
         public static double MetricNo4(SSEInSpace sse1, SSEInSpace sse2)
         {
             //this metric is to be maximized (minimized in absolute value)
-            return -(sse1.StartVector - sse2.StartVector).SqSize
-                - (sse1.StartVector - sse2.StartVector).SqSize;
+            return -(sse1.StartPoint - sse2.StartPoint).SqSize
+                - (sse1.StartPoint - sse2.StartPoint).SqSize;
         }
 
         public static double MetricNo5Pos(SSEInSpace sse1, SSEInSpace sse2)
         {
             //this metric is to be minimized
-            double m3 = (sse1.StartVector - sse2.StartVector).Size
-                        + (sse1.EndVector - sse2.EndVector).Size;
-            Vector u = sse1.EndVector - sse1.StartVector;
-            Vector v = sse2.EndVector - sse2.StartVector;
+            double m3 = (sse1.StartPoint - sse2.StartPoint).Size
+                        + (sse1.EndPoint - sse2.EndPoint).Size;
+            Vector u = sse1.EndPoint - sse1.StartPoint;
+            Vector v = sse2.EndPoint - sse2.StartPoint;
             double angleScaling = 2.0 - u * v / u.Size / v.Size;
             return m3 * angleScaling;
         }
@@ -1404,7 +1404,7 @@ namespace protein.Libraries
                 for (int i = 0; i < templateArray.Length; i++)
                 {
                     w.Write(templateArray[i].Label + "\t");
-                    w.Write((templateArray[i].EndVector - templateArray[i].StartVector).Size.ToString("0.0") + "\t");
+                    w.Write((templateArray[i].EndPoint - templateArray[i].StartPoint).Size.ToString("0.0") + "\t");
                     for (int j = 0; j < candidateArray.Length; j++)
                     {
                         w.Write(metricToMin(templateArray[i], candidateArray[j]).ToString("0.0") + "\t");

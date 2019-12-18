@@ -13,8 +13,6 @@ namespace protein.Geometry
             FixedPoint = fixedPoint;
             Direction = direction;
         }
-
-        // public Line(Point fixedPoint, Vector direction) : this(fixedPoint.Vector, direction) { }
         
         public Line(Point point1, Point point2) : this(point1, (point2 - point1).Normalize()) { }
     }
