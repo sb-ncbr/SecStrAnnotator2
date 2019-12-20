@@ -8,6 +8,7 @@ using Cif.Components;
 using Cif.Tables;
 using protein.SSEs;
 using protein.Geometry;
+using protein.Json;
 
 namespace protein.Libraries
 {

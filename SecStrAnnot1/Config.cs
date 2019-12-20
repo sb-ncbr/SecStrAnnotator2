@@ -2,6 +2,7 @@
 using System.IO;
 
 using protein.Libraries;
+using protein.Json;
 
 namespace protein
 {

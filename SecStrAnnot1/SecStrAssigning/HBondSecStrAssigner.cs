@@ -6,8 +6,9 @@ using System.Reflection;
 
 using SecStrAnnotator2.Utils;
 using Cif.Components;
-using protein.SecStrAssigning.Helpers;
 using protein.SSEs;
+using protein.HydrogenAdding;
+using protein.SecStrAssigning.Helpers;
 
 namespace protein.SecStrAssigning
 {
@@ -31,13 +32,13 @@ namespace protein.SecStrAssigning
         List<int>[] ignoreHBondsTo_Parallel;
         List<int>[] ignoreHBondsFrom_Parallel;
 
-        private HydrogenAdders.IHydrogenAdder hydrogenAdder;
+        private IHydrogenAdder hydrogenAdder;
         private IHBondFinder hBondFinder;
 
         public HBondSecStrAssigner(Protein protein, double hBondEnergyCutoff){
             this.DetectSheets=true;
             this.DetectHelices=true;
-            this.hydrogenAdder = new HydrogenAdders.DsspLikeAmideHydrogenAdder();
+            this.hydrogenAdder = new DsspLikeAmideHydrogenAdder();
             this.residues = hydrogenAdder.AddHydrogens(protein).GetResidues().ToArray(); // removing residues without C-alpha is probably not needed here
             // Cif.Libraries.Lib.WriteLineDebug($"HBondSecStrAssigner(): {this.residues.Length}");
             ignoreHBondsTo_Antiparallel=new List<int>[residues.Length];

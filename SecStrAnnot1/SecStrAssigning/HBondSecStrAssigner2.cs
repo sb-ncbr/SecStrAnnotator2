@@ -7,9 +7,10 @@ using System.Reflection;
 using SecStrAnnotator2.Utils;
 using Cif.Components;
 using Cif.Tables;
-using protein.SecStrAssigning.Helpers;
-using protein.SSEs;
 using protein.Libraries;
+using protein.SSEs;
+using protein.HydrogenAdding;
+using protein.SecStrAssigning.Helpers;
 
 namespace protein.SecStrAssigning
 {
@@ -29,7 +30,7 @@ namespace protein.SecStrAssigning
             this.DetectSheets = true;
             this.DetectHelices = true;
             MyStopwatch watch = new MyStopwatch();
-            var hydrogenAdder = new HydrogenAdders.DsspLikeAmideHydrogenAdder();
+            var hydrogenAdder = new DsspLikeAmideHydrogenAdder();
             protein = hydrogenAdder.AddHydrogens(protein); // removing residues without C-alpha is probably not needed here
             this.model = protein.Model;
             this.residues = protein.GetResidues().ToArray();

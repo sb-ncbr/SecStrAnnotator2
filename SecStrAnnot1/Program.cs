@@ -12,6 +12,7 @@ using protein.Libraries;
 using protein.SSEs;
 using protein.SecStrAssigning;
 using protein.Annotating;
+using protein.Json;
 
 namespace protein
 {
