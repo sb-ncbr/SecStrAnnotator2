@@ -7,6 +7,7 @@ namespace protein.SSEs
 {
 	public enum SSEType
 	{
+		NOT_FOUND_TYPE,
 		MIXED_HELIX_TYPE,
 		HELIX_G_TYPE,
 		HELIX_H_TYPE,

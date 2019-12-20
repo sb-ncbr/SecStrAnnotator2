@@ -22,6 +22,7 @@ namespace protein.SSEs
         };
 
         private static readonly Dictionary<SSEType, char> sseTypeToChar = new Dictionary<SSEType, char>{
+		    { SSEType.NOT_FOUND_TYPE, 'X' },
             { SSEType.MIXED_HELIX_TYPE, 'h' },
             { SSEType.HELIX_G_TYPE, 'G' },
             { SSEType.HELIX_H_TYPE, 'H' },
