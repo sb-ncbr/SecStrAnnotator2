@@ -152,28 +152,6 @@ namespace protein.SSEs
 			return result;
 		}
 
-		// public static SSE Join(SSE first, SSE second, String comment){
-		// 	if (first.ChainID!=second.ChainID) throw new ArgumentException("Joined SSEs must be in the same chain!");
-		// 	if (first.Start>second.End) throw new ArgumentException("The first SSE must start before the second SSE's end!");
-		// 	if (first.SheetId != second.SheetId)
-		// 		Lib.WriteWarning ("Joining two beta-strands with different sheet ID ({0} and {1})!", first.SheetId, second.SheetId);
-		// 	char resultType = Setting.JoiningTypeCombining(first.Type, second.Type) ?? SSE.NOT_FOUND_TYPE;
-		// 	SSE result = new SSE (first.Label + "+" + second.Label, first.ChainID, first.Start, second.End, resultType, first.SheetId);
-		// 	result.AuthChainID = first.AuthChainID;
-		// 	result.AuthStart = first.AuthStart;
-		// 	result.AuthStartInsCode = first.AuthStartInsCode;
-		// 	result.AuthEnd = second.AuthEnd;
-		// 	result.AuthEndInsCode = second.AuthEndInsCode;
-		// 	result.AddComment (first.Comment);
-		// 	result.AddComment (second.Comment);
-		// 	result.AddComment ("Created by joining " + first.Start + "-" + first.End + " (type " + first.Type + ") and "
-		// 		+ second.Start + "-" + second.End + " (type " + second.Type + ")" + (comment == null ? "." : ", " + comment+"."));
-		// 	result.AddNestedSSE (first);
-		// 	result.AddNestedSSE (second);
-		// 	Lib.WriteWarning($"Joining SSEs {first} and {second}.");
-		// 	return result;
-		// }
-
 		public static SSE Join(params SSE[] sses){
 			if (sses.Length < 2){
 				throw new ArgumentException("The number of joined SSEs must be at least 2!");
@@ -223,8 +201,9 @@ namespace protein.SSEs
 				Comment = Comment + addedComment;
 		}
 
-		public bool IsSheet{get{ return ALL_SHEET_TYPES.Contains(this.Type); }}
-		public bool IsHelix{get{ return ALL_HELIX_TYPES.Contains(this.Type); }}
+		public bool IsSheet => ALL_SHEET_TYPES.Contains(this.Type);
+		
+		public bool IsHelix => ALL_HELIX_TYPES.Contains(this.Type);
 
 		public void AddAuthFields(Protein protein){
 			// Console.WriteLine("AddAuthFields");

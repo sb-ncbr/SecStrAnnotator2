@@ -18,11 +18,6 @@ namespace protein
 {
     class MainClass
     {
-        /// <summary>
-        /// The entry point of the program, where the program control starts and ends.7
-        /// </summary>
-        /// <param name="args">The command-line arguments.</param>
-        /// <returns>The exit code that is given to the operating system after the program ends.</returns>
         public static int Main_SecStrAnnot1(string[] args)
         {
             #region Declarations.
@@ -60,8 +55,6 @@ namespace protein
             string correctionsFile = null;
 
             bool createPymolSession = false;
-
-            const bool GEOM_VERSION = true;
 
             char[] acceptedSSETypes = Setting.DEFAULT_ACCEPTED_SSE_TYPES;
             //LibAnnotation.JoiningParameters joiningParameters = new LibAnnotation.JoiningParameters (LibAnnotation.ALL_HELIX_TYPES, 10, 1, 10, 2, 30);
@@ -426,18 +419,6 @@ namespace protein
 
             #region Secondary Structure Assignment of the query protein.
 
-            // #debug:
-            // if (Lib.DoWriteDebug){
-            // 	try {
-            // 		MyStopwatch watch = new MyStopwatch();
-            // 		HBondSecStrAssigner2 hba2 = new HBondSecStrAssigner2(qProtein, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
-            // 		hba2.GetSecStrAssignment();
-            // 		watch.Stop("Time for HBondSecStrAssigner2");
-            // 	} catch (NotImplementedException){
-            // 		//nothing
-            // 	}
-            // }
-
             ISecStrAssigner secStrAssigner;
 
             switch (secStrMethod)
@@ -472,7 +453,7 @@ namespace protein
                     throw new Exception("Unknown secondary structure detection method.");
             }
 
-            if (GEOM_VERSION && joinHelices)
+            if (joinHelices)
             {
                 secStrAssigner = new JoiningSecStrAssigner(secStrAssigner, qProtein, rmsdLimit, Setting.JoiningTypeCombining);
             }
@@ -562,7 +543,6 @@ namespace protein
             {
                 foreach (string queryChainID in chainMapping[templateChainID])
                 {
-
                     #region Superimposing p over t.
                     if (tryToReuseAlignment && File.Exists(fileQueryAlignedPDB))
                     {
@@ -613,98 +593,61 @@ namespace protein
                     List<SSEInSpace> tSSEsInSpace;
                     List<SSEInSpace> qSSEsInSpace;
 
-                    if (GEOM_VERSION)
+
+                    #region Calculate helix-fit and sheet-fit RMSDs for whole chain and output them to a file.
+                    if (Lib.DoWriteDebug)
                     {
-                        #region GEOMETRY-BASED VERSION joining + line segments
-
-                        #region Calculate helix-fit and sheet-fit RMSDs for whole chain and output them to a file.
-                        if (Lib.DoWriteDebug)
+                        const int UNIT_LENGTH = 4;
+                        TextWriter wRMSD = new StreamWriter(fileQueryRmsds);
+                        wRMSD.WriteLine(LibAnnotation.COMMENT_SIGN_WRITE + "RMSDs from fitting helix and sheet shape to the alpha-carbons. Value for resi=x is calculated from residues x, x+1, x+2, x+3.");
+                        wRMSD.WriteLine(LibAnnotation.COMMENT_SIGN_WRITE + "resi\tRMSD_vs_H\tRMSD_vs_H5\tRMSD_vs_H6\tRMSD_vs_E");
+                        List<Residue> residues = qProtein.GetChain(queryChainID).GetResidues().ToList();
+                        for (int i = 0; i <= residues.Count - 6/*UNIT_LENGTH*/; i++)
                         {
-                            const int UNIT_LENGTH = 4;
-                            TextWriter wRMSD = new StreamWriter(fileQueryRmsds);
-                            wRMSD.WriteLine(LibAnnotation.COMMENT_SIGN_WRITE + "RMSDs from fitting helix and sheet shape to the alpha-carbons. Value for resi=x is calculated from residues x, x+1, x+2, x+3.");
-                            wRMSD.WriteLine(LibAnnotation.COMMENT_SIGN_WRITE + "resi\tRMSD_vs_H\tRMSD_vs_H5\tRMSD_vs_H6\tRMSD_vs_E");
-                            List<Residue> residues = qProtein.GetChain(queryChainID).GetResidues().ToList();
-                            for (int i = 0; i <= residues.Count - 6/*UNIT_LENGTH*/; i++)
-                            {
-                                double rmsdH;
-                                double rmsdE;
-                                double rmsdH5;
-                                double rmsdH6;
-                                LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), 'H', rmsdLimit, out rmsdH);
-                                LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), 'E', rmsdLimit, out rmsdE);
-                                LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 5), '5', rmsdLimit, out rmsdH5);
-                                LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 6), '6', rmsdLimit, out rmsdH6);
-                                //wRMSD.WriteLine ("{0}\t{1}\t{2}", residues [i].ResSeq, rmsdH.ToString ("0.000"), rmsdE.ToString ("0.000"));
-                                wRMSD.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", residues[i].SeqNumber, rmsdH.ToString("0.000"), rmsdH5.ToString("0.000"), rmsdH6.ToString("0.000"), rmsdE.ToString("0.000"));
-                            }
-                            wRMSD.Close();
-
-                            times.Add(("Calculate RMSDs for whole chain", DateTime.Now.Subtract(stamp)));
-                            stamp = DateTime.Now;
+                            double rmsdH;
+                            double rmsdE;
+                            double rmsdH5;
+                            double rmsdH6;
+                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), 'H', rmsdLimit, out rmsdH);
+                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), 'E', rmsdLimit, out rmsdE);
+                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 5), '5', rmsdLimit, out rmsdH5);
+                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 6), '6', rmsdLimit, out rmsdH6);
+                            //wRMSD.WriteLine ("{0}\t{1}\t{2}", residues [i].ResSeq, rmsdH.ToString ("0.000"), rmsdE.ToString ("0.000"));
+                            wRMSD.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", residues[i].SeqNumber, rmsdH.ToString("0.000"), rmsdH5.ToString("0.000"), rmsdH6.ToString("0.000"), rmsdE.ToString("0.000"));
                         }
-                        #endregion
+                        wRMSD.Close();
 
-                        #region Calculating line segments corresponding to helices in template and query protein.
-
-                        List<double>[] dump;
-                        if (forceCalculateVectors || !tSSEs.All(sse => sse is SSEInSpace))
-                        {
-                            tSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(tProtein.GetChain(templateChainID), tSSEs, out dump);
-                        }
-                        else
-                        {
-                            tSSEsInSpace = tSSEs.Select(sse => sse as SSEInSpace).ToList();
-                        }
-
-                        if (forceCalculateVectors || !qSSEs.All(sse => sse is SSEInSpace))
-                        {
-                            qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein.GetChain(queryChainID), qSSEs, out dump);
-                        }
-                        else
-                        {
-                            qSSEsInSpace = qSSEs.Select(sse => sse as SSEInSpace).ToList();
-                        }
-
-                        times.Add(("Calculate line segments", DateTime.Now.Subtract(stamp)));
+                        times.Add(("Calculate RMSDs for whole chain", DateTime.Now.Subtract(stamp)));
                         stamp = DateTime.Now;
-                        #endregion
+                    }
+                    #endregion
 
-                        #endregion
+
+                    #region Calculating line segments corresponding to helices in template and query protein.
+
+                    List<double>[] dump;
+                    if (forceCalculateVectors || !tSSEs.All(sse => sse is SSEInSpace))
+                    {
+                        tSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(tProtein.GetChain(templateChainID), tSSEs, out dump);
                     }
                     else
                     {
-                        throw new NotImplementedException();
-                        /*
-						#region OLD VERSION joining + line segments
-
-						#region Calculating line segments corresponding to helices in template and processed protein - old version.
-
-						tSSEsInSpace = LibAnnotation.HelicesAsLineSegments (tProtein.GetChain (templateChainID), tSSEs.Where (sse=>sse.ChainID==templateChainID).ToList ());
-						qSSEsInSpace = LibAnnotation.HelicesAsLineSegments (qProtein.GetChain (queryChainID), qSSEs.Where (sse=>sse.ChainID==queryChainID).ToList ());
-
-						times.Add (("Calculate line segments", DateTime.Now.Subtract (stamp)));
-						stamp = DateTime.Now;
-						#endregion
-
-						#region Joining helices - old version.
-
-						// Joining helices - old version (based on gap length, angle etc.).
-						if (joinHelices) {
-							qSSEsInSpace = LibAnnotation.JoinSSEs (qSSEsInSpace, joiningParameters);
-							// writing obtained helix info into a file
-							LibAnnotation.WriteAnnotationFile (fileQueryJoinedHelices, qSSEsInSpace,
-								"Helix info obtained from DSSP for PDB file " + Path.GetFileName (fileQueryPDB)
-								+ ".\nThen the helices were joined using this settings:\n" + joiningParameters.ToString ());
-						}
-
-						times.Add (("Join helices", DateTime.Now.Subtract (stamp)));
-						stamp = DateTime.Now;
-						#endregion
-
-						#endregion
-						*/
+                        tSSEsInSpace = tSSEs.Select(sse => sse as SSEInSpace).ToList();
                     }
+
+                    if (forceCalculateVectors || !qSSEs.All(sse => sse is SSEInSpace))
+                    {
+                        qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein.GetChain(queryChainID), qSSEs, out dump);
+                    }
+                    else
+                    {
+                        qSSEsInSpace = qSSEs.Select(sse => sse as SSEInSpace).ToList();
+                    }
+
+                    times.Add(("Calculate line segments", DateTime.Now.Subtract(stamp)));
+                    stamp = DateTime.Now;
+                    #endregion
+
 
                     #region Matching.
 
@@ -989,7 +932,7 @@ namespace protein
                 Lib.WriteInColor(ConsoleColor.Yellow, "Loading structure:  {0}, chain {1}, residues {2}\n", filename, chainId, FormatRanges(resSeqRanges));
                 Protein p;
                 (int, int)[] resSeqRangesArray = resSeqRanges.Select(tup => (tup.Item1, tup.Item2)).ToArray();
-                p = SecStrAnnotator2.CifWrapperForSecStrAnnot1_New.ProteinFromCifFile(filename, chainId, resSeqRangesArray);
+                p = SecStrAnnotator2.CifWrapperForSecStrAnnot1.ProteinFromCifFile(filename, chainId, resSeqRangesArray);
 
                 // Check entity type and emptiness of the structure
                 if (p.GetChains().Any())

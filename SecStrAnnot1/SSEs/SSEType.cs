@@ -37,4 +37,3 @@ namespace protein.SSEs
 		BULGE_PARALLEL33_LONG_SIDE_TYPE,
 	}
 }
-

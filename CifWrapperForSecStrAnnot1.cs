@@ -10,7 +10,7 @@ using Cif.Components;
 
 namespace SecStrAnnotator2
 {
-    public static class CifWrapperForSecStrAnnot1_New {
+    public static class CifWrapperForSecStrAnnot1 {
         private const string EXCEPTION_MESSAGE = "Cannot fit CIF data to PDB data model: ";
         private const char PDB_DEFAULT_ALT_LOC = ' ';
         private const char PDB_DEFAULT_INS_CODE = ' ';
