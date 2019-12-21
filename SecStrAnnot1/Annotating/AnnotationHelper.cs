@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 using protein.Libraries;
 
 namespace protein.Annotating
@@ -34,8 +34,8 @@ namespace protein.Annotating
                 Dictionary<int?, List<int?>> dictSheetIdByCandidate = new Dictionary<int?, List<int?>>();
                 foreach (var m in matching)
                 {
-                    SSE template = context.Templates[m.Item1];
-                    SSE candidate = context.Candidates[m.Item2];
+                    Sse template = context.Templates[m.Item1];
+                    Sse candidate = context.Candidates[m.Item2];
                     if (template.IsSheet && candidate.IsSheet)
                     {
                         dictSheetIdByTemplate.MultidictionaryAdd(template.SheetId, candidate.SheetId);

@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 using protein.Libraries;
 
 namespace protein.Annotating
@@ -21,7 +21,7 @@ namespace protein.Annotating
         public Lib.Shuffler TemplateMapping { get; private set; }
         public Lib.Shuffler CandidateMapping { get; private set; }
         private List<(int, int)> rememberedMatching;
-        private SSEInSpace[] rememberedAnnotatedCandidates;
+        private SseInSpace[] rememberedAnnotatedCandidates;
         public bool DoCheckSheetIDConsistency { get; set; }
         public bool DoRenameSheetIDs { get; set; }
 
@@ -55,7 +55,7 @@ namespace protein.Annotating
             return rememberedMatching;
         }
 
-        public virtual IEnumerable<SSEInSpace> GetAnnotatedCandidates()
+        public virtual IEnumerable<SseInSpace> GetAnnotatedCandidates()
         {
             if (rememberedAnnotatedCandidates == null)
             {
@@ -67,7 +67,7 @@ namespace protein.Annotating
                 {
                     // each vertex is matched at most once
                     Lib.Shuffler annotShuffler = Lib.Shuffler.FromMatching(matching);
-                    rememberedAnnotatedCandidates = annotShuffler.ShuffleBack(Context.Candidates, () => SSEInSpace.NewNotFound(null))
+                    rememberedAnnotatedCandidates = annotShuffler.ShuffleBack(Context.Candidates, () => SseInSpace.NewNotFound(null))
                         .Select((sse, i) => sse.RelabeledCopy(Context.Templates[i].Label, Context.Templates[i].Color)).ToArray();
                 }
                 else
@@ -77,16 +77,16 @@ namespace protein.Annotating
                     Dictionary<int, List<int>> multiMatching = new Dictionary<int, List<int>>();
                     foreach (var m in matching)
                         multiMatching.MultidictionaryAdd(m.Item1, m.Item2);
-                    rememberedAnnotatedCandidates = new SSEInSpace[Context.Templates.Length];
+                    rememberedAnnotatedCandidates = new SseInSpace[Context.Templates.Length];
                     for (int i = 0; i < Context.Templates.Length; i++)
                     {
                         if (!multiMatching.ContainsKey(i))
                         {
-                            rememberedAnnotatedCandidates[i] = SSEInSpace.NewNotFound(Context.Templates[i].Label);
+                            rememberedAnnotatedCandidates[i] = SseInSpace.NewNotFound(Context.Templates[i].Label);
                         }
                         else
                         {
-                            SSEInSpace[] all = multiMatching[i].Select(j => Context.Candidates[j]).OrderBy(x => x).Distinct().ToArray();
+                            SseInSpace[] all = multiMatching[i].Select(j => Context.Candidates[j]).OrderBy(x => x).Distinct().ToArray();
                             if (all.Length == 1)
                             {
                                 rememberedAnnotatedCandidates[i] = all[0].RelabeledCopy(Context.Templates[i].Label, Context.Templates[i].Color);
@@ -102,7 +102,7 @@ namespace protein.Annotating
                                         Lib.WriteWarning("Suspicious joining in {0}. Gap between joined SSEs = {1}", Context.Templates[i].Label, all[j + 1].Start - all[j].End - 1);
                                     }
                                 }
-                                rememberedAnnotatedCandidates[i] = SSEInSpace.Join(all).RelabeledCopy(Context.Templates[i].Label);
+                                rememberedAnnotatedCandidates[i] = SseInSpace.Join(all).RelabeledCopy(Context.Templates[i].Label);
                             }
                             else
                                 throw new Exception("This should never happen!");
@@ -129,7 +129,7 @@ namespace protein.Annotating
             return annotConnectivity;
         }
 
-        public IEnumerable<T> SelectFromAnnotated<T>(Func<SSEInSpace, SSEInSpace, T> selector)
+        public IEnumerable<T> SelectFromAnnotated<T>(Func<SseInSpace, SseInSpace, T> selector)
         {
             return GetAnnotatedCandidates()
                 .Select((sse, i) => selector(Context.Templates[i], sse));
@@ -139,10 +139,10 @@ namespace protein.Annotating
             return SelectFromAnnotated((t, q) => (q != null && !q.IsNotFound()) ? Context.MetricToMin(t, q) : 0);
         }
 
-        public void RenameSheetIDs(IEnumerable<SSEInSpace> sses, List<(int, int)> sheetIDMatching)
+        public void RenameSheetIDs(IEnumerable<SseInSpace> sses, List<(int, int)> sheetIDMatching)
         {
             Lib.Shuffler shuffler = Lib.Shuffler.FromMatching(sheetIDMatching);
-            foreach (SSEInSpace sse in sses)
+            foreach (SseInSpace sse in sses)
             {
                 if (sse.SheetId != null)
                 {
@@ -157,8 +157,8 @@ namespace protein.Annotating
             double[] result = new double[Context.Templates.Length];
             foreach (var m in matching)
             {
-                SSEInSpace template = Context.Templates[m.Item1];
-                SSEInSpace candidate = Context.Candidates[m.Item2];
+                SseInSpace template = Context.Templates[m.Item1];
+                SseInSpace candidate = Context.Candidates[m.Item2];
                 double otherMinInRow = Context.Candidates
                     .Where((c, i) => i != m.Item2 && Context.TypeMatching(template.Type, c.Type))
                     .Select(c => (double?)Context.MetricToMin(template, c))

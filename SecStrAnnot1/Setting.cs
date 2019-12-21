@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using protein.SSEs;
+using protein.Sses;
 using protein.Libraries;
 
 namespace protein
@@ -36,7 +36,7 @@ namespace protein
             { SecStrMethod.GeomHbond2,"geom-hbond2" } };
         public const SecStrMethod DEFAULT_SEC_STR_METHOD = SecStrMethod.GeomHbond;
 
-        public static SSEType[] DEFAULT_ACCEPTED_SSE_TYPES = LibSSETypes.ALL_HELIX_TYPES.Concat(LibSSETypes.ALL_SHEET_TYPES).ToArray();
+        public static SseType[] DEFAULT_ACCEPTED_SSE_TYPES = LibSseTypes.ALL_HELIX_TYPES.Concat(LibSseTypes.ALL_SHEET_TYPES).ToArray();
 
         public enum SelectionMethod { DynProg, BB, MOM, Combined, None };
         public static Dictionary<SelectionMethod, string> selectionMethodNames = new Dictionary<SelectionMethod, string>
@@ -95,12 +95,12 @@ namespace protein
 
         // joiningTypeCombining(X,Y) should determine the type of SSE resulting from joining SSE of type X with SSE of type Y. 
         // Return value null indicates that SSEs of these 2 types cannot be joined. 
-        public static Func<SSEType, SSEType, SSEType?> JoiningTypeCombining =>
+        public static Func<SseType, SseType, SseType?> JoiningTypeCombining =>
             (x, y) =>
 				(x == y) ? x
-				: (x.IsHelix() && y.IsHelix()) ? SSEType.MIXED_HELIX_TYPE
-				: (x.IsSheet() && y.IsSheet()) ? SSEType.SHEET_TYPE
-				: (SSEType?)null;
+				: (x.IsHelix() && y.IsHelix()) ? SseType.MIXED_HELIX_TYPE
+				: (x.IsSheet() && y.IsSheet()) ? SseType.SHEET_TYPE
+				: (SseType?)null;
 
         public static string Directory { get; set; }
 

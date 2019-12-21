@@ -5,9 +5,9 @@ using System.Linq;
 using Cif.Components;
 using protein.Libraries;
 
-namespace protein.SSEs
+namespace protein.Sses
 {
-    public class SSE : IComparable<SSE>
+    public class Sse : IComparable<Sse>
     {
         // An object of this class represents a secondary structure element (SSE) in a protein.
 
@@ -51,9 +51,9 @@ namespace protein.SSEs
         public string ChainID { get; private set; } // ID of the chain in which it is located.
         public int Start { get; set; } // Sequence number of the first residue.
         public int End { get; set; } // Sequence number of the last residue.
-        public SSEType Type { get; set; } // Type of SSE according to DSSP abbreviations (H = alpha helix, G = 3_10 helix...)
+        public SseType Type { get; set; } // Type of SSE according to DSSP abbreviations (H = alpha helix, G = 3_10 helix...)
         public int? SheetId { get; set; } // ID number of the beta-sheet that this beta-strand belong to. The value should be null for helices.
-        public List<SSE> NestedSSEs { get; private set; }
+        public List<Sse> NestedSSEs { get; private set; }
         public String Comment { get; private set; } // Any string which is a comment for this SSE. 
         public String Color { get; set; } // Additional info about the color used for visualization (if assigned explicitly, else null).
         public string AuthChainID { get; private set; }
@@ -62,7 +62,7 @@ namespace protein.SSEs
         public int? AuthEnd { get; private set; }
         public string AuthEndInsCode { get; private set; }
 
-        public SSE(String label, string chainID, int start, int end, SSEType type, int? sheetId)
+        public Sse(String label, string chainID, int start, int end, SseType type, int? sheetId)
         {
             Label = label;
             ChainID = chainID;
@@ -74,7 +74,7 @@ namespace protein.SSEs
             Comment = null;
             Color = null;
         }
-        public SSE(SSE orig)
+        public Sse(Sse orig)
         {
             Label = orig.Label;
             ChainID = orig.ChainID;
@@ -92,16 +92,16 @@ namespace protein.SSEs
             AuthEndInsCode = orig.AuthEndInsCode;
             // Console.WriteLine(this);
         }
-        public static SSE NewNotFound(String label)
+        public static Sse NewNotFound(String label)
         {
-            SSE result = new SSE(label, NOT_FOUND_CHAIN, NOT_FOUND_START, NOT_FOUND_END, SSEType.NOT_FOUND_TYPE, null);
+            Sse result = new Sse(label, NOT_FOUND_CHAIN, NOT_FOUND_START, NOT_FOUND_END, SseType.NOT_FOUND_TYPE, null);
             result.AddComment("Not found.");
             return result;
         }
 
         public bool IsNotFound()
         {
-            return this.Type == SSEType.NOT_FOUND_TYPE;
+            return this.Type == SseType.NOT_FOUND_TYPE;
         }
 
         public int Length()
@@ -111,14 +111,14 @@ namespace protein.SSEs
 
         public override String ToString()
         {
-            return "SSE " + Label + " in chain " + ChainID + " residues " + Start.ToString() + "-" + End.ToString() + " (type " + Type.ToString() + ")";
+            return "SSE " + Label + " in chain " + ChainID + " residues " + Start.ToString() + "-" + End.ToString() + " (type " + Type.AsString() + ")";
         }
 
         public override bool Equals(object obj)
         {
-            if (obj is SSE)
+            if (obj is Sse)
             {
-                SSE o = obj as SSE;
+                Sse o = obj as Sse;
                 return o.Label == this.Label && o.ChainID == this.ChainID && o.Start == this.Start && o.End == this.End && o.Type == this.Type;
             }
             else
@@ -131,7 +131,7 @@ namespace protein.SSEs
             return (Label?.GetHashCode() ?? 0) + ChainID.GetHashCode() + Start.GetHashCode() + End.GetHashCode() + Type.GetHashCode();
         }
 
-        public static int Compare(SSE first, SSE second)
+        public static int Compare(Sse first, Sse second)
         {
             int result = first.ChainID.CompareTo(second.ChainID);
             if (result != 0)
@@ -141,29 +141,29 @@ namespace protein.SSEs
                 return result;
             return first.End.CompareTo(second.End);
         }
-        public int CompareTo(SSE other)
+        public int CompareTo(Sse other)
         {
             return Compare(this, other);
         }
 
         /** Return an identical SSEInSpace, but with a different label. */
-        public SSE RelabeledCopy(String newLabel)
+        public Sse RelabeledCopy(String newLabel)
         {
-            SSE result = new SSE(this);
+            Sse result = new Sse(this);
             result.Label = newLabel;
             return result;
         }
 
         /** Return an identical SSEInSpace, but with a different label. */
-        public SSE RelabeledCopy(String newLabel, String newColor)
+        public Sse RelabeledCopy(String newLabel, String newColor)
         {
-            SSE result = new SSE(this);
+            Sse result = new Sse(this);
             result.Label = newLabel;
             result.Color = newColor;
             return result;
         }
 
-        public static SSE Join(params SSE[] sses)
+        public static Sse Join(params Sse[] sses)
         {
             if (sses.Length < 2)
             {
@@ -180,10 +180,10 @@ namespace protein.SSEs
                 Lib.WriteWarning("Joining beta-strands with different sheet ID ({0})!", string.Join(", ", sheetIDs));
             }
             string newChainID = chainIDs[0];
-            SSEType newType = sses.Select(sse => sse.Type).Aggregate<SSEType>((x, y) => Setting.JoiningTypeCombining(x, y) ?? SSEType.NOT_FOUND_TYPE);
-            SSE first = sses[sses.Select(sse => sse.Start).ArgMin()];
-            SSE last = sses[sses.Select(sse => sse.End).ArgMax()];
-            SSE newSSE = new SSE(string.Join("+", sses.Select(s => s.Label ?? "")), newChainID, first.Start, last.End,
+            SseType newType = sses.Select(sse => sse.Type).Aggregate<SseType>((x, y) => Setting.JoiningTypeCombining(x, y) ?? SseType.NOT_FOUND_TYPE);
+            Sse first = sses[sses.Select(sse => sse.Start).ArgMin()];
+            Sse last = sses[sses.Select(sse => sse.End).ArgMax()];
+            Sse newSSE = new Sse(string.Join("+", sses.Select(s => s.Label ?? "")), newChainID, first.Start, last.End,
                 newType, first.SheetId);
             newSSE.AuthChainID = first.AuthChainID;
             newSSE.AuthStart = first.AuthStart;
@@ -191,7 +191,7 @@ namespace protein.SSEs
             newSSE.AuthEnd = last.AuthEnd;
             newSSE.AuthEndInsCode = last.AuthEndInsCode;
             newSSE.AddComment("Created by joining " + sses.Count() + " SSEs: " + sses.Select(sse => sse.Label).EnumerateWithCommas() + ".");
-            foreach (SSE sse in sses)
+            foreach (Sse sse in sses)
             {
                 newSSE.AddNestedSSE(sse);
                 if (sse.Comment != null)
@@ -202,10 +202,10 @@ namespace protein.SSEs
             return newSSE;
         }
 
-        public void AddNestedSSE(SSE nested)
+        public void AddNestedSSE(Sse nested)
         {
             if (NestedSSEs == null)
-                NestedSSEs = new List<SSE>();
+                NestedSSEs = new List<Sse>();
             NestedSSEs.Add(nested);
         }
 

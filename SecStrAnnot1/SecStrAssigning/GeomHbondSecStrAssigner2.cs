@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 using protein.Libraries;
 
 namespace protein.SecStrAssigning
@@ -16,7 +16,7 @@ namespace protein.SecStrAssigning
         public const int MIN_HELIX_SUBHELIX_OVERLAP = 1;
 
         public GeomHbondSecStrAssigner2(Protein p, double rmsdLimit, double hBondEnergyCutoff){
-            this.GeomAssigner = new GeomSecStrAssigner(p.GetChains (), rmsdLimit, LibSSETypes.ALL_HELIX_TYPES);
+            this.GeomAssigner = new GeomSecStrAssigner(p.GetChains (), rmsdLimit, LibSseTypes.ALL_HELIX_TYPES);
             this.HBondAssigner2 = new HBondSecStrAssigner2(p, hBondEnergyCutoff);
         }
 
@@ -26,21 +26,21 @@ namespace protein.SecStrAssigning
             SecStrAssignment sheetAssignment = HBondAssigner2.GetSecStrAssignment ();
             HBondAssigner2.DetectSheets = false;
             HBondAssigner2.DetectHelices = true;
-            List<SSE> subhelices = HBondAssigner2.GetSecStrAssignment ().SSEs.OrderBy (sse => sse).ToList ();
+            List<Sse> subhelices = HBondAssigner2.GetSecStrAssignment ().SSEs.OrderBy (sse => sse).ToList ();
             HBondAssigner2.DetectSheets = true;
-            List<SSE> bigHelices = GeomAssigner.GetSecStrAssignment ().SSEs.OrderBy (sse => sse).ToList ();
+            List<Sse> bigHelices = GeomAssigner.GetSecStrAssignment ().SSEs.OrderBy (sse => sse).ToList ();
 
-            Func<SSE,SSE,int,bool> doOverlap = (a, b, mo) => a.ChainID == b.ChainID && a.End >= b.Start + mo && b.End >= a.Start + mo;
+            Func<Sse,Sse,int,bool> doOverlap = (a, b, mo) => a.ChainID == b.ChainID && a.End >= b.Start + mo && b.End >= a.Start + mo;
 
-            List<SSE> processedHelices = new List<SSE> ();
+            List<Sse> processedHelices = new List<Sse> ();
             foreach (var helix in bigHelices) {
-                List<SSE> subs = subhelices.Where (sub => doOverlap (helix, sub, MIN_HELIX_SUBHELIX_OVERLAP)).ToList ();
+                List<Sse> subs = subhelices.Where (sub => doOverlap (helix, sub, MIN_HELIX_SUBHELIX_OVERLAP)).ToList ();
                 if (subs.Count > 0) {
                     foreach (var sub in subs) {
                         helix.AddNestedSSE (sub);
                     }
                     var subTypes = subs.Select (sub => sub.Type).Distinct ().ToList();
-                    helix.Type = subTypes.Count == 1 ? subTypes[0] : SSEType.MIXED_HELIX_TYPE;
+                    helix.Type = subTypes.Count == 1 ? subTypes[0] : SseType.MIXED_HELIX_TYPE;
                     processedHelices.Add (helix);
                 } else {
                     // ignore helix that contains no subhelices (no H-bonds)

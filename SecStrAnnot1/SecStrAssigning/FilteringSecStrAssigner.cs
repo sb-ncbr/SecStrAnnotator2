@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 
 namespace protein.SecStrAssigning
 {
@@ -14,10 +14,10 @@ namespace protein.SecStrAssigning
         /*Returns the same SSEs as its InnerAssigner, but relabels them with this scheme:
             <Prefix><SSE_type><sequentially_assigned_identifier>, e.g. 1tqn_H10 */
         public ISecStrAssigner InnerAssigner { get; private set; }
-        public SSEType[] AcceptedSSETypes { get; private set; }
+        public SseType[] AcceptedSSETypes { get; private set; }
         public string[] ChainIDs { get; private set; }
 
-        public FilteringSecStrAssigner(ISecStrAssigner innerAssigner, IEnumerable<SSEType> acceptedTypes, IEnumerable<string> chainIDs)
+        public FilteringSecStrAssigner(ISecStrAssigner innerAssigner, IEnumerable<SseType> acceptedTypes, IEnumerable<string> chainIDs)
         {
             this.InnerAssigner = innerAssigner;
             this.AcceptedSSETypes = acceptedTypes.ToArray();

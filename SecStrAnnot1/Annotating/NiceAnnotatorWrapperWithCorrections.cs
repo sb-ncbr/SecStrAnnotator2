@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 using protein.Libraries;
 
 namespace protein.Annotating
@@ -30,23 +30,23 @@ namespace protein.Annotating
             this.protein = p;
         }
         
-        public override IEnumerable<SSEInSpace> GetAnnotatedCandidates()
+        public override IEnumerable<SseInSpace> GetAnnotatedCandidates()
         {
-            SSEInSpace[] result = base.GetAnnotatedCandidates().ToArray();
+            SseInSpace[] result = base.GetAnnotatedCandidates().ToArray();
             for (int i = 0; i < result.Length; i++)
             {
                 List<String> correction = corrs.Where(l => l[1] == Context.Templates[i].Label).DefaultIfEmpty(null).FirstOrDefault();
                 if (correction != null)
                 {
-                    SSEInSpace template = Context.Templates[i];
+                    SseInSpace template = Context.Templates[i];
                     string chainID = correction[2];
                     int start = Int32.Parse(correction[3]);
                     int end = Int32.Parse(correction[4]);
-                    SSE correctedSSE = new SSE(template.Label, chainID, start, end, template.Type, null);
+                    Sse correctedSSE = new Sse(template.Label, chainID, start, end, template.Type, null);
                     List<double>[] dump;
                     result[i] = (start == 0 && end == 0) ?
-                        SSEInSpace.NewNotFound(template.Label)
-                        : LibAnnotation.SSEsAsLineSegments_GeomVersion(protein.GetChain(correctedSSE.ChainID), new SSE[] { correctedSSE }.ToList(), out dump).First();
+                        SseInSpace.NewNotFound(template.Label)
+                        : LibAnnotation.SSEsAsLineSegments_GeomVersion(protein.GetChain(correctedSSE.ChainID), new Sse[] { correctedSSE }.ToList(), out dump).First();
                 }
             }
             return result;

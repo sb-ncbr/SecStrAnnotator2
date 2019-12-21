@@ -6,7 +6,7 @@ using System.Reflection;
 
 using SecStrAnnotator2.Utils;
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 using protein.HydrogenAdding;
 using protein.SecStrAssigning.Helpers;
 
@@ -404,7 +404,7 @@ namespace protein.SecStrAssigning
             return true;
         }
 
-        private SSE GetStrand0(BetaLadder ladder){
+        private Sse GetStrand0(BetaLadder ladder){
             string chainId = residues[ladder.Start0].ChainId;
             int start = residues[ladder.Start0].SeqNumber;
             int end = residues[ladder.End0].SeqNumber;
@@ -414,10 +414,10 @@ namespace protein.SecStrAssigning
                 if (ladder.LastHBondDirection == BetaLadder.HBondDirection.From0To1)
                     end--;
             }
-            return new SSE(null, chainId, start, end, LadderSSEType(ladder), null);
+            return new Sse(null, chainId, start, end, LadderSSEType(ladder), null);
         }
 
-        private SSE GetStrand1(BetaLadder ladder){
+        private Sse GetStrand1(BetaLadder ladder){
             string chainId = residues[ladder.Start1].ChainId;
             int start = residues[ladder.Start1].SeqNumber;
             int end = residues[ladder.End1].SeqNumber;
@@ -435,81 +435,81 @@ namespace protein.SecStrAssigning
                         end--;
                 }
             }
-            return new SSE(null, chainId, start, end, LadderSSEType(ladder), null);
+            return new Sse(null, chainId, start, end, LadderSSEType(ladder), null);
         }
 
-        private SSE GetShortStrand(BetaBulge bulge){
+        private Sse GetShortStrand(BetaBulge bulge){
             if (HBondSSAConstants.BULGES_BY_ALPHA) {
                 throw new NotImplementedException();
             } else {
                 switch(bulge.Type) {
                 case BetaBulge.BulgeType.Classic:
-                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSEType.BULGE_CLASSIC_SHORT_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_CLASSIC_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Wide:
-                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSEType.BULGE_WIDE_SHORT_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_WIDE_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel22:
-                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSEType.BULGE_ANTIPARALLEL22_SHORT_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL22_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel33:
-                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSEType.BULGE_ANTIPARALLEL33_SHORT_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL33_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel15:
-                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSEType.BULGE_ANTIPARALLEL15_SHORT_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL15_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel23:
-                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSEType.BULGE_ANTIPARALLEL23_SHORT_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL23_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel14:
-                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSEType.BULGE_PARALLEL14_SHORT_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL14_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel32:
-                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSEType.BULGE_PARALLEL32_SHORT_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL32_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel13:
-                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSEType.BULGE_PARALLEL13_SHORT_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL13_SHORT_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel33:
-                    return new SSE(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SSEType.BULGE_PARALLEL33_SHORT_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL33_SHORT_SIDE_TYPE, null);
                 default:
                     throw new NotImplementedException();
                 }
             }
         }
     
-        private SSE GetLongStrand(BetaBulge bulge){
+        private Sse GetLongStrand(BetaBulge bulge){
             if (HBondSSAConstants.BULGES_BY_ALPHA) {
                 throw new NotImplementedException();
             } else {
                 switch(bulge.Type) {
                 case BetaBulge.BulgeType.Classic:
-                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSEType.BULGE_CLASSIC_LONG_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_CLASSIC_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Wide:
-                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSEType.BULGE_WIDE_LONG_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_WIDE_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel22:
-                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSEType.BULGE_ANTIPARALLEL22_LONG_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL22_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel33:
-                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSEType.BULGE_ANTIPARALLEL33_LONG_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL33_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel15:
-                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSEType.BULGE_ANTIPARALLEL15_LONG_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL15_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Antiparallel23:
-                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSEType.BULGE_ANTIPARALLEL23_LONG_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL23_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel14:
-                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSEType.BULGE_PARALLEL14_LONG_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL14_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel32:
-                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSEType.BULGE_PARALLEL32_LONG_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL32_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel13:
-                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSEType.BULGE_PARALLEL13_LONG_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL13_LONG_SIDE_TYPE, null);
                 case BetaBulge.BulgeType.Parallel33:
-                    return new SSE(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SSEType.BULGE_PARALLEL33_LONG_SIDE_TYPE, null);
+                    return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL33_LONG_SIDE_TYPE, null);
                 default:
                     throw new NotImplementedException();
                 }
             }
         }
 
-        private SSEType LadderSSEType(BetaLadder ladder){
+        private SseType LadderSSEType(BetaLadder ladder){
             if (ladder.Start0 == ladder.Start1) {
                 // C7 motif
                 if (residues[ladder.End0].SeqNumber - residues[ladder.Start0].SeqNumber != 2)
                     throw new  SecStrAssignmentException("C7 turn with more than 1 stabilizing H-bond.");
                 else
-                    return SSEType.TURN_C7_TYPE;
+                    return SseType.TURN_C7_TYPE;
             } else {
                 // real beta ladder
-                return(CheckLadderAndCountHBonds(ladder) > 2) ? SSEType.SHEET_TYPE : SSEType.ISOLATED_BETA_BRIDGE_TYPE;
+                return(CheckLadderAndCountHBonds(ladder) > 2) ? SseType.SHEET_TYPE : SseType.ISOLATED_BETA_BRIDGE_TYPE;
             }
         }
 
@@ -524,21 +524,21 @@ namespace protein.SecStrAssigning
                 if (DetectHelices) {
                     return GetHelices();
                 } else {
-                    return new SecStrAssignment(new SSE[]{});
+                    return new SecStrAssignment(new Sse[]{});
                 }
             }
         }
 
         private SecStrAssignment GetHelices(){
-            var gHelices = GetXHelices(3, SSEType.HELIX_G_TYPE);
-            var hHelices = GetXHelices(4, SSEType.HELIX_H_TYPE);
-            var iHelices = GetXHelices(5, SSEType.HELIX_I_TYPE);
+            var gHelices = GetXHelices(3, SseType.HELIX_G_TYPE);
+            var hHelices = GetXHelices(4, SseType.HELIX_H_TYPE);
+            var iHelices = GetXHelices(5, SseType.HELIX_I_TYPE);
             return new SecStrAssignment(gHelices.Concat(hHelices).Concat(iHelices));
         }
 
         /** Returns the list of helices formed by(i+x -> i) H bonds. */
-        private List<SSE> GetXHelices(int x, SSEType assignedType){
-            List<SSE> helices = new List<SSE>();
+        private List<Sse> GetXHelices(int x, SseType assignedType){
+            List<Sse> helices = new List<Sse>();
             int currentStart = -1; // -1 = currently not making helix
             int currentEnd = -1;
             for (int i = 0; i < residues.Length; i++) {
@@ -553,7 +553,7 @@ namespace protein.SecStrAssigning
                 } else if (currentStart >= 0 && !hBondFinder.IsHBond(j, i)) {
                     //finish or reject helix
                     if (i - currentStart >= HBondSSAConstants.MIN_HBONDS_PER_HELIX) {
-                        helices.Add(new SSE(null, 
+                        helices.Add(new Sse(null, 
                             residues[currentStart].ChainId, 
                             residues[currentStart].SeqNumber +(HBondSSAConstants.HELICES_BY_ALPHA ? 1 : 0), 
                             residues[currentEnd].SeqNumber -(HBondSSAConstants.HELICES_BY_ALPHA ? 1 : 0), 
@@ -658,27 +658,27 @@ namespace protein.SecStrAssigning
                 if (l.Start0 == l.Start1 &&(l.End0 - l.Start0) > 2)
                     Lib2.WriteWarning("Strange secondary structure in chain {0} {1}-{2}.", residues[l.Start0].ChainId, residues[l.Start0].SeqNumber, residues[l.End0].SeqNumber);
 
-            List<SSE> c7Turns = ladders
+            List<Sse> c7Turns = ladders
                 .Where(l => l.Start0 == l.Start1)
                 .OrderBy(l => l.Start0)
                 .Select(l => GetStrand0(l)/*new SSE("x", residues[l.Start0].ChainID, residues[l.Start0].ResSeq, residues[l.End0].ResSeq, SSE.TURN_C7_TYPE,null)*/)
                 .ToList();
 
             // Build C7 turns and wiggles
-            List<SSE> c7TurnsAndWiggles = new List<SSE>();
+            List<Sse> c7TurnsAndWiggles = new List<Sse>();
             string currentChain = null;
             int? firstResi = null;
             int? lastResi = null;
             int strandCounter = 0;
-            foreach (SSE t in c7Turns) { 
+            foreach (Sse t in c7Turns) { 
                 if (t.ChainID == currentChain && t.End == lastResi + 1) { 
                     // elongation of existing SSE
                     lastResi++;
                 } else {
                     if (currentChain != null) { 
                         // finishing the old SSE
-                        SSEType type = (lastResi - firstResi > 2) ? SSEType.WIGGLE_C7_TYPE : SSEType.TURN_C7_TYPE;
-                        c7TurnsAndWiggles.Add(new SSE("" + type +(strandCounter++), currentChain,(int)firstResi,(int)lastResi, type, null));
+                        SseType type = (lastResi - firstResi > 2) ? SseType.WIGGLE_C7_TYPE : SseType.TURN_C7_TYPE;
+                        c7TurnsAndWiggles.Add(new Sse($"{type.AsString()}{strandCounter++}", currentChain,(int)firstResi,(int)lastResi, type, null));
                     }
                     // starting a new SSE
                     currentChain = t.ChainID;
@@ -707,8 +707,8 @@ namespace protein.SecStrAssigning
             List<BetaStrandInSheet> vertices = new List<BetaStrandInSheet>();
             int sheetCounter = 0;
             foreach (BetaLadder ladder in realLadders) {
-                SSE strand0 = GetStrand0(ladder).RelabeledCopy("x" + strandCounter++);
-                SSE strand1 = GetStrand1(ladder).RelabeledCopy("x" + strandCounter++);
+                Sse strand0 = GetStrand0(ladder).RelabeledCopy("x" + strandCounter++);
+                Sse strand1 = GetStrand1(ladder).RelabeledCopy("x" + strandCounter++);
                 BetaStrandInSheet lower = new BetaStrandInSheet(strand0, sheetCounter, /*0, */strand0.Start % 2 == 0);
                 BetaStrandInSheet upper = new BetaStrandInSheet(strand1, sheetCounter++, /*1, */strand1.Start % 2 != 0);
                 LinkStrands(lower, upper, ladder);
@@ -724,7 +724,7 @@ namespace protein.SecStrAssigning
                     seeds.Add(v);
                 }
             }
-            seeds.Sort((p, q) => SSE.Compare(p.SSE, q.SSE));
+            seeds.Sort((p, q) => Sse.Compare(p.SSE, q.SSE));
             List<List<BetaStrandInSheet>> sheets = new List<List<BetaStrandInSheet>>();
             sheetCounter = 1;
             foreach (BetaStrandInSheet v in seeds) {
@@ -733,7 +733,7 @@ namespace protein.SecStrAssigning
                     u.SheetId = sheetCounter;
                     u.SSE.SheetId = sheetCounter;
                     IEnumerable<BetaLadder> uLadders = u.DownLadders.Union(u.UpLadders);
-                    u.SSE.Type = (u.SSE.End - u.SSE.Start > 0 || uLadders.Any(l => LadderSSEType(l) == SSEType.SHEET_TYPE)) ? SSEType.SHEET_TYPE : SSEType.ISOLATED_BETA_BRIDGE_TYPE;
+                    u.SSE.Type = (u.SSE.End - u.SSE.Start > 0 || uLadders.Any(l => LadderSSEType(l) == SseType.SHEET_TYPE)) ? SseType.SHEET_TYPE : SseType.ISOLATED_BETA_BRIDGE_TYPE;
                     sheet.Add(u);
                 });
                 sheetCounter++;
@@ -755,11 +755,11 @@ namespace protein.SecStrAssigning
             // 	}
             // }
 
-            List<SSE> realStrands = sheets
+            List<Sse> realStrands = sheets
                 .SelectMany(s => s)
                 .Select(v => v.SSE)
                 .OrderBy(sse => sse)
-                .Select((sse, i) => sse.RelabeledCopy(sse.Type.ToString() + i))
+                .Select((sse, i) => sse.RelabeledCopy(sse.Type.AsString() + i))
                 .ToList();
             
             // Get beta-bulges //TODO: Beta-bulges can be detected directly(as H-bond pattern) instead of this way.
@@ -776,12 +776,12 @@ namespace protein.SecStrAssigning
             int bulgeCounter = 0;
 
             //List<SSE> bulgeSides=bulges.SelectMany(b=>new SSE[]{GetShortStrand(b),GetLongStrand(b)}).ToList();
-            List<SSE> bulgeSides = new List<SSE>();
+            List<Sse> bulgeSides = new List<Sse>();
             //Lib.WriteLineDebug("Detected bulges:");
             foreach (BetaBulge bulge in bulges) {
-                foreach (SSE b in new SSE[]{ GetShortStrand(bulge), GetLongStrand(bulge) }) {
-                    SSE side = b.RelabeledCopy(b.Type.ToString() + bulgeCounter.ToString());
-                    SSE[] includingStrands = realStrands.Where(s => s.ChainID == side.ChainID && s.Start <= side.Start && s.End >= side.End).ToArray();
+                foreach (Sse b in new Sse[]{ GetShortStrand(bulge), GetLongStrand(bulge) }) {
+                    Sse side = b.RelabeledCopy(b.Type.AsString() + bulgeCounter.ToString());
+                    Sse[] includingStrands = realStrands.Where(s => s.ChainID == side.ChainID && s.Start <= side.Start && s.End >= side.End).ToArray();
                     if (includingStrands.Length != 1) {
                         throw new InvalidOperationException("One side of a beta-bulge belongs to more than one beta-strand(this should never happen)!");
                     } else {
@@ -793,7 +793,7 @@ namespace protein.SecStrAssigning
                 bulgeCounter++;
             }
 
-            List<SSE> resultSSEs = c7TurnsAndWiggles.Union(realStrands)/*.Union(bulgeSides)*/.OrderBy(sse => sse).ToList();
+            List<Sse> resultSSEs = c7TurnsAndWiggles.Union(realStrands)/*.Union(bulgeSides)*/.OrderBy(sse => sse).ToList();
             /*foreach (SSE sse in result) {
                 int s = ResidueXBefore(sse.Start, 1);
                 int e = ResidueXAfter(sse.End, 1);
@@ -806,7 +806,7 @@ namespace protein.SecStrAssigning
 
             Dictionary<(string, int, int), int> chainStartEnd2Index = new Dictionary<(string, int, int), int>();
             for (int i = 0; i < resultSSEs.Count; i++) {
-                SSE sse = resultSSEs[i];
+                Sse sse = resultSSEs[i];
                 chainStartEnd2Index[(sse.ChainID, sse.Start, sse.End)] = i;
             }
             List<(int, int, int)> edges = new List<(int, int, int)>();

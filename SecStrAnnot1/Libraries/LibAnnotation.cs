@@ -6,7 +6,7 @@ using System.Collections;
 
 using Cif.Components;
 using Cif.Tables;
-using protein.SSEs;
+using protein.Sses;
 using protein.Geometry;
 using protein.Json;
 
@@ -18,6 +18,7 @@ namespace protein.Libraries
         public const char SEPARATOR = '\t';
         public const char COMMENT_SIGN_READ = '#';
         public const String COMMENT_SIGN_WRITE = "# ";
+
         public class JsNames
         {
             public const string LABEL = "label";
@@ -82,10 +83,10 @@ namespace protein.Libraries
         /** Reads annotation data from file fileName in CSV format.
 			CSV format: 1. column = Label, 2. column = ChainID, 3. column = Start, 4. column = End, 5. column = Type. 
 						Columns are separated by SEPARATOR and comments are introduced by COMMENT_SIGN_READ. */
-        public static List<SSE> ReadAnnotationFile(String fileName)
+        public static List<Sse> ReadAnnotationFile(String fileName)
         {
             List<List<String>> table;
-            List<SSE> result = new List<SSE>();
+            List<Sse> result = new List<Sse>();
             HashSet<String> labels = new HashSet<String>(); // to check for duplicities
             using (StreamReader r = new StreamReader(fileName))
             {
@@ -96,7 +97,7 @@ namespace protein.Libraries
                 string chainID;
                 int start;
                 int end;
-                SSEType type;
+                SseType type;
                 if (!labels.Add(sse[0]))
                     Lib.WriteWarning("Multiple definition of \"{0}\" in file \"{1}\".", sse[0], fileName);
                 chainID = sse[1];
@@ -116,12 +117,15 @@ namespace protein.Libraries
                 {
                     throw new FormatException("ReadAnnotationFile: Wrong format. End must be an integer, but \"" + sse[2] + "\" was found in file \"" + fileName + "\".", f);
                 }
-                if (sse[4].Length == 1)
-                    type = LibSSETypes.Type(sse[4][0]);
-                else
-                    throw new FormatException("ReadAnnotationFile: Wrong format. ChainID must be 1 character, but \"" + sse[1] + "\" was found in file \"\"+fileName+\"\".");
-
-                result.Add(new SSE(sse[0], chainID, start, end, type, null));
+                try
+                {
+                    type = LibSseTypes.Type(sse[4]);
+                }
+                catch (KeyNotFoundException)
+                {
+                    throw new FormatException($"ReadAnnotationFile: Wrong format. Unknown SSE type \"{sse[4]}\" found in file \"{fileName}\".");
+                }
+                result.Add(new Sse(sse[0], chainID, start, end, type, null));
             }
             return result;
         }
@@ -129,14 +133,14 @@ namespace protein.Libraries
         /** Write annotation data tofile fileName in CSV format.
 			CSV format: 1. column = Label, 2. column = ChainID, 3. column = Start, 4. column = End, 5. column = Type. 
 						Columns are separated by SEPARATOR and comments are introduced by COMMENT_SIGN_READ. */
-        public static void WriteAnnotationFile(String fileName, IEnumerable<SSE> sses, String comment)
+        public static void WriteAnnotationFile(String fileName, IEnumerable<Sse> sses, String comment)
         {
             List<List<String>> table = sses.Where(x => x != null).Select(x => new List<String> {
                 x.Label,
                 x.ChainID.ToString (),
                 x.Start.ToString (),
                 x.End.ToString (),
-                x.Type.ToString (),
+                x.Type.AsString (),
                 x.Comment
             }).ToList();
             using (StreamWriter w = new StreamWriter(fileName))
@@ -144,10 +148,11 @@ namespace protein.Libraries
                 Lib.WriteCSVWithComments(w, table, SEPARATOR, COMMENT_SIGN_WRITE, comment + "\n\nlabel\tchainID\tstart\tend\ttype");
             }
         }
+
         /** Write annotation data tofile fileName in CSV format.
 			CSV format: 1. column = Label, 2. column = ChainID, 3. column = Start, 4. column = End, 5. column = Type, 6. column = Sequence. 
 						Columns are separated by SEPARATOR and comments are introduced by COMMENT_SIGN_READ. */
-        public static void WriteAnnotationFileWithSequences(String fileName, IEnumerable<(SSE, String)> sses, String comment)
+        public static void WriteAnnotationFileWithSequences(String fileName, IEnumerable<(Sse, String)> sses, String comment)
         {
             List<List<String>> table = sses.Select(t => new List<String> {
                 t.Item1.Label,
@@ -164,7 +169,7 @@ namespace protein.Libraries
             }
         }
 
-        public static JsonValue SSEToJson(SSE sse, IDictionary<string, IEnumerator<object>> extraEnumerators/*IEnumerator<double> metricEnumerator,IEnumerator<double> suspiciousEnumerator,IEnumerator<String> sequenceEnumerator*/)
+        public static JsonValue SSEToJson(Sse sse, IDictionary<string, IEnumerator<object>> extraEnumerators/*IEnumerator<double> metricEnumerator,IEnumerator<double> suspiciousEnumerator,IEnumerator<String> sequenceEnumerator*/)
         {
             JsonValue elem = JsonValue.MakeObject();
             elem[JsNames.LABEL] = new JsonValue(sse.Label);
@@ -176,17 +181,17 @@ namespace protein.Libraries
             // elem [JsNames.AUTH_START_INS_CODE] = new JsonValue (sse.AuthStartInsCode);
             // elem [JsNames.AUTH_END_RESI] = sse.AuthEnd != null ? new JsonValue (sse.AuthEnd.Value) : new JsonValue();
             // elem [JsNames.AUTH_END_INS_CODE] = new JsonValue (sse.AuthEndInsCode);
-            elem[JsNames.TYPE] = new JsonValue(sse.Type.ToString());
+            elem[JsNames.TYPE] = new JsonValue(sse.Type.AsString());
             if (sse.SheetId != null)
                 elem[JsNames.SHEET_ID] = new JsonValue((int)sse.SheetId);
             if (sse.Comment != null)
                 elem[JsNames.COMMENT] = new JsonValue(sse.Comment);
             if (sse.Color != null)
                 elem[JsNames.COLOR] = new JsonValue(sse.Color);
-            if (WRITE_VECTORS && sse is SSEInSpace)
+            if (WRITE_VECTORS && sse is SseInSpace)
             {
-                elem[JsNames.START_VECTOR] = new JsonValue((sse as SSEInSpace).StartPoint.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
-                elem[JsNames.END_VECTOR] = new JsonValue((sse as SSEInSpace).EndPoint.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
+                elem[JsNames.START_VECTOR] = new JsonValue((sse as SseInSpace).StartPoint.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
+                elem[JsNames.END_VECTOR] = new JsonValue((sse as SseInSpace).EndPoint.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
             }
             if (extraEnumerators != null)
             {
@@ -212,7 +217,7 @@ namespace protein.Libraries
             {
                 JsonValue nested = JsonValue.MakeList();
                 bool anyNested = false;
-                foreach (SSE nestedSSE in sse.NestedSSEs)
+                foreach (Sse nestedSSE in sse.NestedSSEs)
                 {
                     if (Lib.DoWriteDebug || nestedSSE.Label != null)
                     {
@@ -229,14 +234,14 @@ namespace protein.Libraries
         }
 
         public static void WriteAnnotationFile_Json(String fileName, String name,
-            IEnumerable<SSE> sses, IDictionary<String, IEnumerable<object>> extras, List<(int, int, int)> betaConnectivity,
+            IEnumerable<Sse> sses, IDictionary<String, IEnumerable<object>> extras, List<(int, int, int)> betaConnectivity,
             List<(Residue, Residue)> hBonds, JsonValue rotationMatrix, String comment)
         {
 
             JsonValue ssesJson = JsonValue.MakeList();
             Dictionary<String, IEnumerator<object>> extraEnumerators = extras?.ToDictionary(kv => kv.Key, kv => kv.Value.GetEnumerator());
 
-            foreach (SSE sse in sses.Where(x => x != null))
+            foreach (Sse sse in sses.Where(x => x != null))
             {
                 JsonValue elem = SSEToJson(sse, extraEnumerators);
                 if (OUTPUT_NOT_FOUND_SSES || !sse.IsNotFound())
@@ -280,7 +285,7 @@ namespace protein.Libraries
             return hBondsJson;
         }
 
-        public static JsonValue BetaConnectivityToJson(List<(int, int, int)> betaConnectivity, IEnumerable<SSE> sses)
+        public static JsonValue BetaConnectivityToJson(List<(int, int, int)> betaConnectivity, IEnumerable<Sse> sses)
         {
             if (betaConnectivity == null)
                 return new JsonValue();
@@ -307,7 +312,7 @@ namespace protein.Libraries
         }
 
         /* Takes the first entity in the file. */
-        public static List<SSE> ReadAnnotationFile_Json(String fileName)
+        public static List<Sse> ReadAnnotationFile_Json(String fileName)
         {
             String dump;
             List<(int, int, int)> dump2;
@@ -335,10 +340,10 @@ namespace protein.Libraries
         }
 
         /* If name==null, takes the first entity in the file. */
-        public static List<SSE> ReadAnnotationFile_Json(String fileName, String name, out String comment,
+        public static List<Sse> ReadAnnotationFile_Json(String fileName, String name, out String comment,
                 out List<(int, int, int)> betaConnectivity, out List<(String, int, int)> merging, bool takeTheOnlyEntryEvenIfNameDoesntMatch)
         {
-            List<SSE> result = new List<SSE>();
+            List<Sse> result = new List<Sse>();
             String str;
             using (StreamReader r = new StreamReader(fileName))
             {
@@ -391,10 +396,8 @@ namespace protein.Libraries
                 {
                     String chainId = sse[JsNames.CHAIN_ID].String;
                     String type = sse[JsNames.TYPE].String;
-                    if (type.Length != 1)
-                        throw new FormatException(JsonLocationString(fileName, name, JsNames.SSES, i, JsNames.TYPE) + " is not a single character.");
                     int? sheetId = sse.Contains(JsNames.SHEET_ID) ? sse[JsNames.SHEET_ID].Int as int? : null;
-                    SSE s = new SSE(sse[JsNames.LABEL].String, chainId, sse[JsNames.START_RESI].Int, sse[JsNames.END_RESI].Int, LibSSETypes.Type(type[0]), sheetId);
+                    Sse s = new Sse(sse[JsNames.LABEL].String, chainId, sse[JsNames.START_RESI].Int, sse[JsNames.END_RESI].Int, LibSseTypes.Type(type), sheetId);
 
                     if (sse.Contains(JsNames.START_VECTOR) && sse.Contains(JsNames.END_VECTOR))
                     {
@@ -402,7 +405,7 @@ namespace protein.Libraries
                         Point startVector = new Point(vec[0].Double, vec[1].Double, vec[2].Double);
                         vec = sse[JsNames.END_VECTOR];
                         Point endVector = new Point(vec[0].Double, vec[1].Double, vec[2].Double);
-                        s = new SSEInSpace(s, startVector, endVector);
+                        s = new SseInSpace(s, startVector, endVector);
                     }
                     if (sse.Contains(JsNames.COMMENT))
                         s.AddComment(sse[JsNames.COMMENT].String);
@@ -639,14 +642,14 @@ namespace protein.Libraries
         /** A class encapsulating parameters for joining neighboring SSEs. */
         public class JoiningParameters
         {
-            public SSEType[] AcceptedTypes { get; private set; }
+            public SseType[] AcceptedTypes { get; private set; }
             public double GapPenalty { get; private set; }
             public double AnglePenalty { get; private set; } // angles in degrees! 
             public double StaggerPenalty { get; private set; } // stagger is in Angstroms
             public int GapThreshold { get; private set; }
             public double PenaltyThreshold { get; private set; }
 
-            public JoiningParameters(SSEType[] acceptedTypes, double gapPenalty, double anglePenaltyPerDegree, double staggerPenalty, int gapThreshold, double penaltyThreshold)
+            public JoiningParameters(SseType[] acceptedTypes, double gapPenalty, double anglePenaltyPerDegree, double staggerPenalty, int gapThreshold, double penaltyThreshold)
             {
                 AcceptedTypes = acceptedTypes;
                 GapPenalty = gapPenalty;
@@ -666,21 +669,21 @@ namespace protein.Libraries
         }
 
         /** Joins neighboring SSEs if they fulfil some conditions. */
-        public static List<SSEInSpace> JoinSSEs(List<SSEInSpace> sses, JoiningParameters parameters)
+        public static List<SseInSpace> JoinSSEs(List<SseInSpace> sses, JoiningParameters parameters)
         {
-            List<SSEInSpace> result = new List<SSEInSpace>();
+            List<SseInSpace> result = new List<SseInSpace>();
             if (sses.Count == 0)
                 return result;
 
             JoiningCriteriaValues criteria;
 
-            SSEInSpace a = sses[0];
-            foreach (SSEInSpace b in sses.Skip(1))
+            SseInSpace a = sses[0];
+            foreach (SseInSpace b in sses.Skip(1))
             {
                 if (ShouldJoin(a, b, parameters, out criteria))
                 {
                     Console.WriteLine("Joining {0} ({1}-{2}) and {3} ({4}-{5}) with gap {6} and angle {7}°.", a.Label, a.Start, a.End, b.Label, b.Start, b.End, b.Start - a.End - 1, 180 / Math.PI * LibGeometry.AngleInRadians(a.EndPoint - a.StartPoint, b.EndPoint - b.StartPoint));
-                    a = SSEInSpace.Join(a, b);
+                    a = SseInSpace.Join(a, b);
                     a.AddComment(criteria.ToString());
                 }
                 else
@@ -694,7 +697,7 @@ namespace protein.Libraries
         }
 
         /** Says whether too SSEs should be joined. */
-        private static bool ShouldJoin(SSEInSpace sse1, SSEInSpace sse2, JoiningParameters parameters, out JoiningCriteriaValues criteria)
+        private static bool ShouldJoin(SseInSpace sse1, SseInSpace sse2, JoiningParameters parameters, out JoiningCriteriaValues criteria)
         {
             if (!parameters.AcceptedTypes.Contains(sse1.Type) || !parameters.AcceptedTypes.Contains(sse2.Type))
             {
@@ -719,16 +722,16 @@ namespace protein.Libraries
         }
 
         /** Joins neighboring SSEs if they fulfil some conditions. */
-        public static List<SSE> JoinSSEs_GeomVersion(Protein p, List<SSE> sses, double rmsdLimit, Func<SSEType, SSEType, SSEType?> typeCombining)
+        public static List<Sse> JoinSSEs_GeomVersion(Protein p, List<Sse> sses, double rmsdLimit, Func<SseType, SseType, SseType?> typeCombining)
         {
-            List<SSE> result = new List<SSE>();
+            List<Sse> result = new List<Sse>();
 
             foreach (Chain chain in p.GetChains())
             {
-                List<SSE> chainSSEs = sses.Where(x => x.ChainID == chain.Id).OrderBy(x => x.Start).ToList();
+                List<Sse> chainSSEs = sses.Where(x => x.ChainID == chain.Id).OrderBy(x => x.Start).ToList();
 
                 List<(int, int)> ranges = new List<(int, int)>();
-                List<SSEType?> checkTypes = new List<SSEType?>();
+                List<SseType?> checkTypes = new List<SseType?>();
                 for (int i = 0; i < chainSSEs.Count - 1; i++)
                 {
                     ranges.Add((chainSSEs[i].End - 3, chainSSEs[i + 1].Start + 3));
@@ -736,7 +739,7 @@ namespace protein.Libraries
                 }
 
                 double[] rmsds = new double[ranges.Count];
-                List<GeometryCheckResult> checkResults = chain.GetResidues(ranges).Select((l, i) => checkTypes[i] == null ? GeometryCheckResult.NOK : CheckGeometry(l, (SSEType)checkTypes[i], rmsdLimit, out rmsds[i])).ToList();
+                List<GeometryCheckResult> checkResults = chain.GetResidues(ranges).Select((l, i) => checkTypes[i] == null ? GeometryCheckResult.NOK : CheckGeometry(l, (SseType)checkTypes[i], rmsdLimit, out rmsds[i])).ToList();
 
                 if (chainSSEs.Count > 0)
                 {
@@ -748,7 +751,7 @@ namespace protein.Libraries
                     {
                         Console.WriteLine("Joining {0} ({1}-{2}) and {3} ({4}-{5}).",
                             result[result.Count - 1].Label, result[result.Count - 1].Start, result[result.Count - 1].End, chainSSEs[i].Label, chainSSEs[i].Start, chainSSEs[i].End);
-                        result[result.Count - 1] = SSE.Join(result[result.Count - 1], chainSSEs[i]);
+                        result[result.Count - 1] = Sse.Join(result[result.Count - 1], chainSSEs[i]);
                         result[result.Count - 1].AddComment("Max RMSD: " + rmsds[i - 1].ToString("0.000") + " A");
                     }
                     else
@@ -761,7 +764,7 @@ namespace protein.Libraries
         }
 
         /** Calculates the "stagger" metric for two helices, which is a measure of their continuity. The value is in Angstroms. */
-        private static double Stagger(SSEInSpace sse1, SSEInSpace sse2)
+        private static double Stagger(SseInSpace sse1, SseInSpace sse2)
         {
             Point A = sse1.StartPoint;
             Point B = sse1.EndPoint;
@@ -795,7 +798,7 @@ namespace protein.Libraries
                 .ToList();
         }
 
-        public static GeometryCheckResult CheckGeometry(IEnumerable<Residue> residues, SSEType sseType, double RMSDLimit, out double maxRMSD)
+        public static GeometryCheckResult CheckGeometry(IEnumerable<Residue> residues, SseType sseType, double RMSDLimit, out double maxRMSD)
         {
             maxRMSD = 0;
             //Lib.WriteDebug ("Geometry check on {0} {1,3} - {2,3}: ", residues.First ().ChainID, residues.First ().ResSeq, residues.Last ().ResSeq);
@@ -839,7 +842,7 @@ namespace protein.Libraries
             return GeometryCheckResult.OK;
         }
 
-        public static GeometryCheckResult CheckGeometryOf1Unit(IEnumerable<Residue> residues, SSEType sseType, double RMSDLimit, out double rmsd)
+        public static GeometryCheckResult CheckGeometryOf1Unit(IEnumerable<Residue> residues, SseType sseType, double RMSDLimit, out double rmsd)
         {
             rmsd = 0;
             int unitLength = residues.Count();
@@ -877,7 +880,7 @@ namespace protein.Libraries
             return (rmsd <= RMSDLimit) ? GeometryCheckResult.OK : GeometryCheckResult.NOK;
         }
 
-        public static GeometryCheckResult CheckSSEGeometry(Protein p, SSE sse, double RMSDLimit, out double maxRMSD)
+        public static GeometryCheckResult CheckSSEGeometry(Protein p, Sse sse, double RMSDLimit, out double maxRMSD)
         {
             (int, int)[] ranges = new (int, int)[] { (sse.Start, sse.End) };
             IEnumerable<Residue> residues = p.GetChain(sse.ChainID).GetResidues(ranges).First();
@@ -928,13 +931,13 @@ namespace protein.Libraries
 		 * numExtraResidues - indicates the number of residues at both the beginning and the end of the list which are not the part of the SSE but should be used in geometrical calculations.
 		 */
         //private static (Vector, Vector) SSEAsLineSegment_GeomVersion(IEnumerable<Residue> residues, char sseType, int numExtraResidues, out List<double> rmsdList){
-        private static (Point, Point) SSEAsLineSegment_GeomVersion(List<Residue> residues, SSE sse, out List<double> rmsdList)
+        private static (Point, Point) SSEAsLineSegment_GeomVersion(List<Residue> residues, Sse sse, out List<double> rmsdList)
         {
             rmsdList = new List<double>();
 
             if (sse.IsNotFound())
             {
-                return ( new Point(Vector.ZERO), new Point(Vector.ZERO));
+                return (new Point(Vector.ZERO), new Point(Vector.ZERO));
             }
 
             int startIndex = 0;
@@ -998,7 +1001,7 @@ namespace protein.Libraries
             return (u, v);
         }
 
-        public static List<SSEInSpace> SSEsAsLineSegments_GeomVersion(Chain chain, List<SSE> sses, out List<double>[] rmsdLists)
+        public static List<SseInSpace> SSEsAsLineSegments_GeomVersion(Chain chain, List<Sse> sses, out List<double>[] rmsdLists)
         {
             if (sses.Any(x => x.ChainID != chain.Id))
                 throw new ArgumentException(System.Reflection.MethodBase.GetCurrentMethod().Name + ": Some SSEs are not from this chain (" + chain.Id + ").");
@@ -1013,39 +1016,39 @@ namespace protein.Libraries
             }
             //for (int i = 0; i < residueLists.Count; i++) { Console.WriteLine ("{0} in {1} {2}-{3}: {4}", sses [i].Label, sses [i].ChainID, sses [i].Start, sses [i].End, residueLists [i].Aggregate ("", (x, y) => x + ", " + y.ToString ())); }
             List<double>[] rmsdLists_ = new List<double>[sses.Count];
-            List<SSEInSpace> ssesInSpace =
-                sses.Select((sse, i) => new SSEInSpace(sse, LibAnnotation.SSEAsLineSegment_GeomVersion(residueLists[i], sse, out rmsdLists_[i]))).ToList();
+            List<SseInSpace> ssesInSpace =
+                sses.Select((sse, i) => new SseInSpace(sse, LibAnnotation.SSEAsLineSegment_GeomVersion(residueLists[i], sse, out rmsdLists_[i]))).ToList();
             rmsdLists = rmsdLists_;
             return ssesInSpace;
         }
 
-        private static int NumExtraResidues(SSE sse)
+        private static int NumExtraResidues(Sse sse)
         {
             return 1;
             // return (sse.Length () >= 4) ? 0 : (sse.Length () >= 2) ? 1 : 2;
         }
 
-        public static double MetricNo3Neg(SSEInSpace sse1, SSEInSpace sse2)
+        public static double MetricNo3Neg(SseInSpace sse1, SseInSpace sse2)
         {
             //this metric is to be maximized (minimized in absolute value)
             return -MetricNo3Pos(sse1, sse2);
         }
 
-        public static double MetricNo3Pos(SSEInSpace sse1, SSEInSpace sse2)
+        public static double MetricNo3Pos(SseInSpace sse1, SseInSpace sse2)
         {
             //this metric is to be minimized
             return (sse1.StartPoint - sse2.StartPoint).Size
                 + (sse1.EndPoint - sse2.EndPoint).Size;
         }
 
-        public static double MetricNo4(SSEInSpace sse1, SSEInSpace sse2)
+        public static double MetricNo4(SseInSpace sse1, SseInSpace sse2)
         {
             //this metric is to be maximized (minimized in absolute value)
             return -(sse1.StartPoint - sse2.StartPoint).SqSize
                 - (sse1.StartPoint - sse2.StartPoint).SqSize;
         }
 
-        public static double MetricNo5Pos(SSEInSpace sse1, SSEInSpace sse2)
+        public static double MetricNo5Pos(SseInSpace sse1, SseInSpace sse2)
         {
             //this metric is to be minimized
             double m3 = (sse1.StartPoint - sse2.StartPoint).Size
@@ -1078,7 +1081,7 @@ namespace protein.Libraries
             return sum / (Math.Max(ra.Length, rb.Length + d) - Math.Min(0, d));
         }
 
-        public static double MetricNo6Pos(SSE sse1, SSE sse2, Chain chain1, Chain chain2)
+        public static double MetricNo6Pos(Sse sse1, Sse sse2, Chain chain1, Chain chain2)
         {
             Point[] ra = chain1.GetResidues(new (int, int)[] { (sse1.Start, sse1.End) })[0].Select(r => r.GetCAlphas().First().Position()).ToArray();
             Point[] rb = chain2.GetResidues(new (int, int)[] { (sse2.Start, sse2.End) })[0].Select(r => r.GetCAlphas().First().Position()).ToArray();
@@ -1090,7 +1093,7 @@ namespace protein.Libraries
             return displacements.Select(d => PartialMetricNo6(ra, rb, d)).Min();
         }
 
-        public static double MetricNo7Pos(SSE sse1, SSE sse2, List<(int?, int?, double)> alignment, Dictionary<int, int> tResiToAli, Dictionary<int, int> qResiToAli)
+        public static double MetricNo7Pos(Sse sse1, Sse sse2, List<(int?, int?, double)> alignment, Dictionary<int, int> tResiToAli, Dictionary<int, int> qResiToAli)
         {
             try
             {
@@ -1142,7 +1145,7 @@ namespace protein.Libraries
             }
         }
 
-        public static double LengthDiffPenalty(SSE sse1, SSE sse2)
+        public static double LengthDiffPenalty(Sse sse1, Sse sse2)
         {
             // TODO implement distinction between helices and strands (e.g. count H-bonds instead of residues)
             const double ALPHA = 10;
@@ -1172,9 +1175,9 @@ namespace protein.Libraries
 
         private class SSET<T_>
         {
-            public SSE SSE { get; set; }
+            public Sse SSE { get; set; }
             public T_ T { get; set; }
-            public SSET(SSE sse, T_ t)
+            public SSET(Sse sse, T_ t)
             {
                 SSE = sse;
                 T = t;
@@ -1183,10 +1186,10 @@ namespace protein.Libraries
 
         private class SSETint<T_>
         {
-            public SSE SSE { get; set; }
+            public Sse SSE { get; set; }
             public T_ T { get; set; }
             public int Int { get; set; }
-            public SSETint(SSE sse, T_ t, int i)
+            public SSETint(Sse sse, T_ t, int i)
             {
                 SSE = sse;
                 T = t;
@@ -1196,9 +1199,9 @@ namespace protein.Libraries
 
         private class SSEInSpaceInt
         {
-            public SSEInSpace SSE { get; set; }
+            public SseInSpace SSE { get; set; }
             public int Int { get; set; }
-            public SSEInSpaceInt(SSEInSpace sse, int i)
+            public SSEInSpaceInt(SseInSpace sse, int i)
             {
                 SSE = sse;
                 Int = i;
@@ -1206,7 +1209,7 @@ namespace protein.Libraries
         }
 
         /** Returns index of best counterpart in candidateHelices and the value of metric. Returns null if not found. */
-        private static (int, double)? FindBestCounterpartNew(SSEInSpaceInt myHelixT, List<SSEInSpaceInt> candidateHelices, int iFrom, int iTo, Func<SSEType, SSEType, bool> typeMatching, Func<SSEInSpace, SSEInSpace, double> metricToMax)
+        private static (int, double)? FindBestCounterpartNew(SSEInSpaceInt myHelixT, List<SSEInSpaceInt> candidateHelices, int iFrom, int iTo, Func<SseType, SseType, bool> typeMatching, Func<SseInSpace, SseInSpace, double> metricToMax)
         {
             if (iFrom > iTo || iFrom > candidateHelices.Count - 1 || iTo < 0)
                 return null; // not found
@@ -1232,13 +1235,13 @@ namespace protein.Libraries
 			chainMapping indicates SSEs from which template chain should be looked for in which protein chain.
 			SSEs are choose in such way that the value of metric is minimized.
 			*/
-        public static List<(SSEInSpace, double)> FindCounterpartsNew(IEnumerable<SSEInSpace> templates, IEnumerable<SSEInSpace> candidates, Dictionary<string, string> chainMapping, Func<SSEType, SSEType, bool> typeMatching, Func<SSEInSpace, SSEInSpace, double> metricToMax)
+        public static List<(SseInSpace, double)> FindCounterpartsNew(IEnumerable<SseInSpace> templates, IEnumerable<SseInSpace> candidates, Dictionary<string, string> chainMapping, Func<SseType, SseType, bool> typeMatching, Func<SseInSpace, SseInSpace, double> metricToMax)
         {
 
             Dictionary<string, List<SSEInSpaceInt>> templatesByResseq = new Dictionary<string, List<SSEInSpaceInt>>(); // list of SSEs for each template chain sorted by starting resseq
             Dictionary<string, List<SSEInSpaceInt>> templatesByPriority = new Dictionary<string, List<SSEInSpaceInt>>(); // list of SSEs for each template chain sorted by their order of processing
             Dictionary<string, List<SSEInSpaceInt>> candidatesByResseq = new Dictionary<string, List<SSEInSpaceInt>>(); // list of SSEs for each template chain sorted by starting resseq
-            List<(SSEInSpace, double)> result = new List<(SSEInSpace, double)>();
+            List<(SseInSpace, double)> result = new List<(SseInSpace, double)>();
 
             foreach (string chain in chainMapping.Keys)
             {
@@ -1247,14 +1250,14 @@ namespace protein.Libraries
                 candidatesByResseq[chainMapping[chain]] = new List<SSEInSpaceInt>();
             }
 
-            foreach (SSEInSpace template in templates)
+            foreach (SseInSpace template in templates)
                 if (templatesByResseq.ContainsKey(template.ChainID))
                 {
                     templatesByResseq[template.ChainID].Add(new SSEInSpaceInt(template, -1)); //-1=no counterpart selected
                     templatesByPriority[template.ChainID].Add(new SSEInSpaceInt(template, -1)); //-1=undefined
                 }
 
-            foreach (SSEInSpace candidate in candidates)
+            foreach (SseInSpace candidate in candidates)
                 if (candidatesByResseq.ContainsKey(candidate.ChainID))
                     candidatesByResseq[candidate.ChainID].Add(new SSEInSpaceInt(candidate, -1)); // -1=not annotated yet
 
@@ -1266,7 +1269,7 @@ namespace protein.Libraries
 				candidatesByResseq [chainMapping[chain]].ForEach (x => Console.WriteLine (x.SSE.ToString ()));*/
             }
 
-            foreach (SSEInSpace t in templates.Where(x => chainMapping.ContainsKey(x.ChainID)))
+            foreach (SseInSpace t in templates.Where(x => chainMapping.ContainsKey(x.ChainID)))
             {
                 var temps = templatesByResseq[t.ChainID];
                 var cands = candidatesByResseq[chainMapping[t.ChainID]];
@@ -1294,7 +1297,7 @@ namespace protein.Libraries
                 }
                 else
                 {
-                    result.Add((SSEInSpace.NewNotFound(t.Label), Double.NegativeInfinity)); // counterpart not found
+                    result.Add((SseInSpace.NewNotFound(t.Label), Double.NegativeInfinity)); // counterpart not found
                 }
                 /*Console.WriteLine ("Found at " + (match==null? "nowhere": match.Item1.ToString())+".");
 				Console.WriteLine ();*/
@@ -1303,8 +1306,8 @@ namespace protein.Libraries
             return result;
         }
 
-        public static List<(SSEInSpace, double)> FindCounterparts_DynProg(IList<SSEInSpace> templates, IList<SSEInSpace> candidates, Func<SSEType, SSEType, bool> typeMatching,
-            Func<SSEInSpace, SSEInSpace, double> metricToMin, Func<SSEInSpace, double> skipTemplatePenalty, Func<SSEInSpace, double> skipCandidatePenalty, out List<double> suspiciousnessList)
+        public static List<(SseInSpace, double)> FindCounterparts_DynProg(IList<SseInSpace> templates, IList<SseInSpace> candidates, Func<SseType, SseType, bool> typeMatching,
+            Func<SseInSpace, SseInSpace, double> metricToMin, Func<SseInSpace, double> skipTemplatePenalty, Func<SseInSpace, double> skipCandidatePenalty, out List<double> suspiciousnessList)
         {
 
             if (templates.Select(x => x.ChainID).Distinct().Count() > 1)
@@ -1313,10 +1316,10 @@ namespace protein.Libraries
                 Lib.WriteWarning("{0}: passed candidate SSEs from more than one chain.", System.Reflection.MethodBase.GetCurrentMethod().Name);
 
             int[] templateRanks;
-            SSEInSpace[] templateArray = Lib.OrderAndGetRanks(templates, sse => sse.Start, out templateRanks).ToArray();
+            SseInSpace[] templateArray = Lib.OrderAndGetRanks(templates, sse => sse.Start, out templateRanks).ToArray();
             int[] candidateRanks;
-            SSEInSpace[] candidateArray = Lib.OrderAndGetRanks(candidates, sse => sse.Start, out candidateRanks).ToArray();
-            SSEInSpace[] selectedCandidateArray = new SSEInSpace[templateArray.Length];
+            SseInSpace[] candidateArray = Lib.OrderAndGetRanks(candidates, sse => sse.Start, out candidateRanks).ToArray();
+            SseInSpace[] selectedCandidateArray = new SseInSpace[templateArray.Length];
             int[] selectedJ = new int[templateArray.Length];
             double[] metricArray = new double[templateArray.Length];
 
@@ -1360,8 +1363,8 @@ namespace protein.Libraries
             {
                 for (int j = 1; j < n; j++)
                 {
-                    SSEInSpace temp = templateArray[i - 1];
-                    SSEInSpace cand = candidateArray[j - 1];
+                    SseInSpace temp = templateArray[i - 1];
+                    SseInSpace cand = candidateArray[j - 1];
 
                     double valueUp = dynProgMatrix[i - 1, j] + skipTemplatePenalty(temp);
                     double valueLeft = dynProgMatrix[i, j - 1] + skipCandidatePenalty(cand);
@@ -1460,7 +1463,7 @@ namespace protein.Libraries
                         break;
                     case 1:
                         // skipped template SSE
-                        selectedCandidateArray[row - 1] = SSEInSpace.NewNotFound(templateArray[row - 1].Label);
+                        selectedCandidateArray[row - 1] = SseInSpace.NewNotFound(templateArray[row - 1].Label);
                         selectedJ[row - 1] = -1;
                         metricArray[row - 1] = Double.PositiveInfinity;
                         row--;
@@ -1516,8 +1519,8 @@ namespace protein.Libraries
                 Dictionary<int?, List<int?>> dictSheetIdByCandidate = new Dictionary<int?, List<int?>>();
                 foreach (int rank in templateRanks)
                 {
-                    SSE template = templateArray[rank];
-                    SSE candidate = selectedCandidateArray[rank];
+                    Sse template = templateArray[rank];
+                    Sse candidate = selectedCandidateArray[rank];
                     if (template.IsSheet && candidate.IsSheet)
                     {
                         dictSheetIdByTemplate.MultidictionaryAdd(template.SheetId, candidate.SheetId);
@@ -1542,8 +1545,8 @@ namespace protein.Libraries
                     // OK -> renaming sheet IDs
                     foreach (int rank in templateRanks)
                     {
-                        SSE template = templateArray[rank];
-                        SSE candidate = selectedCandidateArray[rank];
+                        Sse template = templateArray[rank];
+                        Sse candidate = selectedCandidateArray[rank];
                         if (template.IsSheet && candidate.IsSheet)
                         {
                             candidate.SheetId = dictSheetIdByTemplate[template.SheetId][0];
@@ -1890,7 +1893,7 @@ namespace protein.Libraries
             return result;
         }
 
-        public static List<String> GetSequences(Chain ch, IEnumerable<SSE> sses)
+        public static List<String> GetSequences(Chain ch, IEnumerable<Sse> sses)
         {
             if (sses.Any(sse => sse.ChainID != ch.Id))
                 throw new Exception("Some SSEs belong to another chain");

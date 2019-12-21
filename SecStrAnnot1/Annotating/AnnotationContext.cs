@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 using protein.Libraries;
 
 namespace protein.Annotating
@@ -13,14 +13,14 @@ namespace protein.Annotating
     class AnnotationContext
     {
         //General settings
-        public Func<SSEInSpace, SSEInSpace, double> MetricToMin { get; private set; }
-        public Func<SSEType, SSEType, bool> TypeMatching { get; private set; }
-        public Func<SSEInSpace, double> SkipTemplatePenalty { get; private set; }
-        public Func<SSEInSpace, double> SkipCandidatePenalty { get; private set; }
+        public Func<SseInSpace, SseInSpace, double> MetricToMin { get; private set; }
+        public Func<SseType, SseType, bool> TypeMatching { get; private set; }
+        public Func<SseInSpace, double> SkipTemplatePenalty { get; private set; }
+        public Func<SseInSpace, double> SkipCandidatePenalty { get; private set; }
 
         //Templates and candidates
-        public SSEInSpace[] Templates { get; private set; }
-        public SSEInSpace[] Candidates { get; private set; }
+        public SseInSpace[] Templates { get; private set; }
+        public SseInSpace[] Candidates { get; private set; }
         public bool[,] GuideDiscriminator { get; set; }
 
         //Beta-graph related context
@@ -31,12 +31,12 @@ namespace protein.Annotating
 
         //Constructors
         public AnnotationContext(
-            Func<SSEInSpace, SSEInSpace, double> metricToMin,
-            Func<SSEType, SSEType, bool> typeMatching,
-            Func<SSEInSpace, double> skipTemplatePenalty,
-            Func<SSEInSpace, double> skipCandidatePenalty,
-            IEnumerable<SSEInSpace> templates,
-            IEnumerable<SSEInSpace> candidates
+            Func<SseInSpace, SseInSpace, double> metricToMin,
+            Func<SseType, SseType, bool> typeMatching,
+            Func<SseInSpace, double> skipTemplatePenalty,
+            Func<SseInSpace, double> skipCandidatePenalty,
+            IEnumerable<SseInSpace> templates,
+            IEnumerable<SseInSpace> candidates
         )
         {
             this.MetricToMin = metricToMin;
@@ -157,14 +157,14 @@ namespace protein.Annotating
             ValidateOrdering();
             ValidateBetaGraph();
 
-            List<SSEInSpace> jointCandidates = new List<SSEInSpace>();
+            List<SseInSpace> jointCandidates = new List<SseInSpace>();
             List<(int, int, int)> jointConnections = new List<(int, int, int)>();
             List<(int, int)> conflicts = new List<(int, int)>();
             List<(int, int)> jointGuideAllowedMatches = new List<(int, int)>();
             for (int i = 0; i < Candidates.Length - 1; i++)
             {
-                SSEInSpace s1 = Candidates[i];
-                SSEInSpace s2 = Candidates[i + 1];
+                SseInSpace s1 = Candidates[i];
+                SseInSpace s2 = Candidates[i + 1];
                 if (s1.ChainID == s2.ChainID && s1.IsSheet && s2.IsSheet && s2.Start - s1.End - 1 <= maxGap)
                 {
                     int index = Candidates.Length + jointCandidates.Count;
@@ -172,7 +172,7 @@ namespace protein.Annotating
                     // newSSE.AddComment ("Created by joining " + s1.Label + " and " + s2.Label + " with gap " + (s2.Start - s1.End - 1) + ".");
                     // newSSE.AddNestedSSE (s1);
                     // newSSE.AddNestedSSE (s2);
-                    SSEInSpace newSSE = SSEInSpace.Join(s1, s2, null);
+                    SseInSpace newSSE = SseInSpace.Join(s1, s2, null);
                     jointCandidates.Add(newSSE);
                     if (GuideDiscriminator != null)
                     {
@@ -195,7 +195,7 @@ namespace protein.Annotating
                     conflicts.Add((i + 1, index));
                 }
             }
-            SSEInSpace[] newCandidates = Candidates.Concat(jointCandidates).ToArray();
+            SseInSpace[] newCandidates = Candidates.Concat(jointCandidates).ToArray();
             bool[,] newGuideDiscriminator;
             if (GuideDiscriminator != null)
             {
@@ -269,8 +269,8 @@ namespace protein.Annotating
             {
                 for (int j = i + 1; j < Candidates.Length; j++)
                 {
-                    SSEInSpace s1 = Candidates[i];
-                    SSEInSpace s2 = Candidates[j];
+                    SseInSpace s1 = Candidates[i];
+                    SseInSpace s2 = Candidates[j];
                     if (s1.ChainID == s2.ChainID && s1.IsSheet && s2.IsSheet && s2.Start - s1.End - 1 <= maxGap && Enumerable.Range(i, j - i - 1).All(x => CandidateConnectivity[x, j] == 0))
                         joint.Add((i, j));
                     else
@@ -303,8 +303,8 @@ namespace protein.Annotating
         private AnnotationContext SoftenedTemplatesOrCandidates(List<(int, int)> joinedRanges, int whichGraph)
         {
             bool STRICT = false;
-            SSEInSpace[] gSSEs; //unchanged
-            SSEInSpace[] hSSEs; //to be softened
+            SseInSpace[] gSSEs; //unchanged
+            SseInSpace[] hSSEs; //to be softened
             bool[,] ghGuideDiscriminator;
             int[,] gConnectivity;
             int[,] hConnectivity;
@@ -352,8 +352,8 @@ namespace protein.Annotating
                 int j = joinedRanges[k].Item2;
                 int index = nOrig + k;
                 int[] partIndices = Enumerable.Range(i, j - i + 1).ToArray();
-                IEnumerable<SSEInSpace> parts = hSSEs.Skip(i).Take(j - i + 1);
-                SSEInSpace newSSE = new SSEInSpace(new SSE(parts.Select(p => p.Label).EnumerateWithSeparators("_"), parts.First().ChainID, parts.First().Start, parts.Last().End, SSEType.SHEET_TYPE, null),
+                IEnumerable<SseInSpace> parts = hSSEs.Skip(i).Take(j - i + 1);
+                SseInSpace newSSE = new SseInSpace(new Sse(parts.Select(p => p.Label).EnumerateWithSeparators("_"), parts.First().ChainID, parts.First().Start, parts.Last().End, SseType.SHEET_TYPE, null),
                     parts.First().StartPoint, parts.Last().EndPoint);
                 newSSE.AddComment("Created by joining " + parts.EnumerateWithSeparators(" and ") + ".");
                 foreach (var p in parts)

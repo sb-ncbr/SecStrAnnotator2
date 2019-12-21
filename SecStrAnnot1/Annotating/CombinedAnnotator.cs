@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 using protein.Libraries;
 
 namespace protein.Annotating
@@ -37,8 +37,8 @@ namespace protein.Annotating
                 Lib.WriteLineDebug("CombinedAnnotator.GetMatching(): Dynamic programming caused connectivity issues. Trying dynamic programming with guide strand matching from branch-and-bound.");
                 Lib.Shuffler tShuffler;
                 Lib.Shuffler qShuffler;
-                IEnumerable<SSEInSpace> filteredTemplates = Context.Templates.WhereAndGetShuffler(sse => sse.IsSheet, out tShuffler);
-                IEnumerable<SSEInSpace> filteredCandidates = Context.Candidates.WhereAndGetShuffler(sse => sse.IsSheet, out qShuffler);
+                IEnumerable<SseInSpace> filteredTemplates = Context.Templates.WhereAndGetShuffler(sse => sse.IsSheet, out tShuffler);
+                IEnumerable<SseInSpace> filteredCandidates = Context.Candidates.WhereAndGetShuffler(sse => sse.IsSheet, out qShuffler);
                 int[,] filteredTemplateConnectivity = tShuffler.ShuffleColumns(tShuffler.ShuffleRows(Context.TemplateConnectivity));
                 int[,] filteredCandidateConnectivity = qShuffler.ShuffleColumns(qShuffler.ShuffleRows(Context.CandidateConnectivity));
 

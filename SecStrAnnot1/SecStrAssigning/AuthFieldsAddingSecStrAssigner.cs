@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 
 namespace protein.SecStrAssigning
 {
@@ -18,7 +18,7 @@ namespace protein.SecStrAssigning
         }
         public SecStrAssignment GetSecStrAssignment(){
             SecStrAssignment ass = InnerAssigner.GetSecStrAssignment();
-            foreach (SSE sse in ass.SSEs){
+            foreach (Sse sse in ass.SSEs){
                 sse.AddAuthFields(Protein);
             }
             return ass;

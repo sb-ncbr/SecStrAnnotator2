@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Cif.Components;
 
-namespace protein.SSEs
+namespace protein.Sses
 {
-	public enum SSEType
+	public enum SseType
 	{
 		NOT_FOUND_TYPE,
 		MIXED_HELIX_TYPE,

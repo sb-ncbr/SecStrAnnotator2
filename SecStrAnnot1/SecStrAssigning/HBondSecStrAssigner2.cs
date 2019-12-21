@@ -8,7 +8,7 @@ using SecStrAnnotator2.Utils;
 using Cif.Components;
 using Cif.Tables;
 using protein.Libraries;
-using protein.SSEs;
+using protein.Sses;
 using protein.HydrogenAdding;
 using protein.SecStrAssigning.Helpers;
 
@@ -57,21 +57,21 @@ namespace protein.SecStrAssigning
 
         public SecStrAssignment GetSecStrAssignment()
         {
-            SecStrAssignment assignment = new SecStrAssignment(new List<SSE>());
+            SecStrAssignment assignment = new SecStrAssignment(new List<Sse>());
             assignment.HBonds = HBondsAsResidueTuples(this.hBonds);
             if (DetectSheets){
-                (List<SSE> strands, var connectivity) = GetStrands();
+                (List<Sse> strands, var connectivity) = GetStrands();
                 assignment.SSEs.AddRange(strands);
                 assignment.Connectivity = connectivity;
             }
             if (DetectHelices){
-                List<SSE> helices = GetHelices();
+                List<Sse> helices = GetHelices();
                 assignment.SSEs.AddRange(helices);
             }
             return assignment;
         }
 
-        private List<SSE> GetHelices(){
+        private List<Sse> GetHelices(){
             List<Ladder> ladders = new List<Ladder>();
             for (int don = 0; don < nResidues; don++){
                 foreach (int acc in acceptorsOf[don]){
@@ -94,37 +94,37 @@ namespace protein.SecStrAssigning
                     }
                 }
             }
-            List<SSE> helices = new List<SSE>(capacity: ladders.Count);
+            List<Sse> helices = new List<Sse>(capacity: ladders.Count);
             for (int i = 0; i < ladders.Count; i++){
                 Ladder ladder = ladders[i];
                 int startZeta = ladder.firstHbond.Zeta1;
                 int endZeta = ladder.lastHbond.Zeta0;
                 (int startResIdx, int endResIdx) = ZRangeToResidueIndexRange(startZeta, endZeta, HBondSSAConstants.HELICES_BY_ALPHA);
                 (string chainId, int startSeqId, int endSeqId) = ChainStartEnd(startResIdx, endResIdx);
-                SSEType type = 
-                    ladder.type0 == MicrostrandType.REGULAR_H_HELIX ? SSEType.HELIX_H_TYPE
-                    : ladder.type0 == MicrostrandType.REGULAR_G_HELIX ? SSEType.HELIX_G_TYPE 
-                    : SSEType.HELIX_I_TYPE;
-                SSE sse = new SSE(null/*$"{type}{i}"*/, chainId, startSeqId, endSeqId, type, null);
+                SseType type = 
+                    ladder.type0 == MicrostrandType.REGULAR_H_HELIX ? SseType.HELIX_H_TYPE
+                    : ladder.type0 == MicrostrandType.REGULAR_G_HELIX ? SseType.HELIX_G_TYPE 
+                    : SseType.HELIX_I_TYPE;
+                Sse sse = new Sse(null/*$"{type}{i}"*/, chainId, startSeqId, endSeqId, type, null);
                 helices.Add(sse);
             }            
             return helices;
         }
 
-        private (List<SSE> strands, List<(int strand0, int strand1, int type)> connectivity) GetStrands(){
+        private (List<Sse> strands, List<(int strand0, int strand1, int type)> connectivity) GetStrands(){
             MyStopwatch watch = new MyStopwatch();
             BetaGraph betaGraph = BuildBetaGraph();
             watch.Stop("BuildBetaGraph()");
             
             int nStrands = betaGraph.macrostrands.Count;
-            List<SSE> strands = new List<SSE>(capacity: nStrands);
+            List<Sse> strands = new List<Sse>(capacity: nStrands);
             for (int i = 0; i < nStrands; i++) {
                 var strand = betaGraph.macrostrands[i];
                 (int startResIdx, int endResIdx) = ZRangeToResidueIndexRange(strand.startZeta, strand.endZeta, HBondSSAConstants.STRANDS_BY_ALPHA);
                 (string chainId, int startSeqId, int endSeqId) = ChainStartEnd(startResIdx, endResIdx);
-                SSEType type = (startResIdx == endResIdx) ? SSEType.ISOLATED_BETA_BRIDGE_TYPE : SSEType.SHEET_TYPE;
+                SseType type = (startResIdx == endResIdx) ? SseType.ISOLATED_BETA_BRIDGE_TYPE : SseType.SHEET_TYPE;
                 int sheetId = HBondSSAConstants.SHEET_NUMBERING_FROM + strand.sheet;
-                SSE sse = new SSE(null/*$"{type}{i}"*/, chainId, startSeqId, endSeqId, type, sheetId);
+                Sse sse = new Sse(null/*$"{type}{i}"*/, chainId, startSeqId, endSeqId, type, sheetId);
                 strands.Add(sse);
             }
             var connectivity = betaGraph.macroladders.Select(t => (t.macrostrand0, t.macrostrand1, t.type == MacroladderType.PARALLEL ? 1 : -1)).ToList();

@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace protein.SSEs
+namespace protein.Sses
 {
     /**This static class provides "ideal" geometries of alpha-helix and beta-sheet obtained from 1OG2 and 5ACM respectively.
 	 * These are defined in IdealShapes.InitializeDictionary().*/
     public static class IdealShapes
     {
-        private static Dictionary<SSEType, Shape> idealShapeDictionary;
+        private static Dictionary<SseType, Shape> idealShapeDictionary;
 
-        public static Shape GetShape(SSEType type)
+        public static Shape GetShape(SseType type)
         {
             if (idealShapeDictionary == null)
             {
@@ -88,12 +88,12 @@ namespace protein.SSEs
                 1, 3, new double[] { 1, 0, 0 })
             );
 
-            idealShapeDictionary = new Dictionary<SSEType, Shape>() { };
-            foreach (SSEType type in LibSSETypes.ALL_HELIX_TYPES)
+            idealShapeDictionary = new Dictionary<SseType, Shape>() { };
+            foreach (SseType type in LibSseTypes.ALL_HELIX_TYPES)
             {
                 idealShapeDictionary[type] = idealHelixH;
             }
-            foreach (SSEType type in LibSSETypes.ALL_SHEET_TYPES)
+            foreach (SseType type in LibSseTypes.ALL_SHEET_TYPES)
             {
                 idealShapeDictionary[type] = idealSheetE;
             }

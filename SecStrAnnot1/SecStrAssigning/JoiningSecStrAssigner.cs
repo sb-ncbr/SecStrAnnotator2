@@ -6,7 +6,7 @@ using System.Reflection;
 
 using Cif.Components;
 using protein.Libraries;
-using protein.SSEs;
+using protein.Sses;
 
 namespace protein.SecStrAssigning
 {
@@ -15,9 +15,9 @@ namespace protein.SecStrAssigning
         public ISecStrAssigner InnerAssigner { get; private set; }
         public Protein Protein { get; private set; }
         public double JoiningRmsdLimit { get; private set; }
-        public Func<SSEType, SSEType, SSEType?> JoiningTypeCombining { get; private set; }
+        public Func<SseType, SseType, SseType?> JoiningTypeCombining { get; private set; }
 
-        public JoiningSecStrAssigner(ISecStrAssigner innerAssigner, Protein protein, double joiningRmsdLimit, Func<SSEType, SSEType, SSEType?> joiningTypeCombining)
+        public JoiningSecStrAssigner(ISecStrAssigner innerAssigner, Protein protein, double joiningRmsdLimit, Func<SseType, SseType, SseType?> joiningTypeCombining)
         {
             this.InnerAssigner = innerAssigner;
             this.Protein = protein;

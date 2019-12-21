@@ -5,46 +5,11 @@ using System.Linq;
 using System.Reflection;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 using protein.Libraries;
 
 namespace protein.SecStrAssigning
 {
-    // public class DsspSecStrAssigner : ISecStrAssigner {
-    //     public String DSSPExecutable { get; private set; }
-    //     public String PDBFile { get; private set; }
-    //     public String DSSPFile { get; private set; }
-    //     public string[] ChainIDs { get; private set; }
-    //     public char[] AcceptedSSETypes { get; private set; }
-
-    //     public DsspSecStrAssigner(String dsspExecutable, String PDBFile, String DSSPFile, IEnumerable<string> chainIDs, char[] acceptedSSETypes){
-    //         this.DSSPExecutable = dsspExecutable;
-    //         this.PDBFile = PDBFile;
-    //         this.DSSPFile = DSSPFile;
-    //         this.ChainIDs=chainIDs.ToArray ();
-    //         this.AcceptedSSETypes = acceptedSSETypes;
-    //     }
-
-    //     public SecStrAssignment GetSecStrAssignment(){
-    //         Lib.WriteInColor (ConsoleColor.Yellow, "Running DSSP:\n");
-    //         if (!Lib.RunDSSP (DSSPExecutable, PDBFile, DSSPFile))
-    //             throw new  SecStrAssignmentException (MethodBase.GetCurrentMethod ().DeclaringType.Name + " failed.");
-
-    //         try { 
-    //             return new SecStrAssignment(LibAnnotation.ReadSSEsFromDSSP (DSSPFile, AcceptedSSETypes)
-    //                 .Where (x => ChainIDs.Contains (x.ChainID))
-    //                 .Select ((sse, i) => sse.RelabeledCopy (sse.Type + i.ToString ()))
-    //                 .ToList ()); 
-    //         }
-    //         catch (Exception e) { throw new SecStrAssignmentException (MethodBase.GetCurrentMethod ().DeclaringType.Name + " failed.", e); }
-    //     }
-
-    //     public String GetDescription(){
-    //         return "DSSP method for " + Path.GetFileName (PDBFile) + " (accepted types: " + Lib.EnumerateWithCommas (AcceptedSSETypes) + ")";
-    //     }
-    // }	
-
-
     public class DsspSecStrAssigner : ISecStrAssigner
     {
         public Protein Protein { get; private set; }
@@ -52,9 +17,9 @@ namespace protein.SecStrAssigning
         public String RenumberedPDBFile { get; private set; }  // CIF file with label_ values in auth_ fields
         public String DSSPFile { get; private set; }
         public string[] ChainIDs { get; private set; }
-        public SSEType[] AcceptedSSETypes { get; private set; }
+        public SseType[] AcceptedSSETypes { get; private set; }
 
-        public DsspSecStrAssigner(Protein protein, String dsspExecutable, String renumberedPDBFile, String dsspFile, IEnumerable<string> chainIDs, SSEType[] acceptedSSETypes)
+        public DsspSecStrAssigner(Protein protein, String dsspExecutable, String renumberedPDBFile, String dsspFile, IEnumerable<string> chainIDs, SseType[] acceptedSSETypes)
         {
             this.Protein = protein;
             this.DSSPExecutable = dsspExecutable;
@@ -77,7 +42,7 @@ namespace protein.SecStrAssigning
             {
                 // IEnumerable<SSE> sses = LibAnnotation.ReadSSEsFromDSSP (DSSPFile, AcceptedSSETypes)
                 //     .Where (x => ChainIDs.Contains (x.ChainID))
-                //     .Select ((sse, i) => sse.RelabeledCopy (sse.Type + i.ToString ()));
+                //     .Select ((sse, i) => sse.RelabeledCopy (sse.Type.AsString() + i.ToString ()));
                 // result = new SecStrAssignment(sses); 
                 return ReadSSEsFromDSSPFile();
                 // TODO add support for beta-connectivity
@@ -114,7 +79,7 @@ namespace protein.SecStrAssigning
 		    Returns only SSEs of accepted types (G = 3_10 helix, H = alpha helix, I = pi helix...) */
         private SecStrAssignment ReadSSEsFromDSSPStreamReader(StreamReader reader)
         {
-            List<SSE> SSEs = new List<SSE>();
+            List<Sse> SSEs = new List<Sse>();
             Dictionary<char, int?> dictSheetId = new Dictionary<char, int?> { { ' ', null } };
             var sse2ladders = new List<HashSet<char>>();
             int sheetIdCounter = 1;
@@ -140,7 +105,7 @@ namespace protein.SecStrAssigning
                         // string chainID = line [11].ToString();
                         string chainID = line.Substring(153, 10).Trim();
                         // Lib.WriteWarning("chainID: '{0}'", chainID);
-                        SSEType type = LibSSETypes.Type(line[16]);
+                        SseType type = LibSseTypes.Type(line[16].ToString());
                         lastStrand1Char = (strand1Char != ' ') ? strand1Char : lastStrand1Char;
                         lastStrand2Char = (strand2Char != ' ') ? strand2Char : lastStrand2Char;
                         strand1Char = line[23];
@@ -149,7 +114,7 @@ namespace protein.SecStrAssigning
                         int? sheetId = dictSheetId.GetOrAssignNext(sheetChar, ref sheetIdCounter);
                         if (this.AcceptedSSETypes.Contains(type))
                         {
-                            SSE last = (SSEs.Count != 0) ? SSEs[SSEs.Count - 1] : null;
+                            Sse last = (SSEs.Count != 0) ? SSEs[SSEs.Count - 1] : null;
                             if (last != null && last.ChainID == chainID && last.End == resSeq - 1 && last.Type == type && sheetId == last.SheetId
                                     && DSSPStrandContinues(lastStrand1Char, lastStrand2Char, strand1Char, strand2Char))
                             {
@@ -157,7 +122,7 @@ namespace protein.SecStrAssigning
                             }
                             else
                             {
-                                SSE newSSE = new SSE(type.ToString() + counter.ToString(), chainID, resSeq, resSeq, type, sheetId);
+                                Sse newSSE = new Sse(type.AsString() + counter.ToString(), chainID, resSeq, resSeq, type, sheetId);
                                 SSEs.Add(newSSE);
                                 sse2ladders.Add(new HashSet<char>());
                                 last = newSSE;

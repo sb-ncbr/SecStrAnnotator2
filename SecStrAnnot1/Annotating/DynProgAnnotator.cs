@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 using protein.Libraries;
 
 namespace protein.Annotating
@@ -63,8 +63,8 @@ namespace protein.Annotating
             {
                 for (int j = 1; j < n + 1; j++)
                 {
-                    SSEInSpace temp = Context.Templates[i - 1];
-                    SSEInSpace cand = Context.Candidates[j - 1];
+                    SseInSpace temp = Context.Templates[i - 1];
+                    SseInSpace cand = Context.Candidates[j - 1];
 
                     double valueUp = dynProgMatrix[i - 1, j] + skipTemplatePen[i - 1];
                     double valueLeft = dynProgMatrix[i, j - 1] + skipCandidatePen[j - 1];

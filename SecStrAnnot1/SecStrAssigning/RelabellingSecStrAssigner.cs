@@ -3,7 +3,9 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+
 using Cif.Components;
+using protein.Sses;
 
 namespace protein.SecStrAssigning
 {
@@ -23,7 +25,7 @@ namespace protein.SecStrAssigning
         public SecStrAssignment GetSecStrAssignment(){
             SecStrAssignment result = InnerAssigner.GetSecStrAssignment ();
             result.SSEs=result.SSEs
-                .Select ((sse, i) => sse.RelabeledCopy (SetAllLabelsToNull?null: Prefix + sse.Type + i.ToString ()))
+                .Select ((sse, i) => sse.RelabeledCopy (SetAllLabelsToNull ? null: Prefix + sse.Type.AsString() + i.ToString ()))
                 .ToList ();
             return result;
         }

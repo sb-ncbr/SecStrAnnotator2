@@ -4,12 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-using protein.SSEs;
+using protein.Sses;
 
 namespace protein.SecStrAssigning.Helpers
 {
     class BetaStrandInSheet {
-        public SSE SSE { get; set; }
+        public Sse SSE { get; set; }
         public int SheetId { get; set; }
         //public int Level { get; set; }
         public bool EvenUp { get; set; }
@@ -21,7 +21,7 @@ namespace protein.SecStrAssigning.Helpers
         public List<BetaLadder> DownLadders{ get; set; }
         private bool DFSFlag { get; set; }
 
-        public BetaStrandInSheet(SSE sse, int sheetId, /*int level, */bool evenUp){
+        public BetaStrandInSheet(Sse sse, int sheetId, /*int level, */bool evenUp){
             SSE = sse;
             SheetId = sheetId;
             //Level = level;

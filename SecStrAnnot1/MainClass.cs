@@ -9,7 +9,7 @@ using System.Globalization;
 using SecStrAnnotator2.Utils;
 using Cif.Components;
 using protein.Libraries;
-using protein.SSEs;
+using protein.Sses;
 using protein.SecStrAssigning;
 using protein.Annotating;
 using protein.Json;
@@ -56,20 +56,20 @@ namespace protein
 
             bool createPymolSession = false;
 
-            SSEType[] acceptedSSETypes = Setting.DEFAULT_ACCEPTED_SSE_TYPES;
+            SseType[] acceptedSSETypes = Setting.DEFAULT_ACCEPTED_SSE_TYPES;
             //LibAnnotation.JoiningParameters joiningParameters = new LibAnnotation.JoiningParameters (LibAnnotation.ALL_HELIX_TYPES, 10, 1, 10, 2, 30);
-            LibAnnotation.JoiningParameters joiningParameters = new LibAnnotation.JoiningParameters(LibSSETypes.ALL_HELIX_TYPES.ToArray(), 10, 1, 0, 5, 60); //try stagger penalty 10 or 5
+            LibAnnotation.JoiningParameters joiningParameters = new LibAnnotation.JoiningParameters(LibSseTypes.ALL_HELIX_TYPES.ToArray(), 10, 1, 0, 5, 60); //try stagger penalty 10 or 5
 
             double rmsdLimit = Setting.DEFAULT_RMSD_LIMIT;
 
             // annotationTypeFitting(T,Q) should determine whether query SSE of type Q can be mapped to template SSE of type T.
-            Func<SSEType, SSEType, bool> annotationTypeFitting =
+            Func<SseType, SseType, bool> annotationTypeFitting =
                 (t, q) => t.IsHelix() && q.IsHelix() || t.IsSheet() && q.IsSheet();
 
             Setting.MetricMethod metricMethod = Setting.DEFAULT_METRIC_METHOD;
             double[] maxmetric = Setting.DEFAULT_MAXMETRIC;
-            Func<SSEInSpace, double> skipTemplatePenalty = (sse => maxmetric[0] + maxmetric[1] * (sse.EndPoint - sse.StartPoint).Size);
-            Func<SSEInSpace, double> skipCandidatePenalty = (sse => maxmetric[2] * (sse.EndPoint - sse.StartPoint).Size);
+            Func<SseInSpace, double> skipTemplatePenalty = (sse => maxmetric[0] + maxmetric[1] * (sse.EndPoint - sse.StartPoint).Size);
+            Func<SseInSpace, double> skipCandidatePenalty = (sse => maxmetric[2] * (sse.EndPoint - sse.StartPoint).Size);
 
             double? momTimeoutSeconds = null;
 
@@ -128,7 +128,7 @@ namespace protein
                 .AddParameter("LIMIT")
                 .AddHelp("Specify RMSD limit for geometry-based secondary structure assignment, default: " + Setting.DEFAULT_RMSD_LIMIT.ToString("0.0#####"))
             );
-            options.AddOption(Option.StringOption(new string[] { "-t", "--types" }, v => { acceptedSSETypes = v.Split(',').Select(str => LibSSETypes.Type(str)).ToArray(); })
+            options.AddOption(Option.StringOption(new string[] { "-t", "--types" }, v => { acceptedSSETypes = v.Split(',').Select(str => LibSseTypes.Type(str)).ToArray(); })
                 .AddConstraint(optArgs => optArgs[0].Split(',').All(type => type.Length == 1), "must be a comma-separated list of one-character SSE types")
                 .AddParameter("TYPES")
                 .AddHelp("Specify the allowed types of secondary structures.")
@@ -391,7 +391,7 @@ namespace protein
                 }
                 if (templateSSA.SSEs.Any(s => s.IsSheet && s.SheetId == null))
                 {
-                    foreach (SSE sse in templateSSA.SSEs.Where(s => s.IsSheet))
+                    foreach (Sse sse in templateSSA.SSEs.Where(s => s.IsSheet))
                     {
                         String num = String.Concat(sse.Label.TakeWhile(c => '0' <= c && c <= '9'));
                         if (num.Length == 0)
@@ -520,7 +520,7 @@ namespace protein
                 return 0;
             }
 
-            List<SSEInSpace> annotQHelicesInSpace_AllChains = new List<SSEInSpace>();
+            List<SseInSpace> annotQHelicesInSpace_AllChains = new List<SseInSpace>();
             List<(int, int, int)> annotQConnectivity_AllChains = new List<(int, int, int)>();
             List<double> metricList_AllChains = new List<double>();
             List<double> suspiciousnessList_AllChains = new List<double>();
@@ -529,7 +529,7 @@ namespace protein
             List<double> metric3List_AllChains = new List<double>();
             List<double> metric7List_AllChains = new List<double>();
 
-            List<SSEInSpace> detQSsesInSpace_AllChains = new List<SSEInSpace>();
+            List<SseInSpace> detQSsesInSpace_AllChains = new List<SseInSpace>();
             List<String> detQSseSequences_AllChains = new List<string>();
 
             JsonValue rotationMatrix = null;
@@ -582,12 +582,12 @@ namespace protein
                     #endregion
 
                     Lib.Shuffler shuffler;
-                    List<SSE> tSSEs = templateSSA.SSEs.WhereAndGetShuffler(sse => sse.ChainID == templateChainID, out shuffler).ToList();
+                    List<Sse> tSSEs = templateSSA.SSEs.WhereAndGetShuffler(sse => sse.ChainID == templateChainID, out shuffler).ToList();
                     List<(int, int, int)> tConnectivity = shuffler.UpdateIndices(templateSSA.Connectivity).ToList();
-                    List<SSE> qSSEs = querySSA.SSEs.WhereAndGetShuffler(sse => sse.ChainID == queryChainID, out shuffler).ToList();
+                    List<Sse> qSSEs = querySSA.SSEs.WhereAndGetShuffler(sse => sse.ChainID == queryChainID, out shuffler).ToList();
                     List<(int, int, int)> qConnectivity = shuffler.UpdateIndices(querySSA.Connectivity).ToList();
-                    List<SSEInSpace> tSSEsInSpace;
-                    List<SSEInSpace> qSSEsInSpace;
+                    List<SseInSpace> tSSEsInSpace;
+                    List<SseInSpace> qSSEsInSpace;
 
 
                     #region Calculate helix-fit and sheet-fit RMSDs for whole chain and output them to a file.
@@ -604,8 +604,8 @@ namespace protein
                             double rmsdE;
                             // double rmsdH5;
                             // double rmsdH6;
-                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), SSEType.HELIX_H_TYPE, rmsdLimit, out rmsdH);
-                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), SSEType.SHEET_TYPE, rmsdLimit, out rmsdE);
+                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), SseType.HELIX_H_TYPE, rmsdLimit, out rmsdH);
+                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), SseType.SHEET_TYPE, rmsdLimit, out rmsdE);
                             // LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 5), '5', rmsdLimit, out rmsdH5);
                             // LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 6), '6', rmsdLimit, out rmsdH6);
                             wRMSD.WriteLine("{0}\t{1}\t{2}", residues[i].SeqNumber, rmsdH.ToString("0.000"), rmsdE.ToString("0.000"));
@@ -622,22 +622,22 @@ namespace protein
                     #region Calculating line segments corresponding to helices in template and query protein.
 
                     List<double>[] dump;
-                    if (forceCalculateVectors || !tSSEs.All(sse => sse is SSEInSpace))
+                    if (forceCalculateVectors || !tSSEs.All(sse => sse is SseInSpace))
                     {
                         tSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(tProtein.GetChain(templateChainID), tSSEs, out dump);
                     }
                     else
                     {
-                        tSSEsInSpace = tSSEs.Select(sse => sse as SSEInSpace).ToList();
+                        tSSEsInSpace = tSSEs.Select(sse => sse as SseInSpace).ToList();
                     }
 
-                    if (forceCalculateVectors || !qSSEs.All(sse => sse is SSEInSpace))
+                    if (forceCalculateVectors || !qSSEs.All(sse => sse is SseInSpace))
                     {
                         qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein.GetChain(queryChainID), qSSEs, out dump);
                     }
                     else
                     {
-                        qSSEsInSpace = qSSEs.Select(sse => sse as SSEInSpace).ToList();
+                        qSSEsInSpace = qSSEs.Select(sse => sse as SseInSpace).ToList();
                     }
 
                     times.Add(("Calculate line segments", DateTime.Now.Subtract(stamp)));
@@ -654,7 +654,7 @@ namespace protein
                     double R = LibAnnotation.CharacteristicDistanceOfAlignment(tResiduesForAlignment, qResiduesForAlignment);
                     Console.WriteLine($"Characteristic distance R = {R}");
 
-                    Func<SSEInSpace, SSEInSpace, double> metricToMinimize;
+                    Func<SseInSpace, SseInSpace, double> metricToMinimize;
                     switch (metricMethod)
                     {
                         case Setting.MetricMethod.No3:
@@ -665,8 +665,8 @@ namespace protein
                                 LibAnnotation.MetricNo7Pos(s, t, alignment, LibAnnotation.DictResiToAli(tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli(qResiduesForAlignment, pos.Item2));
                             break;
                         case Setting.MetricMethod.No8:
-                            Func<SSEInSpace, SSEInSpace, double> metric3 = LibAnnotation.MetricNo3Pos;
-                            Func<SSEInSpace, SSEInSpace, double> metric7 = (s, t) => LibAnnotation.MetricNo7Pos(s, t, alignment, LibAnnotation.DictResiToAli(tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli(qResiduesForAlignment, pos.Item2));
+                            Func<SseInSpace, SseInSpace, double> metric3 = LibAnnotation.MetricNo3Pos;
+                            Func<SseInSpace, SseInSpace, double> metric7 = (s, t) => LibAnnotation.MetricNo7Pos(s, t, alignment, LibAnnotation.DictResiToAli(tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli(qResiduesForAlignment, pos.Item2));
                             double xx = 0.5;
                             metricToMinimize = (s, t) =>
                                 (1 - xx) * metric3(s, t) + xx * metric7(s, t) + LibAnnotation.LengthDiffPenalty(s, t);
@@ -692,8 +692,8 @@ namespace protein
                         {
                             for (int j = 0; j < context.Candidates.Count(); j++)
                             {
-                                SSEInSpace t = context.Templates[i];
-                                SSEInSpace c = context.Candidates[j];
+                                SseInSpace t = context.Templates[i];
+                                SseInSpace c = context.Candidates[j];
                                 metricMatrix[i, j] = annotationTypeFitting(t.Type, c.Type) ? metricToMinimize(t, c) : -metricToMinimize(t, c);
                             }
                         }
@@ -744,7 +744,7 @@ namespace protein
                         : new NiceAnnotatorWrapperWithCorrections(context, createAnnotator, correctionsFile, queryID, qProtein);
 
                     DateTime t_BB_0 = DateTime.Now;
-                    List<SSEInSpace> annotQHelicesInSpace = annotator.GetAnnotatedCandidates().ToList();
+                    List<SseInSpace> annotQHelicesInSpace = annotator.GetAnnotatedCandidates().ToList();
                     Lib.WriteLineDebug("Annotated: {0}", annotQHelicesInSpace.EnumerateWithSeparators("\n\t"));
                     List<(int, int, int)> annotQConnectivity = annotator.GetAnnotatedConnectivity(qConnectivity);
                     IEnumerable<double> metricList = annotator.GetMetricList();
@@ -758,7 +758,7 @@ namespace protein
                         else
                         {
                             List<double>[] outRmsdLists;
-                            LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein.GetChain(queryChainID), new SSE[] { sse }.ToList(), out outRmsdLists);
+                            LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein.GetChain(queryChainID), new Sse[] { sse }.ToList(), out outRmsdLists);
                             rmsdLists_AllChains.Add(outRmsdLists[0]);
                         }
                     }
@@ -835,7 +835,7 @@ namespace protein
             int totalFound = annotQHelicesInSpace_AllChains.Count(sse => !sse.IsNotFound());
             for (int i = 0; i < annotQHelicesInSpace_AllChains.Count; i++)
             {
-                SSEInSpace sse = annotQHelicesInSpace_AllChains[i];
+                SseInSpace sse = annotQHelicesInSpace_AllChains[i];
                 double metric = metricList_AllChains[i];
                 // Console.Write(sse.AuthStart == null);
                 Console.WriteLine("    {0}:{1}",

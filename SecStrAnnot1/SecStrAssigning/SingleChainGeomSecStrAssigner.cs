@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 using protein.Libraries;
 
 namespace protein.SecStrAssigning
@@ -25,12 +25,12 @@ namespace protein.SecStrAssigning
             this.SheetsAllowed = true;
         }
 
-        public SingleChainGeomSecStrAssigner(Chain chain, double rmsdLimit, IEnumerable<SSEType> acceptedSSETypes)
+        public SingleChainGeomSecStrAssigner(Chain chain, double rmsdLimit, IEnumerable<SseType> acceptedSSETypes)
         {
             this.Chain = chain;
             this.RmsdLimit = rmsdLimit;
-            this.HelicesAllowed = acceptedSSETypes.Contains(SSEType.MIXED_HELIX_TYPE) || acceptedSSETypes.Contains(SSEType.HELIX_H_TYPE);
-            this.SheetsAllowed = acceptedSSETypes.Contains(SSEType.SHEET_TYPE);
+            this.HelicesAllowed = acceptedSSETypes.Contains(SseType.MIXED_HELIX_TYPE) || acceptedSSETypes.Contains(SseType.HELIX_H_TYPE);
+            this.SheetsAllowed = acceptedSSETypes.Contains(SseType.SHEET_TYPE);
         }
 
         public SecStrAssignment GetSecStrAssignment()
@@ -38,13 +38,13 @@ namespace protein.SecStrAssigning
             int firstAssignedInQuad = 1;
             int lastAssignedInQuad = 2;
             int minimumSSELength = 3;
-            List<SSE> result = new List<SSE>();
+            List<Sse> result = new List<Sse>();
 
             List<Residue> residues = Chain.GetResidues().Where(r => r.HasCAlpha()).ToList();
             bool makingHelix = false;
             bool makingSheet = false;
-            SSEType helixType = SSEType.MIXED_HELIX_TYPE;
-            SSEType sheetType = SSEType.SHEET_TYPE;
+            SseType helixType = SseType.MIXED_HELIX_TYPE;
+            SseType sheetType = SseType.SHEET_TYPE;
             int start = 0;
             int end = 0;
             double rmsd = 0;
@@ -65,7 +65,7 @@ namespace protein.SecStrAssigning
                     {
                         //finish helix
                         if (residues[end].SeqNumber - residues[start].SeqNumber + 1 >= minimumSSELength)
-                            result.Add(new SSE("_", Chain.Id, residues[start].SeqNumber, residues[end].SeqNumber, helixType, null));
+                            result.Add(new Sse("_", Chain.Id, residues[start].SeqNumber, residues[end].SeqNumber, helixType, null));
                         makingHelix = false;
                     }
                 }
@@ -82,7 +82,7 @@ namespace protein.SecStrAssigning
                         //finish sheet
                         //Console.WriteLine ("Ending sheet at {0}", residues [i + lastAssignedInQuad].ResSeq);
                         if (residues[end].SeqNumber - residues[start].SeqNumber + 1 >= minimumSSELength)
-                            result.Add(new SSE("_", Chain.Id, residues[start].SeqNumber, residues[end].SeqNumber, sheetType, null));
+                            result.Add(new Sse("_", Chain.Id, residues[start].SeqNumber, residues[end].SeqNumber, sheetType, null));
                         makingSheet = false;
                     }
                 }
@@ -112,14 +112,14 @@ namespace protein.SecStrAssigning
             {
                 //finish helix
                 if (residues[end].SeqNumber - residues[start].SeqNumber + 1 >= minimumSSELength)
-                    result.Add(new SSE("_", Chain.Id, residues[start].SeqNumber, residues[end].SeqNumber, helixType, null));
+                    result.Add(new Sse("_", Chain.Id, residues[start].SeqNumber, residues[end].SeqNumber, helixType, null));
                 makingHelix = false;
             }
             if (makingSheet)
             {
                 //finish sheet
                 if (residues[end].SeqNumber - residues[start].SeqNumber + 1 >= minimumSSELength)
-                    result.Add(new SSE("_", Chain.Id, residues[start].SeqNumber, residues[end].SeqNumber, sheetType, null));
+                    result.Add(new Sse("_", Chain.Id, residues[start].SeqNumber, residues[end].SeqNumber, sheetType, null));
                 makingSheet = false;
             }
 
@@ -166,14 +166,14 @@ namespace protein.SecStrAssigning
                     else
                     {
                         int index = result.FindIndex(sse => sse.Start == firstResSeq);
-                        SSE old = result[index];
+                        Sse old = result[index];
                         //result [index] = new SSE (old.Label, old.ChainID, Math.Max (old.Start, hb.Min ()-1), Math.Min (old.End, hb.Max ()+1), result [index].Type);
-                        result[index] = new SSE(old.Label, old.ChainID, hb.Min(), hb.Max(), result[index].Type, null);
+                        result[index] = new Sse(old.Label, old.ChainID, hb.Min(), hb.Max(), result[index].Type, null);
                     }
                 }
             }
 
-            return new SecStrAssignment(result.Select((sse, i) => sse.RelabeledCopy(sse.Type + i.ToString())).ToList());
+            return new SecStrAssignment(result.Select((sse, i) => sse.RelabeledCopy(sse.Type.AsString() + i.ToString())).ToList());
         }
 
         public String GetDescription()

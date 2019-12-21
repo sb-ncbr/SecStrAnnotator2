@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace protein.SSEs
+namespace protein.Sses
 {
 	public class Shape{
 		public Matrix Points { get; private set; }

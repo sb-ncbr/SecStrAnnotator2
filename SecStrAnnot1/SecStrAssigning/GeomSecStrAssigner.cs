@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 
 using Cif.Components;
-using protein.SSEs;
+using protein.Sses;
 
 namespace protein.SecStrAssigning
 {
@@ -18,14 +18,14 @@ namespace protein.SecStrAssigning
             Assigners = chains.Select(c => new SingleChainGeomSecStrAssigner(c, rmsdLimit)).ToArray();
         }
 
-        public GeomSecStrAssigner(IEnumerable<Chain> chains, double rmsdLimit, IEnumerable<SSEType> acceptedSSETypes)
+        public GeomSecStrAssigner(IEnumerable<Chain> chains, double rmsdLimit, IEnumerable<SseType> acceptedSSETypes)
         {
             Assigners = chains.Select(c => new SingleChainGeomSecStrAssigner(c, rmsdLimit, acceptedSSETypes)).ToArray();
         }
 
         public SecStrAssignment GetSecStrAssignment()
         {
-            SecStrAssignment result = new SecStrAssignment(new List<SSE>());
+            SecStrAssignment result = new SecStrAssignment(new List<Sse>());
             foreach (ISecStrAssigner assigner in Assigners)
             {
                 result = SecStrAssignment.Combine(result, assigner.GetSecStrAssignment());
