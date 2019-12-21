@@ -96,7 +96,7 @@ namespace protein.Libraries
                 string chainID;
                 int start;
                 int end;
-                char type;
+                SSEType type;
                 if (!labels.Add(sse[0]))
                     Lib.WriteWarning("Multiple definition of \"{0}\" in file \"{1}\".", sse[0], fileName);
                 chainID = sse[1];
@@ -117,7 +117,7 @@ namespace protein.Libraries
                     throw new FormatException("ReadAnnotationFile: Wrong format. End must be an integer, but \"" + sse[2] + "\" was found in file \"" + fileName + "\".", f);
                 }
                 if (sse[4].Length == 1)
-                    type = sse[4][0];
+                    type = LibSSETypes.Type(sse[4][0]);
                 else
                     throw new FormatException("ReadAnnotationFile: Wrong format. ChainID must be 1 character, but \"" + sse[1] + "\" was found in file \"\"+fileName+\"\".");
 
@@ -394,7 +394,7 @@ namespace protein.Libraries
                     if (type.Length != 1)
                         throw new FormatException(JsonLocationString(fileName, name, JsNames.SSES, i, JsNames.TYPE) + " is not a single character.");
                     int? sheetId = sse.Contains(JsNames.SHEET_ID) ? sse[JsNames.SHEET_ID].Int as int? : null;
-                    SSE s = new SSE(sse[JsNames.LABEL].String, chainId, sse[JsNames.START_RESI].Int, sse[JsNames.END_RESI].Int, type[0], sheetId);
+                    SSE s = new SSE(sse[JsNames.LABEL].String, chainId, sse[JsNames.START_RESI].Int, sse[JsNames.END_RESI].Int, LibSSETypes.Type(type[0]), sheetId);
 
                     if (sse.Contains(JsNames.START_VECTOR) && sse.Contains(JsNames.END_VECTOR))
                     {
@@ -639,13 +639,14 @@ namespace protein.Libraries
         /** A class encapsulating parameters for joining neighboring SSEs. */
         public class JoiningParameters
         {
-            public char[] AcceptedTypes { get; private set; }
+            public SSEType[] AcceptedTypes { get; private set; }
             public double GapPenalty { get; private set; }
             public double AnglePenalty { get; private set; } // angles in degrees! 
             public double StaggerPenalty { get; private set; } // stagger is in Angstroms
             public int GapThreshold { get; private set; }
             public double PenaltyThreshold { get; private set; }
-            public JoiningParameters(char[] acceptedTypes, double gapPenalty, double anglePenaltyPerDegree, double staggerPenalty, int gapThreshold, double penaltyThreshold)
+
+            public JoiningParameters(SSEType[] acceptedTypes, double gapPenalty, double anglePenaltyPerDegree, double staggerPenalty, int gapThreshold, double penaltyThreshold)
             {
                 AcceptedTypes = acceptedTypes;
                 GapPenalty = gapPenalty;
@@ -718,7 +719,7 @@ namespace protein.Libraries
         }
 
         /** Joins neighboring SSEs if they fulfil some conditions. */
-        public static List<SSE> JoinSSEs_GeomVersion(Protein p, List<SSE> sses, double rmsdLimit, Func<char, char, char?> typeCombining)
+        public static List<SSE> JoinSSEs_GeomVersion(Protein p, List<SSE> sses, double rmsdLimit, Func<SSEType, SSEType, SSEType?> typeCombining)
         {
             List<SSE> result = new List<SSE>();
 
@@ -727,7 +728,7 @@ namespace protein.Libraries
                 List<SSE> chainSSEs = sses.Where(x => x.ChainID == chain.Id).OrderBy(x => x.Start).ToList();
 
                 List<(int, int)> ranges = new List<(int, int)>();
-                List<char?> checkTypes = new List<char?>();
+                List<SSEType?> checkTypes = new List<SSEType?>();
                 for (int i = 0; i < chainSSEs.Count - 1; i++)
                 {
                     ranges.Add((chainSSEs[i].End - 3, chainSSEs[i + 1].Start + 3));
@@ -735,7 +736,7 @@ namespace protein.Libraries
                 }
 
                 double[] rmsds = new double[ranges.Count];
-                List<GeometryCheckResult> checkResults = chain.GetResidues(ranges).Select((l, i) => checkTypes[i] == null ? GeometryCheckResult.NOK : CheckGeometry(l, (char)checkTypes[i], rmsdLimit, out rmsds[i])).ToList();
+                List<GeometryCheckResult> checkResults = chain.GetResidues(ranges).Select((l, i) => checkTypes[i] == null ? GeometryCheckResult.NOK : CheckGeometry(l, (SSEType)checkTypes[i], rmsdLimit, out rmsds[i])).ToList();
 
                 if (chainSSEs.Count > 0)
                 {
@@ -794,7 +795,7 @@ namespace protein.Libraries
                 .ToList();
         }
 
-        public static GeometryCheckResult CheckGeometry(IEnumerable<Residue> residues, char sseType, double RMSDLimit, out double maxRMSD)
+        public static GeometryCheckResult CheckGeometry(IEnumerable<Residue> residues, SSEType sseType, double RMSDLimit, out double maxRMSD)
         {
             maxRMSD = 0;
             //Lib.WriteDebug ("Geometry check on {0} {1,3} - {2,3}: ", residues.First ().ChainID, residues.First ().ResSeq, residues.Last ().ResSeq);
@@ -838,7 +839,7 @@ namespace protein.Libraries
             return GeometryCheckResult.OK;
         }
 
-        public static GeometryCheckResult CheckGeometryOf1Unit(IEnumerable<Residue> residues, char sseType, double RMSDLimit, out double rmsd)
+        public static GeometryCheckResult CheckGeometryOf1Unit(IEnumerable<Residue> residues, SSEType sseType, double RMSDLimit, out double rmsd)
         {
             rmsd = 0;
             int unitLength = residues.Count();
@@ -1205,7 +1206,7 @@ namespace protein.Libraries
         }
 
         /** Returns index of best counterpart in candidateHelices and the value of metric. Returns null if not found. */
-        private static (int, double)? FindBestCounterpartNew(SSEInSpaceInt myHelixT, List<SSEInSpaceInt> candidateHelices, int iFrom, int iTo, Func<char, char, bool> typeMatching, Func<SSEInSpace, SSEInSpace, double> metricToMax)
+        private static (int, double)? FindBestCounterpartNew(SSEInSpaceInt myHelixT, List<SSEInSpaceInt> candidateHelices, int iFrom, int iTo, Func<SSEType, SSEType, bool> typeMatching, Func<SSEInSpace, SSEInSpace, double> metricToMax)
         {
             if (iFrom > iTo || iFrom > candidateHelices.Count - 1 || iTo < 0)
                 return null; // not found
@@ -1231,7 +1232,7 @@ namespace protein.Libraries
 			chainMapping indicates SSEs from which template chain should be looked for in which protein chain.
 			SSEs are choose in such way that the value of metric is minimized.
 			*/
-        public static List<(SSEInSpace, double)> FindCounterpartsNew(IEnumerable<SSEInSpace> templates, IEnumerable<SSEInSpace> candidates, Dictionary<string, string> chainMapping, Func<char, char, bool> typeMatching, Func<SSEInSpace, SSEInSpace, double> metricToMax)
+        public static List<(SSEInSpace, double)> FindCounterpartsNew(IEnumerable<SSEInSpace> templates, IEnumerable<SSEInSpace> candidates, Dictionary<string, string> chainMapping, Func<SSEType, SSEType, bool> typeMatching, Func<SSEInSpace, SSEInSpace, double> metricToMax)
         {
 
             Dictionary<string, List<SSEInSpaceInt>> templatesByResseq = new Dictionary<string, List<SSEInSpaceInt>>(); // list of SSEs for each template chain sorted by starting resseq
@@ -1302,7 +1303,7 @@ namespace protein.Libraries
             return result;
         }
 
-        public static List<(SSEInSpace, double)> FindCounterparts_DynProg(IList<SSEInSpace> templates, IList<SSEInSpace> candidates, Func<char, char, bool> typeMatching,
+        public static List<(SSEInSpace, double)> FindCounterparts_DynProg(IList<SSEInSpace> templates, IList<SSEInSpace> candidates, Func<SSEType, SSEType, bool> typeMatching,
             Func<SSEInSpace, SSEInSpace, double> metricToMin, Func<SSEInSpace, double> skipTemplatePenalty, Func<SSEInSpace, double> skipCandidatePenalty, out List<double> suspiciousnessList)
         {
 

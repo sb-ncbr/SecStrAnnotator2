@@ -56,19 +56,15 @@ namespace protein
 
             bool createPymolSession = false;
 
-            char[] acceptedSSETypes = Setting.DEFAULT_ACCEPTED_SSE_TYPES;
+            SSEType[] acceptedSSETypes = Setting.DEFAULT_ACCEPTED_SSE_TYPES;
             //LibAnnotation.JoiningParameters joiningParameters = new LibAnnotation.JoiningParameters (LibAnnotation.ALL_HELIX_TYPES, 10, 1, 10, 2, 30);
-            LibAnnotation.JoiningParameters joiningParameters = new LibAnnotation.JoiningParameters(SSE.ALL_HELIX_TYPES, 10, 1, 0, 5, 60); //try stagger penalty 10 or 5
+            LibAnnotation.JoiningParameters joiningParameters = new LibAnnotation.JoiningParameters(LibSSETypes.ALL_HELIX_TYPES.ToArray(), 10, 1, 0, 5, 60); //try stagger penalty 10 or 5
 
             double rmsdLimit = Setting.DEFAULT_RMSD_LIMIT;
 
             // annotationTypeFitting(T,Q) should determine whether query SSE of type Q can be mapped to template SSE of type T.
-            Func<char, char, bool> annotationTypeFitting =
-                ((t, q) => (SSE.ALL_HELIX_TYPES.Contains(t) && SSE.ALL_HELIX_TYPES.Contains(q)) ?
-                true
-                : (SSE.ALL_SHEET_TYPES.Contains(t) && SSE.ALL_SHEET_TYPES.Contains(q)) ?
-                true
-                    : false);
+            Func<SSEType, SSEType, bool> annotationTypeFitting =
+                (t, q) => t.IsHelix() && q.IsHelix() || t.IsSheet() && q.IsSheet();
 
             Setting.MetricMethod metricMethod = Setting.DEFAULT_METRIC_METHOD;
             double[] maxmetric = Setting.DEFAULT_MAXMETRIC;
@@ -132,7 +128,7 @@ namespace protein
                 .AddParameter("LIMIT")
                 .AddHelp("Specify RMSD limit for geometry-based secondary structure assignment, default: " + Setting.DEFAULT_RMSD_LIMIT.ToString("0.0#####"))
             );
-            options.AddOption(Option.StringOption(new string[] { "-t", "--types" }, v => { acceptedSSETypes = v.Split(',').Select(str => str[0]).ToArray(); })
+            options.AddOption(Option.StringOption(new string[] { "-t", "--types" }, v => { acceptedSSETypes = v.Split(',').Select(str => LibSSETypes.Type(str)).ToArray(); })
                 .AddConstraint(optArgs => optArgs[0].Split(',').All(type => type.Length == 1), "must be a comma-separated list of one-character SSE types")
                 .AddParameter("TYPES")
                 .AddHelp("Specify the allowed types of secondary structures.")
@@ -600,20 +596,20 @@ namespace protein
                         const int UNIT_LENGTH = 4;
                         TextWriter wRMSD = new StreamWriter(fileQueryRmsds);
                         wRMSD.WriteLine(LibAnnotation.COMMENT_SIGN_WRITE + "RMSDs from fitting helix and sheet shape to the alpha-carbons. Value for resi=x is calculated from residues x, x+1, x+2, x+3.");
-                        wRMSD.WriteLine(LibAnnotation.COMMENT_SIGN_WRITE + "resi\tRMSD_vs_H\tRMSD_vs_H5\tRMSD_vs_H6\tRMSD_vs_E");
+                        wRMSD.WriteLine(LibAnnotation.COMMENT_SIGN_WRITE + "resi\tRMSD_vs_H\tRMSD_vs_E");
                         List<Residue> residues = qProtein.GetChain(queryChainID).GetResidues().ToList();
-                        for (int i = 0; i <= residues.Count - 6/*UNIT_LENGTH*/; i++)
+                        for (int i = 0; i <= residues.Count - UNIT_LENGTH; i++)
                         {
                             double rmsdH;
                             double rmsdE;
-                            double rmsdH5;
-                            double rmsdH6;
-                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), 'H', rmsdLimit, out rmsdH);
-                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), 'E', rmsdLimit, out rmsdE);
-                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 5), '5', rmsdLimit, out rmsdH5);
-                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 6), '6', rmsdLimit, out rmsdH6);
-                            //wRMSD.WriteLine ("{0}\t{1}\t{2}", residues [i].ResSeq, rmsdH.ToString ("0.000"), rmsdE.ToString ("0.000"));
-                            wRMSD.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", residues[i].SeqNumber, rmsdH.ToString("0.000"), rmsdH5.ToString("0.000"), rmsdH6.ToString("0.000"), rmsdE.ToString("0.000"));
+                            // double rmsdH5;
+                            // double rmsdH6;
+                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), SSEType.HELIX_H_TYPE, rmsdLimit, out rmsdH);
+                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), SSEType.SHEET_TYPE, rmsdLimit, out rmsdE);
+                            // LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 5), '5', rmsdLimit, out rmsdH5);
+                            // LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 6), '6', rmsdLimit, out rmsdH6);
+                            wRMSD.WriteLine("{0}\t{1}\t{2}", residues[i].SeqNumber, rmsdH.ToString("0.000"), rmsdE.ToString("0.000"));
+                            // wRMSD.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", residues[i].SeqNumber, rmsdH.ToString("0.000"), rmsdH5.ToString("0.000"), rmsdH6.ToString("0.000"), rmsdE.ToString("0.000"));
                         }
                         wRMSD.Close();
 

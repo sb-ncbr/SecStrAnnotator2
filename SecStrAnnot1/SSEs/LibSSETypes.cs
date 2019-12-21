@@ -9,27 +9,27 @@ namespace protein.SSEs
 {
     static class LibSSETypes
     {
-        private static readonly HashSet<SSEType> ALL_HELIX_TYPES = new HashSet<SSEType>{
+        public static readonly HashSet<SSEType> ALL_HELIX_TYPES = new HashSet<SSEType>{
             SSEType.HELIX_H_TYPE,
             SSEType.HELIX_G_TYPE,
             SSEType.HELIX_I_TYPE,
             SSEType.MIXED_HELIX_TYPE
         };
 
-        private static readonly HashSet<SSEType> ALL_SHEET_TYPES = new HashSet<SSEType>{ 
-            SSEType.SHEET_TYPE, 
-            SSEType.ISOLATED_BETA_BRIDGE_TYPE 
+        public static readonly HashSet<SSEType> ALL_SHEET_TYPES = new HashSet<SSEType>{
+            SSEType.SHEET_TYPE,
+            SSEType.ISOLATED_BETA_BRIDGE_TYPE
         };
 
         private static readonly Dictionary<SSEType, char> sseTypeToChar = new Dictionary<SSEType, char>{
-		    { SSEType.NOT_FOUND_TYPE, 'X' },
+            { SSEType.NOT_FOUND_TYPE, 'X' },
             { SSEType.MIXED_HELIX_TYPE, 'h' },
             { SSEType.HELIX_G_TYPE, 'G' },
             { SSEType.HELIX_H_TYPE, 'H' },
             { SSEType.HELIX_I_TYPE, 'I' },
             { SSEType.SHEET_TYPE, 'E' },
             { SSEType.ISOLATED_BETA_BRIDGE_TYPE, 'B' },
-            { SSEType.TURN_C7_TYPE, 'U' },
+            { SSEType.TURN_C7_TYPE, 'C' },
             { SSEType.WIGGLE_C7_TYPE, 'W' },
             { SSEType.BULGE_CLASSIC_SHORT_SIDE_TYPE, 'n' },
             { SSEType.BULGE_CLASSIC_LONG_SIDE_TYPE, 'N' },
@@ -52,9 +52,14 @@ namespace protein.SSEs
             { SSEType.BULGE_PARALLEL33_SHORT_SIDE_TYPE, 'l' }, // in 3v8d ~ resi 69
             { SSEType.BULGE_PARALLEL33_LONG_SIDE_TYPE, 'L' },
         };
+        private static readonly Dictionary<char, SSEType> charToSseType = sseTypeToChar.ToDictionary(kv => kv.Value, kv => kv.Key);
+
 
 
         public static char AsChar(this SSEType type) => sseTypeToChar[type];
+
+        public static SSEType Type(char typeString) => charToSseType[typeString]; // TODO remove
+        public static SSEType Type(string typeString) => throw new NotImplementedException();
 
         public static bool IsHelix(this SSEType type) => ALL_HELIX_TYPES.Contains(type);
 

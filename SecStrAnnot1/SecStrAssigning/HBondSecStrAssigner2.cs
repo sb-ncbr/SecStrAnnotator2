@@ -101,10 +101,10 @@ namespace protein.SecStrAssigning
                 int endZeta = ladder.lastHbond.Zeta0;
                 (int startResIdx, int endResIdx) = ZRangeToResidueIndexRange(startZeta, endZeta, HBondSSAConstants.HELICES_BY_ALPHA);
                 (string chainId, int startSeqId, int endSeqId) = ChainStartEnd(startResIdx, endResIdx);
-                char type = 
-                    ladder.type0 == MicrostrandType.REGULAR_H_HELIX ? SSE.HELIX_H_TYPE
-                    : ladder.type0 == MicrostrandType.REGULAR_G_HELIX ? SSE.HELIX_G_TYPE 
-                    : SSE.HELIX_I_TYPE;
+                SSEType type = 
+                    ladder.type0 == MicrostrandType.REGULAR_H_HELIX ? SSEType.HELIX_H_TYPE
+                    : ladder.type0 == MicrostrandType.REGULAR_G_HELIX ? SSEType.HELIX_G_TYPE 
+                    : SSEType.HELIX_I_TYPE;
                 SSE sse = new SSE(null/*$"{type}{i}"*/, chainId, startSeqId, endSeqId, type, null);
                 helices.Add(sse);
             }            
@@ -122,7 +122,7 @@ namespace protein.SecStrAssigning
                 var strand = betaGraph.macrostrands[i];
                 (int startResIdx, int endResIdx) = ZRangeToResidueIndexRange(strand.startZeta, strand.endZeta, HBondSSAConstants.STRANDS_BY_ALPHA);
                 (string chainId, int startSeqId, int endSeqId) = ChainStartEnd(startResIdx, endResIdx);
-                char type = (startResIdx == endResIdx) ? SSE.ISOLATED_BETA_BRIDGE_TYPE : SSE.SHEET_TYPE;
+                SSEType type = (startResIdx == endResIdx) ? SSEType.ISOLATED_BETA_BRIDGE_TYPE : SSEType.SHEET_TYPE;
                 int sheetId = HBondSSAConstants.SHEET_NUMBERING_FROM + strand.sheet;
                 SSE sse = new SSE(null/*$"{type}{i}"*/, chainId, startSeqId, endSeqId, type, sheetId);
                 strands.Add(sse);

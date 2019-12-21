@@ -16,7 +16,7 @@ namespace protein.SecStrAssigning
         public const int MIN_HELIX_SUBHELIX_OVERLAP = 1;
 
         public GeomHbondSecStrAssigner2(Protein p, double rmsdLimit, double hBondEnergyCutoff){
-            this.GeomAssigner = new GeomSecStrAssigner(p.GetChains (), rmsdLimit, SSE.ALL_HELIX_TYPES);
+            this.GeomAssigner = new GeomSecStrAssigner(p.GetChains (), rmsdLimit, LibSSETypes.ALL_HELIX_TYPES);
             this.HBondAssigner2 = new HBondSecStrAssigner2(p, hBondEnergyCutoff);
         }
 
@@ -40,7 +40,7 @@ namespace protein.SecStrAssigning
                         helix.AddNestedSSE (sub);
                     }
                     var subTypes = subs.Select (sub => sub.Type).Distinct ().ToList();
-                    helix.Type = subTypes.Count == 1 ? subTypes[0] : SSE.MIXED_HELIX_TYPE;
+                    helix.Type = subTypes.Count == 1 ? subTypes[0] : SSEType.MIXED_HELIX_TYPE;
                     processedHelices.Add (helix);
                 } else {
                     // ignore helix that contains no subhelices (no H-bonds)

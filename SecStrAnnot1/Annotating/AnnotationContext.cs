@@ -14,7 +14,7 @@ namespace protein.Annotating
     {
         //General settings
         public Func<SSEInSpace, SSEInSpace, double> MetricToMin { get; private set; }
-        public Func<char, char, bool> TypeMatching { get; private set; }
+        public Func<SSEType, SSEType, bool> TypeMatching { get; private set; }
         public Func<SSEInSpace, double> SkipTemplatePenalty { get; private set; }
         public Func<SSEInSpace, double> SkipCandidatePenalty { get; private set; }
 
@@ -32,7 +32,7 @@ namespace protein.Annotating
         //Constructors
         public AnnotationContext(
             Func<SSEInSpace, SSEInSpace, double> metricToMin,
-            Func<char, char, bool> typeMatching,
+            Func<SSEType, SSEType, bool> typeMatching,
             Func<SSEInSpace, double> skipTemplatePenalty,
             Func<SSEInSpace, double> skipCandidatePenalty,
             IEnumerable<SSEInSpace> templates,
@@ -353,7 +353,7 @@ namespace protein.Annotating
                 int index = nOrig + k;
                 int[] partIndices = Enumerable.Range(i, j - i + 1).ToArray();
                 IEnumerable<SSEInSpace> parts = hSSEs.Skip(i).Take(j - i + 1);
-                SSEInSpace newSSE = new SSEInSpace(new SSE(parts.Select(p => p.Label).EnumerateWithSeparators("_"), parts.First().ChainID, parts.First().Start, parts.Last().End, 'E', null),
+                SSEInSpace newSSE = new SSEInSpace(new SSE(parts.Select(p => p.Label).EnumerateWithSeparators("_"), parts.First().ChainID, parts.First().Start, parts.Last().End, SSEType.SHEET_TYPE, null),
                     parts.First().StartPoint, parts.Last().EndPoint);
                 newSSE.AddComment("Created by joining " + parts.EnumerateWithSeparators(" and ") + ".");
                 foreach (var p in parts)

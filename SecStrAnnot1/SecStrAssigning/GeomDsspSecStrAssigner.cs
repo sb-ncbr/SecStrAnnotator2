@@ -10,26 +10,32 @@ using protein.Libraries;
 
 namespace protein.SecStrAssigning
 {
-    public class GeomDsspSecStrAssigner : ISecStrAssigner {
+    public class GeomDsspSecStrAssigner : ISecStrAssigner
+    {
         public ISecStrAssigner HelixAssigner { get; private set; }
         public ISecStrAssigner SheetAssigner { get; private set; }
 
-        public GeomDsspSecStrAssigner(ISecStrAssigner helixAssigner, ISecStrAssigner sheetAssigner){
-            this.HelixAssigner=helixAssigner;
-            this.SheetAssigner=sheetAssigner;
+        public GeomDsspSecStrAssigner(ISecStrAssigner helixAssigner, ISecStrAssigner sheetAssigner)
+        {
+            this.HelixAssigner = helixAssigner;
+            this.SheetAssigner = sheetAssigner;
         }
 
-        public GeomDsspSecStrAssigner(Protein protein, IEnumerable<string> chainIDs,/*IEnumerable<Chain> chains,*/ double rmsdLimit, String dsspExecutable, String renumberedPDBFile, String DSSPFile, char[] acceptedSSETypes){
-            this.HelixAssigner = new GeomSecStrAssigner(chainIDs.Select(c => protein.GetChain(c)), rmsdLimit, acceptedSSETypes.Intersect (SSE.ALL_HELIX_TYPES).ToArray ());
-            this.SheetAssigner = new DsspSecStrAssigner(protein, dsspExecutable, renumberedPDBFile, DSSPFile, chainIDs, acceptedSSETypes.Intersect (SSE.ALL_SHEET_TYPES).ToArray ());
+        public GeomDsspSecStrAssigner(Protein protein, IEnumerable<string> chainIDs,/*IEnumerable<Chain> chains,*/ double rmsdLimit, String dsspExecutable, String renumberedPDBFile, String DSSPFile, SSEType[] acceptedSSETypes)
+        {
+            this.HelixAssigner = new GeomSecStrAssigner(chainIDs.Select(c => protein.GetChain(c)), rmsdLimit, acceptedSSETypes.Intersect(LibSSETypes.ALL_HELIX_TYPES).ToArray());
+            this.SheetAssigner = new DsspSecStrAssigner(protein, dsspExecutable, renumberedPDBFile, DSSPFile, chainIDs, acceptedSSETypes.Intersect(LibSSETypes.ALL_SHEET_TYPES).ToArray());
         }
 
-        public SecStrAssignment GetSecStrAssignment(){
-            SecStrAssignment result = SecStrAssignment.Order (SecStrAssignment.Combine (SheetAssigner.GetSecStrAssignment (), HelixAssigner.GetSecStrAssignment ()));
+        public SecStrAssignment GetSecStrAssignment()
+        {
+            SecStrAssignment result = SecStrAssignment.Order(SecStrAssignment.Combine(SheetAssigner.GetSecStrAssignment(), HelixAssigner.GetSecStrAssignment()));
             //reporting overlapping SSEs
-            for (int i = 0; i < result.SSEs.Count - 1; i++) {
-                if (result.SSEs [i].End >= result.SSEs [i + 1].Start) {
-                    Lib.WriteLineDebug ("Overlapping SSEs: {0} and {1}", result.SSEs [i], result.SSEs [i + 1]);
+            for (int i = 0; i < result.SSEs.Count - 1; i++)
+            {
+                if (result.SSEs[i].End >= result.SSEs[i + 1].Start)
+                {
+                    Lib.WriteLineDebug("Overlapping SSEs: {0} and {1}", result.SSEs[i], result.SSEs[i + 1]);
                 }
             }
             // truncating overlapping SSEs
@@ -45,9 +51,10 @@ namespace protein.SecStrAssigning
             return result;
         }
 
-        public String GetDescription(){
-            return "mixed method (for helices: " + HelixAssigner.GetDescription () + ", for sheets: " + SheetAssigner.GetDescription ();
+        public String GetDescription()
+        {
+            return "mixed method (for helices: " + HelixAssigner.GetDescription() + ", for sheets: " + SheetAssigner.GetDescription();
         }
-    }	
+    }
 }
 
