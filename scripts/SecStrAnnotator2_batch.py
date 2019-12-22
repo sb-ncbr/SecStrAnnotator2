@@ -14,19 +14,21 @@ import subprocess
 #  PARSE ARGUMENTS  ###############################################################################
 
 parser = argparse.ArgumentParser()
-parser.add_argument('directory', help='directory with the input and output files (argument DIRECTORY for SecStrAnnotator)', type=str)
-parser.add_argument('template', help='template domain specification (argument TEMPLATE for SecStrAnnotator)', type=str)
-parser.add_argument('queries', help='JSON file with the list of domains to be annotated (in format {PDB:[[domain_name,chain,ranges]]}, will be processed to QUERY arguments for SecStrAnnotator)', type=str)
-parser.add_argument('--options', help='Any options that are to be passed to SecStrAnnotator (must be enclosed in quotes and contain spaces, not to be confused with Python arguments, e.g. --options \'--ssa dssp --soft\' or \' --soft\')', type=str, default='')
-parser.add_argument('--threads', help='Number of parallel threads (default: 1)', type=int, default=1)
-parser.add_argument('--dll', help='Path to the SecStrAnnotator DLL (default: SecStrAnnotator2.dll)', type=str, default='SecStrAnnotator2.dll')
+parser.add_argument('directory', type=str, help='directory with the input and output files (argument DIRECTORY for SecStrAnnotator)')
+parser.add_argument('template', type=str, help='template domain specification (argument TEMPLATE for SecStrAnnotator)')
+parser.add_argument('queries', type=str, help='JSON file with the list of domains to be annotated (in format {PDB:[[domain_name,chain,ranges]]}, will be processed to QUERY arguments for SecStrAnnotator)')
+parser.add_argument('--options', type=str, default='', help='Any options that are to be passed to SecStrAnnotator (must be enclosed in quotes and contain spaces, not to be confused with Python arguments, e.g. --options \'--ssa dssp --soft\' or \' --soft\')')
+parser.add_argument('--by_pdb', action='store_true', help='Process queries PDB-by-PDB, ignore domain information (only with --options " --onlyssa")')
+parser.add_argument('--threads', type=int, default=1, help='Number of parallel threads (default: 1)')
+parser.add_argument('--dll', type=str, default='SecStrAnnotator2.dll', help='Path to the SecStrAnnotator DLL (default: SecStrAnnotator2.dll)')
 args = parser.parse_args()
 
-options = [opt for opt in args.options.split(' ') if opt != '']
+options = args.options.split()
 onlyssa = '--onlyssa' in options
 directory = args.directory
 template = args.template
 queries_file = args.queries
+by_pdb = args.by_pdb
 n_threads = args.threads
 RUN_DIR = path.dirname(__file__)  # os.getcwd()
 SECSTRANNOTATOR = path.join(RUN_DIR, args.dll)
@@ -174,10 +176,10 @@ if not path.isfile(SECSTRANNOTATOR):
 template_pdb = template.split(',')[0]
 template_struct_file = path.join(directory, template_pdb+'.cif')
 template_annot_file = path.join(directory, template_pdb+'-template.sses.json')
-if not path.isfile(template_struct_file):
+if not onlyssa and not path.isfile(template_struct_file):
 	sys.stderr.write('Error: "' + template_struct_file + '" not found\n')
 	exit(1)
-if not path.isfile(template_annot_file):
+if not onlyssa and not path.isfile(template_annot_file):
 	sys.stderr.write('Error: "' + template_annot_file + '" not found\n')
 	exit(1)
 
@@ -202,33 +204,43 @@ all_annotations = OrderedDict()
 failed = []
 
 def process_pdb(pdb):
+	clear_file(path.join(directory, pdb + '.label2auth.tsv'))
+	if by_pdb:
+		process_domain(pdb, pdb)
+	else:
+		for domain_name, chain, ranges in domains[pdb]:
+			process_domain(domain_name, pdb, chain, ranges)
+
+def process_domain(domain_name, pdb, chain=None, ranges=None):
+	query = pdb
+	if chain is not None:
+		query += ',' + chain 
+	if ranges is not None:
+		query += ',' + ranges
 	thread_out = path.join(directory, 'stdout_thread_' + threading.current_thread().name + '.txt')
 	thread_err = path.join(directory, 'stderr_thread_' + threading.current_thread().name + '.txt')
-	clear_file(path.join(directory, pdb + '.label2auth.tsv'))
-	for domain_name, chain, ranges in domains[pdb]:
-		query = pdb + ',' + chain + ',' + ranges
-		with open(thread_out, 'a') as w_out:
-			with open(thread_err, 'a') as w_err:
-				w_out.write('\n' + '-'*70 + '\n' + domain_name + '\n')
-				w_err.write('-'*70 + '\n' + domain_name + '\n')
-				w_out.flush()
-				w_err.flush()
-				regular_arguments = [directory, template, query] if not onlyssa else [directory, query]
-				exit_code = subprocess.call(secstrannotator_commands + regular_arguments + options, stdout=w_out, stderr=w_err)
-		if exit_code == 0:
-			for ext in out_files_extensions:
-				try_rename_file(path.join(directory, pdb + ext), path.join(directory, domain_name + ext))
-			try:
-				copy_file(path.join(directory, pdb + '-label2auth.tsv'), path.join(directory, pdb + '.label2auth.tsv'), append=True)
-				remove_file(path.join(directory, pdb + '-label2auth.tsv'))
-			except:
-				pass
-			if not onlyssa:
-				annotation = try_read_json(path.join(directory, domain_name + '-annotated.sses.json')).get(pdb, {})
-				annotation['domain'] = { 'name': domain_name, 'pdb': pdb, 'chain': chain, 'ranges': ranges }
-				all_annotations[domain_name] = annotation
-		else:
-			failed.append(domain_name)
+	with open(thread_out, 'a') as w_out:
+		with open(thread_err, 'a') as w_err:
+			w_out.write('\n' + '-'*70 + '\n' + domain_name + '\n')
+			w_err.write('-'*70 + '\n' + domain_name + '\n')
+			w_out.flush()
+			w_err.flush()
+			regular_arguments = [directory, template, query] if not onlyssa else [directory, query]
+			exit_code = subprocess.call(secstrannotator_commands + regular_arguments + options, stdout=w_out, stderr=w_err)
+	if exit_code == 0:
+		for ext in out_files_extensions:
+			try_rename_file(path.join(directory, pdb + ext), path.join(directory, domain_name + ext))
+		try:
+			copy_file(path.join(directory, pdb + '-label2auth.tsv'), path.join(directory, pdb + '.label2auth.tsv'), append=True)
+			remove_file(path.join(directory, pdb + '-label2auth.tsv'))
+		except:
+			pass
+		if not onlyssa:
+			annotation = try_read_json(path.join(directory, domain_name + '-annotated.sses.json')).get(pdb, {})
+			annotation['domain'] = { 'name': domain_name, 'pdb': pdb, 'chain': chain, 'ranges': ranges }
+			all_annotations[domain_name] = annotation
+	else:
+		failed.append(domain_name)
 
 def clear_outputs(thread):
 	thread_out = path.join(directory, 'stdout_thread_' + thread.name + '.txt')
