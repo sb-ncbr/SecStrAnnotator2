@@ -714,5 +714,14 @@ namespace protein.Libraries
             return false;
         }
 
+        public static string Repeat(this string str, int repeats){
+            StringBuilder b = new StringBuilder(str.Length * repeats);
+            for (int i = 0; i < repeats; i++)
+            {
+                b.Append(str);
+            }
+            return b.ToString();
+        }
+
     }
 }

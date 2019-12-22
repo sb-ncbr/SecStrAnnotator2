@@ -23,14 +23,21 @@ namespace protein.Sses
 
         private static readonly Dictionary<SseType, string> sseTypeToString = new Dictionary<SseType, string>{
             { SseType.NOT_FOUND_TYPE, "X" },
+
             { SseType.MIXED_HELIX_TYPE, "h" },
             { SseType.HELIX_G_TYPE, "G" },
             { SseType.HELIX_H_TYPE, "H" },
             { SseType.HELIX_I_TYPE, "I" },
+
             { SseType.SHEET_TYPE, "E" },
             { SseType.ISOLATED_BETA_BRIDGE_TYPE, "B" },
+
             { SseType.TURN_C7_TYPE, "C" },
             { SseType.WIGGLE_C7_TYPE, "W" },
+
+            { SseType.BULGE_ANTIPARALLEL_UNSPECIFIED, "bA" },
+            { SseType.BULGE_PARALLEL_UNSPECIFIED, "bP" },
+
             { SseType.BULGE_CLASSIC_SHORT_SIDE_TYPE, "n" },
             { SseType.BULGE_CLASSIC_LONG_SIDE_TYPE, "N" },
             { SseType.BULGE_WIDE_SHORT_SIDE_TYPE, "m" },
@@ -43,6 +50,7 @@ namespace protein.Sses
             { SseType.BULGE_ANTIPARALLEL15_LONG_SIDE_TYPE, "S" },
             { SseType.BULGE_ANTIPARALLEL23_SHORT_SIDE_TYPE, "o" }, // in 3dbg ~ resi 452
             { SseType.BULGE_ANTIPARALLEL23_LONG_SIDE_TYPE, "O" },
+
             { SseType.BULGE_PARALLEL14_SHORT_SIDE_TYPE, "p" },
             { SseType.BULGE_PARALLEL14_LONG_SIDE_TYPE, "P" },
             { SseType.BULGE_PARALLEL32_SHORT_SIDE_TYPE, "q" }, // in 3ruk ~ resi 38
