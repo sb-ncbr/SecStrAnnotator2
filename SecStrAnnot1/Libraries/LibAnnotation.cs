@@ -1022,6 +1022,29 @@ namespace protein.Libraries
             return ssesInSpace;
         }
 
+        public static List<SseInSpace> SSEsAsLineSegments_GeomVersion(Protein protein, List<Sse> sses){
+            var chainToSseIndices = new Dictionary<string, List<int>>();
+            for (int i = 0; i < sses.Count; i++)
+            {
+                string chainId = sses[i].ChainID;
+                if (!chainToSseIndices.ContainsKey(chainId)){
+                    chainToSseIndices[chainId] = new List<int>();
+                }
+                chainToSseIndices[chainId].Add(i);
+            }
+
+            var result = Enumerable.Repeat<SseInSpace>(null, sses.Count).ToList();
+            foreach (string chainId in chainToSseIndices.Keys){
+                List<double>[] dump;
+                List<SseInSpace> ssesInThisChain = SSEsAsLineSegments_GeomVersion(protein.GetChain(chainId), chainToSseIndices[chainId].Select(i => sses[i]).ToList(), out dump);
+                for (int i = 0; i < ssesInThisChain.Count; i++)
+                {
+                    result[chainToSseIndices[chainId][i]] = ssesInThisChain[i];
+                }           
+            }
+            return result;
+        }
+
         private static int NumExtraResidues(Sse sse)
         {
             return 1;

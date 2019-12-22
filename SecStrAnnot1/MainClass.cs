@@ -234,7 +234,7 @@ namespace protein
                 Setting.Directory = otherArgs[0];
                 try
                 {
-                    ParseDomainSpecification(otherArgs[1], out queryID, out queryChainID_, out queryDomainRanges);
+                    (queryID, queryChainID_, queryDomainRanges) = ParseDomainSpecification(otherArgs[1]);
                 }
                 catch (FormatException e)
                 {
@@ -254,7 +254,7 @@ namespace protein
                 Setting.Directory = otherArgs[0];
                 try
                 {
-                    ParseDomainSpecification(otherArgs[1], out templateID, out templateChainID_, out templateDomainRanges);
+                    (templateID, templateChainID_, templateDomainRanges) = ParseDomainSpecification(otherArgs[1], defaultChain: Setting.DEFAULT_CHAIN_ID);
                 }
                 catch (FormatException e)
                 {
@@ -264,7 +264,7 @@ namespace protein
                 }
                 try
                 {
-                    ParseDomainSpecification(otherArgs[2], out queryID, out queryChainID_, out queryDomainRanges);
+                    (queryID, queryChainID_, queryDomainRanges) = ParseDomainSpecification(otherArgs[2], defaultChain: Setting.DEFAULT_CHAIN_ID);
                 }
                 catch (FormatException e)
                 {
@@ -274,12 +274,6 @@ namespace protein
                 }
             }
             #endregion
-
-
-            string[] queryChainIDs = new string[] { queryChainID_ };
-            Dictionary<string, string[]> chainMapping = new Dictionary<string, string[]> { { templateChainID_, queryChainIDs } }; // mapping which chain in template corresponds to which chain(s) in the query protein
-            string[] allTemplateChainIDs = chainMapping.Keys.ToArray();
-            string[] allQueryChainIDs = chainMapping.Values.SelectMany(x => x).ToArray();
 
 
             #region Reading configuration file.
@@ -339,17 +333,48 @@ namespace protein
                 qProtein.SaveLabel2AuthTable(fileQueryLabel2Auth);
             }
 
+
+            // string[] queryChainIDs = new string[] { queryChainID_ };
+            // Dictionary<string, string[]> chainMapping = new Dictionary<string, string[]> { { templateChainID_, queryChainIDs } }; // mapping which chain in template corresponds to which chain(s) in the query protein
+            // string[] allTemplateChainIDs = chainMapping.Keys.ToArray();
+            // string[] allQueryChainIDs = chainMapping.Values.SelectMany(x => x).ToArray();
+            // if (!onlyDetect)
+            // {
+            //     foreach (string c in chainMapping.Keys)
+            //     {
+            //         if (!tProtein.HasChain(c))
+            //         {
+            //             Lib.WriteError("Template protein does not contain chain {0}.", c);
+            //             return -1;
+            //         }
+            //     }
+            //     foreach (string c in allQueryChainIDs)
+            //     {
+            //         if (!qProtein.HasChain(c))
+            //         {
+            //             Lib.WriteError("Query protein does not contain chain {0}.", c);
+            //             return -1;
+            //         }
+            //     }
+            // }
+
+            string[] queryChainIDs;// = new string[] { queryChainID_ };
+                                   // Dictionary<string, string[]> chainMapping = new Dictionary<string, string[]> { { templateChainID_, queryChainIDs } }; // mapping which chain in template corresponds to which chain(s) in the query protein
+
             if (!onlyDetect)
             {
-                foreach (string c in chainMapping.Keys)
+                if (!tProtein.HasChain(templateChainID_))
                 {
-                    if (!tProtein.HasChain(c))
-                    {
-                        Lib.WriteError("Template protein does not contain chain {0}.", c);
-                        return -1;
-                    }
+                    Lib.WriteError("Template protein does not contain chain {0}.", templateChainID_);
+                    return -1;
                 }
-                foreach (string c in allQueryChainIDs)
+            }
+
+            if (queryChainID_ != null)
+            {
+                queryChainIDs = new string[] { queryChainID_ };
+                // chainMapping = new Dictionary<string, string[]> { { templateChainID_, queryChainIDs } }; // mapping which chain in template corresponds to which chain(s) in the query protein
+                foreach (string c in queryChainIDs)
                 {
                     if (!qProtein.HasChain(c))
                     {
@@ -358,6 +383,16 @@ namespace protein
                     }
                 }
             }
+            else
+            {
+                queryChainIDs = qProtein.GetChains().Select(c => c.Id).ToArray();
+                // chainMapping = new Dictionary<string, string[]> { { templateChainID_, queryChainIDs } }; // mapping which chain in template corresponds to which chain(s) in the query protein
+            }
+            // string[] allTemplateChainIDs = chainMapping.Keys.ToArray();
+            // string[] allQueryChainIDs = chainMapping.Values.SelectMany(x => x).ToArray();
+
+
+
             #endregion
 
 
@@ -374,8 +409,8 @@ namespace protein
             {
                 ISecStrAssigner templateSecStrAssigner =
                     Setting.JSON_INPUT ?
-                    new FileSecStrAssigner_Json(fileTemplateAnnotatedHelices, templateID, allTemplateChainIDs)
-                    : new FileSecStrAssigner(fileTemplateAnnotatedHelices, allTemplateChainIDs) as ISecStrAssigner;
+                    new FileSecStrAssigner_Json(fileTemplateAnnotatedHelices, templateID, new[] { templateChainID_ } /*allTemplateChainIDs*/)
+                    : new FileSecStrAssigner(fileTemplateAnnotatedHelices, new[] { templateChainID_ } /*allTemplateChainIDs*/) as ISecStrAssigner;
                 try
                 {
                     templateSSA = templateSecStrAssigner.GetSecStrAssignment();
@@ -421,17 +456,17 @@ namespace protein
             {
                 case Setting.SecStrMethod.File:
                     secStrAssigner = Setting.JSON_INPUT ?
-                        new FileSecStrAssigner_Json(fileQueryInputHelices, queryID, allQueryChainIDs)
-                        : new FileSecStrAssigner(fileQueryInputHelices, allQueryChainIDs) as ISecStrAssigner;
+                        new FileSecStrAssigner_Json(fileQueryInputHelices, queryID, queryChainIDs)
+                        : new FileSecStrAssigner(fileQueryInputHelices, queryChainIDs) as ISecStrAssigner;
                     break;
                 case Setting.SecStrMethod.Dssp:
-                    secStrAssigner = new DsspSecStrAssigner(qProtein, config.DsspExecutable, fileQueryRenumberedPDB, fileQueryDSSP, allQueryChainIDs, acceptedSSETypes);
+                    secStrAssigner = new DsspSecStrAssigner(qProtein, config.DsspExecutable, fileQueryRenumberedPDB, fileQueryDSSP, queryChainIDs, acceptedSSETypes);
                     break;
                 case Setting.SecStrMethod.Geom:
-                    secStrAssigner = new GeomSecStrAssigner(allQueryChainIDs.Select(c => qProtein.GetChain(c)), rmsdLimit);
+                    secStrAssigner = new GeomSecStrAssigner(queryChainIDs.Select(c => qProtein.GetChain(c)), rmsdLimit);
                     break;
                 case Setting.SecStrMethod.GeomDssp:
-                    secStrAssigner = new GeomDsspSecStrAssigner(qProtein, allQueryChainIDs, rmsdLimit, config.DsspExecutable, fileQueryRenumberedPDB, fileQueryDSSP, acceptedSSETypes);
+                    secStrAssigner = new GeomDsspSecStrAssigner(qProtein, queryChainIDs, rmsdLimit, config.DsspExecutable, fileQueryRenumberedPDB, fileQueryDSSP, acceptedSSETypes);
                     break;
                 case Setting.SecStrMethod.Hbond:
                     secStrAssigner = new HBondSecStrAssigner(qProtein, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
@@ -454,7 +489,7 @@ namespace protein
                 secStrAssigner = new JoiningSecStrAssigner(secStrAssigner, qProtein, rmsdLimit, Setting.JoiningTypeCombining);
             }
 
-            secStrAssigner = new FilteringSecStrAssigner(secStrAssigner, acceptedSSETypes, allQueryChainIDs);
+            // secStrAssigner = new FilteringSecStrAssigner(secStrAssigner, acceptedSSETypes, allQueryChainIDs);
             if (secStrMethod != Setting.SecStrMethod.File)
             {
                 secStrAssigner = new RelabellingSecStrAssigner(secStrAssigner, null, Setting.LABEL_DETECTED_SSES_AS_NULL);
@@ -494,7 +529,7 @@ namespace protein
                     if (!Lib.RunPyMOLScriptWithCommandLineArguments(config.PymolExecutable, config.PymolScriptSession, new string[]{
                         "cif",
                         Setting.Directory,
-                        $"{queryID},{chainMapping[templateChainID_].Last()},{FormatRanges(queryDomainRanges)}",
+                        $"{queryID},{queryChainIDs.Last()},{FormatRanges(queryDomainRanges)}",
                         "--detected",
                         "--hbonds",
                         }))
@@ -502,10 +537,14 @@ namespace protein
                 }
                 if (Lib.DoWriteDebug)
                 {
-                    List<double>[] dump;
-                    var qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein.GetChain(queryChainID_), querySSA.SSEs, out dump);
+                    var qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein, querySSA.SSEs); //new List<SseInSpace>();
+                    // foreach (string chainId in queryChainIDs){
+                    //     qSSEsInSpace.AddRange(LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein, querySSA.SSEs));
+                    // }
 
-                    LibAnnotation.WriteAnnotationFile_Json(fileQueryDetectedHelices, queryID,
+                    LibAnnotation.WriteAnnotationFile_Json(
+                        fileQueryDetectedHelices, 
+                        queryID,
                         qSSEsInSpace,
                         null, //extras
                         querySSA.Connectivity,
@@ -535,284 +574,284 @@ namespace protein
             JsonValue rotationMatrix = null;
 
             #region Superimposition and annotation for each chain.
-            foreach (string templateChainID in allTemplateChainIDs)
+            // foreach (string templateChainID in allTemplateChainIDs)
+            // {
+            foreach (string queryChainID in queryChainIDs)
             {
-                foreach (string queryChainID in chainMapping[templateChainID])
+                #region Superimposing p over t.
+                if (tryToReuseAlignment && File.Exists(fileQueryAlignedPDB))
                 {
-                    #region Superimposing p over t.
-                    if (tryToReuseAlignment && File.Exists(fileQueryAlignedPDB))
+                    // The query protein has already been read from aligned PDB file.
+                }
+                else
+                {
+                    if (alignMethod == Setting.AlignMethod.None)
                     {
-                        // The query protein has already been read from aligned PDB file.
+                        // qProtein.Save (fileQueryAlignedPDB);
+                        File.Copy(fileQueryPDB, fileQueryAlignedPDB, true);
                     }
-                    else
+                    else if (Setting.alignMethodNames.ContainsKey(alignMethod))
                     {
-                        if (alignMethod == Setting.AlignMethod.None)
-                        {
-                            // qProtein.Save (fileQueryAlignedPDB);
-                            File.Copy(fileQueryPDB, fileQueryAlignedPDB, true);
-                        }
-                        else if (Setting.alignMethodNames.ContainsKey(alignMethod))
-                        {
-                            #region Superimpose by a given PyMOL's command.
-                            Lib.WriteInColor(ConsoleColor.Yellow, "Running PyMOL to align proteins:\n");
-                            if (!Lib.RunPyMOLScriptWithCommandLineArguments(config.PymolExecutable, config.PymolScriptAlign, new string[] {
+                        #region Superimpose by a given PyMOL's command.
+                        Lib.WriteInColor(ConsoleColor.Yellow, "Running PyMOL to align proteins:\n");
+                        if (!Lib.RunPyMOLScriptWithCommandLineArguments(config.PymolExecutable, config.PymolScriptAlign, new string[] {
                                 "cif",
                                 Setting.alignMethodNames [alignMethod],
                                 Setting.Directory,
                                 templateID,
-                                templateChainID.ToString (),
+                                templateChainID_.ToString (),
                                 FormatRanges(templateDomainRanges),
                                 queryID,
                                 queryChainID.ToString (),
                                 FormatRanges(queryDomainRanges)
                             }))
-                                return -1;
-                            qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
-                            rotationMatrix = LibAnnotation.ReadRotationMatrixFromAlignmentFile(fileQueryAlignment);
-                            Console.WriteLine(rotationMatrix);
-                            #endregion
+                            return -1;
+                        qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
+                        rotationMatrix = LibAnnotation.ReadRotationMatrixFromAlignmentFile(fileQueryAlignment);
+                        Console.WriteLine(rotationMatrix);
+                        #endregion
+                    }
+                    else
+                    {
+                        throw new Exception(alignMethod + " has no assigned name in alignMethodNames.");
+                    }
+                }
+                times.Add(("Alignment", DateTime.Now.Subtract(stamp)));
+                stamp = DateTime.Now;
+                #endregion
+
+                Lib.Shuffler shuffler;
+                List<Sse> tSSEs = templateSSA.SSEs.WhereAndGetShuffler(sse => sse.ChainID == templateChainID_, out shuffler).ToList();
+                List<(int, int, int)> tConnectivity = shuffler.UpdateIndices(templateSSA.Connectivity).ToList();
+                List<Sse> qSSEs = querySSA.SSEs.WhereAndGetShuffler(sse => sse.ChainID == queryChainID, out shuffler).ToList();
+                List<(int, int, int)> qConnectivity = shuffler.UpdateIndices(querySSA.Connectivity).ToList();
+                List<SseInSpace> tSSEsInSpace;
+                List<SseInSpace> qSSEsInSpace;
+
+
+                #region Calculate helix-fit and sheet-fit RMSDs for whole chain and output them to a file.
+                if (Lib.DoWriteDebug)
+                {
+                    const int UNIT_LENGTH = 4;
+                    TextWriter wRMSD = new StreamWriter(fileQueryRmsds);
+                    wRMSD.WriteLine(LibAnnotation.COMMENT_SIGN_WRITE + "RMSDs from fitting helix and sheet shape to the alpha-carbons. Value for resi=x is calculated from residues x, x+1, x+2, x+3.");
+                    wRMSD.WriteLine(LibAnnotation.COMMENT_SIGN_WRITE + "resi\tRMSD_vs_H\tRMSD_vs_E");
+                    List<Residue> residues = qProtein.GetChain(queryChainID).GetResidues().ToList();
+                    for (int i = 0; i <= residues.Count - UNIT_LENGTH; i++)
+                    {
+                        double rmsdH;
+                        double rmsdE;
+                        // double rmsdH5;
+                        // double rmsdH6;
+                        LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), SseType.HELIX_H_TYPE, rmsdLimit, out rmsdH);
+                        LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), SseType.SHEET_TYPE, rmsdLimit, out rmsdE);
+                        // LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 5), '5', rmsdLimit, out rmsdH5);
+                        // LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 6), '6', rmsdLimit, out rmsdH6);
+                        wRMSD.WriteLine("{0}\t{1}\t{2}", residues[i].SeqNumber, rmsdH.ToString("0.000"), rmsdE.ToString("0.000"));
+                        // wRMSD.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", residues[i].SeqNumber, rmsdH.ToString("0.000"), rmsdH5.ToString("0.000"), rmsdH6.ToString("0.000"), rmsdE.ToString("0.000"));
+                    }
+                    wRMSD.Close();
+
+                    times.Add(("Calculate RMSDs for whole chain", DateTime.Now.Subtract(stamp)));
+                    stamp = DateTime.Now;
+                }
+                #endregion
+
+
+                #region Calculating line segments corresponding to helices in template and query protein.
+
+                List<double>[] dump;
+                if (forceCalculateVectors || !tSSEs.All(sse => sse is SseInSpace))
+                {
+                    tSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(tProtein.GetChain(templateChainID_), tSSEs, out dump);
+                }
+                else
+                {
+                    tSSEsInSpace = tSSEs.Select(sse => sse as SseInSpace).ToList();
+                }
+
+                if (forceCalculateVectors || !qSSEs.All(sse => sse is SseInSpace))
+                {
+                    qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein.GetChain(queryChainID), qSSEs, out dump);
+                }
+                else
+                {
+                    qSSEsInSpace = qSSEs.Select(sse => sse as SseInSpace).ToList();
+                }
+
+                times.Add(("Calculate line segments", DateTime.Now.Subtract(stamp)));
+                stamp = DateTime.Now;
+                #endregion
+
+
+                #region Matching.
+
+                List<Residue> tResiduesForAlignment = tProtein.GetChain(templateChainID_).GetResidues().ToList();
+                List<Residue> qResiduesForAlignment = qProtein.GetChain(queryChainID).GetResidues().ToList();
+                List<(int?, int?, double)> alignment = LibAnnotation.AlignResidues_DynProg(tResiduesForAlignment, qResiduesForAlignment);
+                (List<int>, List<int>) pos = LibAnnotation.AlignmentToPositions(alignment);
+                double R = LibAnnotation.CharacteristicDistanceOfAlignment(tResiduesForAlignment, qResiduesForAlignment);
+                Console.WriteLine($"Characteristic distance R = {R}");
+
+                Func<SseInSpace, SseInSpace, double> metricToMinimize;
+                switch (metricMethod)
+                {
+                    case Setting.MetricMethod.No3:
+                        metricToMinimize = LibAnnotation.MetricNo3Pos;
+                        break;
+                    case Setting.MetricMethod.No7:
+                        metricToMinimize = (s, t) =>
+                            LibAnnotation.MetricNo7Pos(s, t, alignment, LibAnnotation.DictResiToAli(tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli(qResiduesForAlignment, pos.Item2));
+                        break;
+                    case Setting.MetricMethod.No8:
+                        Func<SseInSpace, SseInSpace, double> metric3 = LibAnnotation.MetricNo3Pos;
+                        Func<SseInSpace, SseInSpace, double> metric7 = (s, t) => LibAnnotation.MetricNo7Pos(s, t, alignment, LibAnnotation.DictResiToAli(tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli(qResiduesForAlignment, pos.Item2));
+                        double xx = 0.5;
+                        metricToMinimize = (s, t) =>
+                            (1 - xx) * metric3(s, t) + xx * metric7(s, t) + LibAnnotation.LengthDiffPenalty(s, t);
+                        break;
+                    default:
+                        throw new Exception("Unknown MetricMethod: " + metricMethod);
+                }
+
+
+                Lib.WriteLineDebug("Template connections: {0}", tConnectivity.Select(t => tSSEs[t.Item1].Label + "-" + tSSEs[t.Item2].Label).EnumerateWithCommas());
+                Lib.WriteLineDebug("Query connections: {0}", qConnectivity.Select(t => qSSEs[t.Item1].Label + "-" + qSSEs[t.Item2].Label).EnumerateWithCommas());
+
+                AnnotationContext context = new AnnotationContext(metricToMinimize, annotationTypeFitting,
+                    skipTemplatePenalty, skipCandidatePenalty,
+                    tSSEsInSpace, qSSEsInSpace);
+                context.InitializeTemplateConnectivity(tConnectivity);
+                context.InitializeCandidateConnectivity(qConnectivity);
+
+                if (selectionMethod == Setting.SelectionMethod.None)
+                {
+                    double[,] metricMatrix = new double[context.Templates.Count(), context.Candidates.Count()];
+                    for (int i = 0; i < context.Templates.Count(); i++)
+                    {
+                        for (int j = 0; j < context.Candidates.Count(); j++)
+                        {
+                            SseInSpace t = context.Templates[i];
+                            SseInSpace c = context.Candidates[j];
+                            metricMatrix[i, j] = annotationTypeFitting(t.Type, c.Type) ? metricToMinimize(t, c) : -metricToMinimize(t, c);
+                        }
+                    }
+                    AnnotationHelper.PrintCrossMatrix(context, metricMatrix, "metric_matrix.tsv");
+                    Environment.Exit(0);
+                }
+
+                Func<AnnotationContext, IAnnotator> createAnnotator;
+                switch (selectionMethod)
+                {
+                    case Setting.SelectionMethod.DynProg:
+                        createAnnotator = DynProgAnnotator.New;
+                        break;
+                    case Setting.SelectionMethod.BB:
+                        if (alternativeMatching)
+                            context = context.WithAlternativeTemplates(templateSSA.MergeableSSEs);
+                        if (softMatching)
+                            context = context.Ordered().Softened_New(maxGapForSoftMatching);
+                        createAnnotator = BranchAndBoundAnnotator.New;
+                        break;
+                    case Setting.SelectionMethod.MOM:
+                        if (momTimeoutSeconds.HasValue)
+                        {
+                            createAnnotator = cont => new FallbackAnnotator(
+                                new MOMAnnotator(cont, softMatching),
+                                momTimeoutSeconds.Value,
+                                "MOM annotator timeout, falling back to DP annotator",
+                                new DynProgAnnotator(cont));
                         }
                         else
                         {
-                            throw new Exception(alignMethod + " has no assigned name in alignMethodNames.");
+                            createAnnotator = cont => new MOMAnnotator(cont, softMatching);
                         }
+                        break;
+                    case Setting.SelectionMethod.Combined:
+                        if (alternativeMatching)
+                            context = context.WithAlternativeTemplates(templateSSA.MergeableSSEs);
+                        if (softMatching)
+                            context = context.Ordered().Softened_New(maxGapForSoftMatching);
+                        createAnnotator = CombinedAnnotator.New;
+                        break;
+                    default:
+                        throw new NotImplementedException("Not implemented for this selection method: " + selectionMethod.ToString());
+                }
+                NiceAnnotatorWrapper annotator =
+                    correctionsFile == null ?
+                    new NiceAnnotatorWrapper(context, createAnnotator)
+                    : new NiceAnnotatorWrapperWithCorrections(context, createAnnotator, correctionsFile, queryID, qProtein);
+
+                DateTime t_BB_0 = DateTime.Now;
+                List<SseInSpace> annotQHelicesInSpace = annotator.GetAnnotatedCandidates().ToList();
+                Lib.WriteLineDebug("Annotated: {0}", annotQHelicesInSpace.EnumerateWithSeparators("\n\t"));
+                List<(int, int, int)> annotQConnectivity = annotator.GetAnnotatedConnectivity(qConnectivity);
+                IEnumerable<double> metricList = annotator.GetMetricList();
+                IEnumerable<double> suspiciousnessList = annotator.GetSuspiciousnessList();
+                foreach (var sse in annotator.GetAnnotatedCandidates())
+                {
+                    if (sse.IsNotFound())
+                    {
+                        rmsdLists_AllChains.Add(new List<double>());
                     }
-                    times.Add(("Alignment", DateTime.Now.Subtract(stamp)));
-                    stamp = DateTime.Now;
-                    #endregion
+                    else
+                    {
+                        List<double>[] outRmsdLists;
+                        LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein.GetChain(queryChainID), new Sse[] { sse }.ToList(), out outRmsdLists);
+                        rmsdLists_AllChains.Add(outRmsdLists[0]);
+                    }
+                }
+                List<String> qSseSequences = qProtein.GetChain(queryChainID)
+                    .GetResidues(annotQHelicesInSpace.Select(s => (s.Start - extraResiduesInSequence, s.End + extraResiduesInSequence)))
+                    .Select(s => String.Concat(s.Select(r => r.ShortName))).ToList();
 
-                    Lib.Shuffler shuffler;
-                    List<Sse> tSSEs = templateSSA.SSEs.WhereAndGetShuffler(sse => sse.ChainID == templateChainID, out shuffler).ToList();
-                    List<(int, int, int)> tConnectivity = shuffler.UpdateIndices(templateSSA.Connectivity).ToList();
-                    List<Sse> qSSEs = querySSA.SSEs.WhereAndGetShuffler(sse => sse.ChainID == queryChainID, out shuffler).ToList();
-                    List<(int, int, int)> qConnectivity = shuffler.UpdateIndices(querySSA.Connectivity).ToList();
-                    List<SseInSpace> tSSEsInSpace;
-                    List<SseInSpace> qSSEsInSpace;
 
+                //var ssePairs = Enumerable.Zip (tSSEsInSpace,annotQHelicesInSpace,(t,q)=>new {T=t,Q=q});
 
-                    #region Calculate helix-fit and sheet-fit RMSDs for whole chain and output them to a file.
+                annotQHelicesInSpace_AllChains.AddRange(annotQHelicesInSpace);
+                metricList_AllChains.AddRange(metricList);
+                suspiciousnessList_AllChains.AddRange(suspiciousnessList);
+
+                annotQSseSequences_AllChains.AddRange(qSseSequences);
+                // metric3List_AllChains.AddRange (ssePairs.Select (x => x.Q.IsNotFound () ? Double.NaN : metric3(x.T,x.Q)));
+                // metric7List_AllChains.AddRange (ssePairs.Select (x => x.Q.IsNotFound () ? Double.NaN : metric7(x.T,x.Q)));
+
+                // metric3List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric3(t,q)));
+                // metric7List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric7(t,q)));
+                if (queryChainIDs.Length == 1)
+                {
+                    IEnumerable<(string, string)> labelPairs = annotator.GetMatching().Select(t =>
+                      (annotator.Context.Templates[t.Item1].Label, annotator.Context.Candidates[t.Item2].Label));
                     if (Lib.DoWriteDebug)
                     {
-                        const int UNIT_LENGTH = 4;
-                        TextWriter wRMSD = new StreamWriter(fileQueryRmsds);
-                        wRMSD.WriteLine(LibAnnotation.COMMENT_SIGN_WRITE + "RMSDs from fitting helix and sheet shape to the alpha-carbons. Value for resi=x is calculated from residues x, x+1, x+2, x+3.");
-                        wRMSD.WriteLine(LibAnnotation.COMMENT_SIGN_WRITE + "resi\tRMSD_vs_H\tRMSD_vs_E");
-                        List<Residue> residues = qProtein.GetChain(queryChainID).GetResidues().ToList();
-                        for (int i = 0; i <= residues.Count - UNIT_LENGTH; i++)
+                        using (StreamWriter w = new StreamWriter(Path.Combine(Setting.Directory, "matching-" + templateID + "-" + queryID + ".tsv")))
                         {
-                            double rmsdH;
-                            double rmsdE;
-                            // double rmsdH5;
-                            // double rmsdH6;
-                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), SseType.HELIX_H_TYPE, rmsdLimit, out rmsdH);
-                            LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, UNIT_LENGTH), SseType.SHEET_TYPE, rmsdLimit, out rmsdE);
-                            // LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 5), '5', rmsdLimit, out rmsdH5);
-                            // LibAnnotation.CheckGeometryOf1Unit(residues.GetRange(i, 6), '6', rmsdLimit, out rmsdH6);
-                            wRMSD.WriteLine("{0}\t{1}\t{2}", residues[i].SeqNumber, rmsdH.ToString("0.000"), rmsdE.ToString("0.000"));
-                            // wRMSD.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", residues[i].SeqNumber, rmsdH.ToString("0.000"), rmsdH5.ToString("0.000"), rmsdH6.ToString("0.000"), rmsdE.ToString("0.000"));
-                        }
-                        wRMSD.Close();
-
-                        times.Add(("Calculate RMSDs for whole chain", DateTime.Now.Subtract(stamp)));
-                        stamp = DateTime.Now;
-                    }
-                    #endregion
-
-
-                    #region Calculating line segments corresponding to helices in template and query protein.
-
-                    List<double>[] dump;
-                    if (forceCalculateVectors || !tSSEs.All(sse => sse is SseInSpace))
-                    {
-                        tSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(tProtein.GetChain(templateChainID), tSSEs, out dump);
-                    }
-                    else
-                    {
-                        tSSEsInSpace = tSSEs.Select(sse => sse as SseInSpace).ToList();
-                    }
-
-                    if (forceCalculateVectors || !qSSEs.All(sse => sse is SseInSpace))
-                    {
-                        qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein.GetChain(queryChainID), qSSEs, out dump);
-                    }
-                    else
-                    {
-                        qSSEsInSpace = qSSEs.Select(sse => sse as SseInSpace).ToList();
-                    }
-
-                    times.Add(("Calculate line segments", DateTime.Now.Subtract(stamp)));
-                    stamp = DateTime.Now;
-                    #endregion
-
-
-                    #region Matching.
-
-                    List<Residue> tResiduesForAlignment = tProtein.GetChain(templateChainID).GetResidues().ToList();
-                    List<Residue> qResiduesForAlignment = qProtein.GetChain(queryChainID).GetResidues().ToList();
-                    List<(int?, int?, double)> alignment = LibAnnotation.AlignResidues_DynProg(tResiduesForAlignment, qResiduesForAlignment);
-                    (List<int>, List<int>) pos = LibAnnotation.AlignmentToPositions(alignment);
-                    double R = LibAnnotation.CharacteristicDistanceOfAlignment(tResiduesForAlignment, qResiduesForAlignment);
-                    Console.WriteLine($"Characteristic distance R = {R}");
-
-                    Func<SseInSpace, SseInSpace, double> metricToMinimize;
-                    switch (metricMethod)
-                    {
-                        case Setting.MetricMethod.No3:
-                            metricToMinimize = LibAnnotation.MetricNo3Pos;
-                            break;
-                        case Setting.MetricMethod.No7:
-                            metricToMinimize = (s, t) =>
-                                LibAnnotation.MetricNo7Pos(s, t, alignment, LibAnnotation.DictResiToAli(tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli(qResiduesForAlignment, pos.Item2));
-                            break;
-                        case Setting.MetricMethod.No8:
-                            Func<SseInSpace, SseInSpace, double> metric3 = LibAnnotation.MetricNo3Pos;
-                            Func<SseInSpace, SseInSpace, double> metric7 = (s, t) => LibAnnotation.MetricNo7Pos(s, t, alignment, LibAnnotation.DictResiToAli(tResiduesForAlignment, pos.Item1), LibAnnotation.DictResiToAli(qResiduesForAlignment, pos.Item2));
-                            double xx = 0.5;
-                            metricToMinimize = (s, t) =>
-                                (1 - xx) * metric3(s, t) + xx * metric7(s, t) + LibAnnotation.LengthDiffPenalty(s, t);
-                            break;
-                        default:
-                            throw new Exception("Unknown MetricMethod: " + metricMethod);
-                    }
-
-
-                    Lib.WriteLineDebug("Template connections: {0}", tConnectivity.Select(t => tSSEs[t.Item1].Label + "-" + tSSEs[t.Item2].Label).EnumerateWithCommas());
-                    Lib.WriteLineDebug("Query connections: {0}", qConnectivity.Select(t => qSSEs[t.Item1].Label + "-" + qSSEs[t.Item2].Label).EnumerateWithCommas());
-
-                    AnnotationContext context = new AnnotationContext(metricToMinimize, annotationTypeFitting,
-                        skipTemplatePenalty, skipCandidatePenalty,
-                        tSSEsInSpace, qSSEsInSpace);
-                    context.InitializeTemplateConnectivity(tConnectivity);
-                    context.InitializeCandidateConnectivity(qConnectivity);
-
-                    if (selectionMethod == Setting.SelectionMethod.None)
-                    {
-                        double[,] metricMatrix = new double[context.Templates.Count(), context.Candidates.Count()];
-                        for (int i = 0; i < context.Templates.Count(); i++)
-                        {
-                            for (int j = 0; j < context.Candidates.Count(); j++)
+                            w.WriteLine("{0}\t{1}", templateID, queryID);
+                            foreach (var t in labelPairs)
                             {
-                                SseInSpace t = context.Templates[i];
-                                SseInSpace c = context.Candidates[j];
-                                metricMatrix[i, j] = annotationTypeFitting(t.Type, c.Type) ? metricToMinimize(t, c) : -metricToMinimize(t, c);
-                            }
-                        }
-                        AnnotationHelper.PrintCrossMatrix(context, metricMatrix, "metric_matrix.tsv");
-                        Environment.Exit(0);
-                    }
-
-                    Func<AnnotationContext, IAnnotator> createAnnotator;
-                    switch (selectionMethod)
-                    {
-                        case Setting.SelectionMethod.DynProg:
-                            createAnnotator = DynProgAnnotator.New;
-                            break;
-                        case Setting.SelectionMethod.BB:
-                            if (alternativeMatching)
-                                context = context.WithAlternativeTemplates(templateSSA.MergeableSSEs);
-                            if (softMatching)
-                                context = context.Ordered().Softened_New(maxGapForSoftMatching);
-                            createAnnotator = BranchAndBoundAnnotator.New;
-                            break;
-                        case Setting.SelectionMethod.MOM:
-                            if (momTimeoutSeconds.HasValue)
-                            {
-                                createAnnotator = cont => new FallbackAnnotator(
-                                    new MOMAnnotator(cont, softMatching),
-                                    momTimeoutSeconds.Value,
-                                    "MOM annotator timeout, falling back to DP annotator",
-                                    new DynProgAnnotator(cont));
-                            }
-                            else
-                            {
-                                createAnnotator = cont => new MOMAnnotator(cont, softMatching);
-                            }
-                            break;
-                        case Setting.SelectionMethod.Combined:
-                            if (alternativeMatching)
-                                context = context.WithAlternativeTemplates(templateSSA.MergeableSSEs);
-                            if (softMatching)
-                                context = context.Ordered().Softened_New(maxGapForSoftMatching);
-                            createAnnotator = CombinedAnnotator.New;
-                            break;
-                        default:
-                            throw new NotImplementedException("Not implemented for this selection method: " + selectionMethod.ToString());
-                    }
-                    NiceAnnotatorWrapper annotator =
-                        correctionsFile == null ?
-                        new NiceAnnotatorWrapper(context, createAnnotator)
-                        : new NiceAnnotatorWrapperWithCorrections(context, createAnnotator, correctionsFile, queryID, qProtein);
-
-                    DateTime t_BB_0 = DateTime.Now;
-                    List<SseInSpace> annotQHelicesInSpace = annotator.GetAnnotatedCandidates().ToList();
-                    Lib.WriteLineDebug("Annotated: {0}", annotQHelicesInSpace.EnumerateWithSeparators("\n\t"));
-                    List<(int, int, int)> annotQConnectivity = annotator.GetAnnotatedConnectivity(qConnectivity);
-                    IEnumerable<double> metricList = annotator.GetMetricList();
-                    IEnumerable<double> suspiciousnessList = annotator.GetSuspiciousnessList();
-                    foreach (var sse in annotator.GetAnnotatedCandidates())
-                    {
-                        if (sse.IsNotFound())
-                        {
-                            rmsdLists_AllChains.Add(new List<double>());
-                        }
-                        else
-                        {
-                            List<double>[] outRmsdLists;
-                            LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein.GetChain(queryChainID), new Sse[] { sse }.ToList(), out outRmsdLists);
-                            rmsdLists_AllChains.Add(outRmsdLists[0]);
-                        }
-                    }
-                    List<String> qSseSequences = qProtein.GetChain(queryChainID)
-                        .GetResidues(annotQHelicesInSpace.Select(s => (s.Start - extraResiduesInSequence, s.End + extraResiduesInSequence)))
-                        .Select(s => String.Concat(s.Select(r => r.ShortName))).ToList();
-
-
-                    //var ssePairs = Enumerable.Zip (tSSEsInSpace,annotQHelicesInSpace,(t,q)=>new {T=t,Q=q});
-
-                    annotQHelicesInSpace_AllChains.AddRange(annotQHelicesInSpace);
-                    metricList_AllChains.AddRange(metricList);
-                    suspiciousnessList_AllChains.AddRange(suspiciousnessList);
-
-                    annotQSseSequences_AllChains.AddRange(qSseSequences);
-                    // metric3List_AllChains.AddRange (ssePairs.Select (x => x.Q.IsNotFound () ? Double.NaN : metric3(x.T,x.Q)));
-                    // metric7List_AllChains.AddRange (ssePairs.Select (x => x.Q.IsNotFound () ? Double.NaN : metric7(x.T,x.Q)));
-
-                    // metric3List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric3(t,q)));
-                    // metric7List_AllChains.AddRange (annotator.SelectFromAnnotated ((t,q) => q.IsNotFound () ? Double.NaN : metric7(t,q)));
-                    if (allTemplateChainIDs.Length == 1 && allQueryChainIDs.Length == 1)
-                    {
-                        IEnumerable<(string, string)> labelPairs = annotator.GetMatching().Select(t =>
-                          (annotator.Context.Templates[t.Item1].Label, annotator.Context.Candidates[t.Item2].Label));
-                        if (Lib.DoWriteDebug)
-                        {
-                            using (StreamWriter w = new StreamWriter(Path.Combine(Setting.Directory, "matching-" + templateID + "-" + queryID + ".tsv")))
-                            {
-                                w.WriteLine("{0}\t{1}", templateID, queryID);
-                                foreach (var t in labelPairs)
-                                {
-                                    w.WriteLine("{0}\t{1}", t.Item1, t.Item2);
-                                }
+                                w.WriteLine("{0}\t{1}", t.Item1, t.Item2);
                             }
                         }
                     }
-                    else
-                    {
-                        Lib.WriteWarning("File matching-" + templateID + "-" + queryID + ".tsv was not produced, because annotating multiple chains.");
-                    }
-
-                    List<String> detQSseSequences = qProtein.GetChain(queryChainID)
-                        .GetResidues(qSSEsInSpace.Select(s => (s.Start, s.End)))
-                        .Select(s => String.Concat(s.Select(r => r.ShortName))).ToList();
-                    detQSsesInSpace_AllChains.AddRange(qSSEsInSpace);
-                    detQSseSequences_AllChains.AddRange(detQSseSequences);
-                    annotQConnectivity_AllChains.AddRange(annotQConnectivity);
-
-                    times.Add(("Matching", DateTime.Now - stamp));
-                    stamp = DateTime.Now;
-                    #endregion
-
                 }
+                else
+                {
+                    Lib.WriteWarning("File matching-" + templateID + "-" + queryID + ".tsv was not produced, because annotating multiple chains.");
+                }
+
+                List<String> detQSseSequences = qProtein.GetChain(queryChainID)
+                    .GetResidues(qSSEsInSpace.Select(s => (s.Start, s.End)))
+                    .Select(s => String.Concat(s.Select(r => r.ShortName))).ToList();
+                detQSsesInSpace_AllChains.AddRange(qSSEsInSpace);
+                detQSseSequences_AllChains.AddRange(detQSseSequences);
+                annotQConnectivity_AllChains.AddRange(annotQConnectivity);
+
+                times.Add(("Matching", DateTime.Now - stamp));
+                stamp = DateTime.Now;
+                #endregion
+
             }
+            // }
             #endregion
 
 
@@ -902,7 +941,7 @@ namespace protein
                     "cif",
                     Setting.Directory,
                     $"{templateID},{templateChainID_},{FormatRanges(templateDomainRanges)}",
-                    $"{queryID},{chainMapping[templateChainID_].Last()},{FormatRanges(queryDomainRanges)}",
+                    $"{queryID},{queryChainIDs.Last()},{FormatRanges(queryDomainRanges)}",
                     }))
                     return -1;
             }
@@ -1018,23 +1057,18 @@ namespace protein
         }
 
 
-        private static void ParseDomainSpecification(String domain, out String pdb, out string chain, out List<(int, int)> ranges)
+        private static (string pdb, string chain, List<(int, int)> ranges) ParseDomainSpecification(String domain, string defaultChain = null)
         {
             String[] parts = domain.Split(new char[] { ',' }, 3);
 
-            pdb = parts[0];
+            string pdb = parts[0];
 
-            if (parts.Length >= 2)
-            {
-                chain = parts[1];
-            }
-            else
-            {
-                chain = Setting.DEFAULT_CHAIN_ID;
-            }
+            string chain = (parts.Length >= 2) ? parts[1] : defaultChain;
 
             String rangeString = (parts.Length >= 3) ? parts[2] : Setting.DEFAULT_DOMAIN_RANGES_STRING;
-            ranges = ParseRanges(rangeString);
+            var ranges = ParseRanges(rangeString);
+
+            return (pdb, chain, ranges);
         }
     }
 }

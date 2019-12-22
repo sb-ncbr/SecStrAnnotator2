@@ -26,12 +26,6 @@ namespace protein.SecStrAssigning
 
         public SecStrAssignment GetSecStrAssignment()
         {
-            /*Lib.Shuffler shuffler;
-            List<SSE> result = InnerAssigner
-                .GetSecStrAssignment (out connectivity)
-                .WhereAndGetShuffler (sse => AcceptedSSETypes.Contains (sse.Type) && ChainIDs.Contains (sse.ChainID), out shuffler)
-                .ToList ();
-            connectivity=shuffler.UpdateIndices (connectivity).ToList ();*/
             return SecStrAssignment.Filter(InnerAssigner.GetSecStrAssignment(), sse => AcceptedSSETypes.Contains(sse.Type) && ChainIDs.Contains(sse.ChainID));
         }
 
