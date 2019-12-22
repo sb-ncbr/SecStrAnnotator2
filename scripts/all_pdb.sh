@@ -1,0 +1,1 @@
+(time python3 SecStrAnnotator2_batch.py ../../SecStrAnnot2_data/data_batch/ xxx ../../SecStrAnnot2_data/cath_cyps.json --dll ../bin/Debug/netcoreapp2.0/SecStrAnnotator2.dll --options ' --onlyssa --ssa geom-hbond2 --verbose' --by_pdb --threads 8) > /dev/null 2> ~/time

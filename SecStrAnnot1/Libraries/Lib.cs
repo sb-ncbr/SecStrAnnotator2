@@ -716,6 +716,9 @@ namespace protein.Libraries
         }
 
         public static string Repeat(this string str, int repeats){
+            if (str.Length == 0 || repeats == 0){
+                return "";
+            }
             StringBuilder b = new StringBuilder(str.Length * repeats);
             for (int i = 0; i < repeats; i++)
             {
