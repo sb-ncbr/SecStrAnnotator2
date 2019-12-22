@@ -30,15 +30,15 @@ namespace protein.SecStrAssigning
         {
             this.DetectSheets = true;
             this.DetectHelices = true;
-            MyStopwatch watch = new MyStopwatch();
+            MyStopwatch watch = new MyStopwatch(Lib.WriteLineDebug);
             var hydrogenAdder = new DsspLikeAmideHydrogenAdder();
             protein = hydrogenAdder.AddHydrogens(protein); // removing residues without C-alpha is probably not needed here
             this.model = protein.Model;
             this.residues = protein.GetResidues().ToArray();
             this.nResidues = model.Residues.Count;
-            MyStopwatch watchHBF = new MyStopwatch();
-            var hBondFinder = new BoxingHBondFinder(this.residues, hBondEnergyCutoff);
-            watchHBF.Stop("new BoxingHbondFinder");
+            MyStopwatch watchHBF = new MyStopwatch(Lib.WriteLineDebug);
+            var hBondFinder = new SparseBoxingHBondFinder(this.residues, hBondEnergyCutoff);
+            watchHBF.Stop("new SparseBoxingHbondFinder");
             this.hBonds = new HashSet<(int donor, int acceptor)>();
             this.acceptorsOf = new Dictionary<int, List<int>>();
             for (int don = 0; don < nResidues; don++)
@@ -124,7 +124,7 @@ namespace protein.SecStrAssigning
 
         private (List<Sse> strands, List<(int strand0, int strand1, int type)> connectivity) GetStrands()
         {
-            MyStopwatch watch = new MyStopwatch();
+            MyStopwatch watch = new MyStopwatch(Lib.WriteLineDebug);
             BetaGraph betaGraph = BuildBetaGraph();
             watch.Stop("BuildBetaGraph()");
 
@@ -180,7 +180,7 @@ namespace protein.SecStrAssigning
         private BetaGraph BuildBetaGraph()
         {
 
-            MyStopwatch watch = new MyStopwatch();
+            MyStopwatch watch = new MyStopwatch(Lib.WriteLineDebug);
             List<Ladder> ladders = FindLadders();
             watch.Stop("FindLadders()");
             Ladder[] parallelLadders = ladders.Where(l => l.type0 == MicrostrandType.REGULAR_PARALEL).ToArray();
@@ -189,14 +189,14 @@ namespace protein.SecStrAssigning
             List<Ladder> antiparallelLaddersAndBulges = IncludeAntiparallelBulges(antiparallelLadders);
             List<Ladder> microladders = parallelLaddersAndBulges.Concat(antiparallelLaddersAndBulges).ToList();
 
-            if (Lib.DoWriteDebug)
-            {
-                Lib.WriteLineDebug("Microladders:");
-                foreach (Ladder ladder in microladders)
-                {
-                    Lib.WriteLineDebug(RepresentLadder(ladder));
-                }
-            }
+            // if (Lib.DoWriteDebug)
+            // {
+            //     Lib.WriteLineDebug("Microladders:");
+            //     foreach (Ladder ladder in microladders)
+            //     {
+            //         Lib.WriteLineDebug(RepresentLadder(ladder));
+            //     }
+            // }
 
             var microstrands = new List<(int startZeta, int endZeta, int ladderIndex, int side)>(capacity: 2 * (parallelLaddersAndBulges.Count + antiparallelLaddersAndBulges.Count));
             int nParallel = parallelLaddersAndBulges.Count;
@@ -220,11 +220,11 @@ namespace protein.SecStrAssigning
             var sortedMicrostrandIndices = Enumerable.Range(0, nMicrostrands).OrderBy(i => microstrands[i]).ToArray();
             if (Lib.DoWriteDebug)
             {
-                Lib.WriteLineDebug("Microstrands:");
+                // Lib.WriteLineDebug("Microstrands:");
                 for (int i = 0; i < nMicrostrands; i++)
                 {
                     var ms = microstrands[sortedMicrostrandIndices[i]];
-                    Lib.WriteLineDebug(ms.ToString());
+                    // Lib.WriteLineDebug(ms.ToString());
                 }
             }
 
@@ -238,7 +238,7 @@ namespace protein.SecStrAssigning
                 var lastMacrostrand = starting ? (0, 0, null) : macrostrands[macrostrands.Count - 1];
                 if (!starting && DoOverlap(lastMacrostrand.startZeta, lastMacrostrand.endZeta, microstrand.startZeta, microstrand.endZeta))
                 {
-                    Lib.WriteLineDebug($"Joining macro {lastMacrostrand} and micro {microstrand}");
+                    // Lib.WriteLineDebug($"Joining macro {lastMacrostrand} and micro {microstrand}");
                     lastMacrostrand.microstrands.Add(microstrandIndex);
                     if (microstrand.endZeta > lastMacrostrand.endZeta)
                     {
@@ -253,7 +253,7 @@ namespace protein.SecStrAssigning
             int nMacrostrands = macrostrands.Count;
             if (Lib.DoWriteDebug)
             {
-                Lib.WriteLineDebug("Macrostrands:");
+                // Lib.WriteLineDebug("Macrostrands:");
                 foreach (var ms in macrostrands)
                 {
                     int startResIdx = ZToResidueIndex(ms.startZeta);
@@ -261,7 +261,7 @@ namespace protein.SecStrAssigning
                     string chainId = model.Chains.Id[model.Residues.ChainIndex[startResIdx]];
                     int startSeqId = model.Residues.SeqNumber[startResIdx];
                     int endSeqId = model.Residues.SeqNumber[endResIdx];
-                    Lib.WriteLineDebug($"{chainId} {startSeqId}-{endSeqId} {ms.ToString()} " + Lib.EnumerateWithCommas(ms.microstrands));
+                    // Lib.WriteLineDebug($"{chainId} {startSeqId}-{endSeqId} {ms.ToString()} " + Lib.EnumerateWithCommas(ms.microstrands));
                 }
             }
             int[] microstrand2macrostrand = new int[nMicrostrands];
@@ -272,11 +272,8 @@ namespace protein.SecStrAssigning
                     microstrand2macrostrand[microstrandIndex] = i;
                 }
             }
-            if (Lib.DoWriteDebug)
-            {
-                Lib.WriteLineDebug(Lib.EnumerateWithCommas(microstrand2macrostrand));
-            }
-
+            // Lib.WriteLineDebug(Lib.EnumerateWithCommas(microstrand2macrostrand));
+            
             var macroladders = new List<(int macrostrand0, int macrostrand1, MacroladderType type)>();
             for (int i = 0; i < nMicroladders; i++)
             {
@@ -289,13 +286,13 @@ namespace protein.SecStrAssigning
                 macroladders.Add((mas0, mas1, type));
             }
             macroladders = macroladders.Distinct().OrderBy(mal => mal).ToList();
-            if (Lib.DoWriteDebug)
-            {
-                Lib.WriteLineDebug("Macroladders:");
-                Lib.WriteLineDebug(Lib.EnumerateWithSeparators(macroladders, "\n"));
-            }
+            // if (Lib.DoWriteDebug)
+            // {
+            //     Lib.WriteLineDebug("Macroladders:");
+            //     Lib.WriteLineDebug(Lib.EnumerateWithSeparators(macroladders, "\n"));
+            // }
             var edges = macroladders.Select(mal => (mal.macrostrand0, mal.macrostrand1)).ToList();
-            MyStopwatch watchComp = new MyStopwatch();
+            MyStopwatch watchComp = new MyStopwatch(Lib.WriteLineDebug);
             var sheets = ConnectedComponents(edges);
             int nSheets = sheets.Count;
             watchComp.Stop("ConnecteComponents()");
@@ -309,14 +306,14 @@ namespace protein.SecStrAssigning
             }
             if (Lib.DoWriteDebug)
             {
-                Lib.WriteLineDebug("Sheets:");
-                foreach (var sheet in sheets)
-                {
-                    Lib.WriteLineDebug(Lib.EnumerateWithCommas(sheet));
-                }
-                Lib.WriteLineDebug("Macrostrand2sheet:");
-                Lib.WriteLineDebug(Lib.EnumerateWithCommas(macrostrand2sheet));
-                Lib.WriteLineDebug("");
+                // Lib.WriteLineDebug("Sheets:");
+                // foreach (var sheet in sheets)
+                // {
+                //     Lib.WriteLineDebug(Lib.EnumerateWithCommas(sheet));
+                // }
+                // Lib.WriteLineDebug("Macrostrand2sheet:");
+                // Lib.WriteLineDebug(Lib.EnumerateWithCommas(macrostrand2sheet));
+                // Lib.WriteLineDebug("");
             }
             watch.Stop("rest of BuildBetaGraph()");
 

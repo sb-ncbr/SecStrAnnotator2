@@ -8,8 +8,15 @@ namespace SecStrAnnotator2.Utils
 {
     public class MyStopwatch {
         private DateTime t0;
+        private Action<string> printFunction;
 
         public MyStopwatch(){
+            this.printFunction = s => Lib2.WriteLineDebug(s);
+            Start();
+        }
+
+        public MyStopwatch(Action<string> printFunction){
+            this.printFunction = printFunction;
             Start();
         }
 
@@ -20,7 +27,7 @@ namespace SecStrAnnotator2.Utils
 
         /** Print the time since the last start/stop without reseting */
         public void Lap(string message){
-            Lib2.WriteLineDebug($"{message}: {DateTime.Now.Subtract(t0)}");
+            printFunction($"{message}: {DateTime.Now.Subtract(t0)}");
         }
         
         /** Print the time since the last start/stop and reset */

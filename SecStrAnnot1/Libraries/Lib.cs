@@ -183,6 +183,7 @@ namespace protein.Libraries
                 Console.ForegroundColor = orig;
             }
         }
+        public static void WriteLineDebug(string s) => WriteLineDebug(s, new object[]{});
 
         public static void WriteError(String s, params object[] args)
         {

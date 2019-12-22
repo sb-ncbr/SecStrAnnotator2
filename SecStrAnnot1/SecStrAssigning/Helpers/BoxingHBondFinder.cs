@@ -16,6 +16,7 @@ namespace protein.SecStrAssigning.Helpers
         private List<int>[,,] neighborBoxes;
         private Point corner;
         private readonly (int inX, int inY, int inZ) nBoxes;
+
         public BoxingHBondFinder(IEnumerable<Residue> residues_, double dsspEnergyCutoff)
             : base(residues_, dsspEnergyCutoff)
         {
@@ -49,6 +50,7 @@ namespace protein.SecStrAssigning.Helpers
                     }
                 }
             }
+            Console.WriteLine("NumBoxes {0}", nBoxes.inX * nBoxes.inY * nBoxes.inZ);
         }
         private (int xIndex, int yIndex, int zIndex) GetBoxIndices(int res)
         {

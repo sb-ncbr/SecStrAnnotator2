@@ -489,7 +489,7 @@ namespace protein
                 secStrAssigner = new JoiningSecStrAssigner(secStrAssigner, qProtein, rmsdLimit, Setting.JoiningTypeCombining);
             }
 
-            // secStrAssigner = new FilteringSecStrAssigner(secStrAssigner, acceptedSSETypes, allQueryChainIDs);
+            secStrAssigner = new FilteringSecStrAssigner(secStrAssigner, acceptedSSETypes, queryChainIDs);
             if (secStrMethod != Setting.SecStrMethod.File)
             {
                 secStrAssigner = new RelabellingSecStrAssigner(secStrAssigner, null, Setting.LABEL_DETECTED_SSES_AS_NULL);
