@@ -223,6 +223,8 @@ namespace protein
 
             Lib.WriteLineDebug("AppDomain.CurrentDomain.BaseDirectory: {0}", AppDomain.CurrentDomain.BaseDirectory);
 
+            string templateDomainString;
+            string queryDomainString;
             if (onlyDetect)
             {
                 // Execution with --onlyssa: SecStrAnnotator.exe DIR QUERY
@@ -232,13 +234,14 @@ namespace protein
                     Environment.Exit(1);
                 }
                 Setting.Directory = otherArgs[0];
+                queryDomainString = otherArgs[1];
                 try
                 {
-                    (queryID, queryChainID_, queryDomainRanges) = ParseDomainSpecification(otherArgs[1]);
+                    (queryID, queryChainID_, queryDomainRanges) = ParseDomainSpecification(queryDomainString);
                 }
                 catch (FormatException e)
                 {
-                    Options.PrintError("Invalid value of the 2nd argument \"" + otherArgs[1] + "\"\n"
+                    Options.PrintError("Invalid value of the 2nd argument \"" + queryDomainString + "\"\n"
                         + e.Message);
                     Environment.Exit(1);
                 }
@@ -252,23 +255,25 @@ namespace protein
                     Environment.Exit(1);
                 }
                 Setting.Directory = otherArgs[0];
+                templateDomainString = otherArgs[1];
+                queryDomainString = otherArgs[2];
                 try
                 {
-                    (templateID, templateChainID_, templateDomainRanges) = ParseDomainSpecification(otherArgs[1], defaultChain: Setting.DEFAULT_CHAIN_ID);
+                    (templateID, templateChainID_, templateDomainRanges) = ParseDomainSpecification(templateDomainString, defaultChain: Setting.DEFAULT_CHAIN_ID);
                 }
                 catch (FormatException e)
                 {
-                    Options.PrintError("Invalid value of the 2nd argument \"" + otherArgs[1] + "\"\n"
+                    Options.PrintError("Invalid value of the 2nd argument \"" + templateDomainString + "\"\n"
                         + e.Message);
                     Environment.Exit(1);
                 }
                 try
                 {
-                    (queryID, queryChainID_, queryDomainRanges) = ParseDomainSpecification(otherArgs[2], defaultChain: Setting.DEFAULT_CHAIN_ID);
+                    (queryID, queryChainID_, queryDomainRanges) = ParseDomainSpecification(queryDomainString, defaultChain: Setting.DEFAULT_CHAIN_ID);
                 }
                 catch (FormatException e)
                 {
-                    Options.PrintError("Invalid value of the 3rd argument \"" + otherArgs[2] + "\"\n"
+                    Options.PrintError("Invalid value of the 3rd argument \"" + queryDomainString + "\"\n"
                         + e.Message);
                     Environment.Exit(1);
                 }
@@ -529,7 +534,8 @@ namespace protein
                     if (!Lib.RunPyMOLScriptWithCommandLineArguments(config.PymolExecutable, config.PymolScriptSession, new string[]{
                         "cif",
                         Setting.Directory,
-                        $"{queryID},{queryChainIDs.Last()},{FormatRanges(queryDomainRanges)}",
+                        queryDomainString,
+                        // $"{queryID},{queryChainIDs.Last()},{FormatRanges(queryDomainRanges)}",
                         "--detected",
                         "--hbonds",
                         }))
@@ -987,7 +993,8 @@ namespace protein
 
                 if (!p.GetChains().Any())
                 {
-                    Lib.WriteErrorAndExit("Loaded structure contains no normal residues.");
+                    Lib.WriteWarning("Loaded structure contains no normal residues.");
+                    // Lib.WriteErrorAndExit("Loaded structure contains no normal residues.");
                 }
 
                 p = p.KeepOnlyOneAlternativeLocation();

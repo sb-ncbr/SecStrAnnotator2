@@ -66,11 +66,21 @@ namespace protein.SecStrAssigning.Helpers
         {
             if (canBeDonor[donor] && canBeAcceptor[acceptor])
             {
-                Point n = vecN[donor];
-                Point h = vecH[donor];
-                Point c = vecC[acceptor];
-                Point o = vecO[acceptor];
-                double energy = 0.084 * 332 * (1 / (o - n).Size + 1 / (c - h).Size - 1 / (o - h).Size - 1 / (c - n).Size);
+                Point N = vecN[donor];
+                Point H = vecH[donor];
+                Point C = vecC[acceptor];
+                Point O = vecO[acceptor];
+                Vector CO = O - C;
+                Vector CH = H - C;
+                Vector CN = N - C;
+                Vector OH = H - O;
+                Vector ON = N - O;
+                Vector HN = N - H;
+                Vector axis = CN + OH;  // = 2 * ((n+h)/2 - (c+o)/2)
+                bool sain = axis*CO > 0 && axis*OH > 0 && axis*HN > 0;  // this sanity check is not in the original DSSP (but helps in shitty structures like 1ldp)
+                if (!sain)
+                    return 0;
+                double energy = 0.084 * 332 * (1 / ON.Size + 1 / CH.Size - 1 / OH.Size - 1 / CN.Size);
                 // Console.WriteLine($"{residues[donor]} -> {residues[acceptor]}:  {energy}");
                 return energy;
             }

@@ -32,6 +32,7 @@ arguments = sys.argv[N_PSEUDOARGUMENTS:]
 options = [arg for arg in arguments if arg.startswith('-')]
 arguments = [arg for arg in arguments if not arg.startswith('-')]
 # print(arguments)
+# print(options)
 if len(arguments) == 4:
 	file_format, directory, template, query = arguments
 elif len(arguments) == 3:
@@ -115,7 +116,6 @@ def color_by_annotation(pdb_id, selection, base_color, annotation_file, selectio
 		for donor_chain, donor_resi, acceptor_chain, acceptor_resi in hbonds:
 			donor = '(%s) and chain %s and resi %s and name N' % (selection, donor_chain, donor_resi)
 			acceptor = '(%s) and chain %s and resi %s and name O' % (selection, acceptor_chain, acceptor_resi)
-			# print(donor)
 			cmd.distance(distance_name, donor, acceptor)
 	cmd.deselect()
 
@@ -146,10 +146,13 @@ def convert_ranges(ranges):
 
 def selection_expression(object_name, chain, ranges, symbol=None):
 	"""Creates PyMOL selection expression."""
-	parts = [object_name, 'chain ' + chain, 'resi ' + convert_ranges(ranges)]
+	parts = [object_name]
+	if chain is not None:
+		parts.append('chain ' + chain)
+	if ranges is not None:
+		parts.append('resi ' + convert_ranges(ranges))
 	if symbol is not None:
 		parts.append('symbol ' + symbol)
-	# print(' & '.join(parts) + ' ')
 	return ' & '.join(parts) + ' '
 
 def apply_representations(selection, protein_reprs=[], ligand_reprs=[], bonds_reprs=[]):
@@ -164,24 +167,26 @@ def apply_representations(selection, protein_reprs=[], ligand_reprs=[], bonds_re
 	for repr in bonds_reprs:
 		cmd.show(repr, '*'+HBONDS_OBJECT_NAME)
 
-def show_hbond():
-	# cmd.distance(distance_name, 'start', 'end')
-	# cmd.color(color, distance_name)
-	# cmd.set('dash_radius', radius, distance_name)
-	pass
+def pdb_chain_ranges(domain_spec):
+	parts = domain_spec.split(',', 2)
+	pdb = parts[0] 
+	chain = parts[1] if len(parts) >= 2 else None
+	ranges = parts[2] if len(parts) >= 3 else None
+	return (pdb, chain, ranges)
+
 
 def create_session(directory, template, query):
 	"""Creates and saves a session with superimposed template and query and selected and colored SSEs."""
 	files = []
 
 	if template is not None:
-		template_id, template_chain, template_range = template.split(',', 2)
+		template_id, template_chain, template_range = pdb_chain_ranges(template)  # template.split(',', 2)
 		template_struct_file = path.join(directory, template_id + TEMPLATE_STRUCT_EXT)
 		template_annot_file = path.join(directory, template_id + TEMPLATE_ANNOT_EXT)
 		files.append(template_struct_file)
 		files.append(template_annot_file)
 	
-	query_id, query_chain, query_range = query.split(',', 2)
+	query_id, query_chain, query_range = pdb_chain_ranges(query)  # query.split(',', 2)
 	query_struct_file = path.join(directory, query_id + QUERY_STRUCT_EXT)
 	query_annot_file = path.join(directory, query_id + QUERY_ANNOT_EXT)
 	session_file = path.join(directory, query_id + SESSION_EXT)
@@ -196,16 +201,16 @@ def create_session(directory, template, query):
 	if template is not None:
 		template_object = TEMPLATE_OBJECT_PREFIX + template_id
 		cmd.load(template_struct_file, template_object)
-		color_by_annotation(template_id, selection_expression(template_object, template_chain, ':'), TEMPLATE_BASE_COLOR, template_annot_file, selection_prefix=TEMPLATE_SELECTION_PREFIX)
+		color_by_annotation(template_id, selection_expression(template_object, template_chain, None), TEMPLATE_BASE_COLOR, template_annot_file, selection_prefix=TEMPLATE_SELECTION_PREFIX)
 	
 	query_object = QUERY_OBJECT_PREFIX + query_id
 	cmd.load(query_struct_file, query_object)
-	color_by_annotation(query_id, selection_expression(query_object, query_chain, ':'), QUERY_BASE_COLOR, query_annot_file, selection_prefix=QUERY_SELECTION_PREFIX)
+	color_by_annotation(query_id, selection_expression(query_object, query_chain, None), QUERY_BASE_COLOR, query_annot_file, selection_prefix=QUERY_SELECTION_PREFIX)
 
 	cmd.hide('everything', 'all')
 	if template is not None:
-		apply_representations(selection_expression(template_object, template_chain, ':'), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
-	apply_representations(selection_expression(query_object, query_chain, ':'), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS, bonds_reprs=BOND_REPRESENTATIONS)
+		apply_representations(selection_expression(template_object, template_chain, None), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
+	apply_representations(selection_expression(query_object, query_chain, None), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS, bonds_reprs=BOND_REPRESENTATIONS)
 	cmd.dss()
 	cmd.zoom('vis')
 	cmd.save(session_file)

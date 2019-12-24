@@ -19,22 +19,30 @@ namespace protein.SecStrAssigning.Helpers
         public SparseBoxingHBondFinder(IEnumerable<Residue> residues_, double dsspEnergyCutoff)
             : base(residues_, dsspEnergyCutoff)
         {
-            corner = new Point(vecCA.Select(v => v.X).Min(), vecCA.Select(v => v.Y).Min(), vecCA.Select(v => v.Z).Min());
-            Point otherCorner = new Point(vecCA.Select(v => v.X).Max(), vecCA.Select(v => v.Y).Max(), vecCA.Select(v => v.Z).Max());
-            Vector relativeSize = (otherCorner - corner) / BOX_SIZE;
             boxes = new Dictionary<(int, int, int), List<int>>();
-            for (int i = 0; i < vecCA.Length; i++)
-            {
-                (int,int,int) indices = GetBoxIndices(i);
-                if (!boxes.ContainsKey(indices))
-                    boxes[indices] = new List<int>();
-                boxes[indices].Add(i);
-            }
             neighborBoxes = new Dictionary<(int, int, int), List<int>>();
-            foreach (var indices in boxes.Keys){
-                neighborBoxes[indices] = MergeNeighborBoxes(indices.x, indices.y, indices.z);
+
+            if (residues.Length > 0)
+            {
+                corner = new Point(vecCA.Select(v => v.X).Min(), vecCA.Select(v => v.Y).Min(), vecCA.Select(v => v.Z).Min());
+                Point otherCorner = new Point(vecCA.Select(v => v.X).Max(), vecCA.Select(v => v.Y).Max(), vecCA.Select(v => v.Z).Max());
+                Vector relativeSize = (otherCorner - corner) / BOX_SIZE;
+                for (int i = 0; i < vecCA.Length; i++)
+                {
+                    (int, int, int) indices = GetBoxIndices(i);
+                    if (!boxes.ContainsKey(indices))
+                        boxes[indices] = new List<int>();
+                    boxes[indices].Add(i);
+                }
+                foreach (var indices in boxes.Keys)
+                {
+                    neighborBoxes[indices] = MergeNeighborBoxes(indices.x, indices.y, indices.z);
+                }
             }
-            Console.WriteLine("NumBoxes {0}", neighborBoxes.Count);
+            else
+            {
+                corner = new Point(Vector.ZERO);
+            }
         }
 
         private (int xIndex, int yIndex, int zIndex) GetBoxIndices(int res)

@@ -20,6 +20,7 @@ FAMILY_ID = 'family'
 
 # Field names in SecStrAPI format - SSE annotation (from SecStrAnnotator format)
 SSES = 'secondary_structure_elements'
+NESTED_SSES = 'nested_sses'
 CONNECTIVITY = 'beta_connectivity'
 
 LABEL = 'label'
@@ -29,6 +30,7 @@ COMMENT = 'comment'
 CHAIN_ID = 'chain_id'
 START = 'start'
 END = 'end'
+TYPE = 'type'
 
 AUTH_CHAIN_ID = 'auth_chain_id'
 AUTH_START = 'auth_start'
