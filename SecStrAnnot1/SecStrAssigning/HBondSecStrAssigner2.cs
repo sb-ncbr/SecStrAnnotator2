@@ -1,4 +1,6 @@
-﻿using System;
+﻿// #define DEBUG_OUTPUT
+
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -152,20 +154,20 @@ namespace protein.SecStrAssigning
                         int iMil = mis.microladder;
                         var mil = betaGraph.microladders[iMil];
                         if (parallelBulgeTypes.Contains(mil.type0)){
-                            string bulgeCode = ParallelBulgeCode(mil, invert: mis.side == 1);
                             (startResIdx, endResIdx) = ZRangeToResidueIndexRange(mis.startZeta, mis.endZeta, HBondSSAConstants.BULGES_BY_ALPHA);
                             (chainId, startSeqId, endSeqId) = ChainStartEnd(startResIdx, endResIdx);
                             type = SseType.BULGE_PARALLEL_UNSPECIFIED;
                             Sse bulge = new Sse(null, chainId, startSeqId, endSeqId, type, -iMil);
+                            string bulgeCode = ParallelBulgeCode(mil, invert: mis.side == 1);
                             bulge.AddComment(bulgeCode);
                             sse.AddNestedSSE(bulge);
                         }
                         if (antiparallelBulgeTypes.Contains(mil.type0)){
-                            string bulgeCode = AntiparallelBulgeCode(mil, invert: mis.side == 1);
                             (startResIdx, endResIdx) = ZRangeToResidueIndexRange(mis.startZeta, mis.endZeta, HBondSSAConstants.BULGES_BY_ALPHA);
                             (chainId, startSeqId, endSeqId) = ChainStartEnd(startResIdx, endResIdx);
                             type = SseType.BULGE_ANTIPARALLEL_UNSPECIFIED;
                             Sse bulge = new Sse(null, chainId, startSeqId, endSeqId, type, -iMil);
+                            string bulgeCode = AntiparallelBulgeCode(mil, invert: mis.side == 1);
                             bulge.AddComment(bulgeCode);
                             sse.AddNestedSSE(bulge);
                         }
@@ -189,14 +191,13 @@ namespace protein.SecStrAssigning
             List<Ladder> antiparallelLaddersAndBulges = IncludeAntiparallelBulges(antiparallelLadders);
             List<Ladder> microladders = parallelLaddersAndBulges.Concat(antiparallelLaddersAndBulges).ToList();
 
-            // if (Lib.DoWriteDebug)
-            // {
-            //     Lib.WriteLineDebug("Microladders:");
-            //     foreach (Ladder ladder in microladders)
-            //     {
-            //         Lib.WriteLineDebug(RepresentLadder(ladder));
-            //     }
-            // }
+#if DEBUG_OUTPUT
+            Lib.WriteLineDebug("Microladders:");
+            foreach (Ladder ladder in microladders)
+            {
+                Lib.WriteLineDebug(RepresentLadder(ladder));
+            }
+#endif
 
             var microstrands = new List<(int startZeta, int endZeta, int ladderIndex, int side)>(capacity: 2 * (parallelLaddersAndBulges.Count + antiparallelLaddersAndBulges.Count));
             int nParallel = parallelLaddersAndBulges.Count;
@@ -444,7 +445,7 @@ namespace protein.SecStrAssigning
             int zetaShift1 = secondLadder.firstHbond.Zeta1 - firstLadder.lastHbond.Zeta1;
             var fragmentIndex = model.Residues.FragmentIndex;
             bool sameFragments = fragmentIndex[firstLadder.firstHbond.r0] == fragmentIndex[secondLadder.firstHbond.r0] && fragmentIndex[firstLadder.firstHbond.r1] == fragmentIndex[secondLadder.firstHbond.r1];
-            if (!sameFragments || zetaShift1 < 0)
+            if (!sameFragments || zetaShift0 < 0 || zetaShift1 < 0)
             {
                 return null;
             }
@@ -462,11 +463,11 @@ namespace protein.SecStrAssigning
                 result = new Ladder(firstLadder.lastHbond, secondLadder.firstHbond, MicrostrandType.BULGE_UNSPECIFIED_PARALLEL_EQUAL_SIDE);
             }
             // TODO distinguish bulge type
-            if (result.HasValue)
-            {
-                Lib.WriteLineDebug("BULGE: " + ParallelBulgeCode(result.Value));
-                Lib.WriteLineDebug($"{zetaShift0} {zetaShift1}");
-            }
+            // if (result.HasValue)
+            // {
+            //     Lib.WriteLineDebug("BULGE: " + ParallelBulgeCode(result.Value));
+            //     Lib.WriteLineDebug($"{zetaShift0} {zetaShift1}");
+            // }
             return result;
         }
 
@@ -476,7 +477,7 @@ namespace protein.SecStrAssigning
             int zetaShift1 = firstLadder.lastHbond.Zeta1 - secondLadder.firstHbond.Zeta1;
             var fragmentIndex = model.Residues.FragmentIndex;
             bool sameFragments = fragmentIndex[firstLadder.firstHbond.r0] == fragmentIndex[secondLadder.firstHbond.r0] && fragmentIndex[firstLadder.firstHbond.r1] == fragmentIndex[secondLadder.firstHbond.r1];
-            if (!sameFragments || zetaShift1 < 0)
+            if (!sameFragments || zetaShift0 < 0 || zetaShift1 < 0)
             {
                 return null;
             }
@@ -494,11 +495,11 @@ namespace protein.SecStrAssigning
                 result = new Ladder(firstLadder.lastHbond, secondLadder.firstHbond, MicrostrandType.BULGE_UNSPECIFIED_ANTIPARALLEL_EQUAL_SIDE);
             }
             // TODO distinguish bulge type
-            if (result.HasValue)
-            {
-                Lib.WriteLineDebug("BULGE: " + AntiparallelBulgeCode(result.Value));
-                Lib.WriteLineDebug($"{zetaShift0} {zetaShift1}");
-            }
+            // if (result.HasValue)
+            // {
+            //     Lib.WriteLineDebug("BULGE: " + AntiparallelBulgeCode(result.Value));
+            //     Lib.WriteLineDebug($"{zetaShift0} {zetaShift1}");
+            // }
             return result;
         }
 

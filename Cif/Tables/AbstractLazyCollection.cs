@@ -12,26 +12,33 @@ namespace Cif.Tables
         protected int count { get; private set; }
         private bool[] initialized;
         private TElem[] elements;
-        private Dictionary<TKey,int> elementIndex;
+        private Dictionary<TKey, int> elementIndex;
 
-        protected TElem GetElement(int i){
-            if (i < 0 || i >= count){
+        protected TElem GetElement(int i)
+        {
+            if (i < 0 || i >= count)
+            {
                 throw new IndexOutOfRangeException($"Cannot get {i}-th {wordForElement} of {count}");
             }
-            if (!initialized[i]){
+            if (!initialized[i])
+            {
                 elements[i] = InitializeElement(i);
                 initialized[i] = true;
             }
-            return elements[i];            
+            return elements[i];
         }
-        protected IEnumerable<TElem> GetElements(){
+        protected IEnumerable<TElem> GetElements()
+        {
             return Enumerable.Range(0, count).Select(i => GetElement(i));
         }
-        protected bool ContainsKey(TKey key) {
+        protected bool ContainsKey(TKey key)
+        {
             return count > 0 && elementIndex.ContainsKey(key);
         }
-        protected TElem GetElementByKey(TKey key){
-            if (!ContainsKey(key)){
+        protected TElem GetElementByKey(TKey key)
+        {
+            if (!ContainsKey(key))
+            {
                 throw new KeyNotFoundExceptionWithKey<TKey>(key, $"This {this.GetType()} does not contain {wordForElement} with {wordForKey} '{key}'");
             }
             return GetElement(elementIndex[key]);
@@ -39,18 +46,20 @@ namespace Cif.Tables
 
         protected abstract TElem InitializeElement(int i);
 
-        protected AbstractLazyCollection(string wordForKey, string wordForElement){
+        protected AbstractLazyCollection(string wordForKey, string wordForElement)
+        {
             this.wordForKey = wordForKey;
             this.wordForElement = wordForElement;
             this.count = 0;
         }
 
-        protected void Initialize(IEnumerable<TKey> keys){
+        protected void Initialize(IEnumerable<TKey> keys)
+        {
             this.keys = keys.ToArray();
             this.count = this.keys.Length;
             this.initialized = new bool[count];
             this.elements = new TElem[count];
-            this.elementIndex = new Dictionary<TKey, int>(keys.Select( (key, i) => new KeyValuePair<TKey,int>(key, i) ));
+            this.elementIndex = new Dictionary<TKey, int>(keys.Select((key, i) => new KeyValuePair<TKey, int>(key, i)));
         }
 
     }

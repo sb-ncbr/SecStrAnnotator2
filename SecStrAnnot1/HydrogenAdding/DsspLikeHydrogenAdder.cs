@@ -73,10 +73,6 @@ namespace protein.HydrogenAdding
             {
                 return null;
             }
-            if (thisResidue.SeqNumber == 11)
-            {
-                Console.WriteLine();
-            }
             Point n = ((Atom)nAtom).Position();
             Point c = ((Atom)cAtom).Position();
             Point o = ((Atom)oAtom).Position();

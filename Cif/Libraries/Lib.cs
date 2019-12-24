@@ -61,7 +61,7 @@ namespace Cif.Libraries
 		/// Gets indices on which the value in the array is greater than the previous value (including index 0).
 		/// </summary>
 		/// <param name="array"> Array of monotonically increasing values.</param>
-		public static List<int> RunStartsInOrderedArray(int[] array) {
+		public static List<int> RunStarts(int[] array, bool checkIfIsOrdered = false) {
 			List<int> runStarts = new List<int>();
 			if (array.Length == 0){
 				return runStarts;
@@ -74,7 +74,7 @@ namespace Cif.Libraries
 					// Lib.WriteLineDebug("    " + value + " <--> " + currentRunValue);
 					if (value == currentRunValue){
 						// do nothing
-					} else if (value > currentRunValue){
+					} else if (value > currentRunValue || !checkIfIsOrdered && value < currentRunValue){
 						// start new run
 						runStarts.Add(i);
 						currentRunValue = value;

@@ -3,10 +3,12 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+
 using Cif;
 using Cif.Tables;
 using Cif.Filtering;
 using Cif.Components;
+using SecStrAnnotator2.Utils;
 
 namespace SecStrAnnotator2
 {
@@ -50,12 +52,18 @@ namespace SecStrAnnotator2
                 models = ModelCollection.FromCifCategory(category);
             }
 
-            if (models.Count < 1)
+            Model model;
+            if (models.Count >= 1)
+            {
+                model = models.GetModel(0);
+            }
+            else
             {
                 string rangeString = String.Join(",", resSeqRanges.Select(range => range.Item1 + ":" + range.Item2));
-                throw new FormatException(EXCEPTION_MESSAGE + $"Atom selection given by chain ID '{chainId}' and residue ranges '{rangeString}' is empty");
+                // throw new FormatException(EXCEPTION_MESSAGE + $"Atom selection given by chain ID '{chainId}' and residue ranges '{rangeString}' is empty");
+                Lib2.WriteWarning($"Empty model: Atom selection given by chain ID '{chainId}' and residue ranges '{rangeString}' is empty");
+                model = new ModelBuilder().GetModel();
             }
-            Model model = models.GetModel(0);
             Protein protein = ProteinFromCifModel(model);
             return protein;
         }

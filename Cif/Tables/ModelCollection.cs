@@ -33,13 +33,17 @@ namespace Cif.Tables
             if (category.ContainsItem(Model.MODEL_NUM_COLUMN)) {
                 CifItem modelNumItem = category[Model.MODEL_NUM_COLUMN];
                 int[] modelNumberPerAtom = modelNumItem.GetIntegers(rows);
-                List<int> runStarts;
-                try {
-                    runStarts = Lib.RunStartsInOrderedArray(modelNumberPerAtom);
-                } catch (ArgumentException e) {
-                    throw new NotImplementedException("Model numbers (" + modelNumItem.FullName + ") are not in increasing order (not supported by current version)", e);
+                // List<int> runStarts;
+                // try {
+                //     runStarts = Lib.RunStartsInOrderedArray(modelNumberPerAtom);
+                // } catch (ArgumentException e) {
+                //     throw new NotImplementedException("Model numbers (" + modelNumItem.FullName + ") are not in increasing order (not supported by current version)", e);
+                // }
+                List<int> runStarts = Lib.RunStarts(modelNumberPerAtom);
+                int[] modelNumbers = runStarts.Select(start => modelNumberPerAtom[start]).ToArray();
+                if (modelNumbers.Distinct().Count() != modelNumbers.Count()){
+                    throw new NotImplementedException("Atoms are not grouped by model number (" + modelNumItem.FullName + ") (not supported by current version)");
                 }
-                IEnumerable<int> modelNumbers = runStarts.Select(start => modelNumberPerAtom[start]);
                 modelStartRowIndex = runStarts.Append(rows.Length).ToArray();
                 base.Initialize(modelNumbers);
             } else if (rows.Length > 0) {

@@ -986,7 +986,7 @@ namespace protein
                 }
                 else
                 {
-                    Lib.WriteErrorAndExit("Loaded structure contains no atoms.");
+                    Lib.WriteWarning("Loaded structure contains no atoms.");
                 }
 
                 p = p.KeepOnlyNormalResidues(true);
