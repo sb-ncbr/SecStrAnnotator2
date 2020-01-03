@@ -8,8 +8,6 @@ for bulge in sys.stdin:
     pdb, typ, chain, start, end = bulge.split()
     by_type[typ].append((pdb, chain, start, end))
 
-counts = {typ}
-
 sorted_types_bulges = [kv for kv in sorted(by_type.items(), key = lambda kv: len(kv[1]), reverse=True)]
 
 json.dump(dict(sorted_types_bulges), sys.stdout, indent=4)

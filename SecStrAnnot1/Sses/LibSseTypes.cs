@@ -38,27 +38,27 @@ namespace protein.Sses
             { SseType.BULGE_ANTIPARALLEL_UNSPECIFIED, "bA" },
             { SseType.BULGE_PARALLEL_UNSPECIFIED, "bP" },
 
-            { SseType.BULGE_CLASSIC_SHORT_SIDE_TYPE, "n" },
-            { SseType.BULGE_CLASSIC_LONG_SIDE_TYPE, "N" },
-            { SseType.BULGE_WIDE_SHORT_SIDE_TYPE, "m" },
-            { SseType.BULGE_WIDE_LONG_SIDE_TYPE, "M" },
-            { SseType.BULGE_ANTIPARALLEL33_SHORT_SIDE_TYPE, "u" }, // in 2qad chain B ~ resi 15 // "short" side is the one donating protons
-            { SseType.BULGE_ANTIPARALLEL33_LONG_SIDE_TYPE, "U" }, // "long" side is the one accepting protons
-            { SseType.BULGE_ANTIPARALLEL22_SHORT_SIDE_TYPE, "t" }, // in 1gei ~ resi 13 // "short" side is the one donating protons
-            { SseType.BULGE_ANTIPARALLEL22_LONG_SIDE_TYPE, "T" }, // "long" side is the one accepting protons
-            { SseType.BULGE_ANTIPARALLEL15_SHORT_SIDE_TYPE, "s" }, // in 1gjm ~ resi 94
-            { SseType.BULGE_ANTIPARALLEL15_LONG_SIDE_TYPE, "S" },
-            { SseType.BULGE_ANTIPARALLEL23_SHORT_SIDE_TYPE, "o" }, // in 3dbg ~ resi 452
-            { SseType.BULGE_ANTIPARALLEL23_LONG_SIDE_TYPE, "O" },
+            { SseType.BULGE_ANTIPARALLEL_CLASSIC_SHORT_SIDE, "n" },
+            { SseType.BULGE_ANTIPARALLEL_CLASSIC_LONG_SIDE, "N" },
+            { SseType.BULGE_ANTIPARALLEL_WIDE_SHORT_SIDE, "m" },
+            { SseType.BULGE_ANTIPARALEL_WIDE_LONG_SIDE, "M" },
+            { SseType.BULGE_ANTIPARALLEL33_SHORT_SIDE, "u" }, // in 2qad chain B ~ resi 15 // "short" side is the one donating protons
+            { SseType.BULGE_ANTIPARALLEL33_LONG_SIDE, "U" }, // "long" side is the one accepting protons
+            { SseType.BULGE_ANTIPARALLEL22_DONOR_SIDE, "t" }, // in 1gei ~ resi 13 // "short" side is the one donating protons
+            { SseType.BULGE_ANTIPARALLEL22_ACCEPTOR_SIDE, "T" }, // "long" side is the one accepting protons
+            { SseType.BULGE_ANTIPARALLEL15_SHORT_SIDE, "s" }, // in 1gjm ~ resi 94 -- very rare (8 in PDB)!
+            { SseType.BULGE_ANTIPARALLEL15_LONG_SIDE, "S" },
+            { SseType.BULGE_ANTIPARALLEL23_SHORT_SIDE, "o" }, // in 3dbg ~ resi 452
+            { SseType.BULGE_ANTIPARALLEL23_LONG_SIDE, "O" },
 
-            { SseType.BULGE_PARALLEL14_SHORT_SIDE_TYPE, "p" },
-            { SseType.BULGE_PARALLEL14_LONG_SIDE_TYPE, "P" },
-            { SseType.BULGE_PARALLEL32_SHORT_SIDE_TYPE, "q" }, // in 3ruk ~ resi 38
-            { SseType.BULGE_PARALLEL32_LONG_SIDE_TYPE, "Q" },
-            { SseType.BULGE_PARALLEL13_SHORT_SIDE_TYPE, "r" }, // in 3dax ~ resi 35
-            { SseType.BULGE_PARALLEL13_LONG_SIDE_TYPE, "R" },
-            { SseType.BULGE_PARALLEL33_SHORT_SIDE_TYPE, "l" }, // in 3v8d ~ resi 69
-            { SseType.BULGE_PARALLEL33_LONG_SIDE_TYPE, "L" },
+            { SseType.BULGE_PARALLEL14_SHORT_SIDE, "p" },
+            { SseType.BULGE_PARALLEL14_LONG_SIDE, "P" },
+            { SseType.BULGE_PARALLEL32_SHORT_SIDE, "q" }, // in 3ruk ~ resi 38
+            { SseType.BULGE_PARALLEL32_LONG_SIDE, "Q" },
+            { SseType.BULGE_PARALLEL13_SHORT_SIDE, "r" }, // in 3dax ~ resi 35
+            { SseType.BULGE_PARALLEL13_LONG_SIDE, "R" },
+            { SseType.BULGE_PARALLEL33_SHORT_SIDE, "l" }, // in 3v8d ~ resi 69
+            { SseType.BULGE_PARALLEL33_LONG_SIDE, "L" },
         };
         private static readonly Dictionary<string, SseType> stringToSseType = sseTypeToString.ToDictionary(kv => kv.Value, kv => kv.Key);
 

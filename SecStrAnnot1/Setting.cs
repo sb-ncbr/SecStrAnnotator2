@@ -23,18 +23,18 @@ namespace protein
             { { AlignMethod.None,"none" }, { AlignMethod.Align,"align" }, { AlignMethod.Super,"super"}, { AlignMethod.Cealign,"cealign" } };
         public const AlignMethod DEFAULT_ALIGN_METHOD = AlignMethod.Cealign;
 
-        public enum SecStrMethod { File, Dssp, Hbond, Geom, GeomDssp, GeomHbond, Hbond2, GeomHbond2 };
+        public enum SecStrMethod { File, Dssp, Hbond1, Hbond2, Geom, GeomDssp, GeomHbond1, GeomHbond2 };
 
         public static Dictionary<SecStrMethod, string> secStrMethodNames = new Dictionary<SecStrMethod, string>{
             { SecStrMethod.File,"file" },
             { SecStrMethod.Dssp,"dssp" },
-            { SecStrMethod.Hbond,"hbond" },
+            { SecStrMethod.Hbond1,"hbond1" },
+            { SecStrMethod.Hbond2,"hbond2" },
             { SecStrMethod.Geom,"geom" },
             { SecStrMethod.GeomDssp,"geom-dssp" },
-            { SecStrMethod.GeomHbond,"geom-hbond" },
-            { SecStrMethod.Hbond2,"hbond2" },
+            { SecStrMethod.GeomHbond1,"geom-hbond1" },
             { SecStrMethod.GeomHbond2,"geom-hbond2" } };
-        public const SecStrMethod DEFAULT_SEC_STR_METHOD = SecStrMethod.GeomHbond;
+        public const SecStrMethod DEFAULT_SEC_STR_METHOD = SecStrMethod.GeomHbond2;
 
         public static SseType[] DEFAULT_ACCEPTED_SSE_TYPES = LibSseTypes.ALL_HELIX_TYPES.Concat(LibSseTypes.ALL_SHEET_TYPES).ToArray();
 

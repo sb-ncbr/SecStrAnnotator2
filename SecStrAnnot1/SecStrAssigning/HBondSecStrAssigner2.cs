@@ -148,26 +148,32 @@ namespace protein.SecStrAssigning
                 SseType type = (startResIdx == endResIdx) ? SseType.ISOLATED_BETA_BRIDGE_TYPE : SseType.SHEET_TYPE;
                 int sheetId = HBondSSAConstants.SHEET_NUMBERING_FROM + strand.sheet;
                 Sse sse = new Sse(null/*$"{type}{i}"*/, chainId, startSeqId, endSeqId, type, sheetId);
-                if (Lib.DoWriteDebug) {
-                    foreach (int iMis in strand.microstrands) {
+                if (Lib.DoWriteDebug)
+                {
+                    foreach (int iMis in strand.microstrands)
+                    {
                         var mis = betaGraph.microstrands[iMis];
                         int iMil = mis.microladder;
                         var mil = betaGraph.microladders[iMil];
-                        if (parallelBulgeTypes.Contains(mil.type0)){
+                        if (parallelBulgeTypes.Contains(mil.type0))
+                        {
                             (startResIdx, endResIdx) = ZRangeToResidueIndexRange(mis.startZeta, mis.endZeta, HBondSSAConstants.BULGES_BY_ALPHA);
                             (chainId, startSeqId, endSeqId) = ChainStartEnd(startResIdx, endResIdx);
-                            type = SseType.BULGE_PARALLEL_UNSPECIFIED;
-                            Sse bulge = new Sse(null, chainId, startSeqId, endSeqId, type, -iMil);
+                            // type = SseType.BULGE_PARALLEL_UNSPECIFIED;
                             string bulgeCode = ParallelBulgeCode(mil, invert: mis.side == 1);
+                            SseType bulgeType = BulgeTypeFromBulgeCode(bulgeCode);
+                            Sse bulge = new Sse(null, chainId, startSeqId, endSeqId, bulgeType, -iMil);
                             bulge.AddComment(bulgeCode);
                             sse.AddNestedSSE(bulge);
                         }
-                        if (antiparallelBulgeTypes.Contains(mil.type0)){
+                        if (antiparallelBulgeTypes.Contains(mil.type0))
+                        {
                             (startResIdx, endResIdx) = ZRangeToResidueIndexRange(mis.startZeta, mis.endZeta, HBondSSAConstants.BULGES_BY_ALPHA);
                             (chainId, startSeqId, endSeqId) = ChainStartEnd(startResIdx, endResIdx);
-                            type = SseType.BULGE_ANTIPARALLEL_UNSPECIFIED;
-                            Sse bulge = new Sse(null, chainId, startSeqId, endSeqId, type, -iMil);
+                            // type = SseType.BULGE_ANTIPARALLEL_UNSPECIFIED;
                             string bulgeCode = AntiparallelBulgeCode(mil, invert: mis.side == 1);
+                            SseType bulgeType = BulgeTypeFromBulgeCode(bulgeCode);
+                            Sse bulge = new Sse(null, chainId, startSeqId, endSeqId, bulgeType, -iMil);
                             bulge.AddComment(bulgeCode);
                             sse.AddNestedSSE(bulge);
                         }
@@ -274,7 +280,7 @@ namespace protein.SecStrAssigning
                 }
             }
             // Lib.WriteLineDebug(Lib.EnumerateWithCommas(microstrand2macrostrand));
-            
+
             var macroladders = new List<(int macrostrand0, int macrostrand1, MacroladderType type)>();
             for (int i = 0; i < nMicroladders; i++)
             {
@@ -728,24 +734,26 @@ namespace protein.SecStrAssigning
         }
 
 
-        private string ParallelBulgeCode(Ladder bulge, bool invert = false){
+        private string ParallelBulgeCode(Ladder bulge, bool invert = false)
+        {
             Hbond firstBond = bulge.firstHbond;
             Hbond lastBond = bulge.lastHbond;
             string side0 = BulgeSideCode(firstBond, lastBond);
             string side1 = BulgeSideCode(firstBond.Inverted, lastBond.Inverted);
             if (invert)
-                return $"P_{side1}_{side0}_" ;
+                return $"P_{side1}_{side0}_";
             else
                 return $"P_{side0}_{side1}_";
         }
 
-        private string AntiparallelBulgeCode(Ladder bulge, bool invert = false){
+        private string AntiparallelBulgeCode(Ladder bulge, bool invert = false)
+        {
             Hbond firstBond = bulge.firstHbond;
             Hbond lastBond = bulge.lastHbond;
             string side0 = BulgeSideCode(firstBond, lastBond);
             string side1 = BulgeSideCode(lastBond.Inverted, firstBond.Inverted);
             if (invert)
-                return $"A_{side1}_{side0}_" ;
+                return $"A_{side1}_{side0}_";
             else
                 return $"A_{side0}_{side1}_";
         }
@@ -778,6 +786,49 @@ namespace protein.SecStrAssigning
                 int cycles = riEnd - riStart;
                 return "NcC".Repeat(cycles) + "N";
             }
+        }
+
+        private SseType BulgeTypeFromBulgeCode(string code)
+        {
+            if (code[0] == 'A')
+            {
+                switch (code)
+                {
+                    case "A_NcC_NcCNcC_": return SseType.BULGE_ANTIPARALLEL_CLASSIC_SHORT_SIDE;
+                    case "A_C_NcCN_": return SseType.BULGE_ANTIPARALLEL_CLASSIC_SHORT_SIDE;
+                    case "A_N_CNcC_": return SseType.BULGE_ANTIPARALLEL_CLASSIC_SHORT_SIDE;
+                    case "A_CNcCN_CNcCNcCN_": return SseType.BULGE_ANTIPARALLEL_WIDE_SHORT_SIDE;
+                    case "A_NcCN_CNcC_": return SseType.BULGE_ANTIPARALLEL22_DONOR_SIDE;
+
+                    case "A_NcCNcC_NcC_": return SseType.BULGE_ANTIPARALLEL_CLASSIC_LONG_SIDE;
+                    case "A_NcCN_C_": return SseType.BULGE_ANTIPARALLEL_CLASSIC_LONG_SIDE;
+                    case "A_CNcC_N_": return SseType.BULGE_ANTIPARALLEL_CLASSIC_LONG_SIDE;
+                    case "A_CNcCNcCN_CNcCN_": return SseType.BULGE_ANTIPARALEL_WIDE_LONG_SIDE;
+                    case "A_CNcC_NcCN_": return SseType.BULGE_ANTIPARALLEL22_ACCEPTOR_SIDE;
+
+                    default: return SseType.BULGE_ANTIPARALLEL_UNSPECIFIED;
+                }
+            }
+            else if (code[0] == 'P')
+            {
+                switch (code)
+                {
+                    case "P_NcC_CNcCNcCN_": return SseType.BULGE_PARALLEL14_SHORT_SIDE;
+                    case "P_CNcCN_NcCNcC_": return SseType.BULGE_PARALLEL32_SHORT_SIDE;
+                    case "P_N_CNcC_": return SseType.BULGE_PARALLEL13_SHORT_SIDE;
+                    case "P_CNcCN_NcCNcCNcC_": return SseType.BULGE_PARALLEL33_SHORT_SIDE;
+                    
+                    
+                    case "P_CNcCNcCN_NcC_": return SseType.BULGE_PARALLEL14_LONG_SIDE;
+                    case "P_NcCNcC_CNcCN_": return SseType.BULGE_PARALLEL32_LONG_SIDE;
+                    case "P_CNcC_N_": return SseType.BULGE_PARALLEL13_LONG_SIDE;
+                    case "P_NcCNcCNcC_CNcCN_": return SseType.BULGE_PARALLEL33_LONG_SIDE;
+                    
+                    default: return SseType.BULGE_PARALLEL_UNSPECIFIED;
+                }
+            }
+            
+            throw new NotImplementedException($"Unknown bulge code: {code}");
         }
     }
 }

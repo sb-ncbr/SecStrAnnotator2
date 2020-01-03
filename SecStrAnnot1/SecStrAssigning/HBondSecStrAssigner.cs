@@ -314,7 +314,7 @@ namespace protein.SecStrAssigning
                     if (lb.Start0 == ResidueXAfter(la.End0, 1) && la.Start1 == ResidueXAfter(lb.End1, 2)
                         && la.LastHBondDirection == BetaLadder.HBondDirection.From0To1 && lb.FirstHBondDirection == BetaLadder.HBondDirection.From0To1)
                     {
-                        // arch-bulge a-b(type A15) found in 1gjm
+                        // (type 23) found in 3dbg
                         return new BetaBulge(BetaBulge.BulgeType.Antiparallel23, la.End0, lb.Start0, lb.End1, la.Start1);
                     }
                 }
@@ -527,25 +527,25 @@ namespace protein.SecStrAssigning
                 switch (bulge.Type)
                 {
                     case BetaBulge.BulgeType.Classic:
-                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_CLASSIC_SHORT_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL_CLASSIC_SHORT_SIDE, null);
                     case BetaBulge.BulgeType.Wide:
-                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_WIDE_SHORT_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL_WIDE_SHORT_SIDE, null);
                     case BetaBulge.BulgeType.Antiparallel22:
-                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL22_SHORT_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL22_DONOR_SIDE, null);
                     case BetaBulge.BulgeType.Antiparallel33:
-                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL33_SHORT_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL33_SHORT_SIDE, null);
                     case BetaBulge.BulgeType.Antiparallel15:
-                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL15_SHORT_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL15_SHORT_SIDE, null);
                     case BetaBulge.BulgeType.Antiparallel23:
-                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL23_SHORT_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_ANTIPARALLEL23_SHORT_SIDE, null);
                     case BetaBulge.BulgeType.Parallel14:
-                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL14_SHORT_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL14_SHORT_SIDE, null);
                     case BetaBulge.BulgeType.Parallel32:
-                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL32_SHORT_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL32_SHORT_SIDE, null);
                     case BetaBulge.BulgeType.Parallel13:
-                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL13_SHORT_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL13_SHORT_SIDE, null);
                     case BetaBulge.BulgeType.Parallel33:
-                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL33_SHORT_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartShort].ChainId, residues[bulge.StartShort].SeqNumber, residues[bulge.EndShort].SeqNumber, SseType.BULGE_PARALLEL33_SHORT_SIDE, null);
                     default:
                         throw new NotImplementedException();
                 }
@@ -563,25 +563,25 @@ namespace protein.SecStrAssigning
                 switch (bulge.Type)
                 {
                     case BetaBulge.BulgeType.Classic:
-                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_CLASSIC_LONG_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL_CLASSIC_LONG_SIDE, null);
                     case BetaBulge.BulgeType.Wide:
-                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_WIDE_LONG_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALEL_WIDE_LONG_SIDE, null);
                     case BetaBulge.BulgeType.Antiparallel22:
-                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL22_LONG_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL22_ACCEPTOR_SIDE, null);
                     case BetaBulge.BulgeType.Antiparallel33:
-                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL33_LONG_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL33_LONG_SIDE, null);
                     case BetaBulge.BulgeType.Antiparallel15:
-                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL15_LONG_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL15_LONG_SIDE, null);
                     case BetaBulge.BulgeType.Antiparallel23:
-                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL23_LONG_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_ANTIPARALLEL23_LONG_SIDE, null);
                     case BetaBulge.BulgeType.Parallel14:
-                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL14_LONG_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL14_LONG_SIDE, null);
                     case BetaBulge.BulgeType.Parallel32:
-                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL32_LONG_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL32_LONG_SIDE, null);
                     case BetaBulge.BulgeType.Parallel13:
-                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL13_LONG_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL13_LONG_SIDE, null);
                     case BetaBulge.BulgeType.Parallel33:
-                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL33_LONG_SIDE_TYPE, null);
+                        return new Sse(null, residues[bulge.StartLong].ChainId, residues[bulge.StartLong].SeqNumber, residues[bulge.EndLong].SeqNumber, SseType.BULGE_PARALLEL33_LONG_SIDE, null);
                     default:
                         throw new NotImplementedException();
                 }

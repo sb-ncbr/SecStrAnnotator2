@@ -115,10 +115,12 @@ namespace protein
                 .AddHelp("METHOD is one of " + Setting.secStrMethodNames.Values.EnumerateWithCommas() + "; default: " + Setting.secStrMethodNames[Setting.DEFAULT_SEC_STR_METHOD])
                 .AddHelp("    file:       read from file <QUERY_ID>" + Setting.INPUT_SSES_FILE_EXT)
                 .AddHelp("    dssp:       run DSSP")
-                .AddHelp("    hbond:      use built-in DSSP-like algorithm")
+                .AddHelp("    hbond1:      use built-in DSSP-like algorithm (old version)")
+                .AddHelp("    hbond2:      use built-in DSSP-like algorithm")
                 .AddHelp("    geom:       use built-in geometry-based method")
                 .AddHelp("    geom-dssp:  use geom for helices, dssp for sheets")
-                .AddHelp("    geom-hbond: use geom for helices, hbond for sheets")
+                .AddHelp("    geom-hbond1: use geom for helices, hbond1 for sheets")
+                .AddHelp("    geom-hbond2: use geom for helices, hbond2 for sheets")
             );
             options.AddOption(Option.SwitchOption(new string[] { "-o", "--onlyssa" }, v => { onlyDetect = v; })
                 .AddHelp("Run only secondary structure assignment (SSA), do not run annotation.")
@@ -473,10 +475,10 @@ namespace protein
                 case Setting.SecStrMethod.GeomDssp:
                     secStrAssigner = new GeomDsspSecStrAssigner(qProtein, queryChainIDs, rmsdLimit, config.DsspExecutable, fileQueryRenumberedPDB, fileQueryDSSP, acceptedSSETypes);
                     break;
-                case Setting.SecStrMethod.Hbond:
+                case Setting.SecStrMethod.Hbond1:
                     secStrAssigner = new HBondSecStrAssigner(qProtein, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
                     break;
-                case Setting.SecStrMethod.GeomHbond:
+                case Setting.SecStrMethod.GeomHbond1:
                     secStrAssigner = new GeomHbondSecStrAssigner(qProtein, rmsdLimit, Setting.DEFAULT_H_BOND_ENERGY_LIMIT);
                     break;
                 case Setting.SecStrMethod.Hbond2:
