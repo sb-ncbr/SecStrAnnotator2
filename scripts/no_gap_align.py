@@ -323,6 +323,7 @@ def get_highest_column_index(sequence_matrix):
 def get_max_area_column_index(sequence_matrix):
     heights, widths, areas = logo_heights_widths_areas(sequence_matrix)
     max_area, max_area_index = max( (area, i) for i, area in enumerate(areas) )
+    print(f'Max. area column: {max_area_index}, area: {max_area}')
     return max_area_index
     
 def get_max_maxprob_column_index(sequence_matrix):
