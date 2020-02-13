@@ -26,7 +26,7 @@ PYMOL_REPLACEMENT_CHARACTER  = '+'  # In selection names, avoid-characters will 
 
 import sys
 import json
-import requests
+# import requests
 import re
 from os import path
 from pymol import cmd
@@ -225,13 +225,30 @@ def get_annotation_from_file(filename):
 		annotation = f.read()
 	return annotation
 
+def get_url(url):
+	"""Send HTTP GET request to URL and return the read text."""
+	# # v1 (requests is not by default in Python)
+	# import requests
+	# text = requests.get(url).text
+	# v2 for Python2
+	import urllib 
+	u = urllib.urlopen(url)
+	text = u.read()
+	u.close()
+	# # v3 for Python3
+	# import urllib
+	# urllib.request.urlopen(url)
+	# text = u.read()
+	# u.close()
+	return text
+
 def get_annotation_from_internet(pdbid):
 	"""Download annotation file from SecStrAPI."""
 	pdbid = pdbid.lower()
 	url = SEC_STR_API_URL + pdbid
 	log('Downloading annotation for PDB entry ' + pdbid + '\n  [' + url + ']')
 	try:
-		annotation_text = requests.get(url).text
+		annotation_text = get_url(url)
 		# debug_log(annotation_text[0:70] + '...')  #DEBUG
 		return annotation_text
 	except:
