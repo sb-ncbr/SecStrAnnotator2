@@ -36,6 +36,7 @@ from pymol import cmd
 
 THIS_SCRIPT = 'secstrapi_plugin-1.2.py'
 SCRIPT_VERSION = '1.2'
+REFERENCE_RESIDUE_GENERIC_NUMBER = 50
 
 # Field names in SecStrAPI format 
 API_VERSION = 'api_version'
@@ -71,6 +72,7 @@ TYPE = 'type'
 SHEET_ID = 'sheet_id'
 COLOR='color'
 INSERTION_CODE_NULL = '?'
+SEQUENCE = 'sequence'
 
 # Auxiliary functions #########################################################
 
@@ -360,7 +362,7 @@ def print_messages(annotation_json_object):
 		if do_print:
 			log('SecStrAPI message: ' + message_text)
 
-def apply_annotation(selection, domains, base_color, apply_rotation=False, show_reference_residues=False):
+def apply_annotation(selection, domains, base_color, apply_rotation=False, each_nth_generic_number=0, show_reference_residues=False):
 	for domain in domains:
 		selection = '(' + selection + ')'
 		use_auth = should_use_auth(selection)
@@ -408,6 +410,7 @@ def apply_annotation(selection, domains, base_color, apply_rotation=False, show_
 				cmd.color(assign_color(sse), sel_name + ' and symbol C')
 				if SHOW_LABELS:
 					label_sse(sse, sel_name, use_auth)
+			label_generic_residues(sse, sel_name, use_auth, each_nth_generic_number)
 			if show_reference_residues:
 				mark_reference_residue(sse, sel_name, use_auth, color=assign_color(sse))
 			cmd.deselect()
@@ -434,6 +437,39 @@ def label_sse(sse, selection, use_auth):
 	if cmd.count_atoms(label_selection)==0:
 		label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(middle) + ' and name CA'
 	cmd.label(label_selection, '"' + sse[LABEL].replace('"', '\\"') + '"')
+
+def label_generic_residues(sse, selection, use_auth, each_nth):
+	if each_nth == 0:
+		return
+	if use_auth:
+		chain = sse[AUTH_CHAIN_ID]
+		start = sse[AUTH_START_RESI]
+		end = sse[AUTH_END_RESI]
+		ref = sse.get(AUTH_REFERENCE_RESI, None)
+	else:
+		chain = sse[CHAIN_ID]
+		start = sse[START_RESI]
+		end = sse[END_RESI]
+		ref = sse.get(REFERENCE_RESI, None)
+	sequence = sse.get(SEQUENCE, '')
+	if ref is not None:
+		if len(sequence) != end-start+1:
+			warn('Sequence length for ' + sse[LABEL] + ' does not match residue numbers (Contains insertion code? Set cif_use_auth to off!')
+			return
+		to_label = [(i, resn) for i, resn in zip(range(start, end+1), sequence) if (i-ref) % each_nth == 0]
+		if len(to_label) == 0:
+			to_label = [(start, sequence[0])] if start > ref else [(end, sequence[-1])]
+		for i, resn in zip(range(start, end+1), sequence):
+			if (i-ref) % each_nth == 0:
+				label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(i) + ' and name CB'
+				if cmd.count_atoms(label_selection)==0:
+					label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(i) + ' and name CA'
+				label_text = '"' + resn + '@' + sse[LABEL] + '.' + str(REFERENCE_RESIDUE_GENERIC_NUMBER - ref + i) + '"'
+				cmd.label(label_selection, label_text)
+
+
+	
+
 
 def mark_reference_residue(sse, selection, use_auth, color='red'):
 	if use_auth:
@@ -538,44 +574,46 @@ def test():
 
 # Main function ###############################################################
 
-def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True, force_rotation=True, reference_residues=False):
+@cmd.extend
+def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True, force_rotation=True, generic_numbers=0, reference_residues=False):
 	"""
-DESCRIPTION
+	DESCRIPTION
 
-	"annotate_sec_str" visualizes protein secondary structure annotation.
+		"annotate_sec_str" visualizes protein secondary structure annotation.
 
-USAGE
+	USAGE
 
-	annotate_sec_str selection, [, annotation_file [, name [, base_color [, force_cartoon [, force_rotation [, reference_residues]]]]]]
+		annotate_sec_str selection [, annotation_file [, name [, base_color [, force_cartoon [, force_rotation [, generic_numbers [, reference_residues ]]]]]]]
 
-ARGUMENTS
+	ARGUMENTS
 
-	selection = string: selection-expression.
+		selection = string: selection-expression.
 
-	annotation_file = string: name of the file with secondary structure annotation (in SecStrAPI format). If not specified, the annotation will be downloaded from SecStrAPI (the PDB ID will be guessed from the "name" argument).
+		annotation_file = string: name of the file with secondary structure annotation (in SecStrAPI format). If not specified, the annotation will be downloaded from SecStrAPI (the PDB ID will be guessed from the "name" argument).
 
-	name = string: PDB ID or domain name specifying a protein domain(s) within the annotation file. If not specified, the PDB ID and the domain name will be guessed from the "selection" argument.
+		name = string: PDB ID or domain name specifying a protein domain(s) within the annotation file. If not specified, the PDB ID and the domain name will be guessed from the "selection" argument.
 
+		base_color = string: color to use for non-annotated atoms {default: gray80}
 
-	base_color = string: color to use for non-annotated atoms {default: gray80}
+		force_cartoon = 0/1: apply default cartoon representation for all newly fetched structures {default: 1}
 
-	force_cartoon = 0/1: apply default cartoon representation for all newly fetched structures {default: 1}
+		force_rotation = 0/1: apply standard rotation to all newly fetched structures {default: 1}
 
-	force_rotation = 0/1: apply standard rotation to all newly fetched structures {default: 1}
+		generic_numbers = int: show generic residue numbering where available (0 = don't label, positive integer n = label each n-th residue) {default: 0}
 
-	reference_residues = 0/1: mark the reference residue for each SSE (if available) by a red sphere {default: 0}
+		reference_residues = 0/1: mark the reference residue for each SSE (if available) by a red sphere {default: 0}
 
-NOTES
+	NOTES
 
-	The command will try to fetch the missing structures in case that the "selection" argument is not currently a valid selection-expression.
+		The command will try to fetch the missing structures in case that the "selection" argument is not currently a valid selection-expression.
 
-EXAMPLES
+	EXAMPLES
 
-	annotate_sec_str 1og2   (Fetches 1og2 if not loaded, downloads its annotation from SecStrAPI, annotates all domains (i.e. 1og2A, 1og2B).)
+		annotate_sec_str 1og2   (Fetches 1og2 if not loaded, downloads its annotation from SecStrAPI, annotates all domains (i.e. 1og2A, 1og2B).)
 
-	annotate_sec_str 1og2A  (Fetches 1og2 if not loaded, downloads its annotation from SecStrAPI, annotates domain 1og2A.)
+		annotate_sec_str 1og2A  (Fetches 1og2 if not loaded, downloads its annotation from SecStrAPI, annotates domain 1og2A.)
 
-	annotate_sec_str my_structure, my_annotation.sses.json, 1og2A   (Annotates my_structure)
+		annotate_sec_str my_structure, my_annotation.sses.json, 1og2A   (Annotates my_structure)
 
 	"""
 
@@ -583,6 +621,10 @@ EXAMPLES
 		try:
 			force_cartoon = parse_boolean(force_cartoon)
 			force_rotation = parse_boolean(force_rotation)
+			try: 
+				generic_numbers = int(generic_numbers)
+			except:
+				generic_numbers = 5 if parse_boolean(generic_numbers) else 0
 			reference_residues = parse_boolean(reference_residues)
 		except:
 			return False
@@ -680,7 +722,7 @@ EXAMPLES
 				return False
 		
 		debug_log('OK')  #DEBUG
-		apply_annotation(selection, domains, base_color, apply_rotation=(fetched and force_rotation), show_reference_residues=reference_residues)
+		apply_annotation(selection, domains, base_color, apply_rotation=(fetched and force_rotation), each_nth_generic_number=generic_numbers, show_reference_residues=reference_residues)
 		return True
 	# except Exception as ex:
 	# 	fail(str(ex))
@@ -692,7 +734,7 @@ EXAMPLES
 # The script for PyMOL ########################################################
 
 # test()   #DEBUG
-cmd.extend('annotate_sec_str', annotate_sec_str)
+# cmd.extend('annotate_sec_str', annotate_sec_str)
 print('Command "annotate_sec_str" has been added. Type "help annotate_sec_str" for more information.')
 
 #TODO SecStrAPI website - document the format by example with hints, like PDBe API
