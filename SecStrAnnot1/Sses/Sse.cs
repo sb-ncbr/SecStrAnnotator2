@@ -56,6 +56,7 @@ namespace protein.Sses
         public List<Sse> NestedSSEs { get; private set; }
         public String Comment { get; private set; } // Any string which is a comment for this SSE. 
         public String Color { get; set; } // Additional info about the color used for visualization (if assigned explicitly, else null).
+        public String Rainbow { get; set; } // Additional info about the color used for visualization (if assigned explicitly, else null).
         public string AuthChainID { get; private set; }
         public int? AuthStart { get; private set; }
         public string AuthStartInsCode { get; private set; }
@@ -73,6 +74,7 @@ namespace protein.Sses
             NestedSSEs = null;
             Comment = null;
             Color = null;
+            Rainbow = null;
         }
         public Sse(Sse orig)
         {
@@ -85,6 +87,7 @@ namespace protein.Sses
             NestedSSEs = orig.NestedSSEs;
             Comment = orig.Comment;
             Color = orig.Color;
+            Rainbow = orig.Rainbow;
             AuthChainID = orig.AuthChainID;
             AuthStart = orig.AuthStart;
             AuthStartInsCode = orig.AuthStartInsCode;
@@ -155,11 +158,12 @@ namespace protein.Sses
         }
 
         /** Return an identical SSEInSpace, but with a different label. */
-        public Sse RelabeledCopy(String newLabel, String newColor)
+        public Sse RelabeledCopy(String newLabel, String newColor, String newRainbow)
         {
             Sse result = new Sse(this);
             result.Label = newLabel;
             result.Color = newColor;
+            result.Rainbow = newRainbow;
             return result;
         }
 

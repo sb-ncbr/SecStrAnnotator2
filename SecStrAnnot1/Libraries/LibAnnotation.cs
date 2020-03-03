@@ -36,6 +36,7 @@ namespace protein.Libraries
             public const string END_VECTOR = "end_vector";
             public const string COMMENT = "comment";
             public const string COLOR = "color";
+            public const string RAINBOW = "rainbow";
             public const string METRIC = "metric_value";
             public const string SUSPICIOUSNESS = "suspiciousness";
 
@@ -188,6 +189,8 @@ namespace protein.Libraries
                 elem[JsNames.COMMENT] = new JsonValue(sse.Comment);
             if (sse.Color != null)
                 elem[JsNames.COLOR] = new JsonValue(sse.Color);
+            if (sse.Rainbow != null)
+                elem[JsNames.RAINBOW] = new JsonValue(sse.Rainbow);
             if (WRITE_VECTORS && sse is SseInSpace)
             {
                 elem[JsNames.START_VECTOR] = new JsonValue((sse as SseInSpace).StartPoint.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
@@ -411,6 +414,8 @@ namespace protein.Libraries
                         s.AddComment(sse[JsNames.COMMENT].String);
                     if (sse.Contains(JsNames.COLOR))
                         s.Color = sse[JsNames.COLOR].String;
+                    if (sse.Contains(JsNames.RAINBOW))
+                        s.Rainbow = sse[JsNames.RAINBOW].String;
                     result.Add(s);
                 }
                 catch (JsonKeyNotFoundException e)

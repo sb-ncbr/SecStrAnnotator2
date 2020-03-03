@@ -36,9 +36,9 @@ namespace protein.Sses
         {
             return new SseInSpace(base.RelabeledCopy(newLabel), StartPoint, EndPoint);
         }
-        public new SseInSpace RelabeledCopy(String newLabel, String newColor)
+        public new SseInSpace RelabeledCopy(String newLabel, String newColor, String newRainbow)
         {
-            return new SseInSpace(base.RelabeledCopy(newLabel, newColor), StartPoint, EndPoint);
+            return new SseInSpace(base.RelabeledCopy(newLabel, newColor, newRainbow), StartPoint, EndPoint);
         }
 
         // public static SSEInSpace Join(SSEInSpace first, SSEInSpace second, String comment){

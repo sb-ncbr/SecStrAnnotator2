@@ -68,7 +68,7 @@ namespace protein.Annotating
                     // each vertex is matched at most once
                     Lib.Shuffler annotShuffler = Lib.Shuffler.FromMatching(matching);
                     rememberedAnnotatedCandidates = annotShuffler.ShuffleBack(Context.Candidates, () => SseInSpace.NewNotFound(null))
-                        .Select((sse, i) => sse.RelabeledCopy(Context.Templates[i].Label, Context.Templates[i].Color)).ToArray();
+                        .Select((sse, i) => sse.RelabeledCopy(Context.Templates[i].Label, Context.Templates[i].Color, Context.Templates[i].Rainbow)).ToArray();
                 }
                 else
                 {
@@ -89,7 +89,7 @@ namespace protein.Annotating
                             SseInSpace[] all = multiMatching[i].Select(j => Context.Candidates[j]).OrderBy(x => x).Distinct().ToArray();
                             if (all.Length == 1)
                             {
-                                rememberedAnnotatedCandidates[i] = all[0].RelabeledCopy(Context.Templates[i].Label, Context.Templates[i].Color);
+                                rememberedAnnotatedCandidates[i] = all[0].RelabeledCopy(Context.Templates[i].Label, Context.Templates[i].Color, Context.Templates[i].Rainbow);
                             }
                             else if (all.Length > 1)
                             {
