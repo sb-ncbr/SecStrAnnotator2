@@ -17,6 +17,7 @@ MAPPINGS = 'domain_mappings'
 DOMAIN_NAME = 'domain'
 SOURCE = 'source'
 FAMILY_ID = 'family'
+CANONICAL_ROTATION = 'rotation_matrix'
 
 # Field names in SecStrAPI format - SSE annotation (from SecStrAnnotator format)
 SSES = 'secondary_structure_elements'

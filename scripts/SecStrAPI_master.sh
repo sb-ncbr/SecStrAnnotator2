@@ -20,10 +20,11 @@ EXTRACT_SEQUENCES="$SCRIPT_DIR/extract_sequences.py"
 ALIGN_SEQUENCES="$SCRIPT_DIR/align_sequences.py"
 ADD_REFERENCE_RESIDUES="$SCRIPT_DIR/add_reference_residues.py"
 
-TEMPLATE="2nnj,A,:"
+TEMPLATE="2NNJ,A,:"  # Uppercase to avoid collisions with query protein
 TEMPLATE_ANNOTATION_FILE="$DATA_DIR/../2nnj-template-strict.sses.json"
+TEMPLATE_STRUCTURE_FILE="$DATA_DIR/../2nnj-canonical_rotation.cif"
 SECSTRANNOTATOR_OPTIONS="--soft  --label2auth  --maxmetric 25,0.5,0.5  --verbose"  # Use with --verbose for CYP Anatomy analyses, without --verbose for SecStrAPI
-ALIGNED_SSE_LABELS="A,B,C,D,E,H,I,J,K,L"
+ALIGNED_SSE_LABELS="B,C,E,H,I,J,K,L,J',K',K'',1-1,1-2,1-3,1-4,1-5,2-2,3-1,3-2"
 # ALIGNED_SSE_LABELS="all"
 # ALIGNED_SSE_LABELS="A,B,C,D,E,F,G,H,I,J,K,L"
 # ALIGNED_SSE_LABELS="A',B',B'',B''',F',G',J',K',K'',K''',L'"
@@ -68,6 +69,7 @@ python3  $DOWNLOAD_DOMAINS  $DATA_DIR/cyps_ALL_$TODAY.simple.json  $DATA_DIR/str
 
 echo '=== Annotate ==='
 cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/${TEMPLATE:0:4}-template.sses.json
+cp  $TEMPLATE_STRUCTURE_FILE  $DATA_DIR/structures/${TEMPLATE:0:4}.cif
 python3  $SECSTRANNOTATOR_BATCH  --dll $SECSTRANNOTATOR_DLL \
     --threads $N_THREADS  --options " $SECSTRANNOTATOR_OPTIONS " \
     $DATA_DIR/structures  $TEMPLATE  $DATA_DIR/cyps_ALL_$TODAY.simple.json 

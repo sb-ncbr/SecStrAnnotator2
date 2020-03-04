@@ -14,6 +14,7 @@ import lib
 from constants import *
 
 INPUT_EXT = '-annotated.sses.json'
+INPUT_ALIGNMENT_EXT = '-alignment.json'
 OUTPUT_EXT = '.json'
 SEQUENCE_EXT = '.fasta'
 
@@ -87,6 +88,11 @@ for pdb, domains in input_annotations[ANNOTATIONS].items():
                     confidence = confidence_based_on_metric(sse['metric_value'])
                     lib.insert_after(sse, 'metric_value', [('confidence', confidence)])
         domain[CONNECTIVITY] = annot[CONNECTIVITY]
+        try:
+            with open(path.join(input_directory, name + INPUT_ALIGNMENT_EXT)) as r:
+                domain[CANONICAL_ROTATION] = json.load(r)[CANONICAL_ROTATION]
+        except IOError:
+            pass
         if COMMENT in annot:
             domain[COMMENT] = annot[COMMENT]
 

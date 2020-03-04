@@ -36,7 +36,7 @@ SECSTRANNOTATOR = path.join(RUN_DIR, args.dll)
 all_annotations_file = path.join(directory, 'all_annotations.sses.json')
 output = path.join(directory, 'stdout.txt')
 output_err = path.join(directory, 'stderr.txt')
-out_files_extensions = ['-aligned.cif', '-detected.sses.json', '-annotated.sses.json', '-annotated.pse']
+out_files_extensions = ['-aligned.cif', '-alignment.json', '-detected.sses.json', '-annotated.sses.json', '-annotated.pse']
 
 #  FUNCTIONS  ###############################################################################
 
