@@ -381,8 +381,9 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
 
     scale = 1.0
     height = 3.0
-    width_per_residue = 0.35
-    width_extra = 0.5
+    width_per_residue = 0.3  # 0.35
+    width_extra = 1.0  # 0.5
+    width_minimum = 2.0
     vpad = 0.05
     hpad = 0.05
     font_name = 'DejaVu Sans Mono'
@@ -408,7 +409,8 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
     matrix.index += first_index
     n_residues = matrix.shape[0]
 
-    figsize = ((n_residues * width_per_residue + width_extra) * scale, height * scale)
+    width = max(n_residues*width_per_residue + width_extra, width_minimum)
+    figsize = (width * scale, height * scale)
     logo = logomaker.Logo(matrix, figsize=figsize, vpad=vpad, color_scheme=color_scheme, font_name=font_name)
     logo.fig.set_dpi(100)
     for glyph in logo.glyph_list:
