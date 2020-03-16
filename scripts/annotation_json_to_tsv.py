@@ -8,17 +8,13 @@ from collections import defaultdict
 
 parser = argparse.ArgumentParser()
 parser.add_argument('all_annotations_file', help='JSON file with annotations in SecStrAPI format', type=str)
-parser.add_argument('--fields', help='SSE fields to extract as columns', type=str, default='')
 parser.add_argument('--add_missing_sses', help='Add SSE labels which are missing for each domain, with all columns set to NA', action='store_true')
 parser.add_argument('--one_domain_per_pdb', help='Take only first domain for each PDB', action='store_true')
-parser.add_argument('--only_domain_lists', help='Produce table with domain lists instead of the full table', action='store_true')
 args = parser.parse_args()
 
 all_annotations_file = args.all_annotations_file
-fields = [ field for field in args.fields.split(',') if field != '' ]
 add_missing_sses = args.add_missing_sses
 one_domain_per_pdb = args.one_domain_per_pdb
-only_domain_lists = args.only_domain_lists
 
 
 SSES='secondary_structure_elements'
@@ -98,27 +94,31 @@ def count_GHI_bonds(sse):
 
 def sse_to_row(sse, *extras):
 	row = []
-	row.extend( extra if extra is not None else 'NA' for extra in extras )
-	row.extend( sse[field] if sse is not None else 'NA' for field in fields )
+	row.extend(extra if extra is not None else 'NA' for extra in extras)
+	if sse is not None:
+		row.extend([sse[START], sse[END], length(sse), sse[TYPE]])
+	else:
+		row.extend(['NA', 'NA', 0, 'NA'])
 	row.extend([longest_nested(sse, 'G'), longest_nested_starting(sse, 'G'), longest_nested_ending(sse, 'G'), 
 		longest_nested(sse, 'H'), longest_nested(sse, 'I'), longest_nested_starting(sse, 'I'), longest_nested_ending(sse, 'I'), *count_GHI_bonds(sse)])
 	return row
 
 
 with open(all_annotations_file, 'r') as f:
-	annotations=json.load(f)['annotations']
+	annotations = json.load(f)['annotations']
 
-labels = sorted(set( sse[LABEL] for pdb_annot in annotations.values() for dom_annot in pdb_annot.values() for sse in dom_annot[SSES] ))
-# print(labels)
-# exit()
+labels = sorted(set(sse[LABEL] for pdb_annot in annotations.values() for dom_annot in pdb_annot.values() for sse in dom_annot[SSES]))
+
 result = []
 
 for pdb, pdb_annot in annotations.items():
-	domain_annots = list(pdb_annot.items())[:1] if one_domain_per_pdb else pdb_annot.items()
+	domain_annots = list(pdb_annot.items())
+	if one_domain_per_pdb:
+		domain_annots = domain_annots[:1]
 	for domain, domain_annot in domain_annots:
 		if add_missing_sses:
 			for label in labels:
-				sse = next(( sse for sse in domain_annot[SSES] if sse[LABEL] == label ), None)
+				sse = next((sse for sse in domain_annot[SSES] if sse[LABEL] == label), None)
 				result.append(sse_to_row(sse, domain_annot['uniprot_id'], domain_annot['uniprot_name'], pdb, domain, domain_annot[CHAIN], label))
 		else:
 			for sse in domain_annot[SSES]:
@@ -126,26 +126,11 @@ for pdb, pdb_annot in annotations.items():
 				
 result.sort()
 
-if only_domain_lists:
-	uniprots = [ row[0] for row in result ]
-	domains = [ row[3] for row in result ]
-	uni2domains = defaultdict(lambda: set())
-	for uni, dom in zip(uniprots, domains):
-		uni2domains[uni].add(dom)
-	print('UniProt', 'Count', 'Domains', sep='\t')
-	for uni, doms in uni2domains.items():
-		print(uni, len(doms), ','.join(sorted(doms)), sep='\t')
-else:
-	print('UniProt', 'UniProt_name', 'PDB', 'Domain', CHAIN, LABEL, *fields, 'longest_G', 'longest_G_start', 'longest_G_end', 
-		'longest_H', 'longest_I', 'longest_I_start', 'longest_I_end', 'bonds_G', 'bonds_H', 'bonds_I', sep='\t')
-	for row in result:
-		print(*row, sep='\t')
-
-
-
-
-
-
+print('UniProt', 'UniProt_name', 'PDB', 'Domain', CHAIN, LABEL, 'start', 'end', 'length', 'type', 
+	'longest_G', 'longest_G_start', 'longest_G_end', 'longest_H', 'longest_I', 'longest_I_start', 'longest_I_end', 'bonds_G', 'bonds_H', 'bonds_I', 
+	sep='\t')
+for row in result:
+	print(*row, sep='\t')
 
 
 
