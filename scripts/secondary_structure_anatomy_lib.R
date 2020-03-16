@@ -3,32 +3,36 @@ library(tidyr)  # Tested with tidyr 1.0.2
 library(readr)  # Tested with readr 1.3.1
 library(ggplot2)  # Tested with ggplot2 3.3.0
 
+#############################################################################
+# CytochromeP450-specific constants and functions
+
+HELIX_ORDER = c("A'", "A", "B", "B'", "B''", "C", "D", "E", "F", "F'", "G'", "G", "H", "I", "J", "J'", "K", "K'", "K''", "L", "L'")
+SHEET_ORDER = c("1-0", "1-1", "1-2", "1-3", "1-4", "1-5", "2-1", "2-2", "3-1", "3-2", "3-3", "4-1", "4-2", "5-1", "5-2", "6-1", "6-2")
+OUR_SSES = c(HELIX_ORDER, SHEET_ORDER)
+
+# Decide if the SSE label corresponds to major, minor helix, or strand
+sse_category = function(name) {
+  name = as.character(name)
+  n = nchar(name)
+  if (is_digit(substr(name, 1, 1))) 'strand'
+  else if (substr(name, n, n)=='\'') 'minor h.' 
+  else 'major h.'
+}
+
+#############################################################################
+# General functions
+
+NONRETARDED_PAIRED_PALETTE = c("#FB9A99", "#E31A1C", "#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C")  # Colors from palette Paired, ordered consistently with Set1
+NONRETARDED_PAIRED_PALETTE_SEPARATED = c("#FB9A99", "#A6CEE3", "#B2DF8A", "#E31A1C", "#1F78B4", "#33A02C")  # Colors from palette Paired, ordered consistently with Set1, first light then dark
+NONRETARDED_PAIRED_PALETTE_SEPARATED_DARK = c("#FB6A69", "#769EE3", "#82CF5A", "#C30A0C", "#0F68A4", "#23901C")  # Colors from palette Paired, ordered consistently with Set1, first light then dark, darkened
+HELIX_TYPE_PALETTE = c("#B080C8", "#30A028", "#F8A870", "#CCCCCC") # bright violet (310-helix), dark green (alpha-helix), orange (pi-helix), grey (other)
+
 
 # Interpret path as starting in DATADIR
 full_path = function(path) { 
   paste(DATADIR, path, sep='/') 
 }
 
-HELIX_ORDER = c("A'", "A", "B", "B'", "B''", "C", "D", "E", "F", "F'", "G'", "G", "H", "I", "J", "J'", "K", "K'", "K''", "L", "L'")  # CYP-specific
-SHEET_ORDER = c("1-0", "1-1", "1-2", "1-3", "1-4", "1-5", "2-1", "2-2", "3-1", "3-2", "3-3", "4-1", "4-2", "5-1", "5-2", "6-1", "6-2")  # CYP-specific
-OUR_SSES = c(HELIX_ORDER, SHEET_ORDER)  # CYP-specific
-
-# Decide if the SSE label corresponds to major, minor helix or strand (CYP-specific)
-sse_category = function(name) {
-  name = as.character(name)
-  n = nchar(name)
-  if (is_digit(substr(name,1,1)))
-    result = 'strand'
-  else if (substr(name,n,n)=='\'')
-    result = 'minor h.' 
-  else
-    result = 'major h.'
-  result
-}
-
-nonretarded_paired_palette = c("#FB9A99", "#E31A1C", "#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C")  # Colors from palette Paired, ordered consistently with Set1
-nonretarded_paired_palette_separated      = c("#FB9A99", "#A6CEE3", "#B2DF8A", "#E31A1C", "#1F78B4", "#33A02C")  # Colors from palette Paired, ordered consistently with Set1, first light then dark
-nonretarded_paired_palette_separated_dark = c("#FB6A69", "#769EE3", "#82CF5A", "#C30A0C", "#0F68A4", "#23901C")  # Colors from palette Paired, ordered consistently with Set1, first light then dark, darkened
 
 # Get list of domain names and their UniProtIDs. Optionally summarize domains for each UniProtID to one row.
 get_domains = function(sse_annotation_df, summarize_by_UniProt=FALSE) {
@@ -76,10 +80,12 @@ agresti_coull_confidence_interval = function(successes, total, alpha = 0.05) {
   c(p_-d, p_+d)
 }
 
+# Decide if character is a letter
 is_letter = function(x) {
   grepl("[[:alpha:]]", x)
 }
 
+# Decide if character is a digit
 is_digit = function(x) {
   grepl("[[:digit:]]", x)
 }
@@ -89,6 +95,7 @@ capitalize = function(x) {
   paste(toupper(substring(x, 1, 1)), tolower(substring(x, 2)), sep='')
 }
 
+# Barchart with relative occurrence for each SSE label
 plot_sse_occurrence = function(df, show_confidence = TRUE, alpha = 0.05, title = NULL, stagger_labels = FALSE, turn_labels = FALSE) {
   g = ggplot(table_sse_occurrence(df, alpha)) +
     aes(x = label, y = 100*freq, fill = type) +
@@ -107,6 +114,7 @@ plot_sse_occurrence = function(df, show_confidence = TRUE, alpha = 0.05, title =
   g
 }
 
+# Barchart with relative occurrence for each SSE label, comparing multiple datasets
 plot_sse_occurrence_multi = function(..., show_confidence = TRUE, alpha = 0.05, title = NULL, stagger_labels = FALSE, turn_labels = FALSE) {
   tables = lapply(pairlist(...), table_sse_occurrence, alpha)
   table = bind_rows(tables, .id = 'set')
@@ -114,7 +122,7 @@ plot_sse_occurrence_multi = function(..., show_confidence = TRUE, alpha = 0.05, 
     aes(x = label, y = 100*freq, fill = paste(set, ' (', type, ')', sep = '')) +
     geom_col(position = 'dodge') + 
     geom_vline(xintercept = seq(1.5, length(unique(table$label))-0.5, 1), lwd = 0.4, colour = 'gray90') +
-    scale_fill_manual(values = nonretarded_paired_palette_separated) + 
+    scale_fill_manual(values = NONRETARDED_PAIRED_PALETTE_SEPARATED) + 
     coord_cartesian(ylim = c(0,105)) +
     scale_y_continuous(expand = expand_scale(add = 0), breaks = seq(0, 100, by = 20)) +
     labs(x = 'SSE', y = 'Occurrence [%]', fill = 'Type', title = title) +
@@ -127,8 +135,83 @@ plot_sse_occurrence_multi = function(..., show_confidence = TRUE, alpha = 0.05, 
   g
 }
 
+# Barchart with relative occurrence for each beta-bulge label
+plot_bulge_occurrence = function(df, bulge_df, show_confidence = TRUE, alpha = 0.05, title = NULL, include_parent_strands = TRUE, turn_labels = FALSE, stagger_labels = FALSE) {
+  g = ggplot(table_bulge_occurrence(df, bulge_df, alpha = alpha, include_parent_strands = include_parent_strands)) +
+    aes(x = label, y = 100*freq, fill = type) +
+    geom_col() + 
+    geom_vline(xintercept = seq(1.5, length(unique(df$label))-0.5, 1), lwd = 0.4, colour = 'gray90') +
+    scale_fill_brewer(palette = 'Paired') + 
+    labs(x = 'SSE', y = 'Occurrence [%]', fill = 'Bulge type', title = title) +
+    theme_bw() +
+    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels)
+  if (show_confidence) { 
+    g = g + geom_errorbar(aes(ymin = 100*freq_min, ymax = 100*freq_max), width = 0.4, position = position_dodge(.9)) }
+  g
+}
+
+# Barchart with relative occurrence of each helix type (3_10/alpha/pi) for each SSE label
+plot_contained_helix_types = function(df, ..., turn_labels = FALSE, stagger_labels = FALSE){
+  changed_labels = c(contains_G = expression(paste('contains ', '3'[10])), contains_Η = expression(paste('contains ', alpha)), contains_Ι = expression(paste('contains ', pi)) )
+  g = plot_criteria(df, contains_G = (df$longest_G >= 3), contains_Η = (df$longest_H >= 4), contains_Ι = (df$longest_I >= 5), ..., ignore_zero = TRUE)  +
+    scale_fill_manual(values = HELIX_TYPE_PALETTE, labels = changed_labels) + 
+    order_x_labels(include_strands = FALSE) + 
+    theme_bw() +
+    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels)+
+    theme(legend.text.align = 0)
+  g
+}
+
+# Barchart with relative fraction of cases fulfulling specified criteria, for each SSE label
+plot_criteria = function(df, ..., ignore_zero = FALSE, title = NULL, y_label = 'Fulfilling criterion'){
+  table = table_criteria(df, ..., ignore_zero = ignore_zero) %>% group_by(label, set) %>% mutate(type = sse_category(label))
+  g = ggplot(table) + 
+    aes(x = label, y = 100*fulfilling, fill = set) +
+    geom_col(position = 'dodge') + 
+    geom_vline(xintercept = seq(1.5, length(unique(df$label))-0.5, 1), lwd = 0.4, colour = 'gray90') + 
+    scale_fill_brewer(palette = 'Set1') + 
+    coord_cartesian(ylim = c(0,105)) +
+    scale_y_continuous(expand = expand_scale(add = 0), breaks = seq(0, 100, by = 20)) +
+    labs(x = 'SSE', y = paste(y_label, ' [%]'), fill = 'Type', title = title) +
+    order_x_labels()
+  g
+}
+
+# Table with relative fraction of cases fulfulling specified criteria, for each SSE label
+table_criteria = function(df, ..., by_label = TRUE, ignore_zero = FALSE) {
+  tables = lapply(pairlist(...), function(crit) {table_criterion(df, crit, by_label = by_label, ignore_zero = ignore_zero)})
+  t = bind_rows(tables, .id = 'set')
+  t
+}
+
+# Table with relative fraction of cases fulfulling specified criterion, for each SSE label
+table_criterion = function(df, criterion, by_label = TRUE, ignore_zero = FALSE) {
+  df$ok = criterion
+  if (ignore_zero){
+    df = df %>% filter(length>0)
+  }
+  if (by_label){
+    df = df %>% group_by(label)
+  }
+  df = df %>% summarise(fulfilling=mean(ok))
+  df
+}
+
+# Table with relative occurrence for each beta-bulge label
+table_bulge_occurrence = function(df, bulge_df, alpha = 0.05, include_parent_strands = TRUE) {
+  bulge_df = mutate(bulge_df, label = paste(label, type, sep = '.'))
+  if (include_parent_strands){
+    bulge_df = bind_rows(mutate(df, type = 'strand'), bulge_df)
+  }
+  n_pdb = n_distinct(df$PDB)
+  data = bulge_df %>% filter(length > 0) %>% group_by(label, type) %>% distinct(PDB) %>% count() %>% 
+    mutate(freq = n/n_pdb, category = sse_category(label), freq_min = agresti_coull_confidence_interval(n, n_pdb, alpha)[1], freq_max = agresti_coull_confidence_interval(n, n_pdb, alpha)[2]) %>%
+    filter(category == 'strand') %>% select(-'category')
+  data
+}
+
 # Order SSE labels according to OUR_SSES, optionaly convert apostrophest to prime symbols or stagger labels (show every other label lower)
-order_x_labels = function(apostrophe_to_prime = TRUE, stagger = FALSE) { 
+order_x_labels = function(apostrophe_to_prime = TRUE, stagger = FALSE, include_helices = TRUE, include_strands = TRUE) { 
   f = if (apostrophe_to_prime){
     function(x) { sub("'", "′", sub("''", "″", sub("'''", "‴", x))) }
   } else {
@@ -139,7 +222,8 @@ order_x_labels = function(apostrophe_to_prime = TRUE, stagger = FALSE) {
   } else {
     f
   }
-  scale_x_discrete(limits = OUR_SSES, labels = label_func)
+  limits = if (include_helices & include_strands) {OUR_SSES} else if (include_helices) {HELIX_ORDER} else if (include_strands) {SHEET_ORDER}
+  scale_x_discrete(limits = limits, labels = label_func)
 }
 
 # Customize theme_bw in ggplot
@@ -152,6 +236,7 @@ customize_theme = function(stagger_labels = FALSE, turn_labels = FALSE){
   )
 }
 
+# Boxplot with SSE length (or other specified column) distribution, for each SSE label
 boxplot_sse = function(df, y_column = 'length', ignore_zero = FALSE, width = 0.9, group_col = 'type', title = NULL) {
   df = df %>% mutate(type = mapply(sse_category, label))
   if (ignore_zero) df = df %>% filter(df$length>0)
@@ -168,6 +253,7 @@ boxplot_sse = function(df, y_column = 'length', ignore_zero = FALSE, width = 0.9
     customize_theme()
 }
 
+# Boxplot with SSE length (or other specified column) distribution, for each SSE label
 violinplot_sse = function(df, y_column = 'length', ignore_zero = FALSE, scale = 'width', width = 0.9, group_col = 'type', title = NULL, stagger_labels = FALSE, turn_labels = FALSE) {
   #width = max. width wrt. bar width
   #scale = 'width' (violins have equal width), 'area' (violins have equal area)
@@ -188,6 +274,7 @@ violinplot_sse = function(df, y_column = 'length', ignore_zero = FALSE, scale = 
     customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels)
 }
 
+# Boxplot with SSE length (or other specified column) distribution for each SSE label, comparing multiple datasets
 violinplot_sse_multi = function(..., y_column = 'length', set_names = NULL, ignore_zero = FALSE, scale = 'width', width = 0.9, title = NULL, stagger_labels = FALSE, turn_labels = FALSE) {
   #width = max. width wrt. bar width
   #scale = 'width' (violins have equal width), 'area' (violins have equal area)
@@ -200,7 +287,7 @@ violinplot_sse_multi = function(..., y_column = 'length', set_names = NULL, igno
     geom_violin(scale = scale, width = width, draw_quantiles = c(0.5), kernel = 'triangular', bw = 1/sqrt(6)) + #kernel='gaussian',bw=0.45 or kernel='triangular',bw=1/sqrt(6)
     geom_vline(xintercept = seq(1.5, length(unique(df$label))-0.5, 1), lwd = 0.4, colour = 'gray90') +
     stat_summary(fun.y = 'mean', geom = 'point') + 
-    scale_color_manual(values = nonretarded_paired_palette_separated_dark) + 
+    scale_color_manual(values = NONRETARDED_PAIRED_PALETTE_SEPARATED_DARK) + 
     coord_cartesian(ylim = c(0, max(df$length) + 1)) +
     scale_y_continuous(expand = expand_scale(add = 0), breaks = seq(0, 100, 5), minor_breaks = seq(0 , 100, 1)) +
     labs(x = 'SSE', y = 'Length [#residues]', color = 'Type', title = title) + 
@@ -298,14 +385,14 @@ two_sample_test_by_labels_with_comparison = function(test, df1, df2, stat_col, l
   result %>% data.frame()
 }
 
-
+# Save as a PNG file
 print_png = function(filename, width = 2000, ratio = 2/1, height = NULL, res = 250) { 
   if (is.null(height)) { height = width/ratio }
   dev.print(png, filename, width = width, height = height, res = res)
 }
 
+# Save as a TIFF file
 print_tif = function(filename, width = 2000, ratio = 2/1, height = NULL, res = 250) { 
   if (is.null(height)) { height = width/ratio }
   dev.print(tiff, filename, width = width, height = height, res = res)
 }
-

@@ -289,15 +289,15 @@ table_sse_occurrence = function(df, alpha=0.05) {
   data
   }
 
-table_bulge_occurrence = function(df, bulge_df, alpha=0.05, include_parent_strands=TRUE) {
-  bulge_df = mutate(bulge_df, label=paste(label, bulge, sep='.'))
+table_bulge_occurrence = function(df, bulge_df, alpha = 0.05, include_parent_strands = TRUE) {
+  bulge_df = mutate(bulge_df, label = paste(label, bulge, sep = '.'))
   if (include_parent_strands){
-    bulge_df = bind_rows (mutate(df, bulge='Strand'), bulge_df)
+    bulge_df = bind_rows(mutate(df, bulge = 'Strand'), bulge_df)
   }
   n_pdb = n_distinct(df$PDB)
-  data = bulge_df %>% filter(length>0) %>% group_by(label, bulge) %>% distinct(PDB) %>% count() %>% 
-    mutate(freq=n/n_pdb, type=sse_category(label), freq_min=agresti_coull_confidence_interval(n,n_pdb,alpha)[1], freq_max=agresti_coull_confidence_interval(n,n_pdb,alpha)[2]) %>%
-    filter(type=='strand')
+  data = bulge_df %>% filter(length > 0) %>% group_by(label, bulge) %>% distinct(PDB) %>% count() %>% 
+    mutate(freq = n/n_pdb, type = sse_category(label), freq_min = agresti_coull_confidence_interval(n, n_pdb, alpha)[1], freq_max = agresti_coull_confidence_interval(n, n_pdb, alpha)[2]) %>%
+    filter(type == 'strand')
   data
 }
 
@@ -346,11 +346,8 @@ plot_criteria = function(df, ..., ignore_zero=FALSE, title='', y_label='Fulfilli
 }
 
 plot_contained_helix_types = function(df, ...){
-  #type_palette = c("#F89850", "#43B03C", "#9048A0", "#CCCCCC") # brighter green, darker violet
-  #type_palette = c("#F89850", "#33A02C", "#B86EC3", "#CCCCCC") # darker green, brighter violet
   type_palette = c("#B080C8", "#30A028", "#F8A870", "#CCCCCC") # darker green, brighter violet
   changed_labels = c(contains_G = expression(paste('contains ', '3'[10])), contains_Η = expression(paste('contains ', alpha)), contains_Ι = expression(paste('contains ', pi)) )
-  #changed_labels = c(contains_G = 'Contain Geee', contains_H = 'Contain α', contains_I = 'Contain I' )
   g = plot_criteria(df, contains_G=(df$longest_G>=3), contains_Η=(df$longest_H>=4), contains_Ι=(df$longest_I>=5), ..., ignore_zero=TRUE)  + 
     scale_fill_manual(values=type_palette, labels=changed_labels) + 
     order_x_labels_helices() + 
@@ -374,14 +371,14 @@ plot_sse_occurrence = function(df, show_confidence=TRUE, alpha=0.05, title=NULL,
   g
 }
 
-plot_bulge_occurrence = function(df, bulge_df, show_confidence=TRUE, alpha=0.05, title='', include_parent_strands=TRUE) {
-  g = ggplot(table_bulge_occurrence(df, bulge_df, alpha=alpha, include_parent_strands=include_parent_strands)) +
-    aes(x=label, y=100*freq, fill=bulge) +
+plot_bulge_occurrence = function(df, bulge_df, show_confidence = TRUE, alpha = 0.05, title = NULL, include_parent_strands = TRUE) {
+  g = ggplot(table_bulge_occurrence(df, bulge_df, alpha = alpha, include_parent_strands = include_parent_strands)) +
+    aes(x = label, y = 100*freq, fill = bulge) +
     geom_col() + 
-    scale_fill_brewer(palette='Paired') + 
-    #coord_cartesian(ylim=c(0,100)) +
-    labs(x='SSE', y='Occurrence [%]', fill='Bulge type', title=title)
-  if (show_confidence) { g = g + geom_errorbar(aes(ymin=100*freq_min, ymax=100*freq_max), width=0.4, position=position_dodge(.9)) }
+    scale_fill_brewer(palette = 'Paired') + 
+    labs(x = 'SSE', y = 'Occurrence [%]', fill = 'Bulge type', title = title)
+  if (show_confidence) { 
+    g = g + geom_errorbar(aes(ymin = 100*freq_min, ymax = 100*freq_max), width = 0.4, position = position_dodge(.9)) }
   g
 }
 
