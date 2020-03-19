@@ -9,9 +9,6 @@ from typing import Tuple
 import numpy as np
 from matplotlib import pyplot as plt
 
-import lib
-import no_gap_align
-
 #  CONSTANTS  ##############################################################################
 
 from constants import *

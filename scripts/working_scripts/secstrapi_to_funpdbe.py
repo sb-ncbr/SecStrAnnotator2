@@ -20,7 +20,7 @@ DECIDE_CONFIDENCE_FROM_METRIC = True
 SOFTWARE_VERSION = 'SecStrAnnotator 2.0'  # SecStrAnnotator version TODO put automatically assigned full version of SecStrAnnotator
 
 DATA_RESOURCE = 'SecStrAPI'
-RESOURCE_ENTRY_URL_BASE = 'https://webchem.ncbr.muni.cz/API/SecStr/Annotation/'  # API entry #TODO check if this is correct
+RESOURCE_ENTRY_URL_BASE = 'https://webchem.ncbr.muni.cz/API/SecStr/Annotation/'
 FIRST_SITE_ID = 1
 REFERENCE_RESIDUE_GENERIC_NUMBER = 50
 

@@ -3,7 +3,6 @@ import json
 import argparse
 
 import lib
-import no_gap_align
 
 #  CONSTANTS  ##############################################################################
 

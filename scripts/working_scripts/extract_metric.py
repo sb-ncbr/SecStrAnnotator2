@@ -7,9 +7,6 @@ import argparse
 from collections import defaultdict
 from typing import Tuple
 
-import lib
-import no_gap_align
-
 #  CONSTANTS  ##############################################################################
 
 from constants import *
