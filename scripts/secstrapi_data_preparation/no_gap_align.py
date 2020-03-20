@@ -495,7 +495,7 @@ class NoGapAligner:
             while last_shifts is None or any( last != curr for last, curr in zip(last_shifts, self.shifts) ):
                 last_shifts = self.shifts
                 self.alignment_matrix, self.shifts, bestnesses = multirealign(self.alignment_matrix, sequence_matrices, self.subst_matrix)
-                print(f'Bestness: min {min(bestnesses):.4f}, max {max(bestnesses):.4f}, mean {np.mean(bestnesses):.4f}, median {np.median(bestnesses):.4f}')
+                # print(f'Bestness: min {min(bestnesses):.4f}, max {max(bestnesses):.4f}, mean {np.mean(bestnesses):.4f}, median {np.median(bestnesses):.4f}')
         self.aln_seqs = apply_shifts(self.seqs, self.shifts)
 
     def output_alignment(self, output_file, keep_order=False):
@@ -560,7 +560,7 @@ def main(input_file, output_file, logo_output=None, keep_order=False, print_tree
         while last_shifts is None or any( last != curr for last, curr in zip(last_shifts, shifts) ):
             last_shifts = shifts
             matAln, shifts, bestnesses = multirealign(matAln, sequence_matrices, subst_matrix)
-            print(f'Bestness: min {min(bestnesses):.4f}, max {max(bestnesses):.4f}, mean {np.mean(bestnesses):.4f}, median{np.median(bestnesses):.4f}')
+            # print(f'Bestness: min {min(bestnesses):.4f}, max {max(bestnesses):.4f}, mean {np.mean(bestnesses):.4f}, median{np.median(bestnesses):.4f}')
 
     aln_seqs = apply_shifts(seqs, shifts)
 

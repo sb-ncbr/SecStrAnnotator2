@@ -24,6 +24,7 @@ sse_category = function(name) {
 
 NONRETARDED_PAIRED_PALETTE = c("#FB9A99", "#E31A1C", "#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C")  # Colors from palette Paired, ordered consistently with Set1
 NONRETARDED_PAIRED_PALETTE_SEPARATED = c("#FB9A99", "#A6CEE3", "#B2DF8A", "#E31A1C", "#1F78B4", "#33A02C")  # Colors from palette Paired, ordered consistently with Set1, first light then dark
+NONRETARDED_PAIRED_PALETTE_DARK = c("#FB6A69", "#C30A0C", "#769EE3", "#0F68A4", "#82CF5A", "#23901C")  # Colors from palette Paired, ordered consistently with Set1, first light then dark, darkened
 NONRETARDED_PAIRED_PALETTE_SEPARATED_DARK = c("#FB6A69", "#769EE3", "#82CF5A", "#C30A0C", "#0F68A4", "#23901C")  # Colors from palette Paired, ordered consistently with Set1, first light then dark, darkened
 HELIX_TYPE_PALETTE = c("#B080C8", "#30A028", "#F8A870", "#CCCCCC") # bright violet (310-helix), dark green (alpha-helix), orange (pi-helix), grey (other)
 

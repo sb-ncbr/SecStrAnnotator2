@@ -1,8 +1,8 @@
 """
 SecStrAPI plugin for PyMOL
-Version: 1.2 (2019/11/14)
+Version: 1.3 (2020/03/20)
 
-More information at http://webchem.ncbr.muni.cz/API/SecStr/
+More information at http://webchem.ncbr.muni.cz/API/SecStr/ or https://webchem.ncbr.muni.cz/Wiki/SecStrAnnotator
 
 This PyMOL plugin adds a new command 'annotate_sec_str'.
 To run once, type 'run THIS_FILE' into PyMOL (where THIS_FILE is the exact location of this file).
@@ -34,8 +34,8 @@ from pymol import cmd
 
 # Constants ###################################################################
 
-THIS_SCRIPT = 'secstrapi_plugin-1.2.py'
-SCRIPT_VERSION = '1.2'
+THIS_SCRIPT = 'secstrapi_plugin-1.3.py'
+SCRIPT_VERSION = '1.3'
 REFERENCE_RESIDUE_GENERIC_NUMBER = 50
 
 # Field names in SecStrAPI format 
@@ -98,10 +98,8 @@ def is_valid_domain_name(string):
 def is_valid_selection(selection):
 	try:
 		cmd.count_atoms(selection)
-		# debug_log('is_valid_selection(' + selection + ') == True')  #DEBUG
 		return True
 	except:
-		# debug_log('is_valid_selection(' + selection + ') == False')  #DEBUG
 		return False
 
 def first_valid_pdbid(text, pdbids=None):
@@ -122,7 +120,6 @@ def first_valid_pdbid(text, pdbids=None):
 			return None
 
 def fetch_structure(pdbid, domain_name=None, domain=None, force_cartoon=True):
-	# debug_log('fetch structure ' + str(force_cartoon))  #DEBUG
 	if not is_valid_selection(pdbid):
 		log('Fetching ' + pdbid)
 		cmd.fetch(pdbid, async=0)
@@ -134,7 +131,6 @@ def fetch_structure(pdbid, domain_name=None, domain=None, force_cartoon=True):
 				sel = pdbid
 			else:
 				use_auth = should_use_auth(pdbid)
-				# sel = ' or '.join( '(' + selection_from_domain(domain, use_auth) + ')' for domain in domains )
 				sel = pdbid + ' and (' + selection_from_domain(domain, use_auth) + ')'
 				if domain_name is not None and not is_valid_selection(domain_name):
 					cmd.select(domain_name, sel)
@@ -251,7 +247,6 @@ def get_annotation_from_internet(pdbid):
 	log('Downloading annotation for PDB entry ' + pdbid + '\n  [' + url + ']')
 	try:
 		annotation_text = get_url(url)
-		# debug_log(annotation_text[0:70] + '...')  #DEBUG
 		return annotation_text
 	except:
 		fail('Failed to download annotation for ' + pdbid)
@@ -372,7 +367,6 @@ def apply_annotation(selection, domains, base_color, apply_rotation=False, each_
 		else:
 			domain_name = domain[PDB] + domain[CHAIN]
 		domain_selection = selection + ' and ' + selection_from_domain(domain, use_auth)
-		# debug_log('domain_name:"' + domain_name + '", domain selection: "' + domain_selection + '"')  #DEBUG
 		if not is_valid_selection(domain_name):  # such object may already be defined (e.g. if domain_name == pdb)
 			cmd.select(domain_name, domain_selection)
 		group = domain_name + '.sses'
@@ -380,7 +374,6 @@ def apply_annotation(selection, domains, base_color, apply_rotation=False, each_
 			cmd.group(group)
 
 		if apply_rotation and ROTATION_MATRIX in domain:
-			debug_log('Applying rotation for domain ' + domain_name) #DEBUG
 			pdb = domain[PDB]
 			matrix = domain[ROTATION_MATRIX]
 			cmd.set_object_ttt(pdb, matrix)
@@ -398,18 +391,18 @@ def apply_annotation(selection, domains, base_color, apply_rotation=False, each_
 			bad = ('SSE ' + bad[0]) if len(bad) == 1 else ('SSEs ' + ', '.join(bad)) if len(bad) <= 5 else ('SSEs ' + ', '.join(bad[:5]) + '...')
 			warn('auth_* fields are missing in the annotation (' + bad + '). Using label_* fields for domain "' + domain_name + '".')
 			use_auth = False
+		center_of_mass = cmd.centerofmass(domain_name)
 		for sse in sses:
 			label = sse[LABEL]
 			safe_label = pymol_safe_name(label)
 			chain_id = sse[CHAIN_ID]
 			sel_name = group + '.' + safe_label
 			sel_definition = selection + ' and ' + selection_from_sse(sse, use_auth)
-			# debug_log('sse:"' + sel_name + '", sse selection: "' + sel_definition + '"')  #DEBUG
 			if cmd.count_atoms(sel_definition) > 0:
 				cmd.select(sel_name, sel_definition)
 				cmd.color(assign_color(sse), sel_name + ' and symbol C')
 				if SHOW_LABELS:
-					label_sse(sse, sel_name, use_auth)
+					label_sse(sse, sel_name, use_auth, center_of_mass=center_of_mass)
 			label_generic_residues(sse, sel_name, use_auth, each_nth_generic_number)
 			if show_reference_residues:
 				mark_reference_residue(sse, sel_name, use_auth, color=assign_color(sse))
@@ -423,7 +416,7 @@ def assign_color(sse):
 		magic_number = hash(sse[LABEL]) % 1000
 		return 's' + str(magic_number).zfill(3)
 
-def label_sse(sse, selection, use_auth):
+def label_sse(sse, selection, use_auth, center_of_mass=None):
 	if use_auth:
 		chain = sse[AUTH_CHAIN_ID]
 		start = sse[AUTH_START_RESI]
@@ -433,10 +426,30 @@ def label_sse(sse, selection, use_auth):
 		start = sse[START_RESI]
 		end = sse[END_RESI]
 	middle = (start + end) // 2
-	label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(middle) + ' and name CB'
-	if cmd.count_atoms(label_selection)==0:
-		label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(middle) + ' and name CA'
+	if center_of_mass is None:
+		label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(middle) + ' and name CB'
+		if cmd.count_atoms(label_selection)==0:
+			label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(middle) + ' and name CA'
+	else:
+		CBs = '(' + selection + ') and chain ' + chain + ' and resi ' + resi_str(middle-1) + '-' + resi_str(middle+2) + ' and name CB'
+		label_selection = get_farthest_atom(CBs, center_of_mass)
+		if label_selection is None:
+			CAs = '(' + selection + ') and chain ' + chain + ' and resi ' + resi_str(middle-1) + '-' + resi_str(middle+2) + ' and name CA'
+			label_selection = get_farthest_atom(CAs, center_of_mass)
+		if label_selection is None:
+			label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(middle) + ' and name CA'
 	cmd.label(label_selection, '"' + sse[LABEL].replace('"', '\\"') + '"')
+
+def get_farthest_atom(candidate_selection, center_of_mass):
+	x0, y0, z0 = center_of_mass
+	namespace = {'coords': []}
+	cmd.iterate_state(-1, candidate_selection, 'coords.append((resi, name, x, y, z))', space=namespace)
+	sqdist_resi_name = [((x-x0)**2 + (y-y0)**2 + (z-z0)**2, resi, name) for (resi, name, x, y, z) in namespace['coords']]
+	if len(sqdist_resi_name) > 0:
+		sqdist, resi, name = max(sqdist_resi_name)
+		return '(' + candidate_selection + ') and resi ' + resi + ' and name ' + name
+	else:
+		return None
 
 def label_generic_residues(sse, selection, use_auth, each_nth):
 	if each_nth == 0:
@@ -466,10 +479,6 @@ def label_generic_residues(sse, selection, use_auth, each_nth):
 					label_selection = '(' + selection + ') and chain ' + chain + ' and resi ' + str(i) + ' and name CA'
 				label_text = '"' + resn + '@' + sse[LABEL] + '.' + str(REFERENCE_RESIDUE_GENERIC_NUMBER - ref + i) + '"'
 				cmd.label(label_selection, label_text)
-
-
-	
-
 
 def mark_reference_residue(sse, selection, use_auth, color='red'):
 	if use_auth:
@@ -575,7 +584,7 @@ def test():
 # Main function ###############################################################
 
 @cmd.extend
-def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DEFAULT_BASE_COLOR, force_cartoon=True, force_rotation=True, generic_numbers=0, reference_residues=False):
+def annotate_sec_str(selection, annotation_file=None, name=None, base_color=DEFAULT_BASE_COLOR, force_cartoon=True, force_rotation=True, generic_numbers=0, reference_residues=False):
 	"""
 	DESCRIPTION
 
@@ -630,7 +639,6 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 			return False
 		fetched = False
 		cached_annotations_by_pdbid = {}
-		# debug_log(force_cartoon)  #DEBUG
 		if annotation_file is not None and name is not None:
 			annotation_text = get_annotation_from_file(annotation_file)
 			annotation = parse_annotation_text(annotation_text)
@@ -654,7 +662,6 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 			annotation_text = get_annotation_from_file(annotation_file)
 			annotation = parse_annotation_text(annotation_text)
 			words = re.split('\W+', selection)
-			# debug_log(words)  #DEBUG
 			names_domains = ( (word, annotation.get_domains_by_name(word)) for word in words )
 			candidates = [ (name, doms) for (name, doms) in names_domains if len(doms) > 0 ]
 			if len(candidates) > 1:
@@ -672,10 +679,8 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 				else:
 					fail('Could not guess annotation name from selection "' + selection + '". Please specify argument "name".')
 					return False
-			# debug_log('Guessed PDB ID: ' + pdbid)  #DEBUG
 		else: # annotation_file is None and name is None, guess pdbid using selection and download annotation
 			words = re.split('\W+', selection)
-			# debug_log(words)  #DEBUG
 			candidates = [ word for word in words if is_valid_pdbid(word) or is_valid_domain_name(word) ]
 			if len(candidates) == 1:
 				name = candidates[0]
@@ -683,7 +688,6 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 			else:
 				fail('Could not guess annotation name from selection "' + selection + '". Please specify argument "name".')
 				return False
-			# log('Guessed PDB ID: ' + pdbid)  #DEBUG
 			annotation_text = get_annotation_from_internet(pdbid)
 			annotation = parse_annotation_text(annotation_text)
 			if name == pdbid:
@@ -697,7 +701,6 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 			file_spec = (' in file "' + annotation_file + '"') if annotation_file is not None else ''
 			fail('Could not find annotation for "' + name + '"' + file_spec + '.')
 			return False
-		# debug_log('Partial OK')  #DEBUG
 		
 		if not is_valid_selection(selection):
 			words = re.split('\W+', selection)
@@ -721,20 +724,12 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color = DE
 				fail('Invalid selection "' + selection + '"')
 				return False
 		
-		debug_log('OK')  #DEBUG
 		apply_annotation(selection, domains, base_color, apply_rotation=(fetched and force_rotation), each_nth_generic_number=generic_numbers, show_reference_residues=reference_residues)
 		return True
-	# except Exception as ex:
-	# 	fail(str(ex))
-	# 	return False
 	except None:
 		pass
 
 
 # The script for PyMOL ########################################################
 
-# test()   #DEBUG
-# cmd.extend('annotate_sec_str', annotate_sec_str)
 print('Command "annotate_sec_str" has been added. Type "help annotate_sec_str" for more information.')
-
-#TODO SecStrAPI website - document the format by example with hints, like PDBe API

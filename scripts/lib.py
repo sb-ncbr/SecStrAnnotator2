@@ -8,6 +8,8 @@ from constants import *
 K = TypeVar('K')
 V = TypeVar('V')
 
+DEFAULT_STRUCTURE_QUALITY = 0.0
+
 def insert_after(dictionary: Dict[K, V], after_what: K, new_key_value_pairs: Iterable[Tuple[K, V]]) -> None:
     key_value_pairs = list(dictionary.items())
     dictionary.clear()
@@ -39,7 +41,7 @@ def get_structure_quality(pdb: str) -> float:
     QUALITY = 'overall_quality'
     url = QUALITY_API_URL.format(pdb=pdb)
     r = json.loads(requests.get(url).text)
-    quality = r[pdb][QUALITY]
+    quality = r.get(pdb, {}).get(QUALITY, DEFAULT_STRUCTURE_QUALITY)
     return quality
 
 def single(iterable: Iterable[V]) -> V:

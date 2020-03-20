@@ -21,7 +21,8 @@ SEQUENCE_EXT = '.fasta'
 USE_TWO_CLASS_SSE_TYPE = True
 ADD_CONFIDENCE = True
 METRIC_SIGNIFICANT_DIGITS = 2  # None for no rounding
-DROP_FIELDS = ['start_vector', 'end_vector']
+# KEEP_FIELDS = ['label', 'chain_id', 'start', 'end', 'auth_chain_id', 'auth_start', 'auth_start_ins_code', 'auth_end', 'auth_end_ins_code', 'type', 'metric_value', 'confidence', 'sequence']
+# DROP_FIELDS = ['start_vector', 'end_vector', 'nested_sses']
 
 HIGH_CONFIDENCE_METRIC_THRESHOLD = 10.0
 MEDIUM_CONFIDENCE_METRIC_THRESHOLD = 20.0
@@ -31,10 +32,12 @@ MEDIUM_CONFIDENCE_METRIC_THRESHOLD = 20.0
 parser = argparse.ArgumentParser()
 parser.add_argument('domain_list', help='JSON file with the list of domains in SecStrAPI format (from merge_domain_lists.py)', type=str)
 parser.add_argument('input_directory', help='Directory with SSE annotations (from SecStrAnnotator2.dll)', type=str)
+# parser.add_argument('--keep_all_fields', help='Keep all fields from the input SSE annotations (default: keep only KEEP_FIELDS)', action='store_true')
 args = parser.parse_args()
 
 domain_list_file = args.domain_list
 input_directory = args.input_directory
+# keep_all_fields = args.keep_all_fields
 
 #  FUNCTIONS  ###############################################################################
 
@@ -79,9 +82,13 @@ for pdb, domains in input_annotations[ANNOTATIONS].items():
                     ((AUTH_CHAIN_ID, auth_chain), (AUTH_START, auth_start), (AUTH_START_INS, auth_start_ins), (AUTH_END, auth_end), (AUTH_END_INS, auth_end_ins)))
                 if USE_TWO_CLASS_SSE_TYPE and 'type' in sse:
                     sse['type'] = two_class_sse_type(sse['type'])
-                for field in DROP_FIELDS:
-                    if field in sse:
-                        sse.pop(field)
+                # if not keep_all_fields:
+                #     for field in list(sse.keys()):
+                #         if field not in KEEP_FIELDS:
+                #             sse.pop(field)
+                #     for field in DROP_FIELDS:
+                #         if field in sse:
+                #             sse.pop(field)
                 if METRIC_SIGNIFICANT_DIGITS is not None and 'metric_value' in sse:
                     sse['metric_value'] = round(sse['metric_value'], METRIC_SIGNIFICANT_DIGITS)
                 if ADD_CONFIDENCE and 'metric_value' in sse:

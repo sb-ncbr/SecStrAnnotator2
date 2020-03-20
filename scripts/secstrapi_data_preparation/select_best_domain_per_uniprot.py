@@ -16,7 +16,7 @@ from constants import *
 #  PARSE ARGUMENTS  ##############################################################################
 
 parser = argparse.ArgumentParser()
-parser.add_argument('domain_list', help='JSON file with the list of domains in SecStrAPI format (from merge_domain_lists.py)', type=str)
+parser.add_argument('domain_list', help='JSON file with the list of domains in SecStrAPI format (from domain_lists_to_SecStrAPI_format.py)', type=str)
 args = parser.parse_args()
 
 domain_list_file = args.domain_list
@@ -59,7 +59,7 @@ for pdbs_domains_keys in uniprot2domains.values():
     else:
         pdb, domain = best
         pdb2best_domains[pdb].append(domain)
-    sys.stderr.write(f'{pdb}\t{pdb2quality[pdb]}\n')
+    # sys.stderr.write(f'{pdb}\t{pdb2quality[pdb]}\n')
 
 input_json[ANNOTATIONS] = { pdb: domains for (pdb, domains) in sorted(pdb2best_domains.items()) }
 

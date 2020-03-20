@@ -71,4 +71,4 @@ for label in labels: #debug
         aligner.print_tree(output_file=path.join(trees_dir, label + '.txt'))
     if logos_dir is not None:
         aligner.output_logo(path.join(logos_dir, label + '.png'), tool='logomaker', pivot_as=50, units='bits')
-        aligner.output_logo(path.join(logos_dir, label + '.tif'), tool='logomaker', pivot_as=50, units='bits')
+        # aligner.output_logo(path.join(logos_dir, label + '.tif'), tool='logomaker', pivot_as=50, units='bits')

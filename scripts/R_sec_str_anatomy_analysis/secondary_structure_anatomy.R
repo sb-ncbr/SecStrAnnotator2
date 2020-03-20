@@ -1,7 +1,7 @@
 # SCRIPT FOR ANALYSIS OF SECONDARY STRUCTURE ANATOMY OF A PROTEIN FAMILY (CYTOCHROMES P450)
 
 source('secondary_structure_anatomy_lib.R')  # Contains a few CytochromeP450-specific constants!
-DATADIR = '/home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/testing_20200128-verbose'
+DATADIR = '/home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/CytochromesP450-20200319'
 
 
 # READ DATASETS
@@ -69,6 +69,18 @@ print_tif(full_path('plots/length-setNR-Bact-Euka-500t.tif'), width = 4000, rati
 # point = mean, horizontal line = median
 
 
+# # PLOTS FOR ONE ONE HELIX (EXAMPLE FOR GRAPHICAL ABSTRACT)
+# plot_sse_occurrence(setNR, show_confidence = TRUE, alpha = 0.05) + scale_x_discrete(limits="J") + theme(legend.position = 'none')
+# print_png(full_path('plots/occurrence-setNR-J.png'), width = 450, height = 1200, res = 500)
+# plot_sse_occurrence_multi(Bact = setNR_Bact, Euka = setNR_Euka) + scale_x_discrete(limits="J") + theme(legend.position = 'none')
+# print_png(full_path('plots/occurrence-setNR-Bact-Euka-J.png'), width = 450, height = 1200, res = 500)
+# violinplot_sse(setNR, ignore_zero = TRUE) + scale_x_discrete(limits="J") + theme(legend.position = 'none') + coord_cartesian(ylim = c(0,25))
+# print_png(full_path('plots/length-setNR-J.png'), width = 450, height = 1200, res = 500)
+# violinplot_sse_multi(Bact = setNR_Bact, Euka = setNR_Euka, ignore_zero = TRUE) + scale_x_discrete(limits="J") + theme(legend.position = 'none') + 
+#   scale_color_manual(values = NONRETARDED_PAIRED_PALETTE_DARK) + coord_cartesian(ylim = c(0,25))
+# print_png(full_path('plots/length-setNR-Bact-Euka-J.png'), width = 450, height = 1200, res = 500)
+
+
 # STATISTICAL COMPARISON Set-NR-Bact vs. Set-NR-Euka
 setNR_Bact_nonzero = filter(setNR_Bact, length > 0)
 setNR_Euka_nonzero = filter(setNR_Euka, length > 0)
@@ -81,7 +93,7 @@ two_sample_test_by_labels_with_comparison(wilcox.test, setNR_Bact_nonzero, setNR
 # alternative hypothesis for KS test is reversed ("greater" mean stochastically smaller)!
 
 
-# BETA-BULGES
+# BETA-BULGES - will only work if SecStrAnnotator was run with option  --verbose
 bulgesNR = read_tsv(full_path('beta_bulges_NR.tsv')) %>%
   left_join(taxons, by = 'Domain') %>% filter(label %in% OUR_SSES) %>% mutate(bulge_label = paste(label, type, sep = '.'))
 bulgesALL = read_tsv(full_path('beta_bulges_ALL.tsv')) %>%
@@ -94,7 +106,7 @@ plot_bulge_occurrence(setNR, bulgesNR, show_confidence = TRUE, alpha = 0.05, inc
 print_png(full_path('plots/bulge_occurrence-setNR.png'), width=4000, ratio=2/1, res=500)
 
 
-# HELIX TYPES
+# HELIX TYPES - will only work if SecStrAnnotator was run with option  --verbose
 helicesNR = read_tsv(full_path('annotations_with_reference_residues_NR.tsv')) %>%
   left_join(taxons, by = 'Domain') %>% filter(label %in% HELIX_ORDER & length > 0)
 
