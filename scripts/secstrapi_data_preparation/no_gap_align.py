@@ -325,7 +325,7 @@ def get_max_area_column_index(sequence_matrix):
     # max_area, max_area_index = max( (area, i) for i, area in enumerate(areas) )  # Takes the last in case of ties
     max_area = max(areas)
     max_area_index = next(i for i, area in enumerate(areas) if area == max_area)  # Takes the first in case of ties
-    print(f'Max. area column: {max_area_index}, area: {max_area})', file=sys.stderr)
+    print(f'Max. area column: {max_area_index}, area: {max_area}', file=sys.stderr)
     return max_area_index
     
 def get_max_maxprob_column_index(sequence_matrix):

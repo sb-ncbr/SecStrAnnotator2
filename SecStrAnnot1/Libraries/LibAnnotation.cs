@@ -185,12 +185,12 @@ namespace protein.Libraries
             elem[JsNames.TYPE] = new JsonValue(sse.Type.AsString());
             if (sse.SheetId != null)
                 elem[JsNames.SHEET_ID] = new JsonValue((int)sse.SheetId);
-            if (sse.Comment != null)
-                elem[JsNames.COMMENT] = new JsonValue(sse.Comment);
             if (sse.Color != null)
                 elem[JsNames.COLOR] = new JsonValue(sse.Color);
             if (sse.Rainbow != null)
                 elem[JsNames.RAINBOW] = new JsonValue(sse.Rainbow);
+            if (sse.Comment != null)
+                elem[JsNames.COMMENT] = new JsonValue(sse.Comment);
             if (WRITE_VECTORS && sse is SseInSpace)
             {
                 elem[JsNames.START_VECTOR] = new JsonValue((sse as SseInSpace).StartPoint.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
@@ -1772,7 +1772,7 @@ namespace protein.Libraries
             if (candidates.Any(r => !r.HasCAlpha()))
                 throw new ArgumentException("Some candidate residues do not have C-alpha atom.");
 
-            Lib.WriteLineDebug("Align residues: Candidate residues: {0}", candidates.Select(r => r.ToString()).EnumerateWithCommas());
+            // Lib.WriteLineDebug("Align residues: Candidate residues: {0}", candidates.Select(r => r.ToString()).EnumerateWithCommas());
 
             Point[] tVectors = templates.Select(r => r.GetCAlphas().First().Position()).ToArray();
             Point[] qVectors = candidates.Select(r => r.GetCAlphas().First().Position()).ToArray();
@@ -1828,7 +1828,7 @@ namespace protein.Libraries
             if (candidates.Any(r => !r.HasCAlpha()))
                 throw new ArgumentException("Some candidate residues do not have C-alpha atom.");
 
-            Lib.WriteLineDebug("Align residues: Candidate residues: {0}", candidates.Select(r => r.ToString()).EnumerateWithCommas());
+            // Lib.WriteLineDebug("Align residues: Candidate residues: {0}", candidates.Select(r => r.ToString()).EnumerateWithCommas());
 
             Point[] tPoints = templates.Select(r => r.GetCAlphas().First().Position()).ToArray();
             Point[] qPoints = candidates.Select(r => r.GetCAlphas().First().Position()).ToArray();

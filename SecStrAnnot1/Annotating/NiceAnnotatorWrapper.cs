@@ -102,7 +102,7 @@ namespace protein.Annotating
                                         Lib.WriteWarning("Suspicious joining in {0}. Gap between joined SSEs = {1}", Context.Templates[i].Label, all[j + 1].Start - all[j].End - 1);
                                     }
                                 }
-                                rememberedAnnotatedCandidates[i] = SseInSpace.Join(all).RelabeledCopy(Context.Templates[i].Label);
+                                rememberedAnnotatedCandidates[i] = SseInSpace.Join(all).RelabeledCopy(Context.Templates[i].Label, Context.Templates[i].Color, Context.Templates[i].Rainbow);
                             }
                             else
                                 throw new Exception("This should never happen!");

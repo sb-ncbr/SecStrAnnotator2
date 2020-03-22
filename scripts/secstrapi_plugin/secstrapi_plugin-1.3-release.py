@@ -592,7 +592,7 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color=DEFA
 
 	USAGE
 
-		annotate_sec_str selection [, annotation_file [, name [, base_color [, force_cartoon [, force_rotation [, generic_numbers [, reference_residues ]]]]]]]
+		annotate_sec_str selection [, annotation_file [, name [, base_color [, force_cartoon [, force_rotation [, generic_numbers ]]]]]]
 
 	ARGUMENTS
 
@@ -609,8 +609,6 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color=DEFA
 		force_rotation = 0/1: apply standard rotation to all newly fetched structures {default: 1}
 
 		generic_numbers = int: show generic residue numbering where available (0 = don't label, positive integer n = label each n-th residue) {default: 0}
-
-		reference_residues = 0/1: mark the reference residue for each SSE (if available) by a red sphere {default: 0}
 
 	NOTES
 
