@@ -5,6 +5,8 @@ import sys
 import math
 import argparse
 
+from constants import *
+
 parser = argparse.ArgumentParser()
 parser.add_argument('all_annotations_file', help='JSON file with annotations in SecStrAPI format', type=str)
 # parser.add_argument('--fields', help='SSE fields to extract as columns', type=str, default='')
@@ -14,17 +16,6 @@ args = parser.parse_args()
 all_annotations_file = args.all_annotations_file
 # fields = [ field for field in args.fields.split(',') if field != '' ]
 one_domain_per_pdb = args.one_domain_per_pdb
-
-
-SSES='secondary_structure_elements'
-LABEL='label'
-TYPE='type'
-START='start'
-END='end'
-CHAIN='chain_id'
-COMMENT='comment'
-SEQ='sequence'
-NESTED='nested_sses'
 
 bulge_types='nNmMtTsSoOpPqQrRlL'
 
@@ -45,8 +36,8 @@ def length(sse):
 	return sse[END] - sse[START] + 1
 
 def longest_nested(sse, nested_type):
-	if sse is not None and NESTED in sse:
-		nested = sse[NESTED]
+	if sse is not None and NESTED_SSES in sse:
+		nested = sse[NESTED_SSES]
 		lengths = [length(nes) for nes in nested if nes[TYPE]==nested_type]
 		# sys.stderr.write('Lengths: ' + str(lengths) + '\n')
 		longest = max(lengths + [0])
@@ -55,8 +46,8 @@ def longest_nested(sse, nested_type):
 		return 0
 
 def longest_nested_starting(sse, nested_type, from_start_tolerance=1):
-	if sse is not None and NESTED in sse:
-		nested = sse[NESTED]
+	if sse is not None and NESTED_SSES in sse:
+		nested = sse[NESTED_SSES]
 		lengths = [length(nes) for nes in nested if nes[TYPE]==nested_type and nes[START]<=sse[START]+from_start_tolerance]
 		# sys.stderr.write('Lengths: ' + str(lengths) + '\n')
 		longest = max(lengths + [0])
@@ -65,8 +56,8 @@ def longest_nested_starting(sse, nested_type, from_start_tolerance=1):
 		return 0
 
 def longest_nested_ending(sse, nested_type, from_end_tolerance=1):
-	if sse is not None and NESTED in sse:
-		nested = sse[NESTED]
+	if sse is not None and NESTED_SSES in sse:
+		nested = sse[NESTED_SSES]
 		lengths = [length(nes) for nes in nested if nes[TYPE]==nested_type and nes[END]>=sse[END]-from_end_tolerance]
 		# sys.stderr.write('Lengths: ' + str(lengths) + '\n')
 		longest = max(lengths + [0])
@@ -80,8 +71,8 @@ def elemwise_sum(lists):
 def count_GHI_bonds(sse):
 	if sse is None:
 		return [0, 0, 0]
-	elif NESTED in sse:
-		return elemwise_sum( count_GHI_bonds(nested) for nested in sse[NESTED] )
+	elif NESTED_SSES in sse:
+		return elemwise_sum( count_GHI_bonds(nested) for nested in sse[NESTED_SSES] )
 	else:
 		if sse[TYPE] == 'G':
 			return [length(sse) - 1, 0, 0]
@@ -104,14 +95,14 @@ def find_bulges_recursive(sse):
 	result = []
 	if sse[TYPE] in bulge_types:
 		result.append(sse)
-	for nested in sse.get(NESTED, []):
+	for nested in sse.get(NESTED_SSES, []):
 		result.extend(find_bulges_recursive(nested))
 	return result
 	#TODO write as generator
 
 
 with open(all_annotations_file, 'r') as f:
-	annotations=json.load(f)['annotations']
+	annotations=json.load(f)[ANNOTATIONS]
 
 labels = sorted(set( sse[LABEL] for pdb_annot in annotations.values() for dom_annot in pdb_annot.values() for sse in dom_annot[SSES] ))
 # print(labels)
@@ -123,7 +114,7 @@ for pdb, pdb_annot in annotations.items():
 	if one_domain_per_pdb:
 		domain_annots = domain_annots[:1]
 	for domain, domain_annot in domain_annots:
-		uni = domain_annot['uniprot_id']
+		uni = domain_annot[UNIPROT_ID]
 		sse_bulges = [ (sse, bulge) for sse in domain_annot[SSES] for bulge in find_bulges_recursive(sse) ]
 		for sse, bulge in sse_bulges:
 			row = [uni, pdb, domain, sse[LABEL], bulge[LABEL], bulge[CHAIN], bulge[START], bulge[END], length(bulge), bulge[TYPE]]

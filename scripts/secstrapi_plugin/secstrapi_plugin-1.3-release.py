@@ -1,12 +1,12 @@
 """
 SecStrAPI plugin for PyMOL
-Version: 1.3 (2020/03/20)
+Version: 1.3 (2020/03/23)
 
 More information at http://webchem.ncbr.muni.cz/API/SecStr/ or https://webchem.ncbr.muni.cz/Wiki/SecStrAnnotator
 
 This PyMOL plugin adds a new command 'annotate_sec_str'.
-To run once, type 'run THIS_FILE' into PyMOL (where THIS_FILE is the exact location of this file).
-To run every time you launch PyMOL, install via Plugin Manager in PyMOL or add line 'run THIS_FILE' into your pymolrc file.
+To run once, type 'run https://webchem.ncbr.muni.cz/API/SecStr/Downloads/secstrapi_plugin.py' into PyMOL.
+To install permanently, use PyMOL Plugin Manager or add line 'run THIS_FILE' into your pymolrc file.
 Further information will be available after installation by typing 'help annotate_sec_str'.
 """
 
@@ -357,15 +357,16 @@ def print_messages(annotation_json_object):
 		if do_print:
 			log('SecStrAPI message: ' + message_text)
 
+def get_domain_name(domain):
+	return domain.get(DOMAIN, domain[PDB] + domain[AUTH_CHAIN])
+
 def apply_annotation(selection, domains, base_color, apply_rotation=False, each_nth_generic_number=0, show_reference_residues=False):
-	for domain in domains:
+	domains.sort(key=get_domain_name)
+	for i_domain, domain in enumerate(domains):
 		selection = '(' + selection + ')'
 		use_auth = should_use_auth(selection)
 
-		if DOMAIN in domain:
-			domain_name = domain[DOMAIN]
-		else:
-			domain_name = domain[PDB] + domain[CHAIN]
+		domain_name = get_domain_name(domain)
 		domain_selection = selection + ' and ' + selection_from_domain(domain, use_auth)
 		if not is_valid_selection(domain_name):  # such object may already be defined (e.g. if domain_name == pdb)
 			cmd.select(domain_name, domain_selection)
@@ -373,7 +374,7 @@ def apply_annotation(selection, domains, base_color, apply_rotation=False, each_
 		if not is_valid_selection(group):
 			cmd.group(group)
 
-		if apply_rotation and ROTATION_MATRIX in domain:
+		if apply_rotation and ROTATION_MATRIX in domain and i_domain == 0:
 			pdb = domain[PDB]
 			matrix = domain[ROTATION_MATRIX]
 			cmd.set_object_ttt(pdb, matrix)
@@ -407,6 +408,13 @@ def apply_annotation(selection, domains, base_color, apply_rotation=False, each_
 			if show_reference_residues:
 				mark_reference_residue(sse, sel_name, use_auth, color=assign_color(sse))
 			cmd.deselect()
+	dom_names = ', '.join(get_domain_name(d) for d in domains)
+	if len(domains) == 0:
+		log('Annotated 0 domains')
+	elif len(domains) == 1:
+		log('Annotated domain ' + dom_names)
+	else:
+		log('Annotated ' + str(len(domains)) + ' domains: ' + dom_names)
 
 def assign_color(sse):
 	sse_type = 'H' if (sse[TYPE] in 'GHIh') else 'E' if (sse[TYPE] in 'EBe') else ' '

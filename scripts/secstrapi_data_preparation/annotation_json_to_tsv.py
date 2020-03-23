@@ -6,6 +6,8 @@ import math
 import argparse
 from collections import defaultdict
 
+from constants import *
+
 parser = argparse.ArgumentParser()
 parser.add_argument('all_annotations_file', help='JSON file with annotations in SecStrAPI format', type=str)
 parser.add_argument('--add_missing_sses', help='Add SSE labels which are missing for each domain, with all columns set to NA', action='store_true')
@@ -15,17 +17,6 @@ args = parser.parse_args()
 all_annotations_file = args.all_annotations_file
 add_missing_sses = args.add_missing_sses
 one_domain_per_pdb = args.one_domain_per_pdb
-
-
-SSES='secondary_structure_elements'
-LABEL='label'
-TYPE='type'
-START='start'
-END='end'
-CHAIN='chain_id'
-COMMENT='comment'
-SEQ='sequence'
-NESTED='nested_sses'
 
 
 def equal(sse1, sse2):
@@ -105,7 +96,7 @@ def sse_to_row(sse, *extras):
 
 
 with open(all_annotations_file, 'r') as f:
-	annotations = json.load(f)['annotations']
+	annotations = json.load(f)[ANNOTATIONS]
 
 labels = sorted(set(sse[LABEL] for pdb_annot in annotations.values() for dom_annot in pdb_annot.values() for sse in dom_annot[SSES]))
 
@@ -119,10 +110,10 @@ for pdb, pdb_annot in annotations.items():
 		if add_missing_sses:
 			for label in labels:
 				sse = next((sse for sse in domain_annot[SSES] if sse[LABEL] == label), None)
-				result.append(sse_to_row(sse, domain_annot['uniprot_id'], domain_annot['uniprot_name'], pdb, domain, domain_annot[CHAIN], label))
+				result.append(sse_to_row(sse, domain_annot[UNIPROT_ID], domain_annot[UNIPROT_NAME], pdb, domain, domain_annot[CHAIN], label))
 		else:
 			for sse in domain_annot[SSES]:
-				result.append(sse_to_row(sse, domain_annot['uniprot_id'], domain_annot['uniprot_name'], pdb, domain, domain_annot[CHAIN], sse[LABEL]))
+				result.append(sse_to_row(sse, domain_annot[UNIPROT_ID], domain_annot[UNIPROT_NAME], pdb, domain, domain_annot[CHAIN], sse[LABEL]))
 				
 result.sort()
 

@@ -20,18 +20,12 @@ parser.add_argument('--chain_change_warning', help='Print warning if struct_asym
 args = parser.parse_args()
 
 accession = args.accession
+numbering = args.numbering
 api_url = args.source
 allow_null_domain_name = args.allow_null_domain_name
 join_domains_in_chain = args.join_domains_in_chain
 chain_change_warning = args.chain_change_warning
 
-
-if args.numbering == 'label':
-	AUTH_NUMBERING = False
-elif args.numbering == 'auth':
-	AUTH_NUMBERING = True
-else:
-	raise Exception('Unknown numbering: ' + args.numbering)
 
 #  FUNCTIONS  ################################################################################
 
@@ -47,13 +41,13 @@ def get_domain_name(mapping, default=None):
 	return mapping.get('domain', default)
 
 def get_start(mapping):
-	return mapping['start']['author_residue_number'] if AUTH_NUMBERING else mapping['start']['residue_number']
+	return mapping['start']['author_residue_number'] if numbering == 'auth' else mapping['start']['residue_number']
 
 def get_end(mapping):
-	return mapping['end']['author_residue_number'] if AUTH_NUMBERING else mapping['end']['residue_number']
+	return mapping['end']['author_residue_number'] if numbering == 'auth' else mapping['end']['residue_number']
 
 def get_chain(mapping):
-	return mapping['chain_id'] if AUTH_NUMBERING else mapping['struct_asym_id']
+	return mapping['chain_id'] if numbering == 'auth' else mapping['struct_asym_id']
 
 def get_domains_multisegment(mappings, pdb):  # Returns a list of tuples (domain_name, chain, ranges).
 	segments = []
