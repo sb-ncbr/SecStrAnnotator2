@@ -3,7 +3,7 @@
 #####################################################################################################################
 # SETTINGS
 
-TODAY="20200128"
+TODAY="20200323"
 API_VERSION="1.0"
 N_THREADS="8"
 
@@ -18,8 +18,7 @@ STRUCTURE_CACHE_DIR="$DATA_DIR/../cached_structures/"  # Optional
 TEMPLATE="2NNJ,A,:"  # Uppercase to avoid collisions with query protein
 TEMPLATE_ANNOTATION_FILE="$DATA_DIR/../2NNJ-template-strict.sses.json"
 TEMPLATE_STRUCTURE_FILE="$DATA_DIR/../2NNJ-canonical_rotation.cif"
-# SECSTRANNOTATOR_OPTIONS="--soft  --label2auth  --maxmetric 25,0.5,0.5"
-SECSTRANNOTATOR_OPTIONS="--soft  --label2auth  --maxmetric 25,0.5,0.5  --verbose"  # Use with --verbose to analyse structural irregularities (beta-bulges, helix types)
+SECSTRANNOTATOR_OPTIONS="--soft  --label2auth  --maxmetric 25,0.5,0.5  --verbose"
 ALIGNED_SSE_LABELS="B,C,E,H,I,J,K,L,J',K',K'',1-1,1-2,1-3,1-4,1-5,2-2,3-1,3-2"  # List of SSEs for which a generic residue numbering should be established (comma-separated list or "all")
 
 #####################################################################################################################
@@ -50,9 +49,9 @@ JSON_TO_BULGES_TSV="$SCRIPT_DIR/annotation_json_to_bulges_tsv.py"
 
 echo '=== Get domains from CATH and Pfam ==='
 mkdir  -p  $DATA_DIR
-python3  $DOMAINS_FROM_PDBEAPI  --numbering label  --allow_null_domain_name  --join_domains_in_chain  $CATH_FAMILY_ID  >  $DATA_DIR/set_cath_$TODAY.simple.json 
+python3  $DOMAINS_FROM_PDBEAPI  --join_domains_in_chain  $CATH_FAMILY_ID  >  $DATA_DIR/set_cath_$TODAY.simple.json 
 # Downloading https://www.ebi.ac.uk/pdbe/api/mappings/1.10.630.10
-python3  $DOMAINS_FROM_PDBEAPI  --numbering label  --allow_null_domain_name  --join_domains_in_chain  $PFAM_FAMILY_ID  >  $DATA_DIR/set_pfam_$TODAY.simple.json 
+python3  $DOMAINS_FROM_PDBEAPI  --join_domains_in_chain  $PFAM_FAMILY_ID  >  $DATA_DIR/set_pfam_$TODAY.simple.json 
 # Downloading https://www.ebi.ac.uk/pdbe/api/mappings/PF00067
 
 echo '=== Merge domain lists and format them in SecStrAPI format (also adds UniProt refs) ==='

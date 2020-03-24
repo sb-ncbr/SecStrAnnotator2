@@ -19,6 +19,7 @@ from constants import *
 parser = argparse.ArgumentParser()
 parser.add_argument('lists', help='One or more triples of arguments SOURCE FAMILY FILE, where SOURCE is the name of a source (CATH, Pfam...), FAMILY is the identifier of the family in the source (1.10.630.10, PF00067...), and FILE is a JSON file with the list of domains from the source in format {PDB:[[domain, chain, ranges]]}', nargs='*')
 parser.add_argument('--api_version', help='API version information to include in the output', type=str, default=None)
+parser.add_argument('--domain_naming', help='Type of chain ID to put into the created domain name', choices=['label', 'auth'], default='auth')
 args = parser.parse_args()
 
 if len(args.lists) % 3 != 0:
@@ -28,6 +29,7 @@ else:
     families = args.lists[1::3]
     files = args.lists[2::3]
 api_version = args.api_version
+domain_naming = args.domain_naming
 if api_version is None:
     sys.stderr.write('WARNING: "api_version" is set to null\n')
 
@@ -42,16 +44,20 @@ for source, family, filename in zip(sources, families, files):
     for pdb, domains in pdb2domains.items():
         if pdb not in annotations:
             annotations[pdb] = {} if DOMAINS_IN_DICT else []
-        for domain_name, chain, ranges in domains:
+        for domain in domains:
+            domain_name = domain[DOMAIN_NAME]
+            chain = domain[CHAIN]
+            ranges = domain[RANGES]
+            auth_chain = domain[AUTH_CHAIN]
+            auth_ranges = domain[AUTH_RANGES]
             if DOMAINS_IN_DICT:
                 to_unify = [ dom for dom in annotations[pdb].values() if dom[CHAIN] == chain ]
             else:
                 to_unify = [ dom for dom in annotations[pdb] if dom[CHAIN] == chain ]
             if len(to_unify) == 0:  # create a new domain
-                our_domain_id = lib.create_domain_id(pdb, chain)
-                dom = { PDB: pdb, CHAIN: chain, RANGES: ':' }  # Take whole chain always
+                our_domain_id = lib.create_domain_id(pdb, chain if domain_naming=='label' else auth_chain)
+                dom = { PDB: pdb, CHAIN: chain, RANGES: ':', AUTH_CHAIN: auth_chain, AUTH_RANGES: ':' }  # Take whole chain always
                 dom[UNIPROT_ID], dom[UNIPROT_NAME] = uniprot_manager.get_uniprot_id_and_name(pdb, chain)
-                # dom[TEMPLATE] = template # TODO implement in annotation script, not here
                 dom[MAPPINGS] = []
                 if DOMAINS_IN_DICT:
                     annotations[pdb][our_domain_id] = dom
@@ -61,7 +67,7 @@ for source, family, filename in zip(sources, families, files):
                 dom = to_unify[0]
             else:
                 raise Exception(f'Domain {domain_name} ({pdb} {chain} {ranges}) can be unified with more than one other domain')
-            new_mapping = {DOMAIN_NAME: domain_name, SOURCE: source, FAMILY_ID: family, PDB: pdb, CHAIN: chain, RANGES: ranges}
+            new_mapping = {DOMAIN_NAME: domain_name, SOURCE: source, FAMILY_ID: family, PDB: pdb, CHAIN: chain, RANGES: ranges, AUTH_CHAIN: auth_chain, AUTH_RANGES: auth_ranges}
             dom[MAPPINGS].append(new_mapping)
 
 annotations = { pdb: annot for pdb, annot in sorted(annotations.items()) }

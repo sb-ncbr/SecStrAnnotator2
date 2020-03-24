@@ -57,14 +57,13 @@ if logos_dir is not None:
     os.makedirs(logos_dir)
 
 aligner = no_gap_align.NoGapAligner()
-for label in labels: #debug
+for label in labels:
     print(label)
     names, sequences = zip(*label2seqs[label])
     # for name, sequence in zip(names, sequences):
     #     if '?' in sequence:
     #         print(name, sequence)
     aligner.align(sequences, names=names)
-    # aligner.print_tree()
     if alignments_dir is not None:
         aligner.output_alignment(path.join(alignments_dir, label + '.fasta'))
     if alignments_dir is not None:

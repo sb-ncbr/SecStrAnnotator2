@@ -70,9 +70,9 @@ for pdb, domains in input_annotations[ANNOTATIONS].items():
     for name, domain in lib.iterate_names_domains(domains):
         with open(path.join(input_directory, name + INPUT_EXT)) as r:
             annot = json.load(r)[pdb]
-        if converter is not None:
-            auth_chain, auth_ranges = converter.auth_chain_ranges(domain[CHAIN], domain[RANGES])
-            lib.insert_after(domain, RANGES, ((AUTH_CHAIN, auth_chain), (AUTH_RANGES, auth_ranges)))
+        # if converter is not None:
+        #     auth_chain, auth_ranges = converter.auth_chain_ranges(domain[CHAIN], domain[RANGES])
+        #     lib.insert_after(domain, RANGES, ((AUTH_CHAIN, auth_chain), (AUTH_RANGES, auth_ranges)))
         domain[SSES] = annot[SSES]
         if converter is not None:
             for sse in domain[SSES]:

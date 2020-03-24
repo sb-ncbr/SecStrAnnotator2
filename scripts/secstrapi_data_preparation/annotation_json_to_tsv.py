@@ -36,8 +36,8 @@ def length(sse):
 	return sse[END] - sse[START] + 1
 
 def longest_nested(sse, nested_type):
-	if sse is not None and NESTED in sse:
-		nested = sse[NESTED]
+	if sse is not None and NESTED_SSES in sse:
+		nested = sse[NESTED_SSES]
 		lengths = [length(nes) for nes in nested if nes[TYPE]==nested_type]
 		# sys.stderr.write('Lengths: ' + str(lengths) + '\n')
 		longest = max(lengths + [0])
@@ -46,8 +46,8 @@ def longest_nested(sse, nested_type):
 		return 0
 
 def longest_nested_starting(sse, nested_type, from_start_tolerance=1):
-	if sse is not None and NESTED in sse:
-		nested = sse[NESTED]
+	if sse is not None and NESTED_SSES in sse:
+		nested = sse[NESTED_SSES]
 		lengths = [length(nes) for nes in nested if nes[TYPE]==nested_type and nes[START]<=sse[START]+from_start_tolerance]
 		# sys.stderr.write('Lengths: ' + str(lengths) + '\n')
 		longest = max(lengths + [0])
@@ -56,8 +56,8 @@ def longest_nested_starting(sse, nested_type, from_start_tolerance=1):
 		return 0
 
 def longest_nested_ending(sse, nested_type, from_end_tolerance=1):
-	if sse is not None and NESTED in sse:
-		nested = sse[NESTED]
+	if sse is not None and NESTED_SSES in sse:
+		nested = sse[NESTED_SSES]
 		lengths = [length(nes) for nes in nested if nes[TYPE]==nested_type and nes[END]>=sse[END]-from_end_tolerance]
 		# sys.stderr.write('Lengths: ' + str(lengths) + '\n')
 		longest = max(lengths + [0])
@@ -71,8 +71,8 @@ def elemwise_sum(lists):
 def count_GHI_bonds(sse):
 	if sse is None:
 		return [0, 0, 0]
-	elif NESTED in sse:
-		return elemwise_sum( count_GHI_bonds(nested) for nested in sse[NESTED] )
+	elif NESTED_SSES in sse:
+		return elemwise_sum( count_GHI_bonds(nested) for nested in sse[NESTED_SSES] )
 	else:
 		if sse[TYPE] == 'G':
 			return [length(sse) - 1, 0, 0]

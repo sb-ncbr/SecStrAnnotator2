@@ -5,6 +5,8 @@ import requests
 import json
 import argparse
 
+from constants import *
+
 #  PARSE ARGUMENTS  ################################################################################
 
 DEFAULT_API_URL = 'https://www.ebi.ac.uk/pdbe/api/mappings'  # 'https://wwwdev.ebi.ac.uk/pdbe/api/mappings'
@@ -12,17 +14,17 @@ DEFAULT_NUMBERING = 'label'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('accession', help='"accession" argument to PDBe API SIFTS Mappings, e.g. Pfam accession or CATH cathcode.', type=str)
-parser.add_argument('--numbering', help='Numbering scheme for residue numbers and chain IDs (default = ' +DEFAULT_NUMBERING + ').', choices=['label', 'auth'], default=DEFAULT_NUMBERING)
+# parser.add_argument('--numbering', help='Numbering scheme for residue numbers and chain IDs (default = ' +DEFAULT_NUMBERING + ').', choices=['label', 'auth'], default=DEFAULT_NUMBERING)
 parser.add_argument('--source', help='URL with PDBeAPI server (default = ' + DEFAULT_API_URL + ')', default=DEFAULT_API_URL)
-parser.add_argument('--allow_null_domain_name', help='Allow domain name to be null if not provided by the source (otherwise will create CATH-like domain names)', action='store_true')
+# parser.add_argument('--allow_null_domain_name', help='Allow domain name to be null if not provided by the source (otherwise will create CATH-like domain names)', action='store_true')
 parser.add_argument('--join_domains_in_chain', help='Join all domains in one chain if their names are not provided by the source', action='store_true')
 parser.add_argument('--chain_change_warning', help='Print warning if struct_asym_id != chain_id (label_ vs auth_ chain numbering)', action='store_true')
 args = parser.parse_args()
 
 accession = args.accession
-numbering = args.numbering
+# numbering = args.numbering
 api_url = args.source
-allow_null_domain_name = args.allow_null_domain_name
+# allow_null_domain_name = args.allow_null_domain_name
 join_domains_in_chain = args.join_domains_in_chain
 chain_change_warning = args.chain_change_warning
 
@@ -40,54 +42,70 @@ def create_multidict(key_value_pairs):  # Creates a dictionary with a list of mu
 def get_domain_name(mapping, default=None):
 	return mapping.get('domain', default)
 
-def get_start(mapping):
+def get_start(mapping, numbering=DEFAULT_NUMBERING):
 	return mapping['start']['author_residue_number'] if numbering == 'auth' else mapping['start']['residue_number']
 
-def get_end(mapping):
+def get_end(mapping, numbering=DEFAULT_NUMBERING):
 	return mapping['end']['author_residue_number'] if numbering == 'auth' else mapping['end']['residue_number']
 
-def get_chain(mapping):
+def get_chain(mapping, numbering=DEFAULT_NUMBERING):
 	return mapping['chain_id'] if numbering == 'auth' else mapping['struct_asym_id']
+
+def get_range(mapping, numbering=DEFAULT_NUMBERING):
+	if numbering == 'auth':
+		start = str(mapping['start']['author_residue_number'] or '') + mapping['start']['author_insertion_code']
+		end = str(mapping['end']['author_residue_number'] or '') + mapping['end']['author_insertion_code']
+	else:
+		start = str(mapping['start']['residue_number'] or '')
+		end = str(mapping['end']['residue_number'] or '')
+	return start + ':' + end
 
 def get_domains_multisegment(mappings, pdb):  # Returns a list of tuples (domain_name, chain, ranges).
 	segments = []
 	for mapping in mappings:
-		domain = get_domain_name(mapping)
-		chain = get_chain(mapping)
-		start = get_start(mapping)
-		end = get_end(mapping)
-		if chain_change_warning and mapping['chain_id'] != mapping['struct_asym_id']:
-			sys.stderr.write(f'Warning: {pdb} {mapping["chain_id"]} --> {mapping["struct_asym_id"]}\n')
-		safe_str = lambda i: str(i) if i is not None else ''
-		rang = safe_str(start) + ':' + safe_str(end)
-		segments.append((domain, chain, rang))
-	if all( domain is not None for domain, chain, rang in segments ):
+		domain_name = get_domain_name(mapping)
+		chain = get_chain(mapping, 'label')
+		rang = get_range(mapping, 'label')
+		auth_chain = get_chain(mapping, 'auth')
+		auth_rang = get_range(mapping, 'auth')
+		if chain_change_warning and chain != auth_chain:
+			sys.stderr.write(f'Warning: {pdb} {auth_chain} --> {chain}\n')
+		segments.append({DOMAIN_NAME: domain_name, CHAIN: chain, RANGES: rang, AUTH_CHAIN: auth_chain, AUTH_RANGES: auth_rang})
+	if all( segment[DOMAIN_NAME] is not None for segment in segments ):
 		# All segments have a domain name, join segments with the same domain name.
-		segments_by_domain = create_multidict( (domain, (chain, rang)) for domain, chain, rang in segments )
+		segments_by_domain = create_multidict( (seg[DOMAIN_NAME], seg) for seg in segments )
 		result = []
-		for domain, chain_ranges in sorted(segments_by_domain.items()):
-			chains, ranges = zip(*chain_ranges)
-			chains = set(chains)
+		for domain_name, domain_segments in sorted(segments_by_domain.items()):
+			chains = [seg[CHAIN] for seg in domain_segments]
+			ranges = [seg[RANGES] for seg in domain_segments]
+			auth_chains = [seg[AUTH_CHAIN] for seg in domain_segments]
+			auth_ranges = [seg[AUTH_RANGES] for seg in domain_segments]
+			chains = sorted(set(chains))
+			auth_chains = sorted(set(auth_chains))
 			if len(chains) > 1:
 				sys.stderr.write('Error: Some domains contain parts of multiple chains\n')
 				exit(1)
-			chain = next(iter(chains))
+			chain = chains[0]
+			auth_chain = auth_chains[0]
 			ranges = ','.join( str(rang) for rang in ranges )
-			result.append((domain, chain, ranges))
+			auth_ranges = ','.join( str(rang) for rang in auth_ranges )
+			result.append({DOMAIN_NAME: domain_name, CHAIN: chain, RANGES: ranges, AUTH_CHAIN: auth_chain, AUTH_RANGES: auth_ranges})
 	else:
 		# Some segments miss a domain name, creating new domain names.
 		# sys.stderr.write('Some segments miss a domain name, creating new domain names\n')
-		ranges_by_chain = create_multidict( (chain, rang) for domain, chain, rang in segments )
+		ranges_by_chain = create_multidict( (seg[CHAIN], seg) for seg in segments )
 		result = []
-		for chain, ranges in sorted(ranges_by_chain.items()):
-			if allow_null_domain_name and join_domains_in_chain:
-				result.append( (None, chain, ','.join(ranges)) )
-			elif allow_null_domain_name:
-				result.extend( (None, chain, rang) for rang in ranges )
-			elif len(ranges) == 1 or join_domains_in_chain:
-				result.append( (pdb + chain + '00', chain, ','.join(ranges)) )
+		for chain, chain_segments in sorted(ranges_by_chain.items()):
+			auth_chain = next(seg[AUTH_CHAIN] for seg in chain_segments)
+			ranges = [seg[RANGES] for seg in chain_segments]
+			auth_ranges = [seg[AUTH_RANGES] for seg in chain_segments]
+			if join_domains_in_chain:
+				ranges = ','.join( str(rang) for rang in ranges )
+				auth_ranges = ','.join( str(rang) for rang in auth_ranges )
+				result.append( {DOMAIN_NAME: None, CHAIN: chain, RANGES: ranges, AUTH_CHAIN: auth_chain, AUTH_RANGES: auth_ranges} )
 			else:
-				result.extend( (pdb + chain + str(i).zfill(2), chain, rang) for i, rang in enumerate(ranges, start=1) )
+				for rang, auth_rang in zip(ranges, auth_ranges):
+					result.append( {DOMAIN_NAME: None, CHAIN: chain, RANGES: rang, AUTH_CHAIN: auth_chain, AUTH_RANGES: auth_rang} )
 	return result
 
 #  MAIN  ###############################################################################
@@ -102,7 +120,7 @@ else:
 	exit(1)
 
 output = {}
-for pdb, entry in results.items():
+for pdb, entry in sorted(results.items()):
 	if isinstance(entry, list):
 		output[pdb] = get_domains_multisegment(entry, pdb)
 	elif isinstance(entry, dict) and 'mappings' in entry:
@@ -113,4 +131,4 @@ n_domains = sum( len(doms) for pdb, doms in output.items() )
 
 sys.stderr.write(f'Found {n_domains} domains in {n_pdbs} PDB entries.\n')
 
-print(json.dumps(output, sort_keys=True, indent=4))
+json.dump(output, sys.stdout, indent=4)
