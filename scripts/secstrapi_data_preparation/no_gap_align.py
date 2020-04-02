@@ -4,6 +4,7 @@ from scipy import stats
 import argparse
 import os
 from os import path
+import shutil
 import sys
 import json
 import heapq
@@ -11,6 +12,7 @@ import itertools
 from typing import List, Tuple, Dict
 from collections import defaultdict
 
+from PIL import Image
 import Bio
 from Bio import AlignIO, SeqIO
 from Bio.SubsMat import MatrixInfo
@@ -442,8 +444,16 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
     logo.ax.set_yticklabels(ytl, fontsize=14*scale)
     logo.fig.tight_layout()
     logo.fig.savefig(logo_file, dpi=dpi)
+    if logo_file.endswith(('.tif', '.tiff')):
+        compress_tiff(logo_file)
     pyplot.close(logo.fig)
 
+def compress_tiff(filename: str):
+    name, ext = path.splitext(filename)
+    temp_name = f'{name}-compressed{ext}'
+    with Image.open(filename) as im:
+        im.save(temp_name, compression='tiff_lzw')
+        shutil.move(temp_name, filename)
 
 class PriorityQueue:
 	def __init__(self, elements_keys):

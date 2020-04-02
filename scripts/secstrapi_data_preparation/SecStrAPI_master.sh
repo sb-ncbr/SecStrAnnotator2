@@ -41,6 +41,7 @@ DIVIDE_ANNOTATIONS="$SCRIPT_DIR/divide_annotations_by_pdb.py"
 EXTRACT_SEQUENCES="$SCRIPT_DIR/extract_sequences.py"
 ALIGN_SEQUENCES="$SCRIPT_DIR/align_sequences.py"
 ADD_REFERENCE_RESIDUES="$SCRIPT_DIR/add_reference_residues.py"
+GET_FULL_SEQUENCES="$SCRIPT_DIR/get_full_sequences.py"
 JSON_TO_TSV="$SCRIPT_DIR/annotation_json_to_tsv.py"
 JSON_TO_BULGES_TSV="$SCRIPT_DIR/annotation_json_to_bulges_tsv.py"
 
@@ -104,6 +105,9 @@ python3  $ALIGN_SEQUENCES  $DATA_DIR/annotations_NR_Euka.json  --alignments_dir 
 echo '=== Realign sequences from Set-ALL to the alignment from Set-NR and add reference residue information ==='
 python3  $ADD_REFERENCE_RESIDUES  $DATA_DIR/annotations_NR.json  $DATA_DIR/aligments_NR/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_reference_residues_NR.json
 python3  $ADD_REFERENCE_RESIDUES  $DATA_DIR/annotations_ALL.json  $DATA_DIR/aligments_NR/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_reference_residues_ALL.json
+
+echo '=== Get full sequences ==='
+python3  $GET_FULL_SEQUENCES  $DATA_DIR/set_NR_$TODAY.json  >  $DATA_DIR/set_NR_$TODAY.fasta
 
 echo '=== Divide annotations into per-PDB files ==='
 python3  $SELECT_SSE_FIELDS  $DATA_DIR/annotations_with_reference_residues_ALL.json  >  $DATA_DIR/annotations_with_reference_residues_ALL-selected_fields.json

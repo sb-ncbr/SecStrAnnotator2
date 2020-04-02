@@ -366,11 +366,14 @@ two_sample_test_by_labels_with_comparison = function(test, df1, df2, stat_col, l
     result[which(result[label_col]==label), 'p.value'] = signif(p, digits=signif_digits) 
     result[which(result[label_col]==label), 'p.g'] = signif(pG, digits=signif_digits) 
     result[which(result[label_col]==label), 'p.l'] = signif(pL, digits=signif_digits) 
-    if (!reversed) {
-      result[which(result[label_col]==label), 'compare'] = if (p>p_limit | pG==pL) '       ' else if (pG<pL) '  >    ' else if (pL<pG) '    <  '
-    } else {
-      result[which(result[label_col]==label), 'compare'] = if (p>p_limit | pG==pL) '       ' else if (pG>pL) '  >    ' else if (pL>pG) '    <  '
+    GT = '  >    '
+    LT = '    <  '
+    EQ = '       '
+    comparison = if (p<p_limit & pG<p_limit & pL>=p_limit) GT else if (p<p_limit & pL<p_limit & pG>=p_limit) LT else EQ
+    if (reversed) {
+      comparison = if (comparison==GT) LT else if (comparison==LT) GT else EQ
     }
+    result[which(result[label_col]==label), 'compare'] = comparison
     m1 = mean(sample1)
     m2 = mean(sample2)
     med1 = median(sample1)

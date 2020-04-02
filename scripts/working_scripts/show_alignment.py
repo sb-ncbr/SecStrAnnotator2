@@ -1,14 +1,14 @@
 # PymolScriptSession for SecStrAnnotator 1.0
 # Creates and saves a session with superimposed template and query structures and with selected and colored SSEs.
 # Usage: 
-#     pymol -qcyr script_session.py -- file_format directory [ --hbonds ] [ template_pdbid,template_chain,template_ranges ] query_pdbid,query_chain,query_ranges
+#     pymol -qcyr show_alignment.py  directory  template_pdbid,template_chain,template_ranges  query_pdbid,query_chain,query_ranges  alignment_file
 
 
 # Modifiable constants
 
 TEMPLATE_BASE_COLOR       = 'wheat'  # This color will be used for template residues without annotation.
 QUERY_BASE_COLOR          = 'white'  # This color will be used for query residues without annotation.
-PROTEIN_REPRESENTATIONS   = ['cartoon', 'labels']  # Default visual representations for polymer.
+PROTEIN_REPRESENTATIONS   = ['ribbon', 'labels']  # Default visual representations for polymer.
 LIGAND_REPRESENTATIONS    = ['sticks', 'labels']  # Default visual representations for heteroatoms.
 BOND_REPRESENTATIONS      = ['dashes']  # Default visual representations for hydrogen bonds.
 SHOW_LABELS               = True  # Indicates whether labels with SSE names will be shown.
@@ -32,25 +32,13 @@ arguments = sys.argv[N_PSEUDOARGUMENTS:]
 options = [arg for arg in arguments if arg.startswith('-')]
 arguments = [arg for arg in arguments if not arg.startswith('-')]
 if len(arguments) == 4:
-	file_format, directory, template, query = arguments
-elif len(arguments) == 3:
-	file_format, directory, query = arguments
-	template = None
+	directory, template, query, alignment = arguments
 else:
-	print('ERROR: Exactly 3 or 4 command line arguments required, ' + str(len(arguments)) + ' given: ' + ' '.join(arguments))
+	print('ERROR: Exactly 4 command line arguments required, ' + str(len(arguments)) + ' given: ' + ' '.join(arguments))
 	cmd.quit(1)
-detected = '--detected' in options
-show_hbonds = '--hbonds' in options  # TODO implement
 
 
 # Additional constants
-
-if file_format == 'cif':
-	USE_CIF = True
-elif file_format == 'pdb':
-	USE_CIF = False
-else:
-	raise Exception('Unknown file format: ' + file_format)
 
 SSES = 'secondary_structure_elements'
 HBONDS = 'hydrogen_bonds'
@@ -62,11 +50,11 @@ TYPE = 'type'
 SHEET_ID = 'sheet_id'
 COLOR='color'
 
-TEMPLATE_STRUCT_EXT = '.cif' if USE_CIF else '.pdb'
-QUERY_STRUCT_EXT = ('-aligned' if template is not None else '') +  ('.cif' if USE_CIF else '.pdb')
+TEMPLATE_STRUCT_EXT = '.cif'
+QUERY_STRUCT_EXT = '.cif'
 TEMPLATE_ANNOT_EXT = '-template.sses.json'
-QUERY_ANNOT_EXT = '-detected.sses.json' if detected else '-annotated.sses.json'
-SESSION_EXT = '-detected.pse' if detected else '-annotated.pse'
+QUERY_ANNOT_EXT = '-annotated.sses.json'
+SESSION_EXT = '.pse'
 TEMPLATE_OBJECT_PREFIX = 'T_'
 TEMPLATE_SELECTION_PREFIX = TEMPLATE_OBJECT_PREFIX
 QUERY_OBJECT_PREFIX = ''
@@ -172,55 +160,69 @@ def pdb_chain_ranges(domain_spec):
 	ranges = parts[2] if len(parts) >= 3 else None
 	return (pdb, chain, ranges)
 
+def read_alignment(filename):
+    with open(filename) as f:
+        text = f.read()
+    try:
+        aln = json.loads(text)
+        return [(chain1, str(resi1), chain2, str(resi2)) for chain1, resi1, chain2, resi2 in aln['aligned_residues']]
+    except Exception:
+        lines = [line for line in text.split('\n') if len(line) > 0 and not line.startswith('#')]
+        aln = []
+        for line in lines:
+            chain1, resi1, _, _, _, resi2, chain2 = line.split('\t')  # A	10	K	0.757	P	15	A
+            match = (chain1, resi1, chain2, resi2)
+            if '-' not in match:
+                aln.append(match)
+        return aln
 
-def create_session(directory, template, query):
-	"""Creates and saves a session with superimposed template and query and selected and colored SSEs."""
-	files = []
 
-	if template is not None:
-		template_id, template_chain, template_range = pdb_chain_ranges(template)  # template.split(',', 2)
-		template_struct_file = path.join(directory, template_id + TEMPLATE_STRUCT_EXT)
-		template_annot_file = path.join(directory, template_id + TEMPLATE_ANNOT_EXT)
-		files.append(template_struct_file)
-		files.append(template_annot_file)
-	
-	query_id, query_chain, query_range = pdb_chain_ranges(query)  # query.split(',', 2)
-	query_struct_file = path.join(directory, query_id + QUERY_STRUCT_EXT)
-	query_annot_file = path.join(directory, query_id + QUERY_ANNOT_EXT)
-	session_file = path.join(directory, query_id + SESSION_EXT)
-	files.append(query_struct_file)
-	files.append(query_annot_file)
-	
-	for filename in files:
-		if not path.isfile(filename):
-			print('ERROR: File not found: ' + filename)
-			cmd.quit(1)
-	
-	if template is not None:
-		template_object = TEMPLATE_OBJECT_PREFIX + template_id
-		cmd.load(template_struct_file, template_object)
-		color_by_annotation(template_id, selection_expression(template_object, template_chain, None), TEMPLATE_BASE_COLOR, template_annot_file, selection_prefix=TEMPLATE_SELECTION_PREFIX)
-	
-	query_object = QUERY_OBJECT_PREFIX + query_id
-	cmd.load(query_struct_file, query_object)
-	color_by_annotation(query_id, selection_expression(query_object, query_chain, None), QUERY_BASE_COLOR, query_annot_file, selection_prefix=QUERY_SELECTION_PREFIX)
+def create_session(directory, template, query, alignment_file):
+    """Creates and saves a session with superimposed template and query and selected and colored SSEs."""
+    files = []
 
-	cmd.hide('everything', 'all')
-	if template is not None:
-		apply_representations(selection_expression(template_object, template_chain, None), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
-	apply_representations(selection_expression(query_object, query_chain, None), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS, bonds_reprs=BOND_REPRESENTATIONS)
-	cmd.dss()
-	cmd.zoom('vis')
-	cmd.save(session_file)
+    template_id, template_chain, template_range = pdb_chain_ranges(template)  # template.split(',', 2)
+    template_struct_file = path.join(directory, template_id + TEMPLATE_STRUCT_EXT)
+    files.append(template_struct_file)
+
+    query_id, query_chain, query_range = pdb_chain_ranges(query)  # query.split(',', 2)
+    query_struct_file = path.join(directory, query_id + QUERY_STRUCT_EXT)
+    session_file = path.join(directory, 'aln-'+template_id+'-'+query_id + SESSION_EXT)
+    files.append(query_struct_file)
+	
+    for filename in files:
+        if not path.isfile(filename):
+            print('ERROR: File not found: ' + filename)
+            cmd.quit(1)
+
+    template_object = TEMPLATE_OBJECT_PREFIX + template_id
+    cmd.load(template_struct_file, template_object)
+    
+    query_object = QUERY_OBJECT_PREFIX + query_id
+    cmd.load(query_struct_file, query_object)
+    
+    cmd.hide('everything', 'all')
+    apply_representations(selection_expression(template_object, template_chain, None), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
+    apply_representations(selection_expression(query_object, query_chain, None), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
+    alignment = read_alignment(alignment_file)
+    for chain1, resi1, chain2, resi2 in alignment:
+        sel1 = '%s and chain %s and resi %s and name CA' % (template_object, chain1, resi1)
+        sel2 = '%s and chain %s and resi %s and name CA' % (query_object, chain2, resi2)
+        cmd.distance('dist', sel1, sel2)
+    cmd.color('grey70', template_object)
+    cmd.spectrum('resi', 'rainbow', query_object + ' and symbol C')
+    cmd.hide('labels')
+    cmd.dss()
+    cmd.zoom('vis')
+    cmd.save(session_file)
 
 
 # Main script
 
 try:
-	if USE_CIF:
-		cmd.set('cif_use_auth', False)
-	# print(directory, template, query)
-	create_session(directory, template, query)
+	cmd.set('cif_use_auth', False)
+
+	create_session(directory, template, query, alignment)
 	cmd.quit(0)
 except Exception as e:
 	print('ERROR: Exception raised: ' + str(e))

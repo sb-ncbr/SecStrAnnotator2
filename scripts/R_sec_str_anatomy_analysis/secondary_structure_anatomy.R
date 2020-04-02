@@ -27,6 +27,7 @@ barplot(table((setNR %>% distinct(PDB, Group))$Group), main = 'Number of PDB ent
 
 # PLOTS FOR OCCURRENCE
 occurrence_table_NR = table_sse_occurrence(setNR, alpha = 0.05)
+
 plot_sse_occurrence(setNR, show_confidence = TRUE, alpha = 0.05, turn_labels = TRUE)
 print_png(full_path('plots/occurrence-setNR-500t.png'), width = 4000, ratio = 2/1, res = 500)
 print_tif(full_path('plots/occurrence-setNR-500t.tif'), width = 4000, ratio = 2/1, res = 500)
