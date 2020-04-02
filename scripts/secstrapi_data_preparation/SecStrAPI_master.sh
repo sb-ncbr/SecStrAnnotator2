@@ -11,8 +11,7 @@ FAMILY="CytochromesP450"
 CATH_FAMILY_ID="1.10.630.10"
 PFAM_FAMILY_ID="PF00067"
 
-DATA_DIR="/home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/$FAMILY-$TODAY"
-SCRIPT_DIR="/home/adam/Workspace/C#/SecStrAnnot2/scripts/secstrapi_data_preparation"
+DATA_DIR="$HOME/Workspace/C#/SecStrAnnot2_data/SecStrAPI/$FAMILY-$TODAY"
 STRUCTURE_CACHE_DIR="$DATA_DIR/../cached_structures/"  # Optional
 
 TEMPLATE="2NNJ,A,:"  # Uppercase to avoid collisions with query protein
@@ -24,6 +23,7 @@ ALIGNED_SSE_LABELS="B,C,E,H,I,J,K,L,J',K',K'',1-1,1-2,1-3,1-4,1-5,2-2,3-1,3-2"  
 #####################################################################################################################
 # SCRIPT PATHS
 
+SCRIPT_DIR=`dirname $0`  # Location of this script
 DOMAINS_FROM_PDBEAPI="$SCRIPT_DIR/domains_from_pdbeapi.py"
 DOMAINS_TO_SECSTRAPI_FORMAT="$SCRIPT_DIR/domain_lists_to_SecStrAPI_format.py"
 GET_TAXIDS="$SCRIPT_DIR/get_taxids.py"
@@ -48,46 +48,46 @@ JSON_TO_BULGES_TSV="$SCRIPT_DIR/annotation_json_to_bulges_tsv.py"
 #####################################################################################################################
 # MAIN PIPELINE
 
-echo '=== Get domains from CATH and Pfam ==='
+echo "Results in $DATA_DIR"
+
+echo; echo '=== Get domains from CATH and Pfam ==='
 mkdir  -p  $DATA_DIR
 python3  $DOMAINS_FROM_PDBEAPI  --join_domains_in_chain  $CATH_FAMILY_ID  >  $DATA_DIR/set_cath_$TODAY.simple.json 
-# Downloading https://www.ebi.ac.uk/pdbe/api/mappings/1.10.630.10
 python3  $DOMAINS_FROM_PDBEAPI  --join_domains_in_chain  $PFAM_FAMILY_ID  >  $DATA_DIR/set_pfam_$TODAY.simple.json 
-# Downloading https://www.ebi.ac.uk/pdbe/api/mappings/PF00067
 
-echo '=== Merge domain lists and format them in SecStrAPI format (also adds UniProt refs) ==='
+echo; echo '=== Merge domain lists and format them in SecStrAPI format (also adds UniProt refs) ==='
 python3  $DOMAINS_TO_SECSTRAPI_FORMAT  --api_version $API_VERSION  \
     CATH  $CATH_FAMILY_ID  $DATA_DIR/set_cath_$TODAY.simple.json  \
     Pfam  $PFAM_FAMILY_ID  $DATA_DIR/set_pfam_$TODAY.simple.json  \
     >  $DATA_DIR/set_ALL_$TODAY.json
 
-echo '=== Get NCBI taxons and groups (Euka/Bact/Arch/Viru) ==='
+echo; echo '=== Get NCBI taxons and groups (Euka/Bact/Arch/Viru) ==='
 wget  ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz  -O $DATA_DIR/taxdump.tar.gz
 tar  xzf  $DATA_DIR/taxdump.tar.gz  nodes.dmp  -O  > $DATA_DIR/ncbi_taxonomy_nodes.dmp
 python3  $GET_TAXIDS  $DATA_DIR/set_ALL_$TODAY.json  >  $DATA_DIR/domain_taxons.tsv
 python3  $CLASSIFY_TAXIDS  $DATA_DIR/ncbi_taxonomy_nodes.dmp  $DATA_DIR/domain_taxons.tsv  >  $DATA_DIR/domain_taxons_groups.tsv
 
-echo '=== Select nonredundant set (with best quality) ==='
+echo; echo '=== Select nonredundant set (with best quality) ==='
 python3  $SELECT_BEST_DOMAINS  $DATA_DIR/set_ALL_$TODAY.json  >  $DATA_DIR/set_NR_$TODAY.json
 python3  $SELECT_DOMAINS_BY_TAXON_GROUP  $DATA_DIR/set_NR_$TODAY.json  $DATA_DIR/domain_taxons_groups.tsv  Bact  >  $DATA_DIR/set_NR_Bact_$TODAY.json
 python3  $SELECT_DOMAINS_BY_TAXON_GROUP  $DATA_DIR/set_NR_$TODAY.json  $DATA_DIR/domain_taxons_groups.tsv  Euka  >  $DATA_DIR/set_NR_Euka_$TODAY.json
 
-echo '=== Simplify domain lists (for SecStrAnnotator) ==='
+echo; echo '=== Simplify domain lists (for SecStrAnnotator) ==='
 python3  $SIMPLIFY_DOMAIN_LIST  $DATA_DIR/set_ALL_$TODAY.json  >  $DATA_DIR/set_ALL_$TODAY.simple.json
 python3  $SIMPLIFY_DOMAIN_LIST  $DATA_DIR/set_NR_$TODAY.json  >  $DATA_DIR/set_NR_$TODAY.simple.json
 python3  $EXTRACT_PDB_DOMAIN_LIST  $DATA_DIR/set_ALL_$TODAY.json  >  $DATA_DIR/AnnotationList.json
 
-echo '=== Download CIF files ==='
+echo; echo '=== Download CIF files ==='
 python3  $DOWNLOAD_DOMAINS  $DATA_DIR/set_ALL_$TODAY.simple.json  $DATA_DIR/structures/  --format cif  --no_gzip  --cache $STRUCTURE_CACHE_DIR
 
-echo '=== Annotate ==='
+echo; echo '=== Annotate ==='
 cp  $TEMPLATE_ANNOTATION_FILE  $DATA_DIR/structures/${TEMPLATE:0:4}-template.sses.json
 cp  $TEMPLATE_STRUCTURE_FILE  $DATA_DIR/structures/${TEMPLATE:0:4}.cif
 python3  $SECSTRANNOTATOR_BATCH  --dll $SECSTRANNOTATOR_DLL \
     --threads $N_THREADS  --options " $SECSTRANNOTATOR_OPTIONS " \
     $DATA_DIR/structures  $TEMPLATE  $DATA_DIR/set_ALL_$TODAY.simple.json 
 
-echo '=== Collect annotations and put them to SecStrAPI format ==='
+echo; echo '=== Collect annotations and put them to SecStrAPI format ==='
 python3  $COLLECT_ANNOTATIONS  $DATA_DIR/set_ALL_$TODAY.json  $DATA_DIR/structures/  >  $DATA_DIR/annotations_ALL.json
 python3  $COLLECT_ANNOTATIONS  $DATA_DIR/set_NR_$TODAY.json  $DATA_DIR/structures/  >  $DATA_DIR/annotations_NR.json
 python3  $COLLECT_ANNOTATIONS  $DATA_DIR/set_NR_Bact_$TODAY.json  $DATA_DIR/structures/  >  $DATA_DIR/annotations_NR_Bact.json
@@ -97,23 +97,23 @@ python3  $EXTRACT_SEQUENCES  $DATA_DIR/annotations_NR.json  $DATA_DIR/sequences_
 python3  $EXTRACT_SEQUENCES  $DATA_DIR/annotations_NR_Bact.json  $DATA_DIR/sequences_NR_Bact/
 python3  $EXTRACT_SEQUENCES  $DATA_DIR/annotations_NR_Euka.json  $DATA_DIR/sequences_NR_Euka/
 
-echo '=== Perform no-gap sequence alignment and create sequence logos (from Set-NR) ==='
+echo; echo '=== Perform no-gap sequence alignment and create sequence logos (from Set-NR) ==='
 python3  $ALIGN_SEQUENCES  $DATA_DIR/annotations_NR.json  --alignments_dir $DATA_DIR/aligments_NR/  --trees_dir $DATA_DIR/trees_NR/  --logos_dir $DATA_DIR/logos_NR/
 python3  $ALIGN_SEQUENCES  $DATA_DIR/annotations_NR_Bact.json  --alignments_dir $DATA_DIR/aligments_NR_Bact/  --trees_dir $DATA_DIR/trees_NR_Bact/  --logos_dir $DATA_DIR/logos_NR_Bact/
 python3  $ALIGN_SEQUENCES  $DATA_DIR/annotations_NR_Euka.json  --alignments_dir $DATA_DIR/aligments_NR_Euka/  --trees_dir $DATA_DIR/trees_NR_Euka/  --logos_dir $DATA_DIR/logos_NR_Euka/
 
-echo '=== Realign sequences from Set-ALL to the alignment from Set-NR and add reference residue information ==='
+echo; echo '=== Realign sequences from Set-ALL to the alignment from Set-NR and add reference residue information ==='
 python3  $ADD_REFERENCE_RESIDUES  $DATA_DIR/annotations_NR.json  $DATA_DIR/aligments_NR/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_reference_residues_NR.json
 python3  $ADD_REFERENCE_RESIDUES  $DATA_DIR/annotations_ALL.json  $DATA_DIR/aligments_NR/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_reference_residues_ALL.json
 
-echo '=== Get full sequences ==='
+echo; echo '=== Get full sequences ==='
 python3  $GET_FULL_SEQUENCES  $DATA_DIR/set_NR_$TODAY.json  >  $DATA_DIR/set_NR_$TODAY.fasta
 
-echo '=== Divide annotations into per-PDB files ==='
+echo; echo '=== Divide annotations into per-PDB files ==='
 python3  $SELECT_SSE_FIELDS  $DATA_DIR/annotations_with_reference_residues_ALL.json  >  $DATA_DIR/annotations_with_reference_residues_ALL-selected_fields.json
 python3  $DIVIDE_ANNOTATIONS  $DATA_DIR/annotations_with_reference_residues_ALL-selected_fields.json  $DATA_DIR/annotations_ALL/  --min_dir $DATA_DIR/annotations_ALL_min/
 
-echo '=== Prepare TSV tables for analyses ==='
+echo; echo '=== Prepare TSV tables for analyses ==='
 python3  $JSON_TO_TSV  --add_missing_sses  $DATA_DIR/annotations_with_reference_residues_NR.json  >  $DATA_DIR/annotations_with_reference_residues_NR.tsv
 python3  $JSON_TO_TSV  --add_missing_sses  $DATA_DIR/annotations_with_reference_residues_ALL.json  >  $DATA_DIR/annotations_with_reference_residues_ALL.tsv
 python3  $JSON_TO_BULGES_TSV  $DATA_DIR/annotations_with_reference_residues_NR.json  >  $DATA_DIR/beta_bulges_NR.tsv

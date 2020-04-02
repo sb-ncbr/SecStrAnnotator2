@@ -1,7 +1,9 @@
 # SCRIPT FOR ANALYSIS OF SECONDARY STRUCTURE ANATOMY OF A PROTEIN FAMILY (CYTOCHROMES P450)
 
-source('secondary_structure_anatomy_lib.R')  # Contains a few CytochromeP450-specific constants!
-DATADIR = '/home/adam/Workspace/C#/SecStrAnnot2_data/SecStrAPI/CytochromesP450-20200323'
+source('sec_str_anatomy_lib.R')
+source('sec_str_anatomy_settings.R')  # Contains a few CytochromeP450-specific constants!
+
+DATADIR = '~/Workspace/C#/SecStrAnnot2_data/SecStrAPI/CytochromesP450-20200323'
 
 
 # READ DATASETS
@@ -29,24 +31,24 @@ barplot(table((setNR %>% distinct(PDB, Group))$Group), main = 'Number of PDB ent
 occurrence_table_NR = table_sse_occurrence(setNR, alpha = 0.05)
 
 plot_sse_occurrence(setNR, show_confidence = TRUE, alpha = 0.05, turn_labels = TRUE)
-print_png(full_path('plots/occurrence-setNR-500t.png'), width = 4000, ratio = 2/1, res = 500)
-print_tif(full_path('plots/occurrence-setNR-500t.tif'), width = 4000, ratio = 2/1, res = 500)
+print_png(full_path('plots/occurrence-setNR.png'), width = 4000, ratio = 2/1, res = 500)
+# print_tif(full_path('plots/occurrence-setNR.tif'), width = 4000, ratio = 2/1, res = 500)
 
 plot_sse_occurrence_multi(Bact = setNR_Bact, Euka = setNR_Euka, turn_labels = TRUE)
-print_png(full_path('plots/occurrence-setNR-Bact-Euka-500t.png'), width = 4000, ratio = 2/1, res = 500)
-print_tif(full_path('plots/occurrence-setNR-Bact-Euka-500t.tif'), width = 4000, ratio = 2/1, res = 500)
+print_png(full_path('plots/occurrence-setNR-Bact-Euka.png'), width = 4000, ratio = 2/1, res = 500)
+# print_tif(full_path('plots/occurrence-setNR-Bact-Euka.tif'), width = 4000, ratio = 2/1, res = 500)
 
 
 # PLOTS FOR LENGTH DISTRIBUTION
 boxplot_sse(setNR, ignore_zero = TRUE, title = 'Set-NR')
 
 violinplot_sse(setNR, ignore_zero = TRUE, turn_labels = TRUE)
-print_png(full_path('plots/length-setNR-500t.png'), width = 4000, ratio = 2/1, res = 500)
-print_tif(full_path('plots/length-setNR-500t.tif'), width = 4000, ratio = 2/1, res = 500)
+print_png(full_path('plots/length-setNR.png'), width = 4000, ratio = 2/1, res = 500)
+# print_tif(full_path('plots/length-setNR.tif'), width = 4000, ratio = 2/1, res = 500)
 
 violinplot_sse_multi(Bact = setNR_Bact, Euka = setNR_Euka, ignore_zero = TRUE, turn_labels = TRUE) 
-print_png(full_path('plots/length-setNR-Bact-Euka-500t.png'), width = 4000, ratio = 2/1, res = 500)
-print_tif(full_path('plots/length-setNR-Bact-Euka-500t.tif'), width = 4000, ratio = 2/1, res = 500)
+print_png(full_path('plots/length-setNR-Bact-Euka.png'), width = 4000, ratio = 2/1, res = 500)
+# print_tif(full_path('plots/length-setNR-Bact-Euka.tif'), width = 4000, ratio = 2/1, res = 500)
 # point = mean, horizontal line = median
 
 
@@ -93,9 +95,10 @@ helicesNR = read_tsv(full_path('annotations_with_reference_residues_NR.tsv')) %>
 
 plot_contained_helix_types(helicesNR, y_label = 'Fraction')
 print_png(full_path('plots/contained_types-setNR.png'), width = 4000, ratio = 2/1, res = 500)
-print_tif(full_path('plots/contained_types-setNR.tif'), width = 4000, ratio = 2/1, res = 500)
+# print_tif(full_path('plots/contained_types-setNR.tif'), width = 4000, ratio = 2/1, res = 500)
 
 
 # Comment: Ctrl+Shift+C
 # Go to function definition: F2 / Ctrl+Click
 # Fold all: Alt+O
+
