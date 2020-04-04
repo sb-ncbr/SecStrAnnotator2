@@ -18,9 +18,9 @@ parser.add_argument('directory', type=str, help='directory with the input and ou
 parser.add_argument('template', type=str, help='template domain specification (argument TEMPLATE for SecStrAnnotator)')
 parser.add_argument('queries', type=str, help='JSON file with the list of domains to be annotated (in format {PDB:[[domain_name,chain,ranges]]}, will be processed to QUERY arguments for SecStrAnnotator)')
 parser.add_argument('--options', type=str, default='', help='Any options that are to be passed to SecStrAnnotator (must be enclosed in quotes and contain spaces, not to be confused with Python arguments, e.g. --options \'--ssa dssp --soft\' or \' --soft\')')
-parser.add_argument('--by_pdb', action='store_true', help='Process queries PDB-by-PDB, ignore domain information (only with --options " --onlyssa")')
+parser.add_argument('--by_pdb', action='store_true', help='Process queries PDB-by-PDB, ignore domain information (usable only with --options " --onlyssa")')
 parser.add_argument('--threads', type=int, default=1, help='Number of parallel threads (default: 1)')
-parser.add_argument('--dll', type=str, default='SecStrAnnotator2.dll', help='Path to the SecStrAnnotator DLL (default: SecStrAnnotator2.dll)')
+parser.add_argument('--dll', type=str, default=path.join(path.dirname(__file__), 'SecStrAnnotator2.dll'), help='Path to the SecStrAnnotator DLL (default: SecStrAnnotator2.dll)')
 args = parser.parse_args()
 
 options = args.options.split()
@@ -30,8 +30,7 @@ template = args.template
 queries_file = args.queries
 by_pdb = args.by_pdb
 n_threads = args.threads
-RUN_DIR = path.dirname(__file__)  # os.getcwd()
-SECSTRANNOTATOR = path.join(RUN_DIR, args.dll)
+secstrannotator_dll = args.dll
 
 all_annotations_file = path.join(directory, 'all_annotations.sses.json')
 output = path.join(directory, 'stdout.txt')
@@ -57,7 +56,10 @@ def copy_file(source, dest, append=False):
 				w.write(line)
 
 def remove_file(filename):
-	os.remove(filename)
+	try:
+		os.remove(filename)
+	except FileNotFoundError:
+		pass
 
 def try_read_json(filename):
 	with open(filename) as f:
@@ -169,8 +171,8 @@ def run_in_threads (do_job, jobs, n_threads, progress_bar=None, initialize_threa
 #  MAIN  ###############################################################################
 
 # Determine whether can run dotnet SecStrAnnotator.dll and whether the template files exist
-if not path.isfile(SECSTRANNOTATOR):
-	sys.stderr.write('Error: "' + SECSTRANNOTATOR + '" not found\n')
+if not path.isfile(secstrannotator_dll):
+	sys.stderr.write('Error: "' + secstrannotator_dll + '" not found.\nUse --dll option to set the path to SecStrAnnotator2.dll.\n')
 	exit(1)
 
 template_pdb = template.split(',')[0]
@@ -183,7 +185,7 @@ if not onlyssa and not path.isfile(template_annot_file):
 	sys.stderr.write('Error: "' + template_annot_file + '" not found\n')
 	exit(1)
 
-secstrannotator_commands = ['dotnet', SECSTRANNOTATOR]
+secstrannotator_commands = ['dotnet', secstrannotator_dll]
 
 # Prepare domain list
 domains = read_domains_json(queries_file)
@@ -204,7 +206,7 @@ all_annotations = OrderedDict()
 failed = []
 
 def process_pdb(pdb):
-	clear_file(path.join(directory, pdb + '.label2auth.tsv'))
+	remove_file(path.join(directory, pdb + '.label2auth.tsv'))
 	if by_pdb:
 		process_domain(pdb, pdb)
 	else:
@@ -272,3 +274,6 @@ print('Failed to find ' + str(len(not_found_domains)) + ' domains:')
 print(', '.join(name for name, chain, ranges in not_found_domains))
 print('Failed to annotate ' + str(len(failed)) + ' domains:')
 print(', '.join(failed))
+print('Annotations in:  ' + all_annotations_file)
+print('Output in:       ' + output)
+print('Error output in: ' + output_err)

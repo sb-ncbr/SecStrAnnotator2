@@ -1,0 +1,296 @@
+
+----------------------------------------------------------------------
+1akdA
+Template protein:
+Loading structure:  examples/2nnj.cif, chain A, residues :
+Query protein:
+Loading structure:  examples/1akd.cif, chain A, residues :
+Running PyMOL to align proteins:
+Info: File 'pymol' not found in the base directory '/home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/'.
+      Running 'pymol' from current directory or $PATH.
+Executing: 
+    pymol -qcyr /home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/./script_align.py -- cif cealign examples/ 2nnj A : 1akd A :
+PyMOL>run /home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/./script_align.py,main
+ ExecutiveLoad-Detail: Detected mmCIF
+ ExecutiveLoad-Detail: Detected mmCIF
+Exit code: 0 (success)
+
+Loading structure:  examples/1akd-aligned.cif, chain A, residues :
+[ -0.426095436458229, -0.156971770139603, -0.890955971083146, 46.5586116466117, -0.904371765411414, 0.0482756978408617, 0.424006093027707, 21.1044441350201, -0.0235454657230149, 0.986422485741895, -0.162530891422735, -27.4057154212385, -15.7339893603955, -23.2477021053275, -13.4370878033806, 1 ]
+Characteristic distance R = 2.935
+Values of metric:
+    A'    :   23.68
+    A     :   12.64
+    B     :    4.18
+    B'    :    8.09
+    B''   :Infinity (not found)
+    C     :    4.46
+    D     :   10.59
+    E     :    4.20
+    F     :    5.31
+    F'    :Infinity (not found)
+    G'    :Infinity (not found)
+    G     :   13.59
+    H     :   15.24
+    I     :    1.65
+    J     :   12.45
+    J'    :Infinity (not found)
+    K     :    5.51
+    K'    :    2.89
+    K''   :Infinity (not found)
+    L     :    3.91
+    L'    :Infinity (not found)
+    1-0   :    7.77
+    1-1   :    8.59
+    1-2   :    8.14
+    1-5   :    8.36
+    3-1   :   10.41
+    5-1   :   15.55
+    5-2   :    9.89
+    6-1   :    2.24
+    1-4   :    9.52
+    2-1   :    3.30
+    2-2   :    3.52
+    1-3   :    5.90
+    3-3   :   18.43
+    4-1   :    4.13
+    6-2   :    3.86
+    4-2   :    2.65
+    3-2   :   16.82
+    Total:  267.49
+
+Found SSEs: 32 of 38
+
+
+Times [miliseconds]:
+>     53   Process options, arguments, create file names.
+>    176   Read files
+>    283   Secondary structure assignment
+>    428   Alignment
+>     41   Calculate line segments
+>    313   Matching
+>     11   Create PyMOL session
+  ----------
+>   1308   Total
+
+----------------------------------------------------------------------
+1bu7A
+Template protein:
+Loading structure:  examples/2nnj.cif, chain A, residues :
+Query protein:
+Loading structure:  examples/1bu7.cif, chain A, residues :
+Running PyMOL to align proteins:
+Info: File 'pymol' not found in the base directory '/home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/'.
+      Running 'pymol' from current directory or $PATH.
+Executing: 
+    pymol -qcyr /home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/./script_align.py -- cif cealign examples/ 2nnj A : 1bu7 A :
+PyMOL>run /home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/./script_align.py,main
+ ExecutiveLoad-Detail: Detected mmCIF
+ ExecutiveLoad-Detail: Detected mmCIF
+Exit code: 0 (success)
+
+Loading structure:  examples/1bu7-aligned.cif, chain A, residues :
+[ 0.932115499834081, -0.277192217984529, 0.233077603509817, 47.0000588893891, -0.360714582685133, -0.653112175995442, 0.665829914771625, 21.1927570677802, -0.0323370500718971, -0.704704874295131, -0.708763257609571, -28.3410188644544, -47.9254292047249, -69.2953302455398, -43.1237028139942, 1 ]
+Characteristic distance R = 2.2135
+Values of metric:
+    A'    :    6.63
+    A     :    4.93
+    B     :    6.94
+    B'    :    9.17
+    B''   :    2.20
+    C     :    4.63
+    D     :    9.80
+    E     :    1.74
+    F     :   14.08
+    F'    :Infinity (not found)
+    G'    :Infinity (not found)
+    G     :    7.38
+    H     :   12.83
+    I     :    1.82
+    J     :    2.26
+    J'    :    3.97
+    K     :    2.38
+    K'    :    1.53
+    K''   :    3.63
+    L     :    0.82
+    L'    :Infinity (not found)
+    1-0   :Infinity (not found)
+    1-1   :    2.34
+    1-2   :    1.45
+    1-5   :   12.49
+    3-1   :Infinity (not found)
+    5-1   :Infinity (not found)
+    5-2   :Infinity (not found)
+    6-1   :Infinity (not found)
+    1-4   :   18.09
+    2-1   :    5.79
+    2-2   :    4.51
+    1-3   :    6.02
+    3-3   :    1.82
+    4-1   :    7.77
+    6-2   :Infinity (not found)
+    4-2   :    5.70
+    3-2   :    4.48
+    Total:  167.20
+
+Found SSEs: 29 of 38
+
+
+Times [miliseconds]:
+>     53   Process options, arguments, create file names.
+>    194   Read files
+>    291   Secondary structure assignment
+>    951   Alignment
+>     33   Calculate line segments
+>    240   Matching
+>      9   Create PyMOL session
+  ----------
+>   1775   Total
+
+----------------------------------------------------------------------
+1bu7B
+Template protein:
+Loading structure:  examples/2nnj.cif, chain A, residues :
+Query protein:
+Loading structure:  examples/1bu7.cif, chain B, residues :
+Running PyMOL to align proteins:
+Info: File 'pymol' not found in the base directory '/home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/'.
+      Running 'pymol' from current directory or $PATH.
+Executing: 
+    pymol -qcyr /home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/./script_align.py -- cif cealign examples/ 2nnj A : 1bu7 B :
+PyMOL>run /home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/./script_align.py,main
+ ExecutiveLoad-Detail: Detected mmCIF
+ ExecutiveLoad-Detail: Detected mmCIF
+Exit code: 0 (success)
+
+Loading structure:  examples/1bu7-aligned.cif, chain B, residues :
+[ -0.955012457527149, 0.197128535916336, 0.221566121723148, 47.1162380902273, 0.275598348567284, 0.313993766043631, 0.908544696287819, 20.9814292338308, 0.109529704806237, 0.928734760420444, -0.354196257111561, -28.1029881890775, -35.0937264494176, -118.449971774839, -52.1468089211662, 1 ]
+Characteristic distance R = 2.301
+Values of metric:
+    A'    :    5.28
+    A     :    4.43
+    B     :    6.73
+    B'    :    8.80
+    B''   :    2.32
+    C     :    5.21
+    D     :    9.73
+    E     :    1.90
+    F     :   12.62
+    F'    :Infinity (not found)
+    G'    :Infinity (not found)
+    G     :    6.82
+    H     :   13.16
+    I     :    2.54
+    J     :    2.11
+    J'    :    3.80
+    K     :    2.39
+    K'    :    1.55
+    K''   :    3.60
+    L     :    1.07
+    L'    :Infinity (not found)
+    1-0   :Infinity (not found)
+    1-1   :    2.28
+    1-2   :    1.19
+    1-5   :   11.49
+    3-1   :Infinity (not found)
+    5-1   :Infinity (not found)
+    5-2   :Infinity (not found)
+    6-1   :Infinity (not found)
+    1-4   :   17.74
+    2-1   :    4.62
+    2-2   :    3.42
+    1-3   :    5.52
+    3-3   :    2.05
+    4-1   :    7.36
+    6-2   :Infinity (not found)
+    4-2   :    5.67
+    3-2   :    4.56
+    Total:  159.95
+
+Found SSEs: 29 of 38
+
+
+Times [miliseconds]:
+>     53   Process options, arguments, create file names.
+>    201   Read files
+>    300   Secondary structure assignment
+>    757   Alignment
+>     33   Calculate line segments
+>    224   Matching
+>      9   Create PyMOL session
+  ----------
+>   1582   Total
+
+----------------------------------------------------------------------
+1tqnA
+Template protein:
+Loading structure:  examples/2nnj.cif, chain A, residues :
+Query protein:
+Loading structure:  examples/1tqn.cif, chain A, residues :
+Running PyMOL to align proteins:
+Info: File 'pymol' not found in the base directory '/home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/'.
+      Running 'pymol' from current directory or $PATH.
+Executing: 
+    pymol -qcyr /home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/./script_align.py -- cif cealign examples/ 2nnj A : 1tqn A :
+PyMOL>run /home/adam/Workspace/C#/SecStrAnnot2/bin/Release/netcoreapp2.0/./script_align.py,main
+ ExecutiveLoad-Detail: Detected mmCIF
+ ExecutiveLoad-Detail: Detected mmCIF
+Exit code: 0 (success)
+
+Loading structure:  examples/1tqn-aligned.cif, chain A, residues :
+[ 0.637619867524786, 0.348138849966968, 0.687197384803923, 47.149564743042, 0.767516056743676, -0.210631790066095, -0.605436496797303, 21.2161736024406, -0.0660303504330537, 0.91347336587184, -0.401505171404377, -28.1733263682971, 18.7840416450398, 23.9924629795348, 13.6166550340217, 1 ]
+Characteristic distance R = 2.148
+Values of metric:
+    A'    :    8.54
+    A     :    2.98
+    B     :    3.83
+    B'    :   16.26
+    B''   :Infinity (not found)
+    C     :    1.67
+    D     :   13.92
+    E     :    2.49
+    F     :   17.99
+    F'    :    3.86
+    G'    :   13.51
+    G     :   15.71
+    H     :    6.91
+    I     :    1.54
+    J     :    1.52
+    J'    :    5.71
+    K     :    1.55
+    K'    :    2.00
+    K''   :    1.79
+    L     :    0.78
+    L'    :Infinity (not found)
+    1-0   :Infinity (not found)
+    1-1   :    2.50
+    1-2   :    2.03
+    1-5   :    5.55
+    3-1   :Infinity (not found)
+    5-1   :Infinity (not found)
+    5-2   :Infinity (not found)
+    6-1   :Infinity (not found)
+    1-4   :   10.06
+    2-1   :    2.43
+    2-2   :    3.00
+    1-3   :    1.95
+    3-3   :    1.60
+    4-1   :   12.71
+    6-2   :Infinity (not found)
+    4-2   :    9.03
+    3-2   :    4.78
+    Total:  178.21
+
+Found SSEs: 30 of 38
+
+
+Times [miliseconds]:
+>     51   Process options, arguments, create file names.
+>    170   Read files
+>    292   Secondary structure assignment
+>    517   Alignment
+>     39   Calculate line segments
+>    293   Matching
+>     10   Create PyMOL session
+  ----------
+>   1375   Total

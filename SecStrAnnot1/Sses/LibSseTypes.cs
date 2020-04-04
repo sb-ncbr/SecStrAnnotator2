@@ -67,6 +67,8 @@ namespace protein.Sses
         public static string AsString(this SseType type, bool full = false) => full ? type.ToString() : sseTypeToString[type];
 
         public static SseType Type(string typeString) => stringToSseType[typeString];
+
+        public static bool IsType(string typeString) => stringToSseType.ContainsKey(typeString);
         
 
         public static bool IsHelix(this SseType type) => ALL_HELIX_TYPES.Contains(type);

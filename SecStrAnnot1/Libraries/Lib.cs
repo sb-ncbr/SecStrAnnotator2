@@ -108,6 +108,7 @@ namespace protein.Libraries
             }
             try
             {
+                
                 proc.StartInfo = new ProcessStartInfo();
                 proc.StartInfo.FileName = command;
                 proc.StartInfo.Arguments = args;

@@ -132,10 +132,11 @@ namespace protein
             );
             options.AddOption(Option.StringOption(new string[] { "-t", "--types" }, v => { acceptedSSETypes = v.Split(',').Select(str => LibSseTypes.Type(str)).ToArray(); })
                 .AddConstraint(optArgs => optArgs[0].Split(',').All(type => type.Length == 1), "must be a comma-separated list of one-character SSE types")
+                .AddConstraint(optArgs => optArgs[0].Split(',').All(type => LibSseTypes.IsType(type)), "contains other than allowed types")
                 .AddParameter("TYPES")
                 .AddHelp("Specify the allowed types of secondary structures.")
-                .AddHelp("TYPES is a list of comma-separated (without space) types; default: " + Setting.DEFAULT_ACCEPTED_SSE_TYPES.EnumerateWithSeparators(","))
-                .AddHelp("The types are denoted by DSSP convention (H = alpha helix, G = 3_10 helix, I = pi helix, h = helix, E = strand with >2 H-bonds, B = strand with 2 H-bonds, e = strand)")
+                .AddHelp("TYPES is a list of comma-separated (without space) types; default: " + Setting.DEFAULT_ACCEPTED_SSE_TYPES.Select(type=>type.AsString()).EnumerateWithSeparators(","))
+                .AddHelp("The types are denoted by DSSP convention (H = alpha helix, G = 3_10 helix, I = pi helix, h = helix, E = strand with >2 H-bonds, B = strand with 2 H-bonds)")
             );
             options.AddOption(Option.DictionaryChoiceOption(new string[] { "-m", "--matching" }, v => { selectionMethod = v; }, Setting.selectionMethodNames)
                 .AddParameter("METHOD")

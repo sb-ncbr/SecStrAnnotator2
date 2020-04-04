@@ -1,4 +1,4 @@
-#define DEVEL // DEVEL==true for development versions (odd minor), DEVEL==false for release versions (even minor)
+#define DEVEL // DEVEL==true for development versions, DEVEL==false for release versions
 
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,7 @@ namespace protein
 #if DEVEL
         public static string VERSION = "2.1" + String.Format(".{0}.{1} [{2:u}]", Lib.BuildVersion.Build, Lib.BuildVersion.Revision, Lib.BuildTime);
 #else
-		public static string VERSION = "2.0" + String.Format(" [{0:yyyy-MM-dd}]", Lib.BuildTime);
+		public static string VERSION = "2.1" + String.Format(" [{0:yyyy-MM-dd}]", Lib.BuildTime);
 #endif
 
         public enum AlignMethod { None, Align, Super, Cealign };
