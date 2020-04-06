@@ -714,7 +714,6 @@ namespace protein.SecStrAssigning
         private SecStrAssignment GetSheets()
         {
             // Find H-binding motifs
-            MyStopwatch watch = new MyStopwatch(Lib.WriteLineDebug);
             List<BetaLadder> ladders = new List<BetaLadder>();
             List<(Residue, Residue)> hBonds = new List<(Residue, Residue)>();
             for (int i = 0; i < residues.Length; i++)
@@ -777,7 +776,6 @@ namespace protein.SecStrAssigning
                 hBonds.AddRange(hAcceptors.Select(a => (residues[i], residues[a])));
                 hBonds.AddRange(hDonors.Select(d => (residues[d], residues[i])));
             }
-            watch.Lap("Time for finding H-bond patterns");
 
             foreach (BetaLadder l in ladders)
                 if (l.Start0 == l.Start1 && (l.End0 - l.Start0) > 2)
@@ -979,7 +977,6 @@ namespace protein.SecStrAssigning
             SecStrAssignment result = new SecStrAssignment(resultSSEs);
             result.Connectivity = edges;
             result.HBonds = hBonds.OrderBy(hb => (hb.Item1.ResidueIndex, hb.Item2.ResidueIndex)).ToList();
-            watch.Stop("HBondSecStrAssigner.GetSheets()");
             return result;
         }
 

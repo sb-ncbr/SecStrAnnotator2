@@ -32,15 +32,12 @@ namespace protein.SecStrAssigning
         {
             this.DetectSheets = true;
             this.DetectHelices = true;
-            MyStopwatch watch = new MyStopwatch(Lib.WriteLineDebug);
             var hydrogenAdder = new DsspLikeAmideHydrogenAdder();
             protein = hydrogenAdder.AddHydrogens(protein); // removing residues without C-alpha is probably not needed here
             this.model = protein.Model;
             this.residues = protein.GetResidues().ToArray();
             this.nResidues = model.Residues.Count;
-            MyStopwatch watchHBF = new MyStopwatch(Lib.WriteLineDebug);
             var hBondFinder = new SparseBoxingHBondFinder(this.residues, hBondEnergyCutoff);
-            watchHBF.Stop("new SparseBoxingHbondFinder");
             this.hBonds = new HashSet<(int donor, int acceptor)>();
             this.acceptorsOf = new Dictionary<int, List<int>>();
             for (int don = 0; don < nResidues; don++)
@@ -52,8 +49,6 @@ namespace protein.SecStrAssigning
                     hBonds.Add((don, acc));
                 }
             }
-            watchHBF.Stop("Found H-bonds");
-            watch.Stop("new HBondSecStrAssigner2()");
         }
 
         public String GetDescription()
@@ -126,10 +121,8 @@ namespace protein.SecStrAssigning
 
         private (List<Sse> strands, List<(int strand0, int strand1, int type)> connectivity) GetStrands()
         {
-            MyStopwatch watch = new MyStopwatch(Lib.WriteLineDebug);
             BetaGraph betaGraph = BuildBetaGraph();
-            watch.Stop("BuildBetaGraph()");
-
+         
             int nStrands = betaGraph.macrostrands.Count;
             List<Sse> strands = new List<Sse>(capacity: nStrands);
             var antiparallelBulgeTypes = new HashSet<MicrostrandType>{
@@ -188,9 +181,7 @@ namespace protein.SecStrAssigning
         private BetaGraph BuildBetaGraph()
         {
 
-            MyStopwatch watch = new MyStopwatch(Lib.WriteLineDebug);
             List<Ladder> ladders = FindLadders();
-            watch.Stop("FindLadders()");
             Ladder[] parallelLadders = ladders.Where(l => l.type0 == MicrostrandType.REGULAR_PARALEL).ToArray();
             Ladder[] antiparallelLadders = ladders.Where(l => l.type0 == MicrostrandType.REGULAR_ANTIPARALEL).ToArray();
             List<Ladder> parallelLaddersAndBulges = IncludeParallelBulges(parallelLadders);
@@ -299,10 +290,8 @@ namespace protein.SecStrAssigning
             //     Lib.WriteLineDebug(Lib.EnumerateWithSeparators(macroladders, "\n"));
             // }
             var edges = macroladders.Select(mal => (mal.macrostrand0, mal.macrostrand1)).ToList();
-            MyStopwatch watchComp = new MyStopwatch(Lib.WriteLineDebug);
             var sheets = ConnectedComponents(edges);
             int nSheets = sheets.Count;
-            watchComp.Stop("ConnecteComponents()");
             var macrostrand2sheet = new int[nMacrostrands];
             for (int iSheet = 0; iSheet < nSheets; iSheet++)
             {
@@ -322,7 +311,6 @@ namespace protein.SecStrAssigning
                 // Lib.WriteLineDebug(Lib.EnumerateWithCommas(macrostrand2sheet));
                 // Lib.WriteLineDebug("");
             }
-            watch.Stop("rest of BuildBetaGraph()");
 
             BetaGraph bg = new BetaGraph();
             bg.microstrands = Enumerable.Zip(microstrands, microstrand2macrostrand, (m, m2m) => (m.startZeta, m.endZeta, m.ladderIndex, m.side, m2m)).ToList();

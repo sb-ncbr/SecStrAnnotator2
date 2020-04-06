@@ -88,7 +88,7 @@ namespace protein
             options.AddArgument(new Argument("TEMPLATE")
                 .AddHelp("Template domain specification in format PDB[,CHAIN,[RANGES]]")
             );
-            options.AddArgument(new Argument("QUERY").AddHelp("arg")
+            options.AddArgument(new Argument("QUERY")
                 .AddHelp("Query domain specification in format PDB[,CHAIN,[RANGES]]")
                 .AddHelp("")
                 .AddHelp("Domain specification examples: 1tqn or 1og2,B or 1tqn,A,28: or 1h9r,A,123:182,255:261")
@@ -124,7 +124,7 @@ namespace protein
             );
             options.AddOption(Option.SwitchOption(new string[] { "-o", "--onlyssa" }, v => { onlyDetect = v; })
                 .AddHelp("Run only secondary structure assignment (SSA), do not run annotation.")
-                .AddHelp("Changes usage: " + System.AppDomain.CurrentDomain.FriendlyName + " --onlyssa [OPTIONS] DIRECTORY QUERY")
+                .AddHelp("Changes usage: dotnet " + System.AppDomain.CurrentDomain.FriendlyName + ".dll --onlyssa [OPTIONS] DIRECTORY QUERY")
             );
             options.AddOption(Option.DoubleOption(new string[] { "-l", "--limit" }, v => { rmsdLimit = v; })
                 .AddParameter("LIMIT")
@@ -135,7 +135,7 @@ namespace protein
                 .AddConstraint(optArgs => optArgs[0].Split(',').All(type => LibSseTypes.IsType(type)), "contains other than allowed types")
                 .AddParameter("TYPES")
                 .AddHelp("Specify the allowed types of secondary structures.")
-                .AddHelp("TYPES is a list of comma-separated (without space) types; default: " + Setting.DEFAULT_ACCEPTED_SSE_TYPES.Select(type=>type.AsString()).EnumerateWithSeparators(","))
+                .AddHelp("TYPES is a list of comma-separated (without space) types; default: " + Setting.DEFAULT_ACCEPTED_SSE_TYPES.Select(type => type.AsString()).EnumerateWithSeparators(","))
                 .AddHelp("The types are denoted by DSSP convention (H = alpha helix, G = 3_10 helix, I = pi helix, h = helix, E = strand with >2 H-bonds, B = strand with 2 H-bonds)")
             );
             options.AddOption(Option.DictionaryChoiceOption(new string[] { "-m", "--matching" }, v => { selectionMethod = v; }, Setting.selectionMethodNames)
@@ -178,10 +178,6 @@ namespace protein
                 .AddParameter("LIMIT")
                 .AddHelp("Specify time limit (in seconds) for MOM algorithm; in case of timeout falls back to DP algorithm")
             );
-            options.AddOption(Option.SwitchOption(new string[] { "-i", "--ignoreinsertions" }, v => { Setting.IgnoreInsertions = v; })
-                .AddHelp("Ignore residues with insertion code, if such are present in the input file.")
-                .AddHelp("WARNING: Loaded structure will not correspond fully to the input file!")
-            );
             options.AddOption(Option.SwitchOption(new string[] { "-c", "--calculatevectors" }, v => { forceCalculateVectors = v; })
                 .AddHelp("Force calculation of start and end vector of SSEs, even if they are in the input files.")
             );
@@ -193,6 +189,10 @@ namespace protein
             );
 
 #if DEVEL
+            options.AddOption(Option.SwitchOption(new string[] { "-i", "--ignoreinsertions" }, v => { Setting.IgnoreInsertions = v; })
+                .AddHelp("Ignore residues with insertion code, if such are present in the input file.")
+                .AddHelp("WARNING: Loaded structure will not correspond fully to the input file!")
+            );
 			options.AddOption (Option.StringOption(new string[]{"-C", "--corrections"}, v => { correctionsFile = v; })
 				.AddParameter ("CORR_FILE")
 				.AddHelp("Override automatic annotations by annotations from file CORR_FILE.")
@@ -223,8 +223,6 @@ namespace protein
             {
                 Environment.Exit(1);
             }
-
-            Lib.WriteLineDebug("AppDomain.CurrentDomain.BaseDirectory: {0}", AppDomain.CurrentDomain.BaseDirectory);
 
             string templateDomainString;
             string queryDomainString;
@@ -318,7 +316,7 @@ namespace protein
 
             if (!onlyDetect)
             {
-                Lib.WriteInColor(ConsoleColor.Yellow, "Template protein:\n");
+                // Lib.WriteInColor(ConsoleColor.Yellow, "Template protein:\n");
                 tProtein = ReadProteinFromFile(fileTemplatePDB, templateChainID_, templateDomainRanges);
             }
             else
@@ -326,7 +324,7 @@ namespace protein
                 tProtein = new Protein(null as Cif.Tables.Model); // dummy protein, never will be used
             }
 
-            Lib.WriteInColor(ConsoleColor.Yellow, "Query protein:\n");
+            // Lib.WriteInColor(ConsoleColor.Yellow, "Query protein:\n");
             if (tryToReuseAlignment && File.Exists(fileQueryAlignedPDB))
             {
                 qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges);
@@ -538,21 +536,17 @@ namespace protein
                         "cif",
                         Setting.Directory,
                         queryDomainString,
-                        // $"{queryID},{queryChainIDs.Last()},{FormatRanges(queryDomainRanges)}",
                         "--detected",
                         "--hbonds",
                         }))
                         return -1;
                 }
+                Lib.WriteInColor(ConsoleColor.Yellow, "Detected SSEs: {0}\n", querySSA.SSEs.Count);
                 if (Lib.DoWriteDebug)
                 {
-                    var qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein, querySSA.SSEs); //new List<SseInSpace>();
-                    // foreach (string chainId in queryChainIDs){
-                    //     qSSEsInSpace.AddRange(LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein, querySSA.SSEs));
-                    // }
-
+                    var qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein, querySSA.SSEs);
                     LibAnnotation.WriteAnnotationFile_Json(
-                        fileQueryDetectedHelices, 
+                        fileQueryDetectedHelices,
                         queryID,
                         qSSEsInSpace,
                         null, //extras
@@ -560,11 +554,8 @@ namespace protein
                         querySSA.HBonds,
                         null,
                         null);
-
-                    // string outStr = qSSEsInSpace.Select(sse => sse.ToString() + sse.StartVector.ToString() + sse.EndVector.ToString()).EnumerateWithSeparators("\n");
-                    // Lib.WriteLineDebug($"qSSEs in space: {outStr}");
+                    PrintTimes(times, t0);
                 }
-                PrintTimes(times, t0);
                 return 0;
             }
 
@@ -617,7 +608,7 @@ namespace protein
                             return -1;
                         qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
                         rotationMatrix = LibAnnotation.ReadRotationMatrixFromAlignmentFile(fileQueryAlignment);
-                        Console.WriteLine(rotationMatrix);
+                        // Console.WriteLine(rotationMatrix);
                         #endregion
                     }
                     else
@@ -699,8 +690,8 @@ namespace protein
                 List<Residue> qResiduesForAlignment = qProtein.GetChain(queryChainID).GetResidues().ToList();
                 List<(int?, int?, double)> alignment = LibAnnotation.AlignResidues_DynProg(tResiduesForAlignment, qResiduesForAlignment);
                 (List<int>, List<int>) pos = LibAnnotation.AlignmentToPositions(alignment);
-                double R = LibAnnotation.CharacteristicDistanceOfAlignment(tResiduesForAlignment, qResiduesForAlignment);
-                Console.WriteLine($"Characteristic distance R = {R}");
+                // double R = LibAnnotation.CharacteristicDistanceOfAlignment(tResiduesForAlignment, qResiduesForAlignment);
+                // Console.WriteLine($"Characteristic distance R = {R}");
 
                 Func<SseInSpace, SseInSpace, double> metricToMinimize;
                 switch (metricMethod)
@@ -885,15 +876,14 @@ namespace protein
             {
                 SseInSpace sse = annotQHelicesInSpace_AllChains[i];
                 double metric = metricList_AllChains[i];
-                // Console.Write(sse.AuthStart == null);
-                Console.WriteLine("    {0}:{1}",
-                    String.Format("{0,-6}", sse.Label),
-                    sse.IsNotFound() ? (Double.PositiveInfinity + " (not found)") : String.Format("{0,8:0.00}", metric));
-
+                Console.WriteLine("    {0,-5}: {1,8:0.00} {2}",
+                    sse.Label,
+                    sse.IsNotFound() ? Double.PositiveInfinity : metric,
+                    sse.IsNotFound() ? "(not found)" : "");
             }
-            Console.WriteLine("    " + String.Format("{0,-6}", "Total:") + String.Format("{0,8:0.00}", totalMetric));
+            Console.WriteLine("    Total: {0,8:0.00}", totalMetric);
             Console.WriteLine();
-            Lib.WriteInColor(ConsoleColor.Yellow, "Found SSEs: {0} of {1}\n", totalFound, templateSSA.SSEs.Count);
+            Lib.WriteInColor(ConsoleColor.Yellow, "Annotated SSEs: {0} of {1}\n", totalFound, templateSSA.SSEs.Count);
             Console.WriteLine();
             #endregion
 
@@ -961,7 +951,10 @@ namespace protein
 
 
             #region Write information about times.
-            PrintTimes(times, t0);
+            if (Lib.DoWriteDebug)
+            {
+                PrintTimes(times, t0);
+            }
             #endregion
 
 

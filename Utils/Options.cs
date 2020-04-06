@@ -23,7 +23,7 @@ namespace SecStrAnnotator2.Utils
             this.OptionList = new List<Option>();
             this.ArgumentList = new List<Argument>();
             this.AddOption(new Option(new string[] { "-h", "--help" }, 0, args => PrintHelp())
-                .AddHelp("Print this help message and return 0.")
+                .AddHelp("Print this help message and exit.")
             );
         }
         public void AddOption(Option option)

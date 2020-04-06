@@ -14,7 +14,7 @@ BOND_REPRESENTATIONS      = ['dashes']  # Default visual representations for hyd
 SHOW_LABELS               = True  # Indicates whether labels with SSE names will be shown.
 LABEL_SIZE                = 30  # Size for the labels (None = default size).
 LABEL_OUTLINE_COLOR       = None  # Outline color for the labels (None = default).
-SYMBOL_INSTEAD_APOSTROPHE = '.'  # Apostrophe is not allowed in PyMOL identifiers and will be changed for this symbol
+SYMBOL_INSTEAD_APOSTROPHE = '+'  # Apostrophe is not allowed in PyMOL identifiers and will be changed for this symbol
 
 
 # Imports
@@ -178,13 +178,13 @@ def create_session(directory, template, query):
 	files = []
 
 	if template is not None:
-		template_id, template_chain, template_range = pdb_chain_ranges(template)  # template.split(',', 2)
+		template_id, template_chain, template_range = pdb_chain_ranges(template) 
 		template_struct_file = path.join(directory, template_id + TEMPLATE_STRUCT_EXT)
 		template_annot_file = path.join(directory, template_id + TEMPLATE_ANNOT_EXT)
 		files.append(template_struct_file)
 		files.append(template_annot_file)
 	
-	query_id, query_chain, query_range = pdb_chain_ranges(query)  # query.split(',', 2)
+	query_id, query_chain, query_range = pdb_chain_ranges(query) 
 	query_struct_file = path.join(directory, query_id + QUERY_STRUCT_EXT)
 	query_annot_file = path.join(directory, query_id + QUERY_ANNOT_EXT)
 	session_file = path.join(directory, query_id + SESSION_EXT)
@@ -219,7 +219,6 @@ def create_session(directory, template, query):
 try:
 	if USE_CIF:
 		cmd.set('cif_use_auth', False)
-	# print(directory, template, query)
 	create_session(directory, template, query)
 	cmd.quit(0)
 except Exception as e:

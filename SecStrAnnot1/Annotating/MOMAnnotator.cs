@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 
 using Cif.Components;
+using SecStrAnnotator2.Utils;
 using protein.Sses;
 using protein.Libraries;
 
@@ -76,7 +77,8 @@ namespace protein.Annotating
                 PrintCandidateMatrix (Context, Context.CandidateConnectivity, "c_connectivity.tsv");*/
 
             DateTime stamp = DateTime.Now;
-            Lib.WriteLineDebug("{3}.GetAnnotation(): initialized - {0} vs. {1} vertices ({2})", m, n, stamp, this.GetType().Name);
+            Lib.WriteLineDebug("MOMAnnotator.GetAnnotation(): initialized - {0} vs. {1}", m, n);
+            MyStopwatch watch = new MyStopwatch(Lib.WriteLineDebug);
 
             List<(int, int)> bestMOM = LibAnnotation.MaxWeightMixedOrderedMatching(m, n,
                 MContext.TemplateFST.Select(t => t.Item1).ToArray(),
@@ -85,8 +87,7 @@ namespace protein.Annotating
                 MContext.CandidateFST.Select(t => t.Item2).ToArray(),
                 scores, SoftOrderConsistency).OrderBy(x => x).ToList();
 
-            Lib.WriteLineDebug("MOMAnnotator.GetAnnotation(): found matching ({0})", DateTime.Now);
-            Lib.WriteLineDebug("MOMAnnotator.GetAnnotation(): time: {0}", DateTime.Now - stamp);
+            watch.Stop("MOMAnnotator.GetAnnotation()");
 
             List<(int, int)> bestMatching = new List<(int, int)>();
             foreach ((int ti, int qi) in bestMOM)
@@ -104,9 +105,9 @@ namespace protein.Annotating
                 }
             }
 
-            Lib.WriteLineDebug("Template FST: {0}", MContext.TemplateFST.Select(t => "(" + MContext.Context.Templates[t.Item1].Label + "," + MContext.Context.Templates[t.Item2].Label + ")").EnumerateWithCommas());
-            Lib.WriteLineDebug("Candidate FST: {0}", MContext.CandidateFST.Select(t => "(" + MContext.Context.Candidates[t.Item1].Label + "," + MContext.Context.Candidates[t.Item2].Label + ")").EnumerateWithCommas());
-            Lib.WriteLineDebug("MOM matching: {0}", bestMOM.EnumerateWithCommas());
+            // Lib.WriteLineDebug("Template FST: {0}", MContext.TemplateFST.Select(t => "(" + MContext.Context.Templates[t.Item1].Label + "," + MContext.Context.Templates[t.Item2].Label + ")").EnumerateWithCommas());
+            // Lib.WriteLineDebug("Candidate FST: {0}", MContext.CandidateFST.Select(t => "(" + MContext.Context.Candidates[t.Item1].Label + "," + MContext.Context.Candidates[t.Item2].Label + ")").EnumerateWithCommas());
+            // Lib.WriteLineDebug("MOM matching: {0}", bestMOM.EnumerateWithCommas());
             Lib.WriteLineDebug("Matching: {0}", bestMatching.Select(t => "(" + MContext.Context.Templates[t.Item1].Label + "," + MContext.Context.Candidates[t.Item2].Label + ")").EnumerateWithCommas());
 
             return bestMatching;

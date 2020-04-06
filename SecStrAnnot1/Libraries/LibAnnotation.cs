@@ -1853,9 +1853,7 @@ namespace protein.Libraries
             Func<int, int, double> scoreFunction2 = (i, j) => LocalRMSDScore(tPoints, qPoints, i, j, 15, 7);
             Func<int, int, double> scoreFunction3 = (i, j) => scoreFunction1(i, j) * scoreFunction2(i, j);
 
-            DateTime stamp = DateTime.Now;
             List<(int?, int?, double)> alignment = AlignPoints_DynProg(tPoints.Length, qPoints.Length, scoreFunction1);
-            Lib.WriteLineDebug("AlignPoints: {0}", DateTime.Now - stamp);
 
             if (Lib.DoWriteDebug)
             {
@@ -2137,7 +2135,6 @@ namespace protein.Libraries
             bool forward = true; //direction of backtracking
             int iterationCounter = 0;
 
-            int nM_active = w.Where(x => x > 0).Count();
             DateTime startTime = DateTime.Now;
 
             while (p >= 0)
@@ -2218,7 +2215,7 @@ namespace protein.Libraries
                 // }
             }
             TimeSpan time = DateTime.Now - startTime;
-            Lib.WriteLineDebug($"MaxWeightClique: {nM_active} vertices, {iterationCounter} iterations, {time.TotalSeconds} seconds");
+            Lib.WriteLineDebug($"MaxWeightClique: {nS} eligible vertices, {K.Count} selected vertices, {iterationCounter} iterations, {time.TotalSeconds} seconds");
             return K.Select(i => S[i]).ToList();
         }
 

@@ -40,9 +40,9 @@ namespace protein.Annotating
             innerContext.ApplyShufflers(TemplateMapping, CandidateMapping);
             inner = innerAnnotatorConstructor(innerContext);
 
-            Lib.WriteLineDebug("Templates: {0}", Context.Templates.Select(s => s.Start).EnumerateWithCommas());
-            Lib.WriteLineDebug("Template mapping: {0}", TemplateMapping);
-            Lib.WriteLineDebug("Mapped templates: {0}", innerContext.Templates.Select(s => s.Start).EnumerateWithCommas());
+            // Lib.WriteLineDebug("Templates: {0}", Context.Templates.Select(s => s.Start).EnumerateWithCommas());
+            // Lib.WriteLineDebug("Template mapping: {0}", TemplateMapping);
+            // Lib.WriteLineDebug("Mapped templates: {0}", innerContext.Templates.Select(s => s.Start).EnumerateWithCommas());
 
         }
 

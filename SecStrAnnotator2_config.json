@@ -1,6 +1,6 @@
 {
 	"comments": [
-		"If you are running on Windows, please replace 'pymol' in the following lines by the path to your PyMOL executable, such as 'C:\\Program Files\\PyMOL\\PyMOL\\PyMOL.exe'.",
+		"If you are running on Windows, please replace 'pymol' in the following lines by the path to your PyMOL executable, such as 'C:\\ProgramData\\PyMOL\\Scripts\\pymol.exe'.",
 		"Also replace 'mkdssp' in the following lines by the path to the DSSP executable file (only needed with --ssa dssp).",
 		"Unrooted paths are interpreted as starting in the directory where this configuration file is located."
 	],	
