@@ -1,4 +1,4 @@
-#define DEVEL // DEVEL==true for development versions, DEVEL==false for release versions
+// #define DEVEL // DEVEL==true for development versions, DEVEL==false for release versions
 
 using System;
 using System.Collections.Generic;
@@ -85,7 +85,7 @@ namespace protein
         public const string RMSDS_FILE_EXT = "-rmsds.tsv";
         public const string LABEL2AUTH_FILE_EXT = "-label2auth.tsv";
 
-        public const string CONFIG_FILE = "SecStrAnnotator2_config.json";
+        public const string CONFIG_FILE = "SecStrAnnotator_config.json";
 
         public const bool FILTER_OUTPUT_BY_LABEL = false;
         public static string[] OUTPUT_ONLY_THESE_LABELS = new string[] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "F'", "G'", "J'", "K'", "1a", "1b", "1c", "1d", "2a", "2b" };

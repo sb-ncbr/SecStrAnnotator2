@@ -1,0 +1,1 @@
+./scripts/SecStrAnnotator_batch.py

@@ -31,7 +31,7 @@ MEDIUM_CONFIDENCE_METRIC_THRESHOLD = 20.0
 
 parser = argparse.ArgumentParser()
 parser.add_argument('domain_list', help='JSON file with the list of domains in SecStrAPI format (from merge_domain_lists.py)', type=str)
-parser.add_argument('input_directory', help='Directory with SSE annotations (from SecStrAnnotator2.dll)', type=str)
+parser.add_argument('input_directory', help='Directory with SSE annotations (from SecStrAnnotator.dll)', type=str)
 # parser.add_argument('--keep_all_fields', help='Keep all fields from the input SSE annotations (default: keep only KEEP_FIELDS)', action='store_true')
 args = parser.parse_args()
 

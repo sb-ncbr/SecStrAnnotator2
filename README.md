@@ -14,7 +14,7 @@ For SecStrAnnotator:
 
 - .NET Core Runtime 3.0 or 3.1
 - PyMOL
-- SecStrAnnotator2_config.json – configuration file (modify according to your system)
+- SecStrAnnotator_config.json – configuration file (modify according to your system)
 
 For additional scripts:
 
@@ -24,7 +24,7 @@ For additional scripts:
 
 ## Main parts
 
-### `SecStrAnnotator2.dll`
+### `SecStrAnnotator.dll`
 
 The core program, annotates a query protein domain (e.g. chain A in 1tqn) according to provided template annotation (e.g. chain A in 2nnj). Can also be used without a template to detect secondary structure elements without annotating (`--onlyssa`).
 
@@ -32,18 +32,18 @@ Keep in mind that the chains and residues are numbered according to the label_* 
 
 Example usage:
 
-    dotnet SecStrAnnotator2.dll --help
-    dotnet SecStrAnnotator2.dll --onlyssa examples/ 1tqn,A  # Detect
-    dotnet SecStrAnnotator2.dll examples/ 2nnj,A 1tqn,A     # Detect and annotate
+    dotnet SecStrAnnotator.dll --help
+    dotnet SecStrAnnotator.dll --onlyssa examples/ 1tqn,A  # Detect
+    dotnet SecStrAnnotator.dll examples/ 2nnj,A 1tqn,A     # Detect and annotate
 
-### `scripts/SecStrAnnotator2_batch.py`
+### `scripts/SecStrAnnotator_batch.py`
 
-Runs `SecStrAnnotator2.dll` on multiple query protein domains in one batch.
+Runs `SecStrAnnotator.dll` on multiple query protein domains in one batch.
 
 Example usage:
 
     python3 SecStrAnnotator_batch.py --help
-    python3 SecStrAnnotator_batch.py examples/ 2nnj,A example/cyp_family_sample.json --threads 4
+    python3 SecStrAnnotator_batch.py examples/ 2nnj,A examples/cyp_family_sample.json --threads 4
 
 ### `scripts/secstrapi_data_preparation/`
 

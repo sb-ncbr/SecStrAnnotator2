@@ -1,0 +1,67 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj": {}
+  },
+  "projects": {
+    "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj",
+        "projectName": "SecStrAnnotator",
+        "projectPath": "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj",
+        "packagesPath": "/home/adam/.nuget/packages/",
+        "outputPath": "/home/adam/Workspace/C#/SecStrAnnot2/obj/",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "/usr/share/dotnet/sdk/NuGetFallbackFolder"
+        ],
+        "configFilePaths": [
+          "/home/adam/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp3.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp3.0": {
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp3.0": {
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[3.0.0, 3.0.0]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/3.0.103/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

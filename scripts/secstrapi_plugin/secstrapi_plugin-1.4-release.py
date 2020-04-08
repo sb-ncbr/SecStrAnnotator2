@@ -642,105 +642,102 @@ def annotate_sec_str(selection, annotation_file=None, name=None, base_color=DEFA
     """
 
     try:
-        try:
-            force_cartoon = parse_boolean(force_cartoon)
-            force_rotation = parse_boolean(force_rotation)
-            try: 
-                generic_numbers = int(generic_numbers)
-            except:
-                generic_numbers = 5 if parse_boolean(generic_numbers) else 0
-            reference_residues = parse_boolean(reference_residues)
+        force_cartoon = parse_boolean(force_cartoon)
+        force_rotation = parse_boolean(force_rotation)
+        try: 
+            generic_numbers = int(generic_numbers)
         except:
-            return False
-        fetched = False
-        cached_annotations_by_pdbid = {}
-        if annotation_file is not None and name is not None:
-            annotation_text = get_annotation_from_file(annotation_file)
-            annotation = parse_annotation_text(annotation_text)
-            found_pdbids = annotation.get_pdbids()
-            if name in found_pdbids:
-                pdbid = name
-                domains = annotation.get_domains_by_pdbid(pdbid)
-            else:
-                domains = annotation.get_domains_by_name(name)
-                pdbids = [ dom[PDB] for dom in domains if PDB in dom ]
-                if len(pdbids) == 1:
-                    pdbid = pdbids[0]
-                else:
-                    pdbid = '?'
-        elif annotation_file is None and name is not None:
-            pdbid = name[0:4]
-            annotation_text = get_annotation_from_internet(pdbid)
-            annotation = parse_annotation_text(annotation_text)
+            generic_numbers = 5 if parse_boolean(generic_numbers) else 0
+        reference_residues = parse_boolean(reference_residues)
+    except:
+        return False
+    fetched = False
+    cached_annotations_by_pdbid = {}
+    if annotation_file is not None and name is not None:
+        annotation_text = get_annotation_from_file(annotation_file)
+        annotation = parse_annotation_text(annotation_text)
+        found_pdbids = annotation.get_pdbids()
+        if name in found_pdbids:
+            pdbid = name
+            domains = annotation.get_domains_by_pdbid(pdbid)
+        else:
             domains = annotation.get_domains_by_name(name)
-        elif annotation_file is not None and name is None:
-            annotation_text = get_annotation_from_file(annotation_file)
-            annotation = parse_annotation_text(annotation_text)
-            words = re.split('\W+', selection)
-            names_domains = ( (word, annotation.get_domains_by_name(word)) for word in words )
-            candidates = [ (name, doms) for (name, doms) in names_domains if len(doms) > 0 ]
-            if len(candidates) > 1:
-                fail('Could not guess annotation name from selection "' + selection + '". Please specify argument "name".')
-                return False
-            elif len(candidates) == 1:
-                name, domains = candidates[0]
-                pdbid = name[0:4]
-            else:  # len(candidates) == 0
-                pdbs_domains = ( (word, annotation.get_domains_by_pdbid(word)) for word in words )
-                candidates = [ (pdb, doms) for (pdb, doms) in pdbs_domains if len(doms) > 0 ]
-                if len(candidates) == 1:
-                    pdbid, domains = candidates[0]
-                    name = pdbid
-                else:
-                    fail('Could not guess annotation name from selection "' + selection + '". Please specify argument "name".')
-                    return False
-        else: # annotation_file is None and name is None, guess pdbid using selection and download annotation
-            words = re.split('\W+', selection)
-            candidates = [ word for word in words if is_valid_pdbid(word) or is_valid_domain_name(word) ]
-            if len(candidates) == 1:
-                name = candidates[0]
-                pdbid = name[0:4]
+            pdbids = [ dom[PDB] for dom in domains if PDB in dom ]
+            if len(pdbids) == 1:
+                pdbid = pdbids[0]
             else:
-                fail('Could not guess annotation name from selection "' + selection + '". Please specify argument "name".')
-                return False
-            annotation_text = get_annotation_from_internet(pdbid)
-            annotation = parse_annotation_text(annotation_text)
-            if name == pdbid:
-                domains = annotation.get_domains_by_pdbid(pdbid)
-            else:
-                domains = annotation.get_domains_by_name(name)
-        cached_annotations_by_pdbid[pdbid] = annotation
-                
-        log('NAME: ' + name + ', PDB ID: ' + pdbid + ', DOMAINS: ' + str(len(domains)))
-        if len(domains) == 0:
-            file_spec = (' in file "' + annotation_file + '"') if annotation_file is not None else ''
-            fail('Could not find annotation for "' + name + '"' + file_spec + '.')
+                pdbid = '?'
+    elif annotation_file is None and name is not None:
+        pdbid = name[0:4]
+        annotation_text = get_annotation_from_internet(pdbid)
+        annotation = parse_annotation_text(annotation_text)
+        domains = annotation.get_domains_by_name(name)
+    elif annotation_file is not None and name is None:
+        annotation_text = get_annotation_from_file(annotation_file)
+        annotation = parse_annotation_text(annotation_text)
+        words = re.split('\W+', selection)
+        names_domains = ( (word, annotation.get_domains_by_name(word)) for word in words )
+        candidates = [ (name, doms) for (name, doms) in names_domains if len(doms) > 0 ]
+        if len(candidates) > 1:
+            fail('Could not guess annotation name from selection "' + selection + '". Please specify argument "name".')
             return False
-        
-        if not is_valid_selection(selection):
-            words = re.split('\W+', selection)
-            for word in words:
-                if is_valid_pdbid(word) and not is_valid_selection(word):
-                    fetched = fetch_structure(word, force_cartoon=force_cartoon)
-                elif is_valid_domain_name(word) and not is_valid_selection(word):
-                    pdb = word[0:4]
-                    if annotation_file is None:
-                        if pdb in cached_annotations_by_pdbid:
-                            annotation = cached_annotations_by_pdbid[pdb]
-                        else:
-                            annotation_text = get_annotation_from_internet(pdb)
-                            annotation = parse_annotation_text(annotation_text)
-                    doms = annotation.get_domains_by_name(word)
-                    if len(doms) == 1:
-                        fetched = fetch_structure(pdb, domain_name=word, domain=doms[0], force_cartoon=force_cartoon)
-            if not is_valid_selection(selection):
-                fail('Invalid selection "' + selection + '"')
+        elif len(candidates) == 1:
+            name, domains = candidates[0]
+            pdbid = name[0:4]
+        else:  # len(candidates) == 0
+            pdbs_domains = ( (word, annotation.get_domains_by_pdbid(word)) for word in words )
+            candidates = [ (pdb, doms) for (pdb, doms) in pdbs_domains if len(doms) > 0 ]
+            if len(candidates) == 1:
+                pdbid, domains = candidates[0]
+                name = pdbid
+            else:
+                fail('Could not guess annotation name from selection "' + selection + '". Please specify argument "name".')
                 return False
-        
-        apply_annotation(selection, domains, base_color, apply_rotation=(fetched and force_rotation), each_nth_generic_number=generic_numbers, show_reference_residues=reference_residues)
-        return True
-    except None:
-        pass
+    else: # annotation_file is None and name is None, guess pdbid using selection and download annotation
+        words = re.split('\W+', selection)
+        candidates = [ word for word in words if is_valid_pdbid(word) or is_valid_domain_name(word) ]
+        if len(candidates) == 1:
+            name = candidates[0]
+            pdbid = name[0:4]
+        else:
+            fail('Could not guess annotation name from selection "' + selection + '". Please specify argument "name".')
+            return False
+        annotation_text = get_annotation_from_internet(pdbid)
+        annotation = parse_annotation_text(annotation_text)
+        if name == pdbid:
+            domains = annotation.get_domains_by_pdbid(pdbid)
+        else:
+            domains = annotation.get_domains_by_name(name)
+    cached_annotations_by_pdbid[pdbid] = annotation
+            
+    log('NAME: ' + name + ', PDB ID: ' + pdbid + ', DOMAINS: ' + str(len(domains)))
+    if len(domains) == 0:
+        file_spec = (' in file "' + annotation_file + '"') if annotation_file is not None else ''
+        fail('Could not find annotation for "' + name + '"' + file_spec + '.')
+        return False
+    
+    if not is_valid_selection(selection):
+        words = re.split('\W+', selection)
+        for word in words:
+            if is_valid_pdbid(word) and not is_valid_selection(word):
+                fetched = fetch_structure(word, force_cartoon=force_cartoon)
+            elif is_valid_domain_name(word) and not is_valid_selection(word):
+                pdb = word[0:4]
+                if annotation_file is None:
+                    if pdb in cached_annotations_by_pdbid:
+                        annotation = cached_annotations_by_pdbid[pdb]
+                    else:
+                        annotation_text = get_annotation_from_internet(pdb)
+                        annotation = parse_annotation_text(annotation_text)
+                doms = annotation.get_domains_by_name(word)
+                if len(doms) == 1:
+                    fetched = fetch_structure(pdb, domain_name=word, domain=doms[0], force_cartoon=force_cartoon)
+        if not is_valid_selection(selection):
+            fail('Invalid selection "' + selection + '"')
+            return False
+    
+    apply_annotation(selection, domains, base_color, apply_rotation=(fetched and force_rotation), each_nth_generic_number=generic_numbers, show_reference_residues=reference_residues)
+    return True
 
 
 # The script for PyMOL ########################################################

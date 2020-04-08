@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/SecStrAnnotator2.csproj"
+                "${workspaceFolder}/SecStrAnnotator.csproj"
             ],
             "dependsOn": "write_buildtime",
             "problemMatcher": "$msCompile"

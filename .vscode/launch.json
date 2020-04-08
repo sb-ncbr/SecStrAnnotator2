@@ -11,7 +11,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.0/SecStrAnnotator2.dll",
+            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.0/SecStrAnnotator.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
@@ -25,7 +25,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.0/SecStrAnnotator2.dll",
+            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.0/SecStrAnnotator.dll",
             "args": ["--ssa", "geom-hbond", "/home/adam/Workspace/C#/SecStrAnnot2_data/data", "1og2,A", "1tqn,A"],
             "cwd": "${workspaceFolder}",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
@@ -39,7 +39,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.0/SecStrAnnotator2.dll",
+            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.0/SecStrAnnotator.dll",
             "args": ["-o", "--ssa", "geom-hbond2", "/home/adam/Workspace/C#/SecStrAnnot2_data/data", "4v93", "-v"],
             "cwd": "${workspaceFolder}",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
