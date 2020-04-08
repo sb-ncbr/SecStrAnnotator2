@@ -30,25 +30,29 @@ barplot(table((setNR %>% distinct(PDB, Group))$Group), main = 'Number of PDB ent
 # PLOTS FOR OCCURRENCE
 occurrence_table_NR = table_sse_occurrence(setNR, alpha = 0.05)
 
-plot_sse_occurrence(setNR, show_confidence = TRUE, alpha = 0.05, turn_labels = TRUE)
-print_png(full_path('plots/occurrence-setNR.png'), width = 4000, ratio = 2/1, res = 500)
-# print_tif(full_path('plots/occurrence-setNR.tif'), width = 4000, ratio = 2/1, res = 500)
+plot_sse_occurrence(setNR, show_confidence = TRUE, alpha = 0.05, turn_labels = TRUE, legend_position = 'top')
+print_png(full_path('plots/occurrence-setNR.png'), width = 4000, height = 2300, res = 600)
+plot_sse_occurrence(setNR, show_confidence = TRUE, alpha = 0.05, turn_labels = TRUE, legend_position = 'right')
+print_png(full_path('plots/occurrence-setNR-wide.png'), width = 4000, height = 2000, res = 500)
 
-plot_sse_occurrence_multi(Bact = setNR_Bact, Euka = setNR_Euka, turn_labels = TRUE)
-print_png(full_path('plots/occurrence-setNR-Bact-Euka.png'), width = 4000, ratio = 2/1, res = 500)
-# print_tif(full_path('plots/occurrence-setNR-Bact-Euka.tif'), width = 4000, ratio = 2/1, res = 500)
+plot_sse_occurrence_multi(Bact = setNR_Bact, Euka = setNR_Euka, turn_labels = TRUE, legend_position = 'top')
+print_png(full_path('plots/occurrence-setNR-Bact-Euka.png'), width = 4000, height = 2400, res = 600)
+plot_sse_occurrence_multi(Bact = setNR_Bact, Euka = setNR_Euka, turn_labels = TRUE, legend_position = 'right')
+print_png(full_path('plots/occurrence-setNR-Bact-Euka-wide.png'), width = 4000, height = 2000, res = 500)
 
 
 # PLOTS FOR LENGTH DISTRIBUTION
 boxplot_sse(setNR, ignore_zero = TRUE, title = 'Set-NR')
 
-violinplot_sse(setNR, ignore_zero = TRUE, turn_labels = TRUE)
-print_png(full_path('plots/length-setNR.png'), width = 4000, ratio = 2/1, res = 500)
-# print_tif(full_path('plots/length-setNR.tif'), width = 4000, ratio = 2/1, res = 500)
+violinplot_sse(setNR, ignore_zero = TRUE, turn_labels = TRUE, legend_position = 'top')
+print_png(full_path('plots/length-setNR.png'), width = 4000, height = 2300, res = 600)
+violinplot_sse(setNR, ignore_zero = TRUE, turn_labels = TRUE, legend_position = 'right')
+print_png(full_path('plots/length-setNR-wide.png'), width = 4000, height = 2000, res = 500)
 
-violinplot_sse_multi(Bact = setNR_Bact, Euka = setNR_Euka, ignore_zero = TRUE, turn_labels = TRUE) 
-print_png(full_path('plots/length-setNR-Bact-Euka.png'), width = 4000, ratio = 2/1, res = 500)
-# print_tif(full_path('plots/length-setNR-Bact-Euka.tif'), width = 4000, ratio = 2/1, res = 500)
+violinplot_sse_multi(Bact = setNR_Bact, Euka = setNR_Euka, ignore_zero = TRUE, turn_labels = TRUE, legend_position = 'top')
+print_png(full_path('plots/length-setNR-Bact-Euka.png'), width = 4000, height = 2400, res = 600)
+violinplot_sse_multi(Bact = setNR_Bact, Euka = setNR_Euka, ignore_zero = TRUE, turn_labels = TRUE, legend_position = 'right')
+print_png(full_path('plots/length-setNR-Bact-Euka-wide.png'), width = 4000, height = 2000, res = 500)
 # point = mean, horizontal line = median
 
 
@@ -82,23 +86,26 @@ bulgesNR = read_tsv(full_path('beta_bulges_NR.tsv')) %>%
 bulgesALL = read_tsv(full_path('beta_bulges_ALL.tsv')) %>%
   left_join(taxons, by = 'Domain') %>% filter(label %in% OUR_SSES) %>% mutate(bulge_label = paste(label, type, sep = '.')) %>% keep_one_domain_per_pdb()
 
-View(table_bulge_occurrence(setNR, bulgesNR))
-View(table_bulge_occurrence(setNR %>% filter(Group=='Bact'), bulgesNR %>% filter(Group=='Bact')))
-View(table_bulge_occurrence(setNR %>% filter(Group=='Euka'), bulgesNR %>% filter(Group=='Euka')))
-plot_bulge_occurrence(setNR, bulgesNR, show_confidence = TRUE, alpha = 0.05, include_parent_strands = FALSE, turn_labels = TRUE)
-print_png(full_path('plots/bulge_occurrence-setNR.png'), width=4000, ratio=2/1, res=500)
+bulge_table = table_bulge_occurrence(setNR, bulgesNR)
+bulge_table_Bact = table_bulge_occurrence(setNR %>% filter(Group=='Bact'), bulgesNR %>% filter(Group=='Bact'))
+bulge_table_Euka = table_bulge_occurrence(setNR %>% filter(Group=='Euka'), bulgesNR %>% filter(Group=='Euka'))
+
+plot_bulge_occurrence(setNR, bulgesNR, show_confidence = TRUE, alpha = 0.05, include_parent_strands = FALSE, turn_labels = TRUE, legend_position = 'top')
+print_png(full_path('plots/bulge_occurrence-setNR.png'), width = 4000, height = 2400, res = 600)
+plot_bulge_occurrence(setNR, bulgesNR, show_confidence = TRUE, alpha = 0.05, include_parent_strands = FALSE, turn_labels = TRUE, legend_position = 'right')
+print_png(full_path('plots/bulge_occurrence-setNR-wide.png'), width = 4000, height = 2000, res = 500)
+  # Bulge types: N = classic bulge, M = wide bulge, L = parallel bulge; lowercase = short side, uppercase = long side
 
 
 # HELIX TYPES - will only work if SecStrAnnotator was run with option  --verbose
 helicesNR = read_tsv(full_path('annotations_with_reference_residues_NR.tsv')) %>%
   left_join(taxons, by = 'Domain') %>% filter(label %in% HELIX_ORDER & length > 0)
 
-plot_contained_helix_types(helicesNR, y_label = 'Fraction')
-print_png(full_path('plots/contained_types-setNR.png'), width = 4000, ratio = 2/1, res = 500)
-# print_tif(full_path('plots/contained_types-setNR.tif'), width = 4000, ratio = 2/1, res = 500)
-
+plot_contained_helix_types(helicesNR, y_label = 'Fraction', legend_position = 'top')
+print_png(full_path('plots/contained_types-setNR.png'), width = 4000, height = 2300, res = 600)
+plot_contained_helix_types(helicesNR, y_label = 'Fraction', legend_position = 'right')
+print_png(full_path('plots/contained_types-setNR-wide.png'), width = 4000, height = 2000, res = 500)
 
 # Comment: Ctrl+Shift+C
 # Go to function definition: F2 / Ctrl+Click
 # Fold all: Alt+O
-

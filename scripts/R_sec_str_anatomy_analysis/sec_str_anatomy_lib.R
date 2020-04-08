@@ -79,7 +79,7 @@ capitalize = function(x) {
 }
 
 # Barchart with relative occurrence for each SSE label
-plot_sse_occurrence = function(df, show_confidence = TRUE, alpha = 0.05, title = NULL, stagger_labels = FALSE, turn_labels = FALSE) {
+plot_sse_occurrence = function(df, show_confidence = TRUE, alpha = 0.05, title = NULL, stagger_labels = FALSE, turn_labels = FALSE, legend_position = 'right') {
   g = ggplot(table_sse_occurrence(df, alpha)) +
     aes(x = label, y = 100*freq, fill = type) +
     geom_col() + 
@@ -89,8 +89,9 @@ plot_sse_occurrence = function(df, show_confidence = TRUE, alpha = 0.05, title =
     scale_y_continuous(expand = expand_scale(add = 0), breaks = seq(0, 100, by = 20)) +
     labs(x = 'SSE', y = 'Occurrence [%]', fill = 'Type', title = title) +
     order_x_labels(stagger = stagger_labels) +
+    guides(fill = guide_legend(byrow = TRUE)) +
     theme_bw() +
-    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels)
+    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels, legend_position = legend_position)
   if (show_confidence) { 
     g = g + geom_errorbar(aes(ymin = 100*freq_min, ymax = 100*freq_max), width = 0.4, position = position_dodge(.9)) 
   }
@@ -98,7 +99,7 @@ plot_sse_occurrence = function(df, show_confidence = TRUE, alpha = 0.05, title =
 }
 
 # Barchart with relative occurrence for each SSE label, comparing multiple datasets
-plot_sse_occurrence_multi = function(..., show_confidence = TRUE, alpha = 0.05, title = NULL, stagger_labels = FALSE, turn_labels = FALSE) {
+plot_sse_occurrence_multi = function(..., show_confidence = TRUE, alpha = 0.05, title = NULL, stagger_labels = FALSE, turn_labels = FALSE, legend_position = 'right') {
   tables = lapply(pairlist(...), table_sse_occurrence, alpha)
   table = bind_rows(tables, .id = 'set')
   g = ggplot(table) +
@@ -110,8 +111,9 @@ plot_sse_occurrence_multi = function(..., show_confidence = TRUE, alpha = 0.05, 
     scale_y_continuous(expand = expand_scale(add = 0), breaks = seq(0, 100, by = 20)) +
     labs(x = 'SSE', y = 'Occurrence [%]', fill = 'Type', title = title) +
     order_x_labels(stagger = stagger_labels) +
+    guides(fill = guide_legend(byrow = TRUE)) +
     theme_bw() +
-    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels)
+    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels, legend_position = legend_position)
   if (show_confidence) { 
     g = g + geom_errorbar(aes(ymin = 100*freq_min, ymax = 100*freq_max), width = 0.4, position = position_dodge(.9)) 
   }
@@ -119,34 +121,36 @@ plot_sse_occurrence_multi = function(..., show_confidence = TRUE, alpha = 0.05, 
 }
 
 # Barchart with relative occurrence for each beta-bulge label
-plot_bulge_occurrence = function(df, bulge_df, show_confidence = TRUE, alpha = 0.05, title = NULL, include_parent_strands = TRUE, turn_labels = FALSE, stagger_labels = FALSE) {
+plot_bulge_occurrence = function(df, bulge_df, show_confidence = TRUE, alpha = 0.05, title = NULL, include_parent_strands = TRUE, turn_labels = FALSE, stagger_labels = FALSE, legend_position = 'right') {
   g = ggplot(table_bulge_occurrence(df, bulge_df, alpha = alpha, include_parent_strands = include_parent_strands)) +
     aes(x = label, y = 100*freq, fill = type) +
     geom_col() + 
     geom_vline(xintercept = seq(1.5, length(unique(df$label))-0.5, 1), lwd = 0.4, colour = 'gray90') +
     scale_fill_brewer(palette = 'Paired') + 
+    guides(fill = guide_legend(byrow = FALSE)) +
     labs(x = 'SSE', y = 'Occurrence [%]', fill = 'Bulge type', title = title) +
     theme_bw() +
-    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels)
+    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels, legend_position = legend_position)
   if (show_confidence) { 
     g = g + geom_errorbar(aes(ymin = 100*freq_min, ymax = 100*freq_max), width = 0.4, position = position_dodge(.9)) }
   g
 }
 
 # Barchart with relative occurrence of each helix type (3_10/alpha/pi) for each SSE label
-plot_contained_helix_types = function(df, ..., turn_labels = FALSE, stagger_labels = FALSE){
+plot_contained_helix_types = function(df, ..., turn_labels = FALSE, stagger_labels = FALSE, legend_position = 'right') {
   changed_labels = c(contains_G = expression(paste('contains ', '3'[10])), contains_Η = expression(paste('contains ', alpha)), contains_Ι = expression(paste('contains ', pi)) )
   g = plot_criteria(df, contains_G = (df$longest_G >= 3), contains_Η = (df$longest_H >= 4), contains_Ι = (df$longest_I >= 5), ..., ignore_zero = TRUE)  +
     scale_fill_manual(values = HELIX_TYPE_PALETTE, labels = changed_labels) + 
     order_x_labels(include_strands = FALSE) + 
+    guides(fill = guide_legend(byrow = TRUE)) +
     theme_bw() +
-    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels)+
+    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels, legend_position = legend_position) +
     theme(legend.text.align = 0)
   g
 }
 
 # Barchart with relative fraction of cases fulfulling specified criteria, for each SSE label
-plot_criteria = function(df, ..., ignore_zero = FALSE, title = NULL, y_label = 'Fulfilling criterion'){
+plot_criteria = function(df, ..., ignore_zero = FALSE, title = NULL, y_label = 'Fulfilling criterion') {
   table = table_criteria(df, ..., ignore_zero = ignore_zero) %>% group_by(label, set) %>% mutate(type = sse_category(label))
   g = ggplot(table) + 
     aes(x = label, y = 100*fulfilling, fill = set) +
@@ -184,12 +188,17 @@ table_criterion = function(df, criterion, by_label = TRUE, ignore_zero = FALSE) 
 table_bulge_occurrence = function(df, bulge_df, alpha = 0.05, include_parent_strands = TRUE) {
   bulge_df = mutate(bulge_df, label = paste(label, type, sep = '.'))
   if (include_parent_strands){
-    bulge_df = bind_rows(mutate(df, type = 'strand'), bulge_df)
+    strand_df = df %>% filter(type == 'e')
+    bulge_df = bind_rows(strand_df, bulge_df)
+    # bulge_df = bind_rows(mutate(df, type = 'strand'), bulge_df)
   }
   n_pdb = n_distinct(df$PDB)
   data = bulge_df %>% filter(length > 0) %>% group_by(label, type) %>% distinct(PDB) %>% count() %>% 
-    mutate(freq = n/n_pdb, category = sse_category(label), freq_min = agresti_coull_confidence_interval(n, n_pdb, alpha)[1], freq_max = agresti_coull_confidence_interval(n, n_pdb, alpha)[2]) %>%
-    filter(category == 'strand') %>% select(-'category')
+    mutate(freq = n/n_pdb, 
+           category = sse_category(label), 
+           freq_min = agresti_coull_confidence_interval(n, n_pdb, alpha)[1], 
+           freq_max = agresti_coull_confidence_interval(n, n_pdb, alpha)[2]
+    ) #%>% filter(category == 'strand') %>% select(-'category')
   data
 }
 
@@ -210,12 +219,17 @@ order_x_labels = function(apostrophe_to_prime = TRUE, stagger = FALSE, include_h
 }
 
 # Customize theme_bw in ggplot
-customize_theme = function(stagger_labels = FALSE, turn_labels = FALSE){
+customize_theme = function(stagger_labels = FALSE, turn_labels = FALSE, legend_position = 'right'){
   theme(
     panel.grid.major.x = element_blank(),
     panel.grid.major.y = element_line(color = 'lightgray'),
-    legend.box.margin = margin(l = -10, r = -8),
-    axis.text.x = element_text(angle = if (turn_labels) {45} else {0}, margin = margin (t = if (turn_labels) {5} else {2}))
+    legend.position = legend_position,
+    legend.box.spacing = unit(2, 'pt'),
+    legend.spacing.y = unit(2, 'pt'),
+    axis.text.x = element_text(angle = if (turn_labels) {45} else {0}, 
+                               margin = margin(t = if (turn_labels) {4} else {2}), 
+                               hjust = if (turn_labels) {0.8} else {0.5}
+    )
   )
 }
 
@@ -237,7 +251,7 @@ boxplot_sse = function(df, y_column = 'length', ignore_zero = FALSE, width = 0.9
 }
 
 # Boxplot with SSE length (or other specified column) distribution, for each SSE label
-violinplot_sse = function(df, y_column = 'length', ignore_zero = FALSE, scale = 'width', width = 0.9, group_col = 'type', title = NULL, stagger_labels = FALSE, turn_labels = FALSE) {
+violinplot_sse = function(df, y_column = 'length', ignore_zero = FALSE, scale = 'width', width = 0.9, group_col = 'type', title = NULL, stagger_labels = FALSE, turn_labels = FALSE, legend_position = 'right') {
   #width = max. width wrt. bar width
   #scale = 'width' (violins have equal width), 'area' (violins have equal area)
   #point is mean, line is median
@@ -253,12 +267,13 @@ violinplot_sse = function(df, y_column = 'length', ignore_zero = FALSE, scale = 
     scale_y_continuous(expand = expand_scale(add = 0), minor_breaks = seq(0 , 100, 1), breaks = seq(0, 100, 5)) +
     labs(x = 'SSE', y = 'Length [#residues]', color = capitalize(group_col), title = title) +
     order_x_labels(stagger = stagger_labels) +
+    guides(color = guide_legend(byrow = TRUE)) +
     theme_bw()  +
-    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels)
+    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels, legend_position = legend_position)
 }
 
 # Boxplot with SSE length (or other specified column) distribution for each SSE label, comparing multiple datasets
-violinplot_sse_multi = function(..., y_column = 'length', set_names = NULL, ignore_zero = FALSE, scale = 'width', width = 0.9, title = NULL, stagger_labels = FALSE, turn_labels = FALSE) {
+violinplot_sse_multi = function(..., y_column = 'length', set_names = NULL, ignore_zero = FALSE, scale = 'width', width = 0.9, title = NULL, stagger_labels = FALSE, turn_labels = FALSE, legend_position = 'right') {
   #width = max. width wrt. bar width
   #scale = 'width' (violins have equal width), 'area' (violins have equal area)
   #point is mean, line is median
@@ -275,8 +290,9 @@ violinplot_sse_multi = function(..., y_column = 'length', set_names = NULL, igno
     scale_y_continuous(expand = expand_scale(add = 0), breaks = seq(0, 100, 5), minor_breaks = seq(0 , 100, 1)) +
     labs(x = 'SSE', y = 'Length [#residues]', color = 'Type', title = title) + 
     order_x_labels(stagger = stagger_labels) +
+    guides(color = guide_legend(byrow = TRUE)) +
     theme_bw() + 
-    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels)
+    customize_theme(stagger_labels = stagger_labels, turn_labels = turn_labels, legend_position = legend_position)
 }
 
 # Compare two binomial distributions by the test of equal proportions (prop.test), for each label

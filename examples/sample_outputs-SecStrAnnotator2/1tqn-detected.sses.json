@@ -1,6 +1,6 @@
 {
     "1tqn": {
-        "comment": "Helix info obtained by mixed method (for helices: geometrical method with RMSD limit 1 A (accepted types: H) with further division using geometrical method with RMSD limit 1 A (accepted types: H), for sheets: hydrogen-bond-based method (similar to DSSP, accepted types: E).",
+        "comment": "Helix info obtained by mixed method (for helices: geometrical method with RMSD limit 1 A (accepted types: H) with further division using geometrical method with RMSD limit 1 A (accepted types: H), for sheets: hydrogen-bond-based method (similar to DSSP).",
         "found": 37,
         "secondary_structure_elements": [
             { "label": "H0", "chain_id": "A", "start": 9, "end": 15, "type": "H" },
@@ -46,9 +46,9 @@
             [ "B2", "E5", -1 ],
             [ "E5", "E6", -1 ],
             [ "E6", "E27", 1 ],
-            [ "E24", "E27", -1 ],
             [ "B8", "E24", -1 ],
             [ "E12", "E35", -1 ],
+            [ "E24", "E27", -1 ],
             [ "E25", "E26", -1 ],
             [ "E32", "E36", -1 ],
             [ "B33", "B34", -1 ]
