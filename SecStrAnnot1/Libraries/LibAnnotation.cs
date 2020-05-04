@@ -1850,8 +1850,8 @@ namespace protein.Libraries
             double scalingDistance = Setting.STR_ALIGNMENT_SCALING_DISTANCE;
             double scalingFactor = 1.0 / (scalingDistance * scalingDistance);
             Func<int, int, double> scoreFunction1 = (i, j) => 1 / (1 + scalingFactor * (tPoints[i] - qPoints[j]).SqSize);
-            Func<int, int, double> scoreFunction2 = (i, j) => LocalRMSDScore(tPoints, qPoints, i, j, 15, 7);
-            Func<int, int, double> scoreFunction3 = (i, j) => scoreFunction1(i, j) * scoreFunction2(i, j);
+            // Func<int, int, double> scoreFunction2 = (i, j) => LocalRMSDScore(tPoints, qPoints, i, j, 15, 7);
+            // Func<int, int, double> scoreFunction3 = (i, j) => scoreFunction1(i, j) * scoreFunction2(i, j);
 
             List<(int?, int?, double)> alignment = AlignPoints_DynProg(tPoints.Length, qPoints.Length, scoreFunction1);
 

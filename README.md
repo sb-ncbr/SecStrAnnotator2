@@ -53,7 +53,7 @@ Example usage:
 
     bash scripts/secstrapi_data_preparation/SecStrAPI_master.sh
 
-Before running, modify the SETTINGS section of the `SecStrAPI_master.sh` to set your family of interest, data directory, options, paths to your template annotation (TEMPLATE_ANNOTATION_FILE, TEMPLATE_STRUCTURE_FILE). Unwanted steps of the pipeline can be commented out in the MAIN PIPELINE section.
+Before running, modify the SETTINGS section of `SecStrAPI_master.sh` to set your family of interest, data directory, options, paths to your template annotation (TEMPLATE_ANNOTATION_FILE, TEMPLATE_STRUCTURE_FILE). Unwanted steps of the pipeline can be commented out in the MAIN PIPELINE section.
 
 ### `scripts/R_sec_str_anatomy_analysis/`
 
@@ -61,7 +61,7 @@ Statistical analysis of the annotation results on the whole protein family.
 
 Example usage:
 
-- Launch `rstudio` from this directory
+- Launch `rstudio` from the said directory
 - Set the path to your annotation data (DATADIR) in `sec_str_anatomy.R`
 - Modify the family-specific settings in `sec_str_anatomy_settings.R`
 - Run `sec_str_anatomy.R` line by line
