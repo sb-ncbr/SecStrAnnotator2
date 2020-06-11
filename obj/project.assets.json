@@ -8,8 +8,7 @@
     ".NETCoreApp,Version=v3.0": []
   },
   "packageFolders": {
-    "/home/adam/.nuget/packages/": {},
-    "/usr/share/dotnet/sdk/NuGetFallbackFolder": {}
+    "/home/adam/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
@@ -20,9 +19,6 @@
       "packagesPath": "/home/adam/.nuget/packages/",
       "outputPath": "/home/adam/Workspace/C#/SecStrAnnot2/obj/",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "/usr/share/dotnet/sdk/NuGetFallbackFolder"
-      ],
       "configFilePaths": [
         "/home/adam/.nuget/NuGet/NuGet.Config"
       ],
@@ -57,6 +53,14 @@
         "warn": true,
         "downloadDependencies": [
           {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[3.0.1, 3.0.1]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Host.linux-x64",
+            "version": "[3.0.3, 3.0.3]"
+          },
+          {
             "name": "Microsoft.NETCore.App.Ref",
             "version": "[3.0.0, 3.0.0]"
           }
@@ -66,7 +70,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/3.0.103/RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/3.1.300/RuntimeIdentifierGraph.json"
       }
     }
   }

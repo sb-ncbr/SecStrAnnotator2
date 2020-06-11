@@ -391,48 +391,116 @@ namespace protein.SecStrAssigning
         {
             return hbonds.OrderBy(hb => hb).Select(hb => (residues[hb.donor], residues[hb.acceptor])).ToList();
         }
-        private List<Ladder> IncludeParallelBulges(Ladder[] parallelLadders)
-        {  // Ladders must have strand0 in lower residue index and must sorted wrt strand0 residue index!
-            int n = parallelLadders.Length;
+        // private List<Ladder> IncludeParallelBulges_Wrong(Ladder[] parallelLadders)
+        // {  // Ladders must have strand0 in lower residue index and must sorted wrt strand0 residue index!
+        //     int n = parallelLadders.Length;
+        //     List<Ladder> result = new List<Ladder>(capacity: n);
+        //     if (n == 0)
+        //     {
+        //         return result;
+        //     }
+        //     result.Add(parallelLadders[0]);
+        //     for (int i = 1; i < n; i++)
+        //     {
+        //         Ladder? potentialBulge = TryMakeParallelBulge(parallelLadders[i - 1], parallelLadders[i]);
+        //         if (potentialBulge != null)
+        //         {
+        //             result.Add(potentialBulge.Value);
+        //         }
+        //         result.Add(parallelLadders[i]);
+        //     }
+        //     return result;
+        // }
+        // private List<Ladder> IncludeAntiparallelBulges_Wrong(Ladder[] antiparallelLadders)
+        // {  // Ladders must have strand0 in lower residue index and must sorted wrt strand0 residue index!
+        //     int n = antiparallelLadders.Length;
+        //     List<Ladder> result = new List<Ladder>(capacity: n);
+        //     if (n == 0)
+        //     {
+        //         return result;
+        //     }
+        //     result.Add(antiparallelLadders[0]);
+        //     for (int i = 1; i < n; i++)
+        //     {
+        //         Ladder? potentialBulge = TryMakeAntiparallelBulge(antiparallelLadders[i - 1], antiparallelLadders[i]);
+        //         if (potentialBulge != null)
+        //         {
+        //             result.Add(potentialBulge.Value);
+        //             Lib.WriteLineDebug("Found bulge");
+        //         }
+        //         result.Add(antiparallelLadders[i]);
+        //     }
+        //     return result;
+        // }
+        private List<Ladder> IncludeBulges(Ladder[] ladders, Func<Ladder,Ladder,Ladder?> tryMakeBulge)
+        {  // Ladders must have strand0 in lower residue index and must sorted wrt strand0 start residue index!
+            int n = ladders.Length;
             List<Ladder> result = new List<Ladder>(capacity: n);
-            if (n == 0)
-            {
-                return result;
-            }
-            result.Add(parallelLadders[0]);
-            for (int i = 1; i < n; i++)
-            {
-                Ladder? potentialBulge = TryMakeParallelBulge(parallelLadders[i - 1], parallelLadders[i]);
-                if (potentialBulge != null)
-                {
-                    result.Add(potentialBulge.Value);
+            List<Ladder> potentialFirsts = new List<Ladder>();
+            List<Ladder> newPotentialFirsts = new List<Ladder>();
+            foreach (Ladder second in ladders){
+                foreach(Ladder first in potentialFirsts){
+                    Ladder? potentialBulge = tryMakeBulge(first, second);
+                    if (potentialBulge != null)
+                    {
+                        result.Add(potentialBulge.Value);
+                        Lib.WriteLineDebug("Found bulge");
+                    }
+                    if (first.lastHbond.Zeta0 + Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_LONG_BULGE_SIDE >= second.firstHbond.Zeta0){
+                        newPotentialFirsts.Add(first);
+                    }
                 }
-                result.Add(parallelLadders[i]);
+                (potentialFirsts, newPotentialFirsts) = (newPotentialFirsts, potentialFirsts);
+                newPotentialFirsts.Clear();
+                potentialFirsts.Add(second);
+                result.Add(second);
             }
             return result;
         }
         private List<Ladder> IncludeAntiparallelBulges(Ladder[] antiparallelLadders)
-        {  // Ladders must have strand0 in lower residue index and must sorted wrt strand0 residue index!
-            int n = antiparallelLadders.Length;
-            List<Ladder> result = new List<Ladder>(capacity: n);
-            if (n == 0)
-            {
-                return result;
-            }
-            result.Add(antiparallelLadders[0]);
-            for (int i = 1; i < n; i++)
-            {
-                Ladder? potentialBulge = TryMakeAntiparallelBulge(antiparallelLadders[i - 1], antiparallelLadders[i]);
-                if (potentialBulge != null)
-                {
-                    result.Add(potentialBulge.Value);
-                    Lib.WriteLineDebug("Found bulge");
-                }
-                result.Add(antiparallelLadders[i]);
-            }
-            return result;
+        {  // Ladders must have strand0 in lower residue index and must sorted wrt strand0 start residue index!
+            return IncludeBulges(antiparallelLadders, TryMakeAntiparallelBulge);
+        }
+        private List<Ladder> IncludeParallelBulges(Ladder[] parallelLadders)
+        {  // Ladders must have strand0 in lower residue index and must sorted wrt strand0 start residue index!
+            return IncludeBulges(parallelLadders, TryMakeParallelBulge);
         }
 
+        private Ladder? TryMakeAntiparallelBulge(Ladder firstLadder, Ladder secondLadder)
+        {  // Ladders must have strand0 in lower residue index and must be sorted wrt strand0 residue index!
+            int zetaShift0 = secondLadder.firstHbond.Zeta0 - firstLadder.lastHbond.Zeta0;
+            int zetaShift1 = firstLadder.lastHbond.Zeta1 - secondLadder.firstHbond.Zeta1;
+            var fragmentIndex = model.Residues.FragmentIndex;
+            Lib.WriteLineDebug($"PICA {zetaShift0} {zetaShift1}");
+            var sn = model.Residues.SeqNumber;
+            Lib.WriteLineDebug($"{sn[firstLadder.firstHbond.r1]}-{sn[firstLadder.lastHbond.r1]}  {sn[secondLadder.firstHbond.r1]}-{sn[secondLadder.lastHbond.r1]}");
+            Lib.WriteLineDebug($"{sn[firstLadder.firstHbond.r0]}-{sn[firstLadder.lastHbond.r0]}  {sn[secondLadder.firstHbond.r0]}-{sn[secondLadder.lastHbond.r0]}");
+            bool sameFragments = fragmentIndex[firstLadder.firstHbond.r0] == fragmentIndex[secondLadder.firstHbond.r0] && fragmentIndex[firstLadder.firstHbond.r1] == fragmentIndex[secondLadder.firstHbond.r1];
+            if (!sameFragments || zetaShift0 < 0 || zetaShift1 < 0)
+            {
+                return null;
+            }
+            Ladder? result = null;
+            if (zetaShift0 < zetaShift1 && zetaShift0 <= Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_SHORT_BULGE_SIDE && zetaShift1 <= Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_LONG_BULGE_SIDE)
+            {
+                result = new Ladder(firstLadder.lastHbond, secondLadder.firstHbond, MicrostrandType.BULGE_UNSPECIFIED_ANTIPARALLEL_SHORT_SIDE);
+            }
+            else if (zetaShift0 > zetaShift1 && zetaShift0 <= Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_LONG_BULGE_SIDE && zetaShift1 <= Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_SHORT_BULGE_SIDE)
+            {
+                result = new Ladder(firstLadder.lastHbond, secondLadder.firstHbond, MicrostrandType.BULGE_UNSPECIFIED_ANTIPARALLEL_LONG_SIDE);
+            }
+            else if (zetaShift0 == zetaShift1 && zetaShift0 <= Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_SHORT_BULGE_SIDE)
+            {
+                result = new Ladder(firstLadder.lastHbond, secondLadder.firstHbond, MicrostrandType.BULGE_UNSPECIFIED_ANTIPARALLEL_EQUAL_SIDE);
+            }
+            // TODO distinguish bulge type
+            // if (result.HasValue)
+            // {
+            //     Lib.WriteLineDebug("BULGE: " + AntiparallelBulgeCode(result.Value));
+            //     Lib.WriteLineDebug($"{zetaShift0} {zetaShift1}");
+            // }
+            return result;
+        }
         private Ladder? TryMakeParallelBulge(Ladder firstLadder, Ladder secondLadder)
         {  // Ladders must have strand0 in lower residue index and must be sorted wrt strand0 residue index!
             int zetaShift0 = secondLadder.firstHbond.Zeta0 - firstLadder.lastHbond.Zeta0;
@@ -444,15 +512,15 @@ namespace protein.SecStrAssigning
                 return null;
             }
             Ladder? result = null;
-            if (zetaShift0 < zetaShift1 && zetaShift0 <= 4 && zetaShift1 <= 13)
+            if (zetaShift0 < zetaShift1 && zetaShift0 <= Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_SHORT_BULGE_SIDE && zetaShift1 <= Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_LONG_BULGE_SIDE)
             {
                 result = new Ladder(firstLadder.lastHbond, secondLadder.firstHbond, MicrostrandType.BULGE_UNSPECIFIED_PARALLEL_SHORT_SIDE);
             }
-            else if (zetaShift0 > zetaShift1 && zetaShift0 <= 13 && zetaShift1 <= 4)
+            else if (zetaShift0 > zetaShift1 && zetaShift0 <= Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_LONG_BULGE_SIDE && zetaShift1 <= Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_SHORT_BULGE_SIDE)
             {
                 result = new Ladder(firstLadder.lastHbond, secondLadder.firstHbond, MicrostrandType.BULGE_UNSPECIFIED_PARALLEL_LONG_SIDE);
             }
-            else if (zetaShift0 == zetaShift1 && zetaShift0 <= 4)
+            else if (zetaShift0 == zetaShift1 && zetaShift0 <= Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_SHORT_BULGE_SIDE)
             {
                 result = new Ladder(firstLadder.lastHbond, secondLadder.firstHbond, MicrostrandType.BULGE_UNSPECIFIED_PARALLEL_EQUAL_SIDE);
             }
@@ -460,38 +528,6 @@ namespace protein.SecStrAssigning
             // if (result.HasValue)
             // {
             //     Lib.WriteLineDebug("BULGE: " + ParallelBulgeCode(result.Value));
-            //     Lib.WriteLineDebug($"{zetaShift0} {zetaShift1}");
-            // }
-            return result;
-        }
-
-        private Ladder? TryMakeAntiparallelBulge(Ladder firstLadder, Ladder secondLadder)
-        {  // Ladders must have strand0 in lower residue index and must be sorted wrt strand0 residue index!
-            int zetaShift0 = secondLadder.firstHbond.Zeta0 - firstLadder.lastHbond.Zeta0;
-            int zetaShift1 = firstLadder.lastHbond.Zeta1 - secondLadder.firstHbond.Zeta1;
-            var fragmentIndex = model.Residues.FragmentIndex;
-            bool sameFragments = fragmentIndex[firstLadder.firstHbond.r0] == fragmentIndex[secondLadder.firstHbond.r0] && fragmentIndex[firstLadder.firstHbond.r1] == fragmentIndex[secondLadder.firstHbond.r1];
-            if (!sameFragments || zetaShift0 < 0 || zetaShift1 < 0)
-            {
-                return null;
-            }
-            Ladder? result = null;
-            if (zetaShift0 < zetaShift1 && zetaShift0 <= 4 && zetaShift1 <= 13)
-            {
-                result = new Ladder(firstLadder.lastHbond, secondLadder.firstHbond, MicrostrandType.BULGE_UNSPECIFIED_ANTIPARALLEL_SHORT_SIDE);
-            }
-            else if (zetaShift0 > zetaShift1 && zetaShift0 <= 13 && zetaShift1 <= 4)
-            {
-                result = new Ladder(firstLadder.lastHbond, secondLadder.firstHbond, MicrostrandType.BULGE_UNSPECIFIED_ANTIPARALLEL_LONG_SIDE);
-            }
-            else if (zetaShift0 == zetaShift1 && zetaShift0 <= 4)
-            {
-                result = new Ladder(firstLadder.lastHbond, secondLadder.firstHbond, MicrostrandType.BULGE_UNSPECIFIED_ANTIPARALLEL_EQUAL_SIDE);
-            }
-            // TODO distinguish bulge type
-            // if (result.HasValue)
-            // {
-            //     Lib.WriteLineDebug("BULGE: " + AntiparallelBulgeCode(result.Value));
             //     Lib.WriteLineDebug($"{zetaShift0} {zetaShift1}");
             // }
             return result;

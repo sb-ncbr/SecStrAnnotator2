@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "/NUAvcT9Q3MEOI7SLB3CpyArMEYojqFKJGIFAQVz5nokaKM0jx/5b/ApcJerN8vspVgrAiy9L9+xKx9zLnfrLg==",
+  "success": true,
+  "projectFilePath": "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj",
+  "expectedPackageFiles": [
+    "/home/adam/.nuget/packages/microsoft.netcore.app.ref/3.0.0/microsoft.netcore.app.ref.3.0.0.nupkg.sha512",
+    "/home/adam/.nuget/packages/microsoft.aspnetcore.app.ref/3.0.1/microsoft.aspnetcore.app.ref.3.0.1.nupkg.sha512",
+    "/home/adam/.nuget/packages/microsoft.netcore.app.host.linux-x64/3.0.3/microsoft.netcore.app.host.linux-x64.3.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

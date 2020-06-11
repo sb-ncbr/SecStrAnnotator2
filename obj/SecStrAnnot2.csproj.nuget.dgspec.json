@@ -1,15 +1,15 @@
 {
   "format": 1,
   "restore": {
-    "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj": {}
+    "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnot2.csproj": {}
   },
   "projects": {
-    "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj": {
+    "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnot2.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj",
-        "projectName": "SecStrAnnotator",
-        "projectPath": "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj",
+        "projectUniqueName": "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnot2.csproj",
+        "projectName": "SecStrAnnot2",
+        "projectPath": "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnot2.csproj",
         "packagesPath": "/home/adam/.nuget/packages/",
         "outputPath": "/home/adam/Workspace/C#/SecStrAnnot2/obj/",
         "projectStyle": "PackageReference",
