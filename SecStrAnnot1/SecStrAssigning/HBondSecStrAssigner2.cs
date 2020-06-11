@@ -182,8 +182,16 @@ namespace protein.SecStrAssigning
         {
 
             List<Ladder> ladders = FindLadders();
-            Ladder[] parallelLadders = ladders.Where(l => l.type0 == MicrostrandType.REGULAR_PARALEL).ToArray();
-            Ladder[] antiparallelLadders = ladders.Where(l => l.type0 == MicrostrandType.REGULAR_ANTIPARALEL).ToArray();
+            Ladder[] parallelLadders = ladders
+                .Where(l => l.type0 == MicrostrandType.REGULAR_PARALEL)
+                .OrderBy(l => l.firstHbond.Zeta0)
+                .ToArray();
+            Ladder[] antiparallelLadders = ladders
+                .Where(l => l.type0 == MicrostrandType.REGULAR_ANTIPARALEL)
+                .OrderBy(l => l.firstHbond.Zeta0)
+                .ToArray();
+            // Lib.WriteLineDebug($"Parallel Ladders:\n{parallelLadders.EnumerateWithSeparators("\n")}");
+            // Lib.WriteLineDebug($"Antiparallel Ladders:\n{antiparallelLadders.EnumerateWithSeparators("\n")}");
             List<Ladder> parallelLaddersAndBulges = IncludeParallelBulges(parallelLadders);
             List<Ladder> antiparallelLaddersAndBulges = IncludeAntiparallelBulges(antiparallelLadders);
             List<Ladder> microladders = parallelLaddersAndBulges.Concat(antiparallelLaddersAndBulges).ToList();
@@ -444,7 +452,7 @@ namespace protein.SecStrAssigning
                     if (potentialBulge != null)
                     {
                         result.Add(potentialBulge.Value);
-                        Lib.WriteLineDebug("Found bulge");
+                        // Lib.WriteLineDebug("Found bulge");
                     }
                     if (first.lastHbond.Zeta0 + Helpers.HBondSSAConstants.MAX_Z_SHIFT_ON_LONG_BULGE_SIDE >= second.firstHbond.Zeta0){
                         newPotentialFirsts.Add(first);
@@ -471,10 +479,6 @@ namespace protein.SecStrAssigning
             int zetaShift0 = secondLadder.firstHbond.Zeta0 - firstLadder.lastHbond.Zeta0;
             int zetaShift1 = firstLadder.lastHbond.Zeta1 - secondLadder.firstHbond.Zeta1;
             var fragmentIndex = model.Residues.FragmentIndex;
-            Lib.WriteLineDebug($"PICA {zetaShift0} {zetaShift1}");
-            var sn = model.Residues.SeqNumber;
-            Lib.WriteLineDebug($"{sn[firstLadder.firstHbond.r1]}-{sn[firstLadder.lastHbond.r1]}  {sn[secondLadder.firstHbond.r1]}-{sn[secondLadder.lastHbond.r1]}");
-            Lib.WriteLineDebug($"{sn[firstLadder.firstHbond.r0]}-{sn[firstLadder.lastHbond.r0]}  {sn[secondLadder.firstHbond.r0]}-{sn[secondLadder.lastHbond.r0]}");
             bool sameFragments = fragmentIndex[firstLadder.firstHbond.r0] == fragmentIndex[secondLadder.firstHbond.r0] && fragmentIndex[firstLadder.firstHbond.r1] == fragmentIndex[secondLadder.firstHbond.r1];
             if (!sameFragments || zetaShift0 < 0 || zetaShift1 < 0)
             {
@@ -628,6 +632,7 @@ namespace protein.SecStrAssigning
             public int Zeta0 => 3 * r0 + (opposite ? ACCEPTOR_Z_CHANGE : DONOR_Z_CHANGE);
             public int Zeta1 => 3 * r1 + (opposite ? DONOR_Z_CHANGE : ACCEPTOR_Z_CHANGE);
             public Hbond Inverted => new Hbond(r1, r0, !opposite);
+            public override string ToString() => opposite ? $"{r0} <- {r1}" : $"{r0} -> {r1}";
         }
 
         private struct Ladder
@@ -642,6 +647,7 @@ namespace protein.SecStrAssigning
                 this.lastHbond = lastHbond;
                 this.type0 = type0;
             }
+            public override string ToString() => $"{type0} {firstHbond} ... {lastHbond}";
         }
 
         private struct BetaGraph
