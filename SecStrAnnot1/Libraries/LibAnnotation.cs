@@ -51,6 +51,8 @@ namespace protein.Libraries
 
             public const string SEQUENCE = "sequence";
             public const string NESTED_SSES = "nested_sses";
+            public const string SOFTWARE_INFO = "software";
+            public const string COMMAND_LINE_ARGUMENTS = "args";
             public const string COMMENT_PER_ENTRY = "comment";
             public const string FOUND_COUNT = "found";
             public const string TOTAL_METRIC = "total_metric_value";
@@ -255,6 +257,8 @@ namespace protein.Libraries
             json[name] = JsonValue.MakeObject();
             if (WRITE_COMMENTS_PER_ENTRY && comment != null)
                 json[name][JsNames.COMMENT_PER_ENTRY] = new JsonValue(comment?.Replace('\n', ' ')?.Replace('\t', ' '));
+            json[name][JsNames.SOFTWARE_INFO] = new JsonValue(Setting.NAME + " " + Setting.VERSION);
+            json[name][JsNames.COMMAND_LINE_ARGUMENTS] = new JsonValue(Setting.CommandLineArguments.EnumerateWithSeparators(" "));
             json[name][JsNames.FOUND_COUNT] = new JsonValue(sses.Count(sse => !sse.IsNotFound()));
             if (WRITE_METRIC && extras != null && extras.ContainsKey(JsNames.METRIC))
                 json[name][JsNames.TOTAL_METRIC] = new JsonValue(extras[JsNames.METRIC].Select(x => RoundDouble((double)x)).Where(x => !Double.IsInfinity(x) && !Double.IsNaN(x)).Sum());

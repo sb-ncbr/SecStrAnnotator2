@@ -106,9 +106,6 @@ echo; echo '=== Realign sequences from Set-ALL to the alignment from Set-NR and 
 python3  $ADD_REFERENCE_RESIDUES  $DATA_DIR/annotations_NR.json  $DATA_DIR/aligments_NR/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_reference_residues_NR.json
 python3  $ADD_REFERENCE_RESIDUES  $DATA_DIR/annotations_ALL.json  $DATA_DIR/aligments_NR/  --labels $ALIGNED_SSE_LABELS  --label2auth_dir $DATA_DIR/structures/  >  $DATA_DIR/annotations_with_reference_residues_ALL.json
 
-echo; echo '=== Get full sequences ==='
-python3  $GET_FULL_SEQUENCES  $DATA_DIR/set_NR_$TODAY.json  >  $DATA_DIR/set_NR_$TODAY.fasta
-
 echo; echo '=== Divide annotations into per-PDB files ==='
 python3  $SELECT_SSE_FIELDS  $DATA_DIR/annotations_with_reference_residues_ALL.json  >  $DATA_DIR/annotations_with_reference_residues_ALL-selected_fields.json
 python3  $DIVIDE_ANNOTATIONS  $DATA_DIR/annotations_with_reference_residues_ALL-selected_fields.json  $DATA_DIR/annotations_ALL/  --min_dir $DATA_DIR/annotations_ALL_min/
@@ -118,3 +115,6 @@ python3  $JSON_TO_TSV  --add_missing_sses  $DATA_DIR/annotations_with_reference_
 python3  $JSON_TO_TSV  --add_missing_sses  $DATA_DIR/annotations_with_reference_residues_ALL.json  >  $DATA_DIR/annotations_with_reference_residues_ALL.tsv
 python3  $JSON_TO_BULGES_TSV  $DATA_DIR/annotations_with_reference_residues_NR.json  >  $DATA_DIR/beta_bulges_NR.tsv
 python3  $JSON_TO_BULGES_TSV  $DATA_DIR/annotations_with_reference_residues_ALL.json  >  $DATA_DIR/beta_bulges_ALL.tsv
+
+echo; echo '=== Get full sequences ==='
+python3  $GET_FULL_SEQUENCES  $DATA_DIR/set_NR_$TODAY.json  >  $DATA_DIR/set_NR_$TODAY.fasta

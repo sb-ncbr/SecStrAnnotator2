@@ -1,6 +1,5 @@
 
 import numpy as np
-from scipy import stats
 import argparse
 import os
 from os import path
@@ -13,10 +12,11 @@ from typing import List, Tuple, Dict
 from collections import defaultdict
 
 from PIL import Image
-import Bio
 from Bio import AlignIO, SeqIO
 from Bio.SubsMat import MatrixInfo
-# pip3 install Biopython logomaker
+import logomaker
+from matplotlib import pyplot
+# pip3 install Biopython logomaker matplotlib
 
 ################################################################################
 
@@ -377,10 +377,6 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
     '''Generate sequence logos using Logomaker.
     units: 'bits' or 'probability', color_scheme: 'weblogo_protein', 'hydrophobicity' ...
     # Logomaker documentation: https://logomaker.readthedocs.io/en/latest/'''
-
-    import logomaker
-    from matplotlib import pyplot
-
     scale = 1.0
     height = 3.0
     width_per_residue = 0.3  # 0.35

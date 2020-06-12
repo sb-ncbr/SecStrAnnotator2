@@ -79,6 +79,7 @@ namespace protein
 
 
             #region Processing options and arguments.
+            Setting.CommandLineArguments = args;
             Options options = new Options();
             options.GlobalHelp = Setting.NAME + " " + Setting.VERSION;
 
@@ -889,8 +890,7 @@ namespace protein
 
 
             #region Output of chosen SSEs into a file.
-            String comment = "Automatic annotation for " + queryID + " based on " + templateID + " template.\nProgram was called with these parameters: "
-                + String.Concat(args.Select(x => x + " ")) + "\nTotal value of used metric: " + totalMetric.ToString("0.00");
+            String comment = $"Automatic annotation for {queryID} based on {templateID} template. Total value of used metric: {totalMetric:0.00}";
             if (Setting.JSON_OUTPUT)
             {
                 var extras = Lib.DoWriteDebug ?

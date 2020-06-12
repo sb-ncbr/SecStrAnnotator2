@@ -18,6 +18,8 @@ namespace protein
 		public static string VERSION = "2.1" + String.Format(" [{0:yyyy-MM-dd}]", Lib.BuildTime);
 #endif
 
+        public static string[] CommandLineArguments;
+
         public enum AlignMethod { None, Align, Super, Cealign };
         public static Dictionary<AlignMethod, string> alignMethodNames = new Dictionary<AlignMethod, string>
             { { AlignMethod.None,"none" }, { AlignMethod.Align,"align" }, { AlignMethod.Super,"super"}, { AlignMethod.Cealign,"cealign" } };
