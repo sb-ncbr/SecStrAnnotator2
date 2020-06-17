@@ -22,6 +22,7 @@ SYMBOL_INSTEAD_APOSTROPHE = '+'  # Apostrophe is not allowed in PyMOL identifier
 from os import path 
 import sys
 import json
+import random
 from pymol import cmd
 
 
@@ -67,7 +68,7 @@ QUERY_STRUCT_EXT = ('-aligned' if template is not None else '') +  ('.cif' if US
 TEMPLATE_ANNOT_EXT = '-template.sses.json'
 QUERY_ANNOT_EXT = '-detected.sses.json' if detected else '-annotated.sses.json'
 SESSION_EXT = '-detected.pse' if detected else '-annotated.pse'
-TEMPLATE_OBJECT_PREFIX = 'T_'
+TEMPLATE_OBJECT_PREFIX = ''
 TEMPLATE_SELECTION_PREFIX = TEMPLATE_OBJECT_PREFIX
 QUERY_OBJECT_PREFIX = ''
 QUERY_SELECTION_PREFIX = QUERY_OBJECT_PREFIX
@@ -96,12 +97,13 @@ def color_by_annotation(pdb_id, selection, base_color, annotation_file, selectio
 		cmd.set('label_color', base_color, selection)
 		if LABEL_OUTLINE_COLOR is not None:
 			cmd.set('label_outline_color', LABEL_OUTLINE_COLOR)
+	cmd.group(selection_prefix)
 	for sse in sorted(sses, key = lambda x: (x[CHAIN_ID], x[START_RESI])):
 		label = sse[LABEL]
 		chain_id = sse[CHAIN_ID]
 		start = sse[START_RESI]
 		end = sse[END_RESI]
-		sel_name = selection_prefix + safe_object_name(label)
+		sel_name = selection_prefix + '.' + safe_object_name(label)
 		sel_expression = selection_expression(selection, chain_id, str(start) + ':' + str(end), symbol='C')
 		if cmd.count_atoms(sel_expression) > 0:
 			cmd.select(sel_name, sel_expression)
@@ -110,7 +112,7 @@ def color_by_annotation(pdb_id, selection, base_color, annotation_file, selectio
 				label_sse(sse, selection)
 	if show_hbonds:
 		hbonds = annotation.get(HBONDS, [])
-		distance_name = selection_prefix + HBONDS_OBJECT_NAME
+		distance_name = selection_prefix + '.' + HBONDS_OBJECT_NAME
 		for donor_chain, donor_resi, acceptor_chain, acceptor_resi in hbonds:
 			donor = '(%s) and chain %s and resi %s and name N' % (selection, donor_chain, donor_resi)
 			acceptor = '(%s) and chain %s and resi %s and name O' % (selection, acceptor_chain, acceptor_resi)
@@ -122,8 +124,10 @@ def assign_color(sse):
 	if COLOR in sse:
 		return sse[COLOR]
 	else:
-		magic_value = hash(sse[LABEL])
-		return 's' + str(magic_value % 1000).zfill(3)
+		# magic_value = hash(sse[LABEL]) % 1000
+		random.seed(sse[LABEL])
+		magic_value = random.randint(0, 999)
+		return 's' + str(magic_value).zfill(3)
 
 def label_sse(sse, selection):
 	"""Adds a label to SSE"""
@@ -199,11 +203,11 @@ def create_session(directory, template, query):
 	if template is not None:
 		template_object = TEMPLATE_OBJECT_PREFIX + template_id
 		cmd.load(template_struct_file, template_object)
-		color_by_annotation(template_id, selection_expression(template_object, template_chain, None), TEMPLATE_BASE_COLOR, template_annot_file, selection_prefix=TEMPLATE_SELECTION_PREFIX)
+		color_by_annotation(template_id, selection_expression(template_object, template_chain, None), TEMPLATE_BASE_COLOR, template_annot_file, selection_prefix=template_object+'.sses')
 	
 	query_object = QUERY_OBJECT_PREFIX + query_id
 	cmd.load(query_struct_file, query_object)
-	color_by_annotation(query_id, selection_expression(query_object, query_chain, None), QUERY_BASE_COLOR, query_annot_file, selection_prefix=QUERY_SELECTION_PREFIX)
+	color_by_annotation(query_id, selection_expression(query_object, query_chain, None), QUERY_BASE_COLOR, query_annot_file, selection_prefix=query_object+'.sses')
 
 	cmd.hide('everything', 'all')
 	if template is not None:

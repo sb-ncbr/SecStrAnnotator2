@@ -1,4 +1,4 @@
-#define DEVEL // DEVEL==true for development versions, DEVEL==false for release versions
+// #define DEVEL // DEVEL==true for development versions, DEVEL==false for release versions
 
 using System;
 using System.Collections.Generic;
@@ -12,10 +12,11 @@ namespace protein
     static class Setting
     {
         public const string NAME = "SecStrAnnotator";
+        public const string VERSION_NUMBER = "2.2";
 #if DEVEL
-        public static string VERSION = "2.1" + String.Format(".{0}.{1} [{2:u}]", Lib.BuildVersion.Build, Lib.BuildVersion.Revision, Lib.BuildTime);
+        public static string VERSION = $"{VERSION_NUMBER}.{Lib.BuildVersion.Build}.{Lib.BuildVersion.Revision} [{Lib.BuildTime:u}]";
 #else
-		public static string VERSION = "2.1" + String.Format(" [{0:yyyy-MM-dd}]", Lib.BuildTime);
+		public static string VERSION = $"{VERSION_NUMBER} [{Lib.BuildTime:yyyy-MM-dd}]";
 #endif
 
         public static string[] CommandLineArguments;

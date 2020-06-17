@@ -19,6 +19,7 @@ For SecStrAnnotator:
 For additional scripts:
 
 - Python3 (>=3.6)
+- Python3 packages listed in `scripts/requirements.txt` (install by `pip3 install -r scripts/requirements.txt`)
 - bash
 - R, rstudio
 

@@ -1,6 +1,6 @@
 {
     "2nnj": {
-        "comment": "Automatic annotation for 2nnj based on 1og2 template and manually curated",
+        "comment": "Manually created template annotation for 2nnj, chain A",
         "numbering": "label",
 		"secondary_structure_elements": [
             { "label": "A'", "chain_id": "A", "start": 24, "end": 26, "type": "H", "color": "s121" },

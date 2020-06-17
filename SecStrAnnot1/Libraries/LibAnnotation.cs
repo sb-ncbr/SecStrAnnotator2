@@ -77,7 +77,7 @@ namespace protein.Libraries
 
         const bool OUTPUT_NOT_FOUND_SSES = false;
 
-        const int DEFAULT_DOUBLE_DIGITS = 6;
+        const int DEFAULT_DOUBLE_DIGITS = 3; //6;
 
         const double SUSPICIOUSNESS_THRESHOLD = 1.0; // annotation of an SSE is suspicious, if annotated/(alternative+annotated)>= SUSPICIOUSNESS_THRESHOLD (annotated = really used metric, alternative = second best metric)
 
@@ -260,8 +260,11 @@ namespace protein.Libraries
             json[name][JsNames.SOFTWARE_INFO] = new JsonValue(Setting.NAME + " " + Setting.VERSION);
             json[name][JsNames.COMMAND_LINE_ARGUMENTS] = new JsonValue(Setting.CommandLineArguments.EnumerateWithSeparators(" "));
             json[name][JsNames.FOUND_COUNT] = new JsonValue(sses.Count(sse => !sse.IsNotFound()));
-            if (WRITE_METRIC && extras != null && extras.ContainsKey(JsNames.METRIC))
-                json[name][JsNames.TOTAL_METRIC] = new JsonValue(extras[JsNames.METRIC].Select(x => RoundDouble((double)x)).Where(x => !Double.IsInfinity(x) && !Double.IsNaN(x)).Sum());
+            if (WRITE_METRIC && extras != null && extras.ContainsKey(JsNames.METRIC)){
+                double totalMetric = extras[JsNames.METRIC].Select(x => (double) x).Where(x => !Double.IsInfinity(x) && !Double.IsNaN(x)).Sum();
+                json[name][JsNames.TOTAL_METRIC] = new JsonValue(RoundDouble(totalMetric));
+                // json[name][JsNames.TOTAL_METRIC] = new JsonValue(extras[JsNames.METRIC].Select(x => RoundDouble((double)x)).Where(x => !Double.IsInfinity(x) && !Double.IsNaN(x)).Sum());
+            }
             json[name][JsNames.SSES] = ssesJson;
             if (betaConnectivity != null)
                 json[name][JsNames.BETA_CONNECTIVITY] = BetaConnectivityToJson(betaConnectivity, sses);

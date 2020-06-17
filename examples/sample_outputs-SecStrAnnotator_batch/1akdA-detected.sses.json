@@ -1,6 +1,8 @@
 {
     "1akd": {
         "comment": "Helix info obtained by mixed method (for helices: geometrical method with RMSD limit 1 A (accepted types: H) with further division using geometrical method with RMSD limit 1 A (accepted types: H), for sheets: hydrogen-bond-based method (similar to DSSP).",
+        "software": "SecStrAnnotator 2.2 [2020-06-17]",
+        "args": "examples/ 2nnj,A 1akd,A,:",
         "found": 33,
         "secondary_structure_elements": [
             { "label": "G0", "chain_id": "A", "start": 20, "end": 22, "type": "G" },

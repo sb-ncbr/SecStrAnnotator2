@@ -8,7 +8,7 @@ import sys
 import constants as cnst
 
 EXTENSION = '-detected.sses.json'
-
+BULGE_SSE_TYPES = 'bA bP n N m M u U t T s S o O p P q Q r R l L'.split()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('in_directory', help='Directory with .sses.json files')
@@ -34,7 +34,7 @@ for i, file in enumerate(files):
         for nested in nesteds:
             # typ = 
             typ = nested[cnst.TYPE]
-            if typ == 'bP' or typ == 'bA':
+            if typ in BULGE_SSE_TYPES:
                 print(pdb, nested[cnst.COMMENT], nested[cnst.CHAIN_ID], nested[cnst.START], nested[cnst.END])
                 bulge_types.add(nested[cnst.COMMENT])
     if i%1000 == 0:

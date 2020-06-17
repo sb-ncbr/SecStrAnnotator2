@@ -1,0 +1,7 @@
+biopython
+logomaker
+matplotlib
+numpy
+pillow
+requests
+svgwrite
