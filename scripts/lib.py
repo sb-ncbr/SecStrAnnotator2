@@ -1,9 +1,15 @@
 import sys
 import json
 import requests
-from typing import List, Dict, Tuple, Union, Iterator, Iterable, Callable, TypeVar
+import shutil
+import ftplib
+import tarfile
+from collections import namedtuple
+from typing import List, Dict, Tuple, Union, Iterator, Iterable, Callable, TypeVar, Optional
 
 from constants import *
+
+DEFAULT_ENCODING = 'utf-8'
 
 K = TypeVar('K')
 V = TypeVar('V')
@@ -57,6 +63,19 @@ def single(iterable: Iterable[V]) -> V:
     except StopIteration:
         raise ValueError('Iterable contains no elements')
 
+def get_from_ftp(address: str, destination_file: str, username: str = 'anonymous') -> None:
+    if address.startswith('ftp://'):
+        address = address[6:]
+    server, filename = address.split('/', maxsplit=1)
+    with ftplib.FTP(server, username) as connection:
+        with open(destination_file, 'wb') as w:
+            connection.retrbinary(f'RETR {filename}', w.write)
+
+def extract_from_tar(tar_archive: str, extracted_file: str, destination_file: str) -> None:
+    with tarfile.open(tar_archive, 'r') as tar:
+        with tar.extractfile(extracted_file) as r:
+            with open(destination_file, 'wb') as w:
+                shutil.copyfileobj(r, w)
 
 class LazyDict:
     def __init__(self, initializer: Callable[[K], V]):
@@ -76,7 +95,7 @@ class Label2AuthConverter:
         self.table = {}
         self.chain_table = {}
         self.unknown_ins_code_as_empty_string = unknown_ins_code_as_empty_string
-        with open(conversion_table_file) as r:
+        with open(conversion_table_file, 'r', encoding=DEFAULT_ENCODING) as r:
             for line in r:
                 if not line.lstrip().startswith('#'):
                     chain, resi, auth_chain, auth_resi, auth_ins_code, label_comp_id = line.strip().split('\t')
@@ -151,3 +170,139 @@ class UniProtManager:
                     raise Exception(f'{pdb} chain {chain} has an ambiguous mapping to Uniprot: {old_id} vs {uni_id}')
                 else:
                     self.pdbchain2uniidname[(pdb, chain)] = (uni_id, uni_name)
+
+
+class RedirectIO:
+
+    def __init__(self, stdin: Optional[str] = None, stdout: Optional[str] = None, stderr: Optional[str] = None, append_stdout: bool = False, append_stderr: bool = False):
+        self.new_in_file = stdin
+        self.new_out_file = stdout
+        self.new_err_file = stderr
+        self.append_stdout = append_stdout
+        self.append_stderr = append_stderr
+
+    def __enter__(self):
+        if self.new_in_file is not None:
+            self.new_in = open(self.new_in_file, 'r')
+            self.old_in = sys.stdin
+            sys.stdin = self.new_in
+        if self.new_out_file is not None:
+            self.new_out = open(self.new_out_file, 'a' if self.append_stdout else 'w')
+            self.old_out = sys.stdout
+            sys.stdout = self.new_out
+        if self.new_err_file is not None:
+            self.new_err = open(self.new_err_file, 'a' if self.append_stderr else 'w')
+            self.old_err = sys.stderr
+            sys.stderr = self.new_err
+
+    def __exit__(self, exctype, excinst, exctb):
+        if self.new_in_file is not None:
+            sys.stdin = self.old_in
+            self.new_in.close()
+        if self.new_out_file is not None:
+            sys.stdout = self.old_out
+            self.new_out.close()
+        if self.new_err_file is not None:
+            sys.stderr = self.old_err
+            self.new_err.close()
+
+
+class ProgressBar:
+    DONE_SYMBOL = '█'
+    TODO_SYMBOL = '-'
+    def __init__(self, n_steps, width=None, title='', prefix='', suffix='', writer=None):
+        self.n_steps = n_steps # expected number of steps
+        self.width = width if width is not None else shutil.get_terminal_size().columns
+        self.width -= len(prefix) + len(suffix) + 12  # self.width -= len(prefix) + len(suffix) + 10
+        self.title = (' '+title+' ')[0:min(len(title)+2, self.width)]
+        self.prefix = prefix
+        self.suffix = suffix
+        self.writer = writer if writer is not None else sys.stdout
+        self.done = 0 # number of completed steps
+        self.shown = 0 # number of shown symbols
+
+    def start(self):
+        self.writer.write(' ' * len(self.prefix))
+        self.writer.write(' ┌' + self.title + '─'*(self.width-len(self.title)) + '┐\n')
+        self.writer.flush()
+        self.step(0, force=True)
+        return self
+
+    def step(self, n_steps=1, force=False):
+        if n_steps == 0 and not force:
+            return
+        self.done = min(self.done + n_steps, self.n_steps)
+        progress = self.done / self.n_steps
+        new_shown = int(self.width * progress)
+        if new_shown != self.shown or force:
+            self.writer.write(f'\r{self.prefix} └')
+            self.writer.write(self.DONE_SYMBOL * new_shown + self.TODO_SYMBOL * (self.width - new_shown))
+            self.writer.write(f'┘ {int(100*progress):>3}% {self.suffix} ')
+            self.writer.flush()
+            self.shown = new_shown  
+
+    def finalize(self):
+        self.step(self.n_steps - self.done)
+        self.writer.write('\n')
+        self.writer.flush()
+
+
+Task = namedtuple('Task', ['name', 'function', 'args', 'kwargs', 'stdin', 'stdout', 'stderr', 'pre_message', 'post_message'])
+
+class Pipeline:
+
+    def __init__(self, checkpoint_file=None):
+        self.checkpoint_file = checkpoint_file
+        self.tasks = []
+    
+    def add_task(self, name: str, function: Callable, *args,
+            stdin: Optional[str] = None, stdout: Optional[str] = None, stderr: Optional[str] = None, 
+            pre_message: Optional[str] = None, post_message: Optional[str] = None, 
+            kwargs = {}, **kwargs_):
+        '''Append new task to the pipeline. 
+        The task will be called as function(*args, **kwargs_). 
+        If a keyword argument conflicts with a keyword arguments of add_task, use kwargs instead of kwargs_.
+        Task names must be unique and not contain newline characters. 
+        Task name can be None - such tasks are not logged into checkpoint file and will be repeated after resume.
+        '''
+        if name is not None and '\n' in name:
+            raise ValueError(f'Task name must not contain newline character.')
+        if name is not None and any(task.name == name for task in self.tasks):
+            raise ValueError(f'Duplicate task name in pipeline: {name}. Use unique task names!')
+        if len(kwargs) > 0 and len(kwargs_) > 0:
+            raise ValueError('Use either kwargs or **kwargs_, not both!')
+        kwargs_.update(kwargs)
+        self.tasks.append(Task(name, function, args, kwargs_, stdin, stdout, stderr, pre_message, post_message))
+    
+    def start(self):
+        '''Perform all tasks in the pipeline.'''
+        if self.checkpoint_file is not None:
+            with open(self.checkpoint_file, 'w', encoding=DEFAULT_ENCODING) as f:
+                f.write('')
+        for task in self.tasks:
+            self._do_task(task)
+    
+    def resume(self):
+        '''Perform all tasks in the pipeline, except for those completed earlier (i.e. listed in the checkpoint file).'''
+        if self.checkpoint_file is not None:
+            try: 
+                with open(self.checkpoint_file, 'r', encoding=DEFAULT_ENCODING) as f:
+                    completed_tasks = [line.rstrip('\n\r') for line in f]
+            except OSError:
+                completed_tasks = []
+        else:
+            completed_tasks = []
+        for task in self.tasks:
+            if task.name not in completed_tasks:
+                self._do_task(task)
+    
+    def _do_task(self, task):
+        if task.pre_message is not None:
+            print(task.pre_message)
+        with RedirectIO(stdin=task.stdin, stdout=task.stdout, stderr=task.stderr):
+            result = task.function(*task.args, **task.kwargs)
+        if self.checkpoint_file is not None and task.name is not None:
+            with open(self.checkpoint_file, 'a', encoding=DEFAULT_ENCODING) as f:
+                f.write(task.name + '\n')
+        if task.post_message is not None:
+            print(task.post_message)

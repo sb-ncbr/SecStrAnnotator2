@@ -18,6 +18,8 @@ import logomaker
 from matplotlib import pyplot
 # pip3 install Biopython logomaker matplotlib
 
+import lib
+
 ################################################################################
 
 GAP_CHAR = '-'
@@ -40,7 +42,7 @@ def print_aln(seqs, names=None, tree=None, output_file=None):
         for row in zip(*columns):
             print(*row)
     else:
-        with open(output_file, 'w') as w:
+        with open(output_file, 'w', encoding=lib.DEFAULT_ENCODING) as w:
             for row in zip(*columns):
                 w.write(' '.join(row) + '\n')
     #     for seq, name in zip(seqs, names):
@@ -50,7 +52,7 @@ def print_aln(seqs, names=None, tree=None, output_file=None):
     #         print('|', seq, '|')
 
 def write_fasta(names: List[str], sequences: List[str], filename: str):
-    with open(filename, 'w') as w:
+    with open(filename, 'w', encoding=lib.DEFAULT_ENCODING) as w:
         for name, seq in zip(names, sequences):
             w.write(f'>{name}\n{seq}\n')
 
@@ -327,14 +329,13 @@ def get_max_area_column_index(sequence_matrix):
     # max_area, max_area_index = max( (area, i) for i, area in enumerate(areas) )  # Takes the last in case of ties
     max_area = max(areas)
     max_area_index = next(i for i, area in enumerate(areas) if area == max_area)  # Takes the first in case of ties
-    print(f'Max. area column: {max_area_index}, area: {max_area}', file=sys.stderr)
+    # print(f'Max. area column: {max_area_index}, area: {max_area}', file=sys.stderr)
     return max_area_index
     
 def get_max_maxprob_column_index(sequence_matrix):
     maxprobs = logo_maxprobs(sequence_matrix)
     max_mp, max_mp_index = max( (mp, i) for i, mp in enumerate(maxprobs) )
     return max_mp_index
-    
 
 def get_pivot_column_index(sequence_matrix, probability=False):
     if probability:
@@ -342,8 +343,9 @@ def get_pivot_column_index(sequence_matrix, probability=False):
     else:
         return get_max_area_column_index(sequence_matrix)
 
+
 def run_weblogo2(alignment_file, logo_file, first_index=0):
-    with open(alignment_file) as r:
+    with open(alignment_file, 'r', encoding=lib.DEFAULT_ENCODING) as r:
         for line in r:
             if line[0] != '>':
                 n_residues = len(line.strip())
@@ -440,16 +442,19 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
     logo.ax.set_yticklabels(ytl, fontsize=14*scale)
     logo.fig.tight_layout()
     logo.fig.savefig(logo_file, dpi=dpi)
+    pyplot.close(logo.fig)
     if logo_file.endswith(('.tif', '.tiff')):
         compress_tiff(logo_file)
-    pyplot.close(logo.fig)
 
 def compress_tiff(filename: str):
     name, ext = path.splitext(filename)
     temp_name = f'{name}-compressed{ext}'
-    with Image.open(filename) as im:
-        im.save(temp_name, compression='tiff_lzw')
-        shutil.move(temp_name, filename)
+    im = Image.open(filename)
+    im.save(temp_name, compression='tiff_lzw')
+    im.close()  # `with Image.open(filename)...` fails to close the file on Windows!
+    os.remove(filename)
+    shutil.move(temp_name, filename)
+
 
 class PriorityQueue:
 	def __init__(self, elements_keys):
@@ -532,6 +537,24 @@ class NoGapAligner:
         else:
             raise NotImplementedError(f'Unknown tool: {tool}')
         os.remove(alignment_file)
+    
+    def print_column_statistics(self, label='', include_header=False, only_header=False, file=None):
+        file = file or sys.stdout
+        sep = '\t'
+        rows = []
+        if include_header or only_header:
+            rows.append(('Label', 'Weighted-average height', 'Max. area', 'Max. area index', 'Max. height', 'Max. height index'))
+        if not only_header:
+            heights, widths, areas = logo_heights_widths_areas(self.alignment_matrix)
+            max_area_index = get_max_area_column_index(self.alignment_matrix)
+            max_area = areas[max_area_index]
+            max_height_index = get_highest_column_index(self.alignment_matrix)
+            max_height = heights[max_height_index]
+            avg_height = sum(areas) / sum(widths)
+            rows.append((label, avg_height, max_area, max_area_index, max_height, max_height_index))
+        for row in rows:
+            print(*row, sep=sep, file=file)
+
 
 class Realigner:
     def __init__(self, reference_alignment_file, subst_matrix_info=MatrixInfo.blosum62, gap_penalty=10):
@@ -548,70 +571,70 @@ class Realigner:
         pivot = self.pivot_index - shift
         return shift, pivot
 
-def main(input_file, output_file, logo_output=None, keep_order=False, print_tree=False, realign=True):
-    inp = SeqIO.parse(input_file, 'fasta')
-    names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
+# def main(input_file, output_file, logo_output=None, keep_order=False, print_tree=False, realign=True):
+#     inp = SeqIO.parse(input_file, 'fasta')
+#     names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
 
-    subst_matrix, alphabet, letter2index = substitution_matrix(MatrixInfo.blosum62, gap_penalty=GAP_PENALTY)
+#     subst_matrix, alphabet, letter2index = substitution_matrix(MatrixInfo.blosum62, gap_penalty=GAP_PENALTY)
 
-    # print('Matrix:', subst_matrix)
-    # print('Alphabet:', alphabet)
-    # print('Letter2index:', letter2index)
+#     # print('Matrix:', subst_matrix)
+#     # print('Alphabet:', alphabet)
+#     # print('Letter2index:', letter2index)
 
-    sequence_matrices = [ sequence2matrix(seq, letter2index) for seq in seqs ]
-    matAln, shifts, tree = multialign(sequence_matrices, subst_matrix)
+#     sequence_matrices = [ sequence2matrix(seq, letter2index) for seq in seqs ]
+#     matAln, shifts, tree = multialign(sequence_matrices, subst_matrix)
 
-    if realign:
-        last_shifts = None
-        while last_shifts is None or any( last != curr for last, curr in zip(last_shifts, shifts) ):
-            last_shifts = shifts
-            matAln, shifts, bestnesses = multirealign(matAln, sequence_matrices, subst_matrix)
-            # print(f'Bestness: min {min(bestnesses):.4f}, max {max(bestnesses):.4f}, mean {np.mean(bestnesses):.4f}, median{np.median(bestnesses):.4f}')
+#     if realign:
+#         last_shifts = None
+#         while last_shifts is None or any( last != curr for last, curr in zip(last_shifts, shifts) ):
+#             last_shifts = shifts
+#             matAln, shifts, bestnesses = multirealign(matAln, sequence_matrices, subst_matrix)
+#             # print(f'Bestness: min {min(bestnesses):.4f}, max {max(bestnesses):.4f}, mean {np.mean(bestnesses):.4f}, median{np.median(bestnesses):.4f}')
 
-    aln_seqs = apply_shifts(seqs, shifts)
+#     aln_seqs = apply_shifts(seqs, shifts)
 
-    # print('Aln\n', matAln)
-    # print('Shifts\n', shifts)
-    # print('Tree\n', tree)
+#     # print('Aln\n', matAln)
+#     # print('Shifts\n', shifts)
+#     # print('Tree\n', tree)
 
-    # print_aln(seqs, names=names)
-    # print('#')
-    if not keep_order:
-        aln_seqs, names = zip(*( (aln_seqs[i], names[i])  for i in reordering_from_tree(tree) ))
-    write_fasta(names, aln_seqs, output_file)
-    if print_tree:
-        print_aln(aln_seqs, names=None, tree=tree)
+#     # print_aln(seqs, names=names)
+#     # print('#')
+#     if not keep_order:
+#         aln_seqs, names = zip(*( (aln_seqs[i], names[i])  for i in reordering_from_tree(tree) ))
+#     write_fasta(names, aln_seqs, output_file)
+#     if print_tree:
+#         print_aln(aln_seqs, names=None, tree=tree)
 
-    if logo_output is not None:
-        height = 8
-        width_per_residue = 0.8
-        n_residues = matAln.shape[0]
-        max_height_index = get_pivot_column_index(matAln)
-        # run_weblogo2(output_file, logo_output, first_index=-max_height_index)
-        run_weblogo3(output_file, logo_output, first_index=-max_height_index)
+#     if logo_output is not None:
+#         height = 8
+#         width_per_residue = 0.8
+#         n_residues = matAln.shape[0]
+#         max_height_index = get_pivot_column_index(matAln)
+#         # run_weblogo2(output_file, logo_output, first_index=-max_height_index)
+#         run_weblogo3(output_file, logo_output, first_index=-max_height_index)
             
-################################################################################
+# ################################################################################
 
-if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('input', help='Input file with sequences in multi-FASTA format', type=str)
-    # parser.add_argument('output', help='Output file for aligned sequences in multi-FASTA format', type=str)
-    # parser.add_argument('--logo_output', help='Output file for aligned sequences in multi-FASTA format', type=str, default=None)
-    # parser.add_argument('--keep_order', help='Print aligned sequence in the same order as they appeared in the input (otherwise will order them by the tree)', action='store_true')
-    # args = parser.parse_args()
+# if __name__ == "__main__":
+#     # parser = argparse.ArgumentParser()
+#     # parser.add_argument('input', help='Input file with sequences in multi-FASTA format', type=str)
+#     # parser.add_argument('output', help='Output file for aligned sequences in multi-FASTA format', type=str)
+#     # parser.add_argument('--logo_output', help='Output file for aligned sequences in multi-FASTA format', type=str, default=None)
+#     # parser.add_argument('--keep_order', help='Print aligned sequence in the same order as they appeared in the input (otherwise will order them by the tree)', action='store_true')
+#     # args = parser.parse_args()
 
-    # main(input_file = args.input, output_file = args.output, logo_output = args.logo_output, keep_order = args.keep_order)
+#     # main(input_file = args.input, output_file = args.output, logo_output = args.logo_output, keep_order = args.keep_order)
 
-    directory = "/home/adam/Workspace/Python/Ubertemplate/alignment_data/"
-    labels = ["1a", "1b", "1c", "1d", "1e", "2a", "2b", "3a", "3b", "3c", "4a", "4b", "4c", "A", "A'", "B", "B'", "B''", "B'''", "C", "D", "E", "F", "F'", "G", "G'", "H", "I", "J", "J'", "K", "K'", "K''", "K'''", "L", "L'"]
-    # labels = ["F"]
-    os.makedirs(path.join(directory, 'aligned'), exist_ok=True)
-    os.makedirs(path.join(directory, 'logos'), exist_ok=True)
-    for label in labels:
-        print(label)
-        main(
-            path.join(directory, 'sequences', f'extracted_sequences_{label}.fasta'),
-            path.join(directory, 'aligned', f'{label}.fasta'),
-            logo_output=path.join(directory, 'logos', f'{label}.png'),
-            keep_order=False, 
-            print_tree=True)
+#     directory = "/home/adam/Workspace/Python/Ubertemplate/alignment_data/"
+#     labels = ["1a", "1b", "1c", "1d", "1e", "2a", "2b", "3a", "3b", "3c", "4a", "4b", "4c", "A", "A'", "B", "B'", "B''", "B'''", "C", "D", "E", "F", "F'", "G", "G'", "H", "I", "J", "J'", "K", "K'", "K''", "K'''", "L", "L'"]
+#     # labels = ["F"]
+#     os.makedirs(path.join(directory, 'aligned'), exist_ok=True)
+#     os.makedirs(path.join(directory, 'logos'), exist_ok=True)
+#     for label in labels:
+#         print(label)
+#         main(
+#             path.join(directory, 'sequences', f'extracted_sequences_{label}.fasta'),
+#             path.join(directory, 'aligned', f'{label}.fasta'),
+#             logo_output=path.join(directory, 'logos', f'{label}.png'),
+#             keep_order=False, 
+#             print_tree=True)

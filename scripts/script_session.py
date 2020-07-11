@@ -41,7 +41,7 @@ else:
 	print('ERROR: Exactly 3 or 4 command line arguments required, ' + str(len(arguments)) + ' given: ' + ' '.join(arguments))
 	cmd.quit(1)
 detected = '--detected' in options
-show_hbonds = '--hbonds' in options  # TODO implement
+show_hbonds = '--hbonds' in options
 
 
 # Additional constants

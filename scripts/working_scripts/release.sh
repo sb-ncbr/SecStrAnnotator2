@@ -17,6 +17,8 @@ cp  -r  examples  $RELEASE/
 
 mkdir  $RELEASE/scripts
 cp  scripts/SecStrAnnotator_batch.py  $RELEASE/scripts/
+cp  scripts/SecStrAPI_pipeline.py  $RELEASE/scripts/
+cp  scripts/SecStrAPI_pipeline_settings.json  $RELEASE/scripts/
 cp  scripts/script_align.py  $RELEASE/scripts/
 cp  scripts/script_session.py  $RELEASE/scripts/
 cp  scripts/lib.py  $RELEASE/scripts/
@@ -29,5 +31,6 @@ rm  $RELEASE/scripts/R_sec_str_anatomy_analysis/*obsolete*
 mkdir  $RELEASE/scripts/secstrapi_plugin
 cp  scripts/secstrapi_plugin/$PLUGIN_RELEASE  $RELEASE/scripts/secstrapi_plugin
 
+rm  -f  $RELEASE-release.zip
 zip  $RELEASE-release.zip  -r $RELEASE
 rm  -r  $RELEASE

@@ -1,7 +1,7 @@
 {
     "1akd": {
         "comment": "Automatic annotation for 1akd based on 2nnj template. Total value of used metric: 267.49",
-        "software": "SecStrAnnotator 2.2 [2020-06-17]",
+        "software": "SecStrAnnotator 2.2 [2020-07-01]",
         "args": "examples/ 2nnj,A 1akd,A,:",
         "found": 32,
         "total_metric_value": 267.49,

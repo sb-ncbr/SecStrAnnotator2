@@ -1,7 +1,7 @@
 {
     "1akdA": {
         "comment": "Automatic annotation for 1akd based on 2nnj template. Total value of used metric: 267.49",
-        "software": "SecStrAnnotator 2.2 [2020-06-17]",
+        "software": "SecStrAnnotator 2.2 [2020-07-01]",
         "args": "examples/ 2nnj,A 1akd,A,:",
         "found": 32,
         "total_metric_value": 267.49,
@@ -746,9 +746,1331 @@
             "ranges": ":"
         }
     },
+    "1bu7A": {
+        "comment": "Automatic annotation for 1bu7 based on 2nnj template. Total value of used metric: 167.20",
+        "software": "SecStrAnnotator 2.2 [2020-07-01]",
+        "args": "examples/ 2nnj,A 1bu7,A,:",
+        "found": 29,
+        "total_metric_value": 167.195,
+        "secondary_structure_elements": [
+            {
+                "label": "A'",
+                "chain_id": "A",
+                "start": 17,
+                "end": 20,
+                "type": "G",
+                "color": "s121",
+                "start_vector": [
+                    41.817,
+                    10.568,
+                    -4.39
+                ],
+                "end_vector": [
+                    37.728,
+                    11.339,
+                    -10.462
+                ],
+                "metric_value": 6.627,
+                "sequence": "LPLL"
+            },
+            {
+                "label": "A",
+                "chain_id": "A",
+                "start": 25,
+                "end": 36,
+                "type": "H",
+                "color": "s143",
+                "start_vector": [
+                    37.677,
+                    16.524,
+                    -16.713
+                ],
+                "end_vector": [
+                    38.205,
+                    28.331,
+                    -3.382
+                ],
+                "metric_value": 4.931,
+                "sequence": "PVQALMKIADEL"
+            },
+            {
+                "label": "B",
+                "chain_id": "A",
+                "start": 55,
+                "end": 62,
+                "type": "H",
+                "color": "s208",
+                "start_vector": [
+                    48.271,
+                    34.503,
+                    -9.494
+                ],
+                "end_vector": [
+                    59.043,
+                    30.356,
+                    -12.894
+                ],
+                "metric_value": 6.937,
+                "sequence": "QRLIKEAC"
+            },
+            {
+                "label": "B'",
+                "chain_id": "A",
+                "start": 73,
+                "end": 82,
+                "type": "h",
+                "color": "s251",
+                "start_vector": [
+                    50.913,
+                    12.394,
+                    -15.477
+                ],
+                "end_vector": [
+                    56.166,
+                    6.138,
+                    -26.592
+                ],
+                "metric_value": 9.165,
+                "sequence": "QALKFVRDFA"
+            },
+            {
+                "label": "B''",
+                "chain_id": "A",
+                "start": 86,
+                "end": 88,
+                "type": "G",
+                "color": "s272",
+                "start_vector": [
+                    58.458,
+                    15.015,
+                    -28.323
+                ],
+                "end_vector": [
+                    59.133,
+                    15.832,
+                    -23.48
+                ],
+                "metric_value": 2.203,
+                "sequence": "LFT"
+            },
+            {
+                "label": "C",
+                "chain_id": "A",
+                "start": 94,
+                "end": 107,
+                "type": "h",
+                "color": "s294",
+                "start_vector": [
+                    69.952,
+                    14.257,
+                    -24.384
+                ],
+                "end_vector": [
+                    61.436,
+                    27.448,
+                    -38.768
+                ],
+                "metric_value": 4.631,
+                "sequence": "KNWKKAHNILLPSF"
+            },
+            {
+                "label": "D",
+                "chain_id": "A",
+                "start": 109,
+                "end": 132,
+                "type": "h",
+                "color": "s316",
+                "start_vector": [
+                    59.552,
+                    29.446,
+                    -41.968
+                ],
+                "end_vector": [
+                    28.012,
+                    19.547,
+                    -52.271
+                ],
+                "metric_value": 9.798,
+                "sequence": "QQAMKGYHAMMVDIAVQLVQKWER"
+            },
+            {
+                "label": "E",
+                "chain_id": "A",
+                "start": 141,
+                "end": 158,
+                "type": "H",
+                "color": "s359",
+                "start_vector": [
+                    31.41,
+                    18.685,
+                    -35.013
+                ],
+                "end_vector": [
+                    55.678,
+                    16.28,
+                    -45.014
+                ],
+                "metric_value": 1.741,
+                "sequence": "VPEDMTRLTLDTIGLCGF"
+            },
+            {
+                "label": "F",
+                "chain_id": "A",
+                "start": 172,
+                "end": 189,
+                "type": "h",
+                "color": "s381",
+                "start_vector": [
+                    45.141,
+                    5.302,
+                    -40.229
+                ],
+                "end_vector": [
+                    44.584,
+                    6.311,
+                    -11.992
+                ],
+                "metric_value": 14.078,
+                "sequence": "PFITSMVRALDEAMNKLQ"
+            },
+            {
+                "label": "G",
+                "chain_id": "A",
+                "start": 196,
+                "end": 226,
+                "type": "h",
+                "color": "s445",
+                "start_vector": [
+                    41.252,
+                    -7.525,
+                    -15.074
+                ],
+                "end_vector": [
+                    65.097,
+                    8.63,
+                    -52.926
+                ],
+                "metric_value": 7.382,
+                "sequence": "PAYDENKRQFQEDIKVMNDLVDKIIADRKAS"
+            },
+            {
+                "label": "H",
+                "chain_id": "A",
+                "start": 233,
+                "end": 239,
+                "type": "H",
+                "color": "s467",
+                "start_vector": [
+                    58.602,
+                    17.352,
+                    -43.771
+                ],
+                "end_vector": [
+                    69.27,
+                    16.31,
+                    -41.296
+                ],
+                "metric_value": 12.828,
+                "sequence": "LLTHMLN"
+            },
+            {
+                "label": "I",
+                "chain_id": "A",
+                "start": 251,
+                "end": 283,
+                "type": "H",
+                "color": "s532",
+                "start_vector": [
+                    66.121,
+                    6.208,
+                    -34.75
+                ],
+                "end_vector": [
+                    25.621,
+                    33.155,
+                    -30.547
+                ],
+                "metric_value": 1.82,
+                "sequence": "DENIRYQIITFLIAGHETTSGLLSFALYFLVKN"
+            },
+            {
+                "label": "J",
+                "chain_id": "A",
+                "start": 284,
+                "end": 298,
+                "type": "H",
+                "color": "s554",
+                "start_vector": [
+                    27.185,
+                    38.291,
+                    -31.244
+                ],
+                "end_vector": [
+                    40.015,
+                    40.56,
+                    -49.065
+                ],
+                "metric_value": 2.263,
+                "sequence": "PHVLQKAAEEAARVL"
+            },
+            {
+                "label": "J'",
+                "chain_id": "A",
+                "start": 305,
+                "end": 311,
+                "type": "h",
+                "color": "s575",
+                "start_vector": [
+                    49.376,
+                    35.091,
+                    -48.54
+                ],
+                "end_vector": [
+                    44.448,
+                    40.193,
+                    -38.714
+                ],
+                "metric_value": 3.966,
+                "sequence": "YKQVKQL"
+            },
+            {
+                "label": "K",
+                "chain_id": "A",
+                "start": 312,
+                "end": 325,
+                "type": "H",
+                "color": "s597",
+                "start_vector": [
+                    41.325,
+                    40.468,
+                    -38.321
+                ],
+                "end_vector": [
+                    40.346,
+                    28.676,
+                    -22.13
+                ],
+                "metric_value": 2.381,
+                "sequence": "KYVGMVLNEALRLW"
+            },
+            {
+                "label": "K'",
+                "chain_id": "A",
+                "start": 357,
+                "end": 362,
+                "type": "h",
+                "color": "s727",
+                "start_vector": [
+                    43.848,
+                    25.702,
+                    -16.156
+                ],
+                "end_vector": [
+                    41.676,
+                    34.861,
+                    -15.135
+                ],
+                "metric_value": 1.533,
+                "sequence": "IPQLHR"
+            },
+            {
+                "label": "K''",
+                "chain_id": "A",
+                "start": 376,
+                "end": 379,
+                "type": "G",
+                "color": "s748",
+                "start_vector": [
+                    36.075,
+                    40.12,
+                    -27.144
+                ],
+                "end_vector": [
+                    43.114,
+                    43.188,
+                    -26.842
+                ],
+                "metric_value": 3.627,
+                "sequence": "PERF"
+            },
+            {
+                "label": "L",
+                "chain_id": "A",
+                "start": 403,
+                "end": 420,
+                "type": "H",
+                "color": "s770",
+                "start_vector": [
+                    54.129,
+                    26.767,
+                    -33.465
+                ],
+                "end_vector": [
+                    30.984,
+                    32.743,
+                    -46.503
+                ],
+                "metric_value": 0.82,
+                "sequence": "QQFALHEATLVLGMMLKH"
+            },
+            {
+                "label": "1-1",
+                "chain_id": "A",
+                "start": 39,
+                "end": 44,
+                "type": "E",
+                "sheet_id": 1,
+                "color": "s164",
+                "start_vector": [
+                    45.716,
+                    27.972,
+                    -4.002
+                ],
+                "end_vector": [
+                    48.142,
+                    9.09,
+                    -3.775
+                ],
+                "metric_value": 2.338,
+                "sequence": "IFKFEA"
+            },
+            {
+                "label": "1-2",
+                "chain_id": "A",
+                "start": 47,
+                "end": 52,
+                "type": "E",
+                "sheet_id": 1,
+                "color": "s186",
+                "start_vector": [
+                    53.353,
+                    10.576,
+                    -4.034
+                ],
+                "end_vector": [
+                    47.176,
+                    27.671,
+                    -9.278
+                ],
+                "metric_value": 1.452,
+                "sequence": "RVTRYL"
+            },
+            {
+                "label": "1-5",
+                "chain_id": "A",
+                "start": 67,
+                "end": 69,
+                "type": "E",
+                "sheet_id": 1,
+                "color": "s229",
+                "start_vector": [
+                    62.402,
+                    26.769,
+                    -11.895
+                ],
+                "end_vector": [
+                    59.086,
+                    20.274,
+                    -16.804
+                ],
+                "metric_value": 12.489,
+                "sequence": "FDK"
+            },
+            {
+                "label": "1-4",
+                "chain_id": "A",
+                "start": 330,
+                "end": 335,
+                "type": "E",
+                "sheet_id": 1,
+                "color": "s640",
+                "start_vector": [
+                    46.75,
+                    21.452,
+                    -19.34
+                ],
+                "end_vector": [
+                    62.903,
+                    21.834,
+                    -8.896
+                ],
+                "metric_value": 18.094,
+                "sequence": "AFSLYA"
+            },
+            {
+                "label": "2-1",
+                "chain_id": "A",
+                "start": 339,
+                "end": 341,
+                "type": "E",
+                "sheet_id": 2,
+                "color": "s662",
+                "start_vector": [
+                    63.084,
+                    26.785,
+                    -2.4
+                ],
+                "end_vector": [
+                    55.746,
+                    31.635,
+                    -3.045
+                ],
+                "metric_value": 5.787,
+                "sequence": "TVL"
+            },
+            {
+                "label": "2-2",
+                "chain_id": "A",
+                "start": 345,
+                "end": 347,
+                "type": "E",
+                "sheet_id": 2,
+                "color": "s683",
+                "start_vector": [
+                    54.573,
+                    29.341,
+                    1.162
+                ],
+                "end_vector": [
+                    60.008,
+                    23.097,
+                    -1.485
+                ],
+                "metric_value": 4.512,
+                "sequence": "YPL"
+            },
+            {
+                "label": "1-3",
+                "chain_id": "A",
+                "start": 352,
+                "end": 356,
+                "type": "E",
+                "sheet_id": 1,
+                "color": "s705",
+                "start_vector": [
+                    56.644,
+                    19.279,
+                    -7.452
+                ],
+                "end_vector": [
+                    45.65,
+                    26.178,
+                    -15.747
+                ],
+                "metric_value": 6.017,
+                "sequence": "ELMVL"
+            },
+            {
+                "label": "3-3",
+                "chain_id": "A",
+                "start": 421,
+                "end": 424,
+                "type": "E",
+                "sheet_id": 3,
+                "color": "s791",
+                "start_vector": [
+                    29.798,
+                    31.581,
+                    -46.002
+                ],
+                "end_vector": [
+                    23.265,
+                    28.464,
+                    -36.422
+                ],
+                "metric_value": 1.82,
+                "sequence": "FDFE"
+            },
+            {
+                "label": "4-1",
+                "chain_id": "A",
+                "start": 433,
+                "end": 435,
+                "type": "E",
+                "sheet_id": 4,
+                "color": "s835",
+                "start_vector": [
+                    31.712,
+                    19.307,
+                    -23.308
+                ],
+                "end_vector": [
+                    39.19,
+                    14.298,
+                    -22.789
+                ],
+                "metric_value": 7.772,
+                "sequence": "IKE"
+            },
+            {
+                "label": "4-2",
+                "chain_id": "A",
+                "start": 439,
+                "end": 441,
+                "type": "E",
+                "sheet_id": 4,
+                "color": "s878",
+                "start_vector": [
+                    40.826,
+                    19.225,
+                    -24.728
+                ],
+                "end_vector": [
+                    32.168,
+                    19.424,
+                    -27.979
+                ],
+                "metric_value": 5.702,
+                "sequence": "LKP"
+            },
+            {
+                "label": "3-2",
+                "chain_id": "A",
+                "start": 447,
+                "end": 450,
+                "type": "E",
+                "sheet_id": 3,
+                "color": "s900",
+                "start_vector": [
+                    24.645,
+                    23.916,
+                    -39.058
+                ],
+                "end_vector": [
+                    26.31,
+                    30.444,
+                    -49.097
+                ],
+                "metric_value": 4.482,
+                "sequence": "KAKS"
+            }
+        ],
+        "beta_connectivity": [
+            [
+                "1-1",
+                "1-2",
+                -1
+            ],
+            [
+                "1-2",
+                "1-3",
+                1
+            ],
+            [
+                "1-5",
+                "1-4",
+                -1
+            ],
+            [
+                "1-4",
+                "1-3",
+                -1
+            ],
+            [
+                "2-1",
+                "2-2",
+                -1
+            ],
+            [
+                "3-3",
+                "3-2",
+                -1
+            ],
+            [
+                "4-1",
+                "4-2",
+                -1
+            ]
+        ],
+        "rotation_matrix": [
+            0.9321154998340809,
+            -0.27719221798452875,
+            0.2330776035098165,
+            47.00005888938906,
+            -0.36071458268513285,
+            -0.653112175995442,
+            0.6658299147716251,
+            21.19275706778016,
+            -0.03233705007189726,
+            -0.7047048742951312,
+            -0.7087632576095712,
+            -28.341018864454444,
+            -47.925429204724864,
+            -69.29533024553982,
+            -43.12370281399417,
+            1
+        ],
+        "domain": {
+            "name": "1bu7A",
+            "pdb": "1bu7",
+            "chain": "A",
+            "ranges": ":"
+        }
+    },
+    "1bu7B": {
+        "comment": "Automatic annotation for 1bu7 based on 2nnj template. Total value of used metric: 159.95",
+        "software": "SecStrAnnotator 2.2 [2020-07-01]",
+        "args": "examples/ 2nnj,A 1bu7,B,:",
+        "found": 29,
+        "total_metric_value": 159.953,
+        "secondary_structure_elements": [
+            {
+                "label": "A'",
+                "chain_id": "B",
+                "start": 17,
+                "end": 20,
+                "type": "G",
+                "color": "s121",
+                "start_vector": [
+                    40.308,
+                    11.529,
+                    -2.772
+                ],
+                "end_vector": [
+                    36.126,
+                    12.567,
+                    -7.966
+                ],
+                "metric_value": 5.285,
+                "sequence": "LPLL"
+            },
+            {
+                "label": "A",
+                "chain_id": "B",
+                "start": 25,
+                "end": 36,
+                "type": "H",
+                "color": "s143",
+                "start_vector": [
+                    37.817,
+                    16.916,
+                    -16.209
+                ],
+                "end_vector": [
+                    38.73,
+                    28.87,
+                    -3.318
+                ],
+                "metric_value": 4.425,
+                "sequence": "PVQALMKIADEL"
+            },
+            {
+                "label": "B",
+                "chain_id": "B",
+                "start": 55,
+                "end": 62,
+                "type": "H",
+                "color": "s208",
+                "start_vector": [
+                    48.963,
+                    34.342,
+                    -9.79
+                ],
+                "end_vector": [
+                    59.607,
+                    29.421,
+                    -13.052
+                ],
+                "metric_value": 6.73,
+                "sequence": "QRLIKEAC"
+            },
+            {
+                "label": "B'",
+                "chain_id": "B",
+                "start": 73,
+                "end": 82,
+                "type": "h",
+                "color": "s251",
+                "start_vector": [
+                    50.53,
+                    11.189,
+                    -16.628
+                ],
+                "end_vector": [
+                    56.221,
+                    5.705,
+                    -28.143
+                ],
+                "metric_value": 8.8,
+                "sequence": "QALKFVRDFA"
+            },
+            {
+                "label": "B''",
+                "chain_id": "B",
+                "start": 86,
+                "end": 88,
+                "type": "G",
+                "color": "s272",
+                "start_vector": [
+                    58.358,
+                    14.734,
+                    -29.107
+                ],
+                "end_vector": [
+                    58.964,
+                    15.14,
+                    -24.205
+                ],
+                "metric_value": 2.319,
+                "sequence": "LFT"
+            },
+            {
+                "label": "C",
+                "chain_id": "B",
+                "start": 94,
+                "end": 107,
+                "type": "h",
+                "color": "s294",
+                "start_vector": [
+                    69.764,
+                    13.574,
+                    -25.324
+                ],
+                "end_vector": [
+                    61.578,
+                    27.7,
+                    -38.872
+                ],
+                "metric_value": 5.211,
+                "sequence": "KNWKKAHNILLPSF"
+            },
+            {
+                "label": "D",
+                "chain_id": "B",
+                "start": 109,
+                "end": 132,
+                "type": "h",
+                "color": "s316",
+                "start_vector": [
+                    59.748,
+                    29.813,
+                    -42.221
+                ],
+                "end_vector": [
+                    27.73,
+                    19.693,
+                    -52.099
+                ],
+                "metric_value": 9.729,
+                "sequence": "QQAMKGYHAMMVDIAVQLVQKWER"
+            },
+            {
+                "label": "E",
+                "chain_id": "B",
+                "start": 141,
+                "end": 158,
+                "type": "H",
+                "color": "s359",
+                "start_vector": [
+                    31.701,
+                    18.323,
+                    -34.926
+                ],
+                "end_vector": [
+                    55.574,
+                    16.888,
+                    -45.762
+                ],
+                "metric_value": 1.905,
+                "sequence": "VPEDMTRLTLDTIGLCGF"
+            },
+            {
+                "label": "F",
+                "chain_id": "B",
+                "start": 172,
+                "end": 189,
+                "type": "h",
+                "color": "s381",
+                "start_vector": [
+                    45.308,
+                    5.932,
+                    -41.838
+                ],
+                "end_vector": [
+                    44.464,
+                    4.422,
+                    -14.324
+                ],
+                "metric_value": 12.617,
+                "sequence": "PFITSMVRALDEAMNKLQ"
+            },
+            {
+                "label": "G",
+                "chain_id": "B",
+                "start": 196,
+                "end": 226,
+                "type": "h",
+                "color": "s445",
+                "start_vector": [
+                    41.547,
+                    -9.083,
+                    -18.154
+                ],
+                "end_vector": [
+                    65.211,
+                    10.242,
+                    -54.352
+                ],
+                "metric_value": 6.817,
+                "sequence": "PAYDENKRQFQEDIKVMNDLVDKIIADRKAS"
+            },
+            {
+                "label": "H",
+                "chain_id": "B",
+                "start": 233,
+                "end": 239,
+                "type": "H",
+                "color": "s467",
+                "start_vector": [
+                    58.787,
+                    17.977,
+                    -44.311
+                ],
+                "end_vector": [
+                    69.226,
+                    16.719,
+                    -41.999
+                ],
+                "metric_value": 13.158,
+                "sequence": "LLTHMLN"
+            },
+            {
+                "label": "I",
+                "chain_id": "B",
+                "start": 251,
+                "end": 283,
+                "type": "H",
+                "color": "s532",
+                "start_vector": [
+                    66.231,
+                    6.211,
+                    -35.978
+                ],
+                "end_vector": [
+                    25.817,
+                    32.963,
+                    -30.167
+                ],
+                "metric_value": 2.538,
+                "sequence": "DENIRYQIITFLIAGHETTSGLLSFALYFLVKN"
+            },
+            {
+                "label": "J",
+                "chain_id": "B",
+                "start": 284,
+                "end": 298,
+                "type": "H",
+                "color": "s554",
+                "start_vector": [
+                    27.232,
+                    37.992,
+                    -30.91
+                ],
+                "end_vector": [
+                    39.622,
+                    40.91,
+                    -48.874
+                ],
+                "metric_value": 2.11,
+                "sequence": "PHVLQKAAEEAARVL"
+            },
+            {
+                "label": "J'",
+                "chain_id": "B",
+                "start": 305,
+                "end": 311,
+                "type": "h",
+                "color": "s575",
+                "start_vector": [
+                    49.17,
+                    35.47,
+                    -48.537
+                ],
+                "end_vector": [
+                    44.35,
+                    40.383,
+                    -38.57
+                ],
+                "metric_value": 3.8,
+                "sequence": "YKQVKQL"
+            },
+            {
+                "label": "K",
+                "chain_id": "B",
+                "start": 312,
+                "end": 325,
+                "type": "H",
+                "color": "s597",
+                "start_vector": [
+                    41.174,
+                    40.48,
+                    -38.113
+                ],
+                "end_vector": [
+                    40.629,
+                    28.497,
+                    -22.097
+                ],
+                "metric_value": 2.39,
+                "sequence": "KYVGMVLNEALRLW"
+            },
+            {
+                "label": "K'",
+                "chain_id": "B",
+                "start": 357,
+                "end": 362,
+                "type": "h",
+                "color": "s727",
+                "start_vector": [
+                    44.078,
+                    25.371,
+                    -16.272
+                ],
+                "end_vector": [
+                    42.209,
+                    34.532,
+                    -15.177
+                ],
+                "metric_value": 1.546,
+                "sequence": "IPQLHR"
+            },
+            {
+                "label": "K''",
+                "chain_id": "B",
+                "start": 376,
+                "end": 379,
+                "type": "G",
+                "color": "s748",
+                "start_vector": [
+                    36.15,
+                    39.923,
+                    -26.828
+                ],
+                "end_vector": [
+                    43.196,
+                    43.128,
+                    -26.687
+                ],
+                "metric_value": 3.605,
+                "sequence": "PERF"
+            },
+            {
+                "label": "L",
+                "chain_id": "B",
+                "start": 403,
+                "end": 420,
+                "type": "H",
+                "color": "s770",
+                "start_vector": [
+                    54.182,
+                    26.777,
+                    -33.654
+                ],
+                "end_vector": [
+                    30.913,
+                    32.905,
+                    -46.236
+                ],
+                "metric_value": 1.066,
+                "sequence": "QQFALHEATLVLGMMLKH"
+            },
+            {
+                "label": "1-1",
+                "chain_id": "B",
+                "start": 39,
+                "end": 44,
+                "type": "E",
+                "sheet_id": 1,
+                "color": "s164",
+                "start_vector": [
+                    46.811,
+                    28.096,
+                    -4.334
+                ],
+                "end_vector": [
+                    46.84,
+                    9.063,
+                    -3.224
+                ],
+                "metric_value": 2.275,
+                "sequence": "IFKFEA"
+            },
+            {
+                "label": "1-2",
+                "chain_id": "B",
+                "start": 47,
+                "end": 52,
+                "type": "E",
+                "sheet_id": 1,
+                "color": "s186",
+                "start_vector": [
+                    52.054,
+                    9.62,
+                    -4.09
+                ],
+                "end_vector": [
+                    47.909,
+                    27.437,
+                    -9.458
+                ],
+                "metric_value": 1.193,
+                "sequence": "RVTRYL"
+            },
+            {
+                "label": "1-5",
+                "chain_id": "B",
+                "start": 67,
+                "end": 69,
+                "type": "E",
+                "sheet_id": 1,
+                "color": "s229",
+                "start_vector": [
+                    62.714,
+                    25.415,
+                    -12.081
+                ],
+                "end_vector": [
+                    58.995,
+                    19.161,
+                    -17.154
+                ],
+                "metric_value": 11.49,
+                "sequence": "FDK"
+            },
+            {
+                "label": "1-4",
+                "chain_id": "B",
+                "start": 330,
+                "end": 335,
+                "type": "E",
+                "sheet_id": 1,
+                "color": "s640",
+                "start_vector": [
+                    46.799,
+                    21.087,
+                    -19.544
+                ],
+                "end_vector": [
+                    63.009,
+                    20.453,
+                    -9.193
+                ],
+                "metric_value": 17.738,
+                "sequence": "AFSLYA"
+            },
+            {
+                "label": "2-1",
+                "chain_id": "B",
+                "start": 339,
+                "end": 341,
+                "type": "E",
+                "sheet_id": 2,
+                "color": "s662",
+                "start_vector": [
+                    63.607,
+                    25.398,
+                    -2.566
+                ],
+                "end_vector": [
+                    56.566,
+                    30.772,
+                    -3.209
+                ],
+                "metric_value": 4.62,
+                "sequence": "TVL"
+            },
+            {
+                "label": "2-2",
+                "chain_id": "B",
+                "start": 345,
+                "end": 347,
+                "type": "E",
+                "sheet_id": 2,
+                "color": "s683",
+                "start_vector": [
+                    55.538,
+                    28.643,
+                    1.12
+                ],
+                "end_vector": [
+                    60.275,
+                    21.839,
+                    -1.536
+                ],
+                "metric_value": 3.419,
+                "sequence": "YPL"
+            },
+            {
+                "label": "1-3",
+                "chain_id": "B",
+                "start": 352,
+                "end": 356,
+                "type": "E",
+                "sheet_id": 1,
+                "color": "s705",
+                "start_vector": [
+                    56.726,
+                    18.453,
+                    -7.626
+                ],
+                "end_vector": [
+                    45.965,
+                    25.882,
+                    -15.885
+                ],
+                "metric_value": 5.523,
+                "sequence": "ELMVL"
+            },
+            {
+                "label": "3-3",
+                "chain_id": "B",
+                "start": 421,
+                "end": 424,
+                "type": "E",
+                "sheet_id": 3,
+                "color": "s791",
+                "start_vector": [
+                    29.692,
+                    31.636,
+                    -45.692
+                ],
+                "end_vector": [
+                    23.321,
+                    28.199,
+                    -36.151
+                ],
+                "metric_value": 2.054,
+                "sequence": "FDFE"
+            },
+            {
+                "label": "4-1",
+                "chain_id": "B",
+                "start": 433,
+                "end": 435,
+                "type": "E",
+                "sheet_id": 4,
+                "color": "s835",
+                "start_vector": [
+                    32.062,
+                    19.181,
+                    -23.097
+                ],
+                "end_vector": [
+                    39.516,
+                    14.53,
+                    -22.196
+                ],
+                "metric_value": 7.364,
+                "sequence": "IKE"
+            },
+            {
+                "label": "4-2",
+                "chain_id": "B",
+                "start": 439,
+                "end": 441,
+                "type": "E",
+                "sheet_id": 4,
+                "color": "s878",
+                "start_vector": [
+                    41.058,
+                    19.19,
+                    -24.784
+                ],
+                "end_vector": [
+                    32.43,
+                    19.345,
+                    -27.855
+                ],
+                "metric_value": 5.67,
+                "sequence": "LKP"
+            },
+            {
+                "label": "3-2",
+                "chain_id": "B",
+                "start": 447,
+                "end": 450,
+                "type": "E",
+                "sheet_id": 3,
+                "color": "s900",
+                "start_vector": [
+                    24.752,
+                    23.698,
+                    -38.891
+                ],
+                "end_vector": [
+                    26.062,
+                    30.489,
+                    -48.737
+                ],
+                "metric_value": 4.558,
+                "sequence": "KAKS"
+            }
+        ],
+        "beta_connectivity": [
+            [
+                "1-1",
+                "1-2",
+                -1
+            ],
+            [
+                "1-2",
+                "1-3",
+                1
+            ],
+            [
+                "1-5",
+                "1-4",
+                -1
+            ],
+            [
+                "1-4",
+                "1-3",
+                -1
+            ],
+            [
+                "2-1",
+                "2-2",
+                -1
+            ],
+            [
+                "3-3",
+                "3-2",
+                -1
+            ],
+            [
+                "4-1",
+                "4-2",
+                -1
+            ]
+        ],
+        "rotation_matrix": [
+            -0.955012457527149,
+            0.19712853591633586,
+            0.22156612172314838,
+            47.11623809022728,
+            0.27559834856728355,
+            0.31399376604363066,
+            0.9085446962878181,
+            20.98142923383076,
+            0.10952970480623656,
+            0.928734760420444,
+            -0.354196257111561,
+            -28.102988189077525,
+            -35.09372644941761,
+            -118.44997177483899,
+            -52.1468089211662,
+            1
+        ],
+        "domain": {
+            "name": "1bu7B",
+            "pdb": "1bu7",
+            "chain": "B",
+            "ranges": ":"
+        }
+    },
     "1tqnA": {
         "comment": "Automatic annotation for 1tqn based on 2nnj template. Total value of used metric: 178.21",
-        "software": "SecStrAnnotator 2.2 [2020-06-17]",
+        "software": "SecStrAnnotator 2.2 [2020-07-01]",
         "args": "examples/ 2nnj,A 1tqn,A,:",
         "found": 30,
         "total_metric_value": 178.214,
@@ -1424,1328 +2746,6 @@
             "name": "1tqnA",
             "pdb": "1tqn",
             "chain": "A",
-            "ranges": ":"
-        }
-    },
-    "1bu7A": {
-        "comment": "Automatic annotation for 1bu7 based on 2nnj template. Total value of used metric: 167.20",
-        "software": "SecStrAnnotator 2.2 [2020-06-17]",
-        "args": "examples/ 2nnj,A 1bu7,A,:",
-        "found": 29,
-        "total_metric_value": 167.195,
-        "secondary_structure_elements": [
-            {
-                "label": "A'",
-                "chain_id": "A",
-                "start": 17,
-                "end": 20,
-                "type": "G",
-                "color": "s121",
-                "start_vector": [
-                    41.817,
-                    10.568,
-                    -4.39
-                ],
-                "end_vector": [
-                    37.728,
-                    11.339,
-                    -10.462
-                ],
-                "metric_value": 6.627,
-                "sequence": "LPLL"
-            },
-            {
-                "label": "A",
-                "chain_id": "A",
-                "start": 25,
-                "end": 36,
-                "type": "H",
-                "color": "s143",
-                "start_vector": [
-                    37.677,
-                    16.524,
-                    -16.713
-                ],
-                "end_vector": [
-                    38.205,
-                    28.331,
-                    -3.382
-                ],
-                "metric_value": 4.931,
-                "sequence": "PVQALMKIADEL"
-            },
-            {
-                "label": "B",
-                "chain_id": "A",
-                "start": 55,
-                "end": 62,
-                "type": "H",
-                "color": "s208",
-                "start_vector": [
-                    48.271,
-                    34.503,
-                    -9.494
-                ],
-                "end_vector": [
-                    59.043,
-                    30.356,
-                    -12.894
-                ],
-                "metric_value": 6.937,
-                "sequence": "QRLIKEAC"
-            },
-            {
-                "label": "B'",
-                "chain_id": "A",
-                "start": 73,
-                "end": 82,
-                "type": "h",
-                "color": "s251",
-                "start_vector": [
-                    50.913,
-                    12.394,
-                    -15.477
-                ],
-                "end_vector": [
-                    56.166,
-                    6.138,
-                    -26.592
-                ],
-                "metric_value": 9.165,
-                "sequence": "QALKFVRDFA"
-            },
-            {
-                "label": "B''",
-                "chain_id": "A",
-                "start": 86,
-                "end": 88,
-                "type": "G",
-                "color": "s272",
-                "start_vector": [
-                    58.458,
-                    15.015,
-                    -28.323
-                ],
-                "end_vector": [
-                    59.133,
-                    15.832,
-                    -23.48
-                ],
-                "metric_value": 2.203,
-                "sequence": "LFT"
-            },
-            {
-                "label": "C",
-                "chain_id": "A",
-                "start": 94,
-                "end": 107,
-                "type": "h",
-                "color": "s294",
-                "start_vector": [
-                    69.952,
-                    14.257,
-                    -24.384
-                ],
-                "end_vector": [
-                    61.436,
-                    27.448,
-                    -38.768
-                ],
-                "metric_value": 4.631,
-                "sequence": "KNWKKAHNILLPSF"
-            },
-            {
-                "label": "D",
-                "chain_id": "A",
-                "start": 109,
-                "end": 132,
-                "type": "h",
-                "color": "s316",
-                "start_vector": [
-                    59.552,
-                    29.446,
-                    -41.968
-                ],
-                "end_vector": [
-                    28.012,
-                    19.547,
-                    -52.271
-                ],
-                "metric_value": 9.798,
-                "sequence": "QQAMKGYHAMMVDIAVQLVQKWER"
-            },
-            {
-                "label": "E",
-                "chain_id": "A",
-                "start": 141,
-                "end": 158,
-                "type": "H",
-                "color": "s359",
-                "start_vector": [
-                    31.41,
-                    18.685,
-                    -35.013
-                ],
-                "end_vector": [
-                    55.678,
-                    16.28,
-                    -45.014
-                ],
-                "metric_value": 1.741,
-                "sequence": "VPEDMTRLTLDTIGLCGF"
-            },
-            {
-                "label": "F",
-                "chain_id": "A",
-                "start": 172,
-                "end": 189,
-                "type": "h",
-                "color": "s381",
-                "start_vector": [
-                    45.141,
-                    5.302,
-                    -40.229
-                ],
-                "end_vector": [
-                    44.584,
-                    6.311,
-                    -11.992
-                ],
-                "metric_value": 14.078,
-                "sequence": "PFITSMVRALDEAMNKLQ"
-            },
-            {
-                "label": "G",
-                "chain_id": "A",
-                "start": 196,
-                "end": 226,
-                "type": "h",
-                "color": "s445",
-                "start_vector": [
-                    41.252,
-                    -7.525,
-                    -15.074
-                ],
-                "end_vector": [
-                    65.097,
-                    8.63,
-                    -52.926
-                ],
-                "metric_value": 7.382,
-                "sequence": "PAYDENKRQFQEDIKVMNDLVDKIIADRKAS"
-            },
-            {
-                "label": "H",
-                "chain_id": "A",
-                "start": 233,
-                "end": 239,
-                "type": "H",
-                "color": "s467",
-                "start_vector": [
-                    58.602,
-                    17.352,
-                    -43.771
-                ],
-                "end_vector": [
-                    69.27,
-                    16.31,
-                    -41.296
-                ],
-                "metric_value": 12.828,
-                "sequence": "LLTHMLN"
-            },
-            {
-                "label": "I",
-                "chain_id": "A",
-                "start": 251,
-                "end": 283,
-                "type": "H",
-                "color": "s532",
-                "start_vector": [
-                    66.121,
-                    6.208,
-                    -34.75
-                ],
-                "end_vector": [
-                    25.621,
-                    33.155,
-                    -30.547
-                ],
-                "metric_value": 1.82,
-                "sequence": "DENIRYQIITFLIAGHETTSGLLSFALYFLVKN"
-            },
-            {
-                "label": "J",
-                "chain_id": "A",
-                "start": 284,
-                "end": 298,
-                "type": "H",
-                "color": "s554",
-                "start_vector": [
-                    27.185,
-                    38.291,
-                    -31.244
-                ],
-                "end_vector": [
-                    40.015,
-                    40.56,
-                    -49.065
-                ],
-                "metric_value": 2.263,
-                "sequence": "PHVLQKAAEEAARVL"
-            },
-            {
-                "label": "J'",
-                "chain_id": "A",
-                "start": 305,
-                "end": 311,
-                "type": "h",
-                "color": "s575",
-                "start_vector": [
-                    49.376,
-                    35.091,
-                    -48.54
-                ],
-                "end_vector": [
-                    44.448,
-                    40.193,
-                    -38.714
-                ],
-                "metric_value": 3.966,
-                "sequence": "YKQVKQL"
-            },
-            {
-                "label": "K",
-                "chain_id": "A",
-                "start": 312,
-                "end": 325,
-                "type": "H",
-                "color": "s597",
-                "start_vector": [
-                    41.325,
-                    40.468,
-                    -38.321
-                ],
-                "end_vector": [
-                    40.346,
-                    28.676,
-                    -22.13
-                ],
-                "metric_value": 2.381,
-                "sequence": "KYVGMVLNEALRLW"
-            },
-            {
-                "label": "K'",
-                "chain_id": "A",
-                "start": 357,
-                "end": 362,
-                "type": "h",
-                "color": "s727",
-                "start_vector": [
-                    43.848,
-                    25.702,
-                    -16.156
-                ],
-                "end_vector": [
-                    41.676,
-                    34.861,
-                    -15.135
-                ],
-                "metric_value": 1.533,
-                "sequence": "IPQLHR"
-            },
-            {
-                "label": "K''",
-                "chain_id": "A",
-                "start": 376,
-                "end": 379,
-                "type": "G",
-                "color": "s748",
-                "start_vector": [
-                    36.075,
-                    40.12,
-                    -27.144
-                ],
-                "end_vector": [
-                    43.114,
-                    43.188,
-                    -26.842
-                ],
-                "metric_value": 3.627,
-                "sequence": "PERF"
-            },
-            {
-                "label": "L",
-                "chain_id": "A",
-                "start": 403,
-                "end": 420,
-                "type": "H",
-                "color": "s770",
-                "start_vector": [
-                    54.129,
-                    26.767,
-                    -33.465
-                ],
-                "end_vector": [
-                    30.984,
-                    32.743,
-                    -46.503
-                ],
-                "metric_value": 0.82,
-                "sequence": "QQFALHEATLVLGMMLKH"
-            },
-            {
-                "label": "1-1",
-                "chain_id": "A",
-                "start": 39,
-                "end": 44,
-                "type": "E",
-                "sheet_id": 1,
-                "color": "s164",
-                "start_vector": [
-                    45.716,
-                    27.972,
-                    -4.002
-                ],
-                "end_vector": [
-                    48.142,
-                    9.09,
-                    -3.775
-                ],
-                "metric_value": 2.338,
-                "sequence": "IFKFEA"
-            },
-            {
-                "label": "1-2",
-                "chain_id": "A",
-                "start": 47,
-                "end": 52,
-                "type": "E",
-                "sheet_id": 1,
-                "color": "s186",
-                "start_vector": [
-                    53.353,
-                    10.576,
-                    -4.034
-                ],
-                "end_vector": [
-                    47.176,
-                    27.671,
-                    -9.278
-                ],
-                "metric_value": 1.452,
-                "sequence": "RVTRYL"
-            },
-            {
-                "label": "1-5",
-                "chain_id": "A",
-                "start": 67,
-                "end": 69,
-                "type": "E",
-                "sheet_id": 1,
-                "color": "s229",
-                "start_vector": [
-                    62.402,
-                    26.769,
-                    -11.895
-                ],
-                "end_vector": [
-                    59.086,
-                    20.274,
-                    -16.804
-                ],
-                "metric_value": 12.489,
-                "sequence": "FDK"
-            },
-            {
-                "label": "1-4",
-                "chain_id": "A",
-                "start": 330,
-                "end": 335,
-                "type": "E",
-                "sheet_id": 1,
-                "color": "s640",
-                "start_vector": [
-                    46.75,
-                    21.452,
-                    -19.34
-                ],
-                "end_vector": [
-                    62.903,
-                    21.834,
-                    -8.896
-                ],
-                "metric_value": 18.094,
-                "sequence": "AFSLYA"
-            },
-            {
-                "label": "2-1",
-                "chain_id": "A",
-                "start": 339,
-                "end": 341,
-                "type": "E",
-                "sheet_id": 2,
-                "color": "s662",
-                "start_vector": [
-                    63.084,
-                    26.785,
-                    -2.4
-                ],
-                "end_vector": [
-                    55.746,
-                    31.635,
-                    -3.045
-                ],
-                "metric_value": 5.787,
-                "sequence": "TVL"
-            },
-            {
-                "label": "2-2",
-                "chain_id": "A",
-                "start": 345,
-                "end": 347,
-                "type": "E",
-                "sheet_id": 2,
-                "color": "s683",
-                "start_vector": [
-                    54.573,
-                    29.341,
-                    1.162
-                ],
-                "end_vector": [
-                    60.008,
-                    23.097,
-                    -1.485
-                ],
-                "metric_value": 4.512,
-                "sequence": "YPL"
-            },
-            {
-                "label": "1-3",
-                "chain_id": "A",
-                "start": 352,
-                "end": 356,
-                "type": "E",
-                "sheet_id": 1,
-                "color": "s705",
-                "start_vector": [
-                    56.644,
-                    19.279,
-                    -7.452
-                ],
-                "end_vector": [
-                    45.65,
-                    26.178,
-                    -15.747
-                ],
-                "metric_value": 6.017,
-                "sequence": "ELMVL"
-            },
-            {
-                "label": "3-3",
-                "chain_id": "A",
-                "start": 421,
-                "end": 424,
-                "type": "E",
-                "sheet_id": 3,
-                "color": "s791",
-                "start_vector": [
-                    29.798,
-                    31.581,
-                    -46.002
-                ],
-                "end_vector": [
-                    23.265,
-                    28.464,
-                    -36.422
-                ],
-                "metric_value": 1.82,
-                "sequence": "FDFE"
-            },
-            {
-                "label": "4-1",
-                "chain_id": "A",
-                "start": 433,
-                "end": 435,
-                "type": "E",
-                "sheet_id": 4,
-                "color": "s835",
-                "start_vector": [
-                    31.712,
-                    19.307,
-                    -23.308
-                ],
-                "end_vector": [
-                    39.19,
-                    14.298,
-                    -22.789
-                ],
-                "metric_value": 7.772,
-                "sequence": "IKE"
-            },
-            {
-                "label": "4-2",
-                "chain_id": "A",
-                "start": 439,
-                "end": 441,
-                "type": "E",
-                "sheet_id": 4,
-                "color": "s878",
-                "start_vector": [
-                    40.826,
-                    19.225,
-                    -24.728
-                ],
-                "end_vector": [
-                    32.168,
-                    19.424,
-                    -27.979
-                ],
-                "metric_value": 5.702,
-                "sequence": "LKP"
-            },
-            {
-                "label": "3-2",
-                "chain_id": "A",
-                "start": 447,
-                "end": 450,
-                "type": "E",
-                "sheet_id": 3,
-                "color": "s900",
-                "start_vector": [
-                    24.645,
-                    23.916,
-                    -39.058
-                ],
-                "end_vector": [
-                    26.31,
-                    30.444,
-                    -49.097
-                ],
-                "metric_value": 4.482,
-                "sequence": "KAKS"
-            }
-        ],
-        "beta_connectivity": [
-            [
-                "1-1",
-                "1-2",
-                -1
-            ],
-            [
-                "1-2",
-                "1-3",
-                1
-            ],
-            [
-                "1-5",
-                "1-4",
-                -1
-            ],
-            [
-                "1-4",
-                "1-3",
-                -1
-            ],
-            [
-                "2-1",
-                "2-2",
-                -1
-            ],
-            [
-                "3-3",
-                "3-2",
-                -1
-            ],
-            [
-                "4-1",
-                "4-2",
-                -1
-            ]
-        ],
-        "rotation_matrix": [
-            0.9321154998340809,
-            -0.27719221798452875,
-            0.2330776035098165,
-            47.00005888938906,
-            -0.36071458268513285,
-            -0.653112175995442,
-            0.6658299147716251,
-            21.19275706778016,
-            -0.03233705007189726,
-            -0.7047048742951312,
-            -0.7087632576095712,
-            -28.341018864454444,
-            -47.925429204724864,
-            -69.29533024553982,
-            -43.12370281399417,
-            1
-        ],
-        "domain": {
-            "name": "1bu7A",
-            "pdb": "1bu7",
-            "chain": "A",
-            "ranges": ":"
-        }
-    },
-    "1bu7B": {
-        "comment": "Automatic annotation for 1bu7 based on 2nnj template. Total value of used metric: 159.95",
-        "software": "SecStrAnnotator 2.2 [2020-06-17]",
-        "args": "examples/ 2nnj,A 1bu7,B,:",
-        "found": 29,
-        "total_metric_value": 159.953,
-        "secondary_structure_elements": [
-            {
-                "label": "A'",
-                "chain_id": "B",
-                "start": 17,
-                "end": 20,
-                "type": "G",
-                "color": "s121",
-                "start_vector": [
-                    40.308,
-                    11.529,
-                    -2.772
-                ],
-                "end_vector": [
-                    36.126,
-                    12.567,
-                    -7.966
-                ],
-                "metric_value": 5.285,
-                "sequence": "LPLL"
-            },
-            {
-                "label": "A",
-                "chain_id": "B",
-                "start": 25,
-                "end": 36,
-                "type": "H",
-                "color": "s143",
-                "start_vector": [
-                    37.817,
-                    16.916,
-                    -16.209
-                ],
-                "end_vector": [
-                    38.73,
-                    28.87,
-                    -3.318
-                ],
-                "metric_value": 4.425,
-                "sequence": "PVQALMKIADEL"
-            },
-            {
-                "label": "B",
-                "chain_id": "B",
-                "start": 55,
-                "end": 62,
-                "type": "H",
-                "color": "s208",
-                "start_vector": [
-                    48.963,
-                    34.342,
-                    -9.79
-                ],
-                "end_vector": [
-                    59.607,
-                    29.421,
-                    -13.052
-                ],
-                "metric_value": 6.73,
-                "sequence": "QRLIKEAC"
-            },
-            {
-                "label": "B'",
-                "chain_id": "B",
-                "start": 73,
-                "end": 82,
-                "type": "h",
-                "color": "s251",
-                "start_vector": [
-                    50.53,
-                    11.189,
-                    -16.628
-                ],
-                "end_vector": [
-                    56.221,
-                    5.705,
-                    -28.143
-                ],
-                "metric_value": 8.8,
-                "sequence": "QALKFVRDFA"
-            },
-            {
-                "label": "B''",
-                "chain_id": "B",
-                "start": 86,
-                "end": 88,
-                "type": "G",
-                "color": "s272",
-                "start_vector": [
-                    58.358,
-                    14.734,
-                    -29.107
-                ],
-                "end_vector": [
-                    58.964,
-                    15.14,
-                    -24.205
-                ],
-                "metric_value": 2.319,
-                "sequence": "LFT"
-            },
-            {
-                "label": "C",
-                "chain_id": "B",
-                "start": 94,
-                "end": 107,
-                "type": "h",
-                "color": "s294",
-                "start_vector": [
-                    69.764,
-                    13.574,
-                    -25.324
-                ],
-                "end_vector": [
-                    61.578,
-                    27.7,
-                    -38.872
-                ],
-                "metric_value": 5.211,
-                "sequence": "KNWKKAHNILLPSF"
-            },
-            {
-                "label": "D",
-                "chain_id": "B",
-                "start": 109,
-                "end": 132,
-                "type": "h",
-                "color": "s316",
-                "start_vector": [
-                    59.748,
-                    29.813,
-                    -42.221
-                ],
-                "end_vector": [
-                    27.73,
-                    19.693,
-                    -52.099
-                ],
-                "metric_value": 9.729,
-                "sequence": "QQAMKGYHAMMVDIAVQLVQKWER"
-            },
-            {
-                "label": "E",
-                "chain_id": "B",
-                "start": 141,
-                "end": 158,
-                "type": "H",
-                "color": "s359",
-                "start_vector": [
-                    31.701,
-                    18.323,
-                    -34.926
-                ],
-                "end_vector": [
-                    55.574,
-                    16.888,
-                    -45.762
-                ],
-                "metric_value": 1.905,
-                "sequence": "VPEDMTRLTLDTIGLCGF"
-            },
-            {
-                "label": "F",
-                "chain_id": "B",
-                "start": 172,
-                "end": 189,
-                "type": "h",
-                "color": "s381",
-                "start_vector": [
-                    45.308,
-                    5.932,
-                    -41.838
-                ],
-                "end_vector": [
-                    44.464,
-                    4.422,
-                    -14.324
-                ],
-                "metric_value": 12.617,
-                "sequence": "PFITSMVRALDEAMNKLQ"
-            },
-            {
-                "label": "G",
-                "chain_id": "B",
-                "start": 196,
-                "end": 226,
-                "type": "h",
-                "color": "s445",
-                "start_vector": [
-                    41.547,
-                    -9.083,
-                    -18.154
-                ],
-                "end_vector": [
-                    65.211,
-                    10.242,
-                    -54.352
-                ],
-                "metric_value": 6.817,
-                "sequence": "PAYDENKRQFQEDIKVMNDLVDKIIADRKAS"
-            },
-            {
-                "label": "H",
-                "chain_id": "B",
-                "start": 233,
-                "end": 239,
-                "type": "H",
-                "color": "s467",
-                "start_vector": [
-                    58.787,
-                    17.977,
-                    -44.311
-                ],
-                "end_vector": [
-                    69.226,
-                    16.719,
-                    -41.999
-                ],
-                "metric_value": 13.158,
-                "sequence": "LLTHMLN"
-            },
-            {
-                "label": "I",
-                "chain_id": "B",
-                "start": 251,
-                "end": 283,
-                "type": "H",
-                "color": "s532",
-                "start_vector": [
-                    66.231,
-                    6.211,
-                    -35.978
-                ],
-                "end_vector": [
-                    25.817,
-                    32.963,
-                    -30.167
-                ],
-                "metric_value": 2.538,
-                "sequence": "DENIRYQIITFLIAGHETTSGLLSFALYFLVKN"
-            },
-            {
-                "label": "J",
-                "chain_id": "B",
-                "start": 284,
-                "end": 298,
-                "type": "H",
-                "color": "s554",
-                "start_vector": [
-                    27.232,
-                    37.992,
-                    -30.91
-                ],
-                "end_vector": [
-                    39.622,
-                    40.91,
-                    -48.874
-                ],
-                "metric_value": 2.11,
-                "sequence": "PHVLQKAAEEAARVL"
-            },
-            {
-                "label": "J'",
-                "chain_id": "B",
-                "start": 305,
-                "end": 311,
-                "type": "h",
-                "color": "s575",
-                "start_vector": [
-                    49.17,
-                    35.47,
-                    -48.537
-                ],
-                "end_vector": [
-                    44.35,
-                    40.383,
-                    -38.57
-                ],
-                "metric_value": 3.8,
-                "sequence": "YKQVKQL"
-            },
-            {
-                "label": "K",
-                "chain_id": "B",
-                "start": 312,
-                "end": 325,
-                "type": "H",
-                "color": "s597",
-                "start_vector": [
-                    41.174,
-                    40.48,
-                    -38.113
-                ],
-                "end_vector": [
-                    40.629,
-                    28.497,
-                    -22.097
-                ],
-                "metric_value": 2.39,
-                "sequence": "KYVGMVLNEALRLW"
-            },
-            {
-                "label": "K'",
-                "chain_id": "B",
-                "start": 357,
-                "end": 362,
-                "type": "h",
-                "color": "s727",
-                "start_vector": [
-                    44.078,
-                    25.371,
-                    -16.272
-                ],
-                "end_vector": [
-                    42.209,
-                    34.532,
-                    -15.177
-                ],
-                "metric_value": 1.546,
-                "sequence": "IPQLHR"
-            },
-            {
-                "label": "K''",
-                "chain_id": "B",
-                "start": 376,
-                "end": 379,
-                "type": "G",
-                "color": "s748",
-                "start_vector": [
-                    36.15,
-                    39.923,
-                    -26.828
-                ],
-                "end_vector": [
-                    43.196,
-                    43.128,
-                    -26.687
-                ],
-                "metric_value": 3.605,
-                "sequence": "PERF"
-            },
-            {
-                "label": "L",
-                "chain_id": "B",
-                "start": 403,
-                "end": 420,
-                "type": "H",
-                "color": "s770",
-                "start_vector": [
-                    54.182,
-                    26.777,
-                    -33.654
-                ],
-                "end_vector": [
-                    30.913,
-                    32.905,
-                    -46.236
-                ],
-                "metric_value": 1.066,
-                "sequence": "QQFALHEATLVLGMMLKH"
-            },
-            {
-                "label": "1-1",
-                "chain_id": "B",
-                "start": 39,
-                "end": 44,
-                "type": "E",
-                "sheet_id": 1,
-                "color": "s164",
-                "start_vector": [
-                    46.811,
-                    28.096,
-                    -4.334
-                ],
-                "end_vector": [
-                    46.84,
-                    9.063,
-                    -3.224
-                ],
-                "metric_value": 2.275,
-                "sequence": "IFKFEA"
-            },
-            {
-                "label": "1-2",
-                "chain_id": "B",
-                "start": 47,
-                "end": 52,
-                "type": "E",
-                "sheet_id": 1,
-                "color": "s186",
-                "start_vector": [
-                    52.054,
-                    9.62,
-                    -4.09
-                ],
-                "end_vector": [
-                    47.909,
-                    27.437,
-                    -9.458
-                ],
-                "metric_value": 1.193,
-                "sequence": "RVTRYL"
-            },
-            {
-                "label": "1-5",
-                "chain_id": "B",
-                "start": 67,
-                "end": 69,
-                "type": "E",
-                "sheet_id": 1,
-                "color": "s229",
-                "start_vector": [
-                    62.714,
-                    25.415,
-                    -12.081
-                ],
-                "end_vector": [
-                    58.995,
-                    19.161,
-                    -17.154
-                ],
-                "metric_value": 11.49,
-                "sequence": "FDK"
-            },
-            {
-                "label": "1-4",
-                "chain_id": "B",
-                "start": 330,
-                "end": 335,
-                "type": "E",
-                "sheet_id": 1,
-                "color": "s640",
-                "start_vector": [
-                    46.799,
-                    21.087,
-                    -19.544
-                ],
-                "end_vector": [
-                    63.009,
-                    20.453,
-                    -9.193
-                ],
-                "metric_value": 17.738,
-                "sequence": "AFSLYA"
-            },
-            {
-                "label": "2-1",
-                "chain_id": "B",
-                "start": 339,
-                "end": 341,
-                "type": "E",
-                "sheet_id": 2,
-                "color": "s662",
-                "start_vector": [
-                    63.607,
-                    25.398,
-                    -2.566
-                ],
-                "end_vector": [
-                    56.566,
-                    30.772,
-                    -3.209
-                ],
-                "metric_value": 4.62,
-                "sequence": "TVL"
-            },
-            {
-                "label": "2-2",
-                "chain_id": "B",
-                "start": 345,
-                "end": 347,
-                "type": "E",
-                "sheet_id": 2,
-                "color": "s683",
-                "start_vector": [
-                    55.538,
-                    28.643,
-                    1.12
-                ],
-                "end_vector": [
-                    60.275,
-                    21.839,
-                    -1.536
-                ],
-                "metric_value": 3.419,
-                "sequence": "YPL"
-            },
-            {
-                "label": "1-3",
-                "chain_id": "B",
-                "start": 352,
-                "end": 356,
-                "type": "E",
-                "sheet_id": 1,
-                "color": "s705",
-                "start_vector": [
-                    56.726,
-                    18.453,
-                    -7.626
-                ],
-                "end_vector": [
-                    45.965,
-                    25.882,
-                    -15.885
-                ],
-                "metric_value": 5.523,
-                "sequence": "ELMVL"
-            },
-            {
-                "label": "3-3",
-                "chain_id": "B",
-                "start": 421,
-                "end": 424,
-                "type": "E",
-                "sheet_id": 3,
-                "color": "s791",
-                "start_vector": [
-                    29.692,
-                    31.636,
-                    -45.692
-                ],
-                "end_vector": [
-                    23.321,
-                    28.199,
-                    -36.151
-                ],
-                "metric_value": 2.054,
-                "sequence": "FDFE"
-            },
-            {
-                "label": "4-1",
-                "chain_id": "B",
-                "start": 433,
-                "end": 435,
-                "type": "E",
-                "sheet_id": 4,
-                "color": "s835",
-                "start_vector": [
-                    32.062,
-                    19.181,
-                    -23.097
-                ],
-                "end_vector": [
-                    39.516,
-                    14.53,
-                    -22.196
-                ],
-                "metric_value": 7.364,
-                "sequence": "IKE"
-            },
-            {
-                "label": "4-2",
-                "chain_id": "B",
-                "start": 439,
-                "end": 441,
-                "type": "E",
-                "sheet_id": 4,
-                "color": "s878",
-                "start_vector": [
-                    41.058,
-                    19.19,
-                    -24.784
-                ],
-                "end_vector": [
-                    32.43,
-                    19.345,
-                    -27.855
-                ],
-                "metric_value": 5.67,
-                "sequence": "LKP"
-            },
-            {
-                "label": "3-2",
-                "chain_id": "B",
-                "start": 447,
-                "end": 450,
-                "type": "E",
-                "sheet_id": 3,
-                "color": "s900",
-                "start_vector": [
-                    24.752,
-                    23.698,
-                    -38.891
-                ],
-                "end_vector": [
-                    26.062,
-                    30.489,
-                    -48.737
-                ],
-                "metric_value": 4.558,
-                "sequence": "KAKS"
-            }
-        ],
-        "beta_connectivity": [
-            [
-                "1-1",
-                "1-2",
-                -1
-            ],
-            [
-                "1-2",
-                "1-3",
-                1
-            ],
-            [
-                "1-5",
-                "1-4",
-                -1
-            ],
-            [
-                "1-4",
-                "1-3",
-                -1
-            ],
-            [
-                "2-1",
-                "2-2",
-                -1
-            ],
-            [
-                "3-3",
-                "3-2",
-                -1
-            ],
-            [
-                "4-1",
-                "4-2",
-                -1
-            ]
-        ],
-        "rotation_matrix": [
-            -0.955012457527149,
-            0.19712853591633586,
-            0.22156612172314838,
-            47.11623809022728,
-            0.27559834856728355,
-            0.31399376604363066,
-            0.9085446962878181,
-            20.98142923383076,
-            0.10952970480623656,
-            0.928734760420444,
-            -0.354196257111561,
-            -28.102988189077525,
-            -35.09372644941761,
-            -118.44997177483899,
-            -52.1468089211662,
-            1
-        ],
-        "domain": {
-            "name": "1bu7B",
-            "pdb": "1bu7",
-            "chain": "B",
             "ranges": ":"
         }
     }

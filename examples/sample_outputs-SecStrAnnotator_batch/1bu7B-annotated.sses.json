@@ -1,7 +1,7 @@
 {
     "1bu7": {
         "comment": "Automatic annotation for 1bu7 based on 2nnj template. Total value of used metric: 159.95",
-        "software": "SecStrAnnotator 2.2 [2020-06-17]",
+        "software": "SecStrAnnotator 2.2 [2020-07-01]",
         "args": "examples/ 2nnj,A 1bu7,B,:",
         "found": 29,
         "total_metric_value": 159.953,

@@ -1,8 +1,8 @@
 {
     "1tqn": {
         "comment": "Automatic annotation for 1tqn based on 2nnj template. Total value of used metric: 178.21",
-        "software": "SecStrAnnotator 2.2 [2020-06-17]",
-        "args": "examples 2nnj,A 1tqn,A",
+        "software": "SecStrAnnotator 2.2 [2020-07-01]",
+        "args": "examples/ 2nnj,A 1tqn,A",
         "found": 30,
         "total_metric_value": 178.214,
         "secondary_structure_elements": [

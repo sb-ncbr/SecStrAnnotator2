@@ -149,6 +149,11 @@ plot_contained_helix_types = function(df, ..., turn_labels = FALSE, stagger_labe
   g
 }
 
+table_contained_helix_types = function(df, ...) {
+  table = table_criteria(df, contains_G = (df$longest_G >= 3), contains_Η = (df$longest_H >= 4), contains_Ι = (df$longest_I >= 5), ..., ignore_zero = TRUE)
+  table %>% spread(set, fulfilling)
+}
+
 # Barchart with relative fraction of cases fulfulling specified criteria, for each SSE label
 plot_criteria = function(df, ..., ignore_zero = FALSE, title = NULL, y_label = 'Fulfilling criterion') {
   table = table_criteria(df, ..., ignore_zero = ignore_zero) %>% group_by(label, set) %>% mutate(type = sse_category(label))
@@ -310,7 +315,7 @@ two_sample_occurrence_prop_test = function(df1, df2, p_limit = 0.05, print_all =
     test_result = prop.test(c(row$present1, row$present2), c(n_pdb1, n_pdb2))
     p = test_result$p.value
     freq_diff = row$freq_diff
-    data[which(data$label == the_label), 'p.value'] = if (is.na(p)) '' else signif(p, digits=signif_digits) 
+    data[which(data$label == the_label), 'p.value'] = if (is.na(p)) p else signif(p, digits=signif_digits) 
     data[which(data$label == the_label), 'compare'] = if (p>p_limit | freq_diff==0) '       ' else if (freq_diff<0) '  >    ' else if (freq_diff>0) '    <  '
     data[which(data$label == the_label), 'freq_diff'] = signif(freq_diff, digits=signif_digits)
   }
@@ -361,6 +366,11 @@ two_sample_test_by_labels_with_comparison = function(test, df1, df2, stat_col, l
     p = test(sample1, sample2)$p.value
     pG = test(sample1, sample2, alternative='greater')$p.value
     pL = test(sample1, sample2, alternative='less')$p.value
+    if (reversed){
+      swap = pG
+      pG = pL
+      pL = swap
+    }
     result[which(result[label_col]==label), 'p.value'] = signif(p, digits=signif_digits) 
     result[which(result[label_col]==label), 'p.g'] = signif(pG, digits=signif_digits) 
     result[which(result[label_col]==label), 'p.l'] = signif(pL, digits=signif_digits) 
@@ -368,9 +378,6 @@ two_sample_test_by_labels_with_comparison = function(test, df1, df2, stat_col, l
     LT = '    <  '
     EQ = '       '
     comparison = if (p<p_limit & pG<p_limit & pL>=p_limit) GT else if (p<p_limit & pL<p_limit & pG>=p_limit) LT else EQ
-    if (reversed) {
-      comparison = if (comparison==GT) LT else if (comparison==LT) GT else EQ
-    }
     result[which(result[label_col]==label), 'compare'] = comparison
     m1 = mean(sample1)
     m2 = mean(sample2)

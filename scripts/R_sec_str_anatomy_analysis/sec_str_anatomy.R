@@ -3,11 +3,11 @@
 source('sec_str_anatomy_lib.R')
 source('sec_str_anatomy_settings.R')  # Contains a few CytochromeP450-specific constants!
 
-DATADIR = '~/Workspace/C#/SecStrAnnot2_data/SecStrAPI/CytochromesP450-20200323'
+DATADIR = '~/Workspace/C#/SecStrAnnot2_data/SecStrAPI/CytochromesP450-20200707'
 
 
 # READ DATASETS
-taxons = read.csv(full_path('domain_taxons_groups.tsv'), sep='\t', header = FALSE, col.names=c('Domain','TaxID','Group'))
+taxons = read.csv(full_path('domains_taxons_groups.tsv'), sep='\t', header = FALSE, col.names=c('Domain','TaxID','Group'))
 setNR = read_tsv(full_path('annotations_with_reference_residues_NR.tsv')) %>%
   left_join(taxons, by = 'Domain') %>% select(-starts_with('longest_'), -starts_with('bonds_')) %>% filter(label %in% OUR_SSES)
 setALL = read_tsv(full_path('annotations_with_reference_residues_ALL.tsv')) %>% 
@@ -29,6 +29,8 @@ barplot(table((setNR %>% distinct(PDB, Group))$Group), main = 'Number of PDB ent
 
 # PLOTS FOR OCCURRENCE
 occurrence_table_NR = table_sse_occurrence(setNR, alpha = 0.05)
+occurrence_table_NR_Bact = table_sse_occurrence(setNR_Bact, alpha = 0.05)
+occurrence_table_NR_Euka = table_sse_occurrence(setNR_Euka, alpha = 0.05)
 
 plot_sse_occurrence(setNR, show_confidence = TRUE, alpha = 0.05, turn_labels = TRUE, legend_position = 'top')
 print_png(full_path('plots/occurrence-setNR.png'), width = 4000, height = 2300, res = 600)
@@ -43,6 +45,7 @@ print_png(full_path('plots/occurrence-setNR-Bact-Euka-wide.png'), width = 4000, 
 
 # PLOTS FOR LENGTH DISTRIBUTION
 boxplot_sse(setNR, ignore_zero = TRUE, title = 'Set-NR')
+print_png(full_path('plots/length-boxplot-setNR.png'), width = 4000, height = 2300, res = 600)
 
 violinplot_sse(setNR, ignore_zero = TRUE, turn_labels = TRUE, legend_position = 'top')
 print_png(full_path('plots/length-setNR.png'), width = 4000, height = 2300, res = 600)
@@ -101,6 +104,11 @@ print_png(full_path('plots/bulge_occurrence-setNR-wide.png'), width = 4000, heig
 helicesNR = read_tsv(full_path('annotations_with_reference_residues_NR.tsv')) %>%
   left_join(taxons, by = 'Domain') %>% filter(label %in% HELIX_ORDER & length > 0)
 
+contained_helices_NR_total = table_contained_helix_types(helicesNR, by_label=FALSE)
+contained_helices_NR = table_contained_helix_types(helicesNR)
+contained_helices_NR_Bact = table_contained_helix_types(helicesNR %>% filter(Group=='Bact'))
+contained_helices_NR_Euka = table_contained_helix_types(helicesNR %>% filter(Group=='Euka'))
+
 plot_contained_helix_types(helicesNR, y_label = 'Fraction', legend_position = 'top')
 print_png(full_path('plots/contained_types-setNR.png'), width = 4000, height = 2300, res = 600)
 plot_contained_helix_types(helicesNR, y_label = 'Fraction', legend_position = 'right')
@@ -109,3 +117,4 @@ print_png(full_path('plots/contained_types-setNR-wide.png'), width = 4000, heigh
 # Comment: Ctrl+Shift+C
 # Go to function definition: F2 / Ctrl+Click
 # Fold all: Alt+O
+
