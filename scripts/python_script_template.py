@@ -20,9 +20,9 @@ from typing import Dict, Any, Optional
 def parse_args() -> Dict[str, Any]:
     '''Parse command line arguments.'''
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('foo', help='Dummy argument foo', type=str)
-    parser.add_argument('--bar', help=f'Dummy option bar (default = {123})', type=int, default=123)
-    parser.add_argument('--baz', help=f'Dummy switch baz', action='store_true')
+    parser.add_argument('foo', help='Dummy_argument_foo', type=str)
+    parser.add_argument('--bar', help=f'Dummy_option_bar (default = {123})', type=int, default=123)
+    parser.add_argument('--baz', help=f'Dummy_switch_baz', action='store_true')
     # TODO add command line arguments
     args = parser.parse_args()
     return vars(args)

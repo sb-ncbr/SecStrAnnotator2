@@ -52,7 +52,7 @@ def main(all_annotations_file: str, output_directory: str, min_dir: Optional[str
     for pdb, domains in pdb2domains.items():
         result = { API_VERSION: api_version, ANNOTATIONS: { pdb: domains } }
         with open(path.join(output_directory, pdb + OUTPUT_EXT), 'w', encoding=lib.DEFAULT_ENCODING) as w:
-            json.dump(result, w, indent=4)
+            json.dump(result, w, indent=JSON_INDENT)
             w.write('\n')
         if min_dir is not None:
             with open(path.join(min_dir, pdb + OUTPUT_EXT), 'w', encoding=lib.DEFAULT_ENCODING) as w:

@@ -2,6 +2,7 @@
 
 # SecStrAPI format details
 DOMAINS_IN_DICT = True
+JSON_INDENT = 2
 
 # Field names in SecStrAPI format - general and domain specification
 API_VERSION = 'api_version'

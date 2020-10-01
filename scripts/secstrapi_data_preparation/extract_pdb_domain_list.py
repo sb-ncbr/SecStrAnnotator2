@@ -39,7 +39,7 @@ def main(input_file: str) -> None:
     for pdb, domains in pdb2domains.items():
         simple_list[pdb] = [ name for name, dom in lib.iterate_names_domains(domains) ] 
 
-    json.dump(simple_list, sys.stdout, indent=4)
+    json.dump(simple_list, sys.stdout, indent=JSON_INDENT)
     print()
 
     n_pdbs = len(simple_list)
