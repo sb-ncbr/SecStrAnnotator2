@@ -375,8 +375,89 @@ def run_weblogo3(alignment_file, logo_file, first_index=0):
     # print(command)
     os.system(command)
 
+def run_logomaker_from_matrix(matrix, widths, logo_file, first_index=0, dpi=600, units='bits', color_scheme='weblogo_protein', title=None):
+    '''Generate sequence logo using Logomaker.
+    matrix: pandas dataframe (columns correspond to amino acid letters)
+    widths: array of widths of individual columns
+    units: 'bits' or 'probability', color_scheme: 'weblogo_protein', 'hydrophobicity' ...
+    # Logomaker documentation: https://logomaker.readthedocs.io/en/latest/'''
+    scale = 1.0
+    height = 3.0
+    width_per_residue = 0.3  # 0.35
+    width_extra = 1.0  # 0.5
+    width_minimum = 2.0
+    vpad = 0.05
+    hpad = 0.05
+    font_name = 'DejaVu Sans Mono'
+    y_tick_spacing = 0.5
+    y_label_spacing = 1
+    y_label_format = '{:.0f}'
+
+    if title is None:
+        title = path.split(logo_file)[1]
+        title = path.splitext(title)[0]
+        title = 'Helix ' + title if title[0].isalpha() else 'Strand ' + title
+
+    matrix.index += first_index
+    n_residues = matrix.shape[0]
+
+    width = max(n_residues*width_per_residue + width_extra, width_minimum)
+    figsize = (width * scale, height * scale)
+    logo = logomaker.Logo(matrix, figsize=figsize, vpad=vpad, color_scheme=color_scheme, font_name=font_name)
+    logo.fig.set_dpi(100)
+    for glyph in logo.glyph_list:
+        p = int(glyph.p)  # position
+        c = glyph.c  # character
+        logo.style_single_glyph(p, c, width=(1 - hpad) * widths[p-first_index])
+
+    max_y = np.log2(20) if units == 'bits' else 1.0
+
+    logo.ax.yaxis.set_view_interval(0, max_y)
+    logo.ax.title.set_text(title)
+    logo.ax.title.set_fontsize(20*scale)
+    logo.ax.title.set_fontweight('bold')
+    # logo.ax.set_xlabel('position', labelpad=0, fontsize=14*scale)
+    y_label = 'Information content [bits]' if units=='bits' else units
+    logo.ax.set_ylabel(y_label, labelpad=3.0, fontsize=12*scale)
+    logo.style_xticks(spacing=1, anchor=0, rotation=90, fmt='%d', fontsize=14*scale)
+    logo.style_spines(visible=False)
+    logo.style_spines(spines=['left', 'bottom', 'top', 'right'], visible=True, linewidth=1)
+
+    logo.ax.set_yticks(np.arange(0, max_y, y_tick_spacing))
+    logo.fig.tight_layout()
+    ytl = logo.ax.get_yticklabels()
+    for lab in ytl:
+        y = lab.get_position()[1]
+        if y % y_label_spacing == 0:
+            lab.set_text(y_label_format.format(y))
+        else:
+            lab.set_text('')
+    logo.ax.set_yticklabels(ytl, fontsize=14*scale)
+    logo.fig.tight_layout()
+    logo.fig.savefig(logo_file, dpi=dpi)
+    pyplot.close(logo.fig)
+    if logo_file.endswith(('.tif', '.tiff')):
+        compress_tiff(logo_file)
+
 def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits', color_scheme='weblogo_protein'):
-    '''Generate sequence logos using Logomaker.
+    '''Generate sequence logo using Logomaker.
+    units: 'bits' or 'probability', color_scheme: 'weblogo_protein', 'hydrophobicity' ...
+    # Logomaker documentation: https://logomaker.readthedocs.io/en/latest/'''
+    inp = SeqIO.parse(alignment_file, 'fasta')
+    names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
+    counts_mat = logomaker.alignment_to_matrix(seqs, characters_to_ignore=GAP_CHAR+UNKNOWN_CHAR)
+    prob_mat = counts_mat / len(seqs)
+    heights, widths, areas = logo_heights_widths_areas(prob_mat.values, first_column_is_gap=False)
+    if units == 'bits':
+        matrix = heights.reshape((-1, 1)) * prob_mat / prob_mat.values.sum(axis=1, keepdims=True)
+    elif units == 'probability':
+        matrix = prob_mat / prob_mat.values.sum(axis=1, keepdims=True)
+    else:
+        raise ValueError("units must be 'bits' or 'probability'")
+    run_logomaker_from_matrix(matrix, widths, logo_file, first_index=first_index, dpi=dpi, units=units, color_scheme=color_scheme)
+    
+def run_logomaker_backup(alignment_file, logo_file, first_index=0, dpi=600, units='bits', color_scheme='weblogo_protein'):
+    '''Generate sequence logo using Logomaker.
     units: 'bits' or 'probability', color_scheme: 'weblogo_protein', 'hydrophobicity' ...
     # Logomaker documentation: https://logomaker.readthedocs.io/en/latest/'''
     scale = 1.0
@@ -405,6 +486,8 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
         matrix = heights.reshape((-1, 1)) * prob_mat / prob_mat.values.sum(axis=1, keepdims=True)
     elif units == 'probability':
         matrix = prob_mat / prob_mat.values.sum(axis=1, keepdims=True)
+    else:
+        raise ValueError("units must be 'bits' or 'probability'")
 
     matrix.index += first_index
     n_residues = matrix.shape[0]
@@ -425,7 +508,8 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
     logo.ax.title.set_fontsize(20*scale)
     logo.ax.title.set_fontweight('bold')
     # logo.ax.set_xlabel('position', labelpad=0, fontsize=14*scale)
-    logo.ax.set_ylabel(units, labelpad=1.0, fontsize=14*scale)
+    y_label = 'Information content [bits]' if units=='bits' else units
+    logo.ax.set_ylabel(y_label, labelpad=3.0, fontsize=12*scale)
     logo.style_xticks(spacing=1, anchor=0, rotation=90, fmt='%d', fontsize=14*scale)
     logo.style_spines(visible=False)
     logo.style_spines(spines=['left', 'bottom', 'top', 'right'], visible=True, linewidth=1)
