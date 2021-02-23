@@ -263,15 +263,27 @@ namespace protein.Libraries
         }
 
         /**Finds the optimal translation and rotation of mobile to get aligned with target.
-		 * In outparams returns translation vector, rotation matrix, and final RMSD.
-		 * Expects target to be mean-centered (i.e. centroid = [0,0,0]). */
-        public static void Align(Matrix mobile, Matrix target, out Matrix translation, out Matrix rotation, out double RMSD)
+         * In outparams returns translation vector, rotation matrix, and final RMSD.
+         * if centeredTarget==true, expects target to be mean-centered (i.e. centroid = [0,0,0]). */
+        public static void Align(Matrix mobile, Matrix target, out Matrix translation, out Matrix rotation, out double RMSD, bool centeredTarget=true)
         {
-            Matrix centeredMobile = mobile.Copy();
-            centeredMobile.MeanCenterVertically(out translation);
-            translation = -translation;
-            rotation = FitRotation(centeredMobile, target);
-            RMSD = RMSDPerRow(centeredMobile * rotation, target);
+            mobile = mobile.Copy();
+            Matrix mobileMean;
+            mobile.MeanCenterVertically(out mobileMean);
+            Matrix targetMean = null;
+            if (centeredTarget){
+                // nothing
+            } else {
+                target = target.Copy();
+                target.MeanCenterVertically(out targetMean);
+            }
+            rotation = FitRotation(mobile, target);
+            if (centeredTarget){
+                translation = -mobileMean * rotation;
+            } else {
+                translation = targetMean - mobileMean * rotation;
+            }
+            RMSD = RMSDPerRow(mobile * rotation, target);
         }
 
     }

@@ -1,4 +1,4 @@
-// #define DEVEL // DEVEL==true for development versions, DEVEL==false for release versions
+#define DEVEL // DEVEL==true for development versions, DEVEL==false for release versions
 
 using System;
 using System.Collections.Generic;
@@ -23,7 +23,7 @@ namespace protein
 
         public enum AlignMethod { None, Align, Super, Cealign };
         public static Dictionary<AlignMethod, string> alignMethodNames = new Dictionary<AlignMethod, string>
-            { { AlignMethod.None,"none" }, { AlignMethod.Align,"align" }, { AlignMethod.Super,"super"}, { AlignMethod.Cealign,"cealign" } };
+            { { AlignMethod.None,"none" }, { AlignMethod.Align,"align" }, { AlignMethod.Super,"super"}, { AlignMethod.Cealign,"cealign" }};
         public const AlignMethod DEFAULT_ALIGN_METHOD = AlignMethod.Cealign;
 
         public enum SecStrMethod { File, Dssp, Hbond1, Hbond2, Geom, GeomDssp, GeomHbond1, GeomHbond2 };

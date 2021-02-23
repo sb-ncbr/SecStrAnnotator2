@@ -5,6 +5,8 @@ using Cif.Tables;
 using Cif.Libraries;
 using System.Text;
 using System.IO;
+using protein;
+using protein.Geometry;
 
 namespace Cif.Components
 {
@@ -139,6 +141,34 @@ namespace Cif.Components
             return result;
         }
 
+        /**
+         * Returns a protein containing only those residues which have a C alpha atom.
+         */
+		public Protein Transform(Matrix rotation, Matrix translation){
+            ModelBuilder builder = new ModelBuilder();
+            foreach (Entity entity in this.GetEntities()){
+                builder.StartEntity(entity.Id);
+                foreach (Chain chain in entity.GetChains()) {
+                    builder.StartChain(chain.Id, chain.AuthId);
+                    foreach (Residue residue in chain.GetResidues()) {
+                        if (residue.HasCAlpha()) {
+                            builder.StartResidue(residue.ResidueInfo());
+                            foreach (Atom atom in residue.GetAtoms()) {
+                                AtomInfo newInfo = atom.AtomInfo();
+                                Point newPoint = atom.Position().Transform(rotation, translation);
+                                newInfo.X = newPoint.X;
+                                newInfo.Y = newPoint.Y;
+                                newInfo.Z = newPoint.Z;
+                                builder.AddAtom(atom.Id, newInfo);
+                            }
+                        }
+                    }
+                }
+            }
+            Protein result = new Protein(builder, this.Model.ModelNumber);
+            return result;
+        }
+
         public string ToLongString() {
             StringBuilder b = new StringBuilder();
             b.AppendLine("Protein");
@@ -183,5 +213,6 @@ namespace Cif.Components
                 }           
             }
 		}
+    
     }
 }

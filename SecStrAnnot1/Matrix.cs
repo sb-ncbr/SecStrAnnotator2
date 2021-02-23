@@ -220,6 +220,25 @@ namespace protein
             return C;
         }
 
+        public static Matrix operator +(Matrix A, Matrix B)
+        {
+            if (A.Rows == B.Rows && A.Columns == B.Columns){
+                Matrix C = new Matrix(A.Rows, A.Columns);
+                for (int i = 0; i < A.Rows; i++)
+                    for (int j = 0; j < A.Columns; j++)
+                        C[i, j] = A[i, j] + B[i, j];
+                return C;
+            } else if (B.Rows==1 && A.Columns == B.Columns){ // broadcasting
+                Matrix C = new Matrix(A.Rows, A.Columns);
+                for (int i = 0; i < A.Rows; i++)
+                    for (int j = 0; j < A.Columns; j++)
+                        C[i, j] = A[i, j] + B[0, j];
+                return C;
+            } else {
+                throw new ArgumentException("Matrices must have the same number of rows and columns.");
+            }
+        }
+
         public static Matrix operator -(Matrix B)
         {
             Matrix C = new Matrix(B.Rows, B.Columns);

@@ -24,6 +24,13 @@ namespace protein.Geometry
         public double X => Vector.X;
         public double Y => Vector.Y;
         public double Z => Vector.Z;
+
+        public Point Transform(Matrix rotation, Matrix translation){
+            Matrix oldMatrix = Matrix.FromRows(new Point[]{this});
+            Matrix newMatrix = oldMatrix * rotation + translation;
+            Point newPoint = new Point(newMatrix.ToRowVectors()[0]);
+            return newPoint;
+        }
     }
 }
 

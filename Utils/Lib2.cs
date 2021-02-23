@@ -82,6 +82,10 @@ namespace SecStrAnnotator2.Utils
             return multidict.Select(kv => kv.Key + keyValueSep + kv.Value.Enumerate(valueSep)).Enumerate(keySep);
         }
 
+        public static IEnumerable<T> WhereHasValue<T>(this IEnumerable<T?> enumer) where T: struct{
+            return enumer.Where(x => x.HasValue).Select(x => x.Value);
+        }
+
         public static void Log(object o)
         {
             WriteLineDebug(o.GetType().ToString() + ": " + o.ToString());

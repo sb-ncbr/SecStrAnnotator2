@@ -244,7 +244,7 @@ namespace Cif.Tables
                 "auth_asym_id",
                 "auth_atom_id",
                 "pdbx_PDB_model_num",
-                "pdbe_label_seq_id",
+                // "pdbe_label_seq_id",
             };
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(loop);
@@ -267,19 +267,18 @@ namespace Cif.Tables
                                 Entities.Id[ei],
                                 Residues.SeqNumber[ri],
                                 Residues.AuthInsertionCode[ri] ?? NA,
-                                Atoms.X[ai],
-                                Atoms.Y[ai],
-                                Atoms.Z[ai],
+                                Atoms.X[ai].ToString("0.000"),
+                                Atoms.Y[ai].ToString("0.000"),
+                                Atoms.Z[ai].ToString("0.000"),
                                 fabulateOccupancyAndBFactor ? "1.0" : NA, // occupancy,
                                 fabulateOccupancyAndBFactor ? "0.0" : NA, // B_iso_or_equiv,
                                 NA, // pdbx_formal_charge,
                                 fillAuthFieldsWithLabelValues ? Residues.SeqNumber[ri].ToString() : Residues.AuthSeqNumber[ri]?.ToString() ?? NA,
                                 fillAuthFieldsWithLabelValues ? Residues.Compound[ri] : Residues.AuthCompound[ri] ?? NA,
                                 fillAuthFieldsWithLabelValues ? Chains.Id[ci] : Chains.AuthId[ci], // auth_asym_id
-                                // fillAuthFieldsWithLabelValues ? (Chains.Id[ci]=="A" ? "AX" : Chains.Id[ci]) : Chains.AuthId[ci], // auth_asym_id - for debugging
-                                fillAuthFieldsWithLabelValues ? Atoms.Name[ai] : NA, // auth_atom_id,
+                                fillAuthFieldsWithLabelValues ? Atoms.Name[ai] : Atoms.Name[ai], // auth_atom_id,
                                 this.ModelNumber,
-                                NA // pdbe_label_seq_id
+                                // NA // pdbe_label_seq_id
                             });
                             sb.AppendLine(line);
                         }

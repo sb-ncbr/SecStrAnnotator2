@@ -8,12 +8,18 @@ namespace Cif
         public TKey Key { get; private set; }
 
         public KeyNotFoundExceptionWithKey(TKey key) 
-            : base() { }
+            : base() { 
+                Key = key;
+            }
 
         public KeyNotFoundExceptionWithKey(TKey key, string message) 
-            : base(message) { }
+            : base(message) {
+                Key = key;
+            }
 
         public KeyNotFoundExceptionWithKey(TKey key, string message, Exception innerException) 
-            : base(message, innerException) { }
+            : base(message, innerException) {
+                Key = key;
+            }
     }
 }

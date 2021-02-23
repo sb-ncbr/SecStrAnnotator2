@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Resources;
 using System.Threading;
 using System.Globalization;
 
@@ -595,7 +594,7 @@ namespace protein
                     {
                         #region Superimpose by a given PyMOL's command.
                         Lib.WriteInColor(ConsoleColor.Yellow, "Running PyMOL to align proteins:\n");
-                        if (!Lib.RunPyMOLScriptWithCommandLineArguments(config.PymolExecutable, config.PymolScriptAlign, new string[] {
+                        bool pymolAlignmentSuccess = Lib.RunPyMOLScriptWithCommandLineArguments(config.PymolExecutable, config.PymolScriptAlign, new string[] {
                                 "cif",
                                 Setting.alignMethodNames [alignMethod],
                                 Setting.Directory,
@@ -605,8 +604,14 @@ namespace protein
                                 queryID,
                                 queryChainID.ToString (),
                                 FormatRanges(queryDomainRanges)
-                            }))
-                            return -1;
+                            });
+                        if (!pymolAlignmentSuccess)
+                        {
+                            Lib.WriteWarning("Structural alignment in PyMOL failed. Falling back to DumbAlign (simple internal method).");
+                            qProtein = DumbAligner.DumbAlign(tProtein, qProtein, alignedMobileOutputFile: fileQueryAlignedPDB, alignmentJsonFile: fileQueryAlignment);
+                            // Lib.WriteErrorAndExit("Structural alignment in PyMOL failed.");
+                            // return -1;
+                        }
                         qProtein = ReadProteinFromFile(fileQueryAlignedPDB, queryChainID_, queryDomainRanges).KeepOnlyNormalResidues(true);
                         rotationMatrix = LibAnnotation.ReadRotationMatrixFromAlignmentFile(fileQueryAlignment);
                         // Console.WriteLine(rotationMatrix);

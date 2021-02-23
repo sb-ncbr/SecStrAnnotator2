@@ -1000,7 +1000,8 @@ namespace protein.Libraries
                 LibAlgebra.Align(mobile, IdealShapes.GetShape(sse.Type).Points, out trans, out rot, out rmsd);
                 Matrix rotBack = rot.Transpose();
                 sumAxes += (IdealShapes.GetShape(sse.Type).Axis * rotBack).ToRowVectors()[0];
-                sumOrigins += (IdealShapes.GetShape(sse.Type).Origin * rotBack - trans).ToRowVectors()[0];
+                // sumOrigins += (IdealShapes.GetShape(sse.Type).Origin * rotBack - trans).ToRowVectors()[0];
+                sumOrigins += ((IdealShapes.GetShape(sse.Type).Origin - trans) * rotBack).ToRowVectors()[0];
                 rmsdList.Add(rmsd);
                 // if (Double.IsNaN(sumAxes.X)) Lib.WriteLineDebug($"    SumAxes {sumAxes}, SumOrigins {sumOrigins}, Mobile {mobile}, Rot {rot}, Trans {trans}");
                 //Console.WriteLine ("<{0,3}> {1,8}", quad [1].ResSeq, rmsd);
@@ -1132,6 +1133,7 @@ namespace protein.Libraries
         {
             try
             {
+                // Lib.WriteLineDebug($"m7: {sse1.Start}-{sse1.End} vs {sse2.Start}-{sse2.End}");
                 int s1 = tResiToAli[sse1.Start];
                 int s2 = qResiToAli[sse2.Start];
                 int e1 = tResiToAli[sse1.End];
