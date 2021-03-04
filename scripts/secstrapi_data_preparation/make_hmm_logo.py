@@ -31,12 +31,14 @@ def parse_args() -> Dict[str, Any]:
     parser.add_argument('hmmlogo_file', help='Output of running "hmmlogo *.hmm"', type=str)
     parser.add_argument('output_file', help='Filename for output image (PNG/TIF)"', type=str)
     parser.add_argument('--positions', help=f'Residue range from:to (1-based, to excluded, default = ":" (meaning start:end))', type=str, default=':')
+    parser.add_argument('--title', help=f'Title for the logo', type=str, default='')
+    parser.add_argument('--shift_numbers', help=f'Shift residue numbers by this number (default: 0)', type=int, default=0)
     # TODO add command line arguments
     args = parser.parse_args()
     return vars(args)
 
 
-def main(hmmlogo_file: str, output_file: str, positions: Union[Tuple[Optional[int], Optional[int]], str] = ':') -> Optional[int]:
+def main(hmmlogo_file: str, output_file: str, positions: Union[Tuple[Optional[int], Optional[int]], str] = ':', title: str = '', shift_numbers: Union[int, str] = 0) -> Optional[int]:
     # TODO add parameters
     '''Foo'''
     # TODO add docstring
@@ -44,15 +46,17 @@ def main(hmmlogo_file: str, output_file: str, positions: Union[Tuple[Optional[in
         positions = parse_range(positions)
     fro1, to1 = positions
     fro0, to0 = range_1_to_0_based(positions)
+    shift_numbers = int(shift_numbers)
         
     heights, occupancy = parse_hmmlogo_file(hmmlogo_file)
     heights = heights[fro0:to0, :]
+    # print(heights / heights.sum(axis=1, keepdims=True))
     occupancy = occupancy[fro0:to0]
     heights = pd.DataFrame(heights, columns=AMINOACIDS)
     first_index = fro1 if fro1 is not None else 1
     print(heights)
     print(occupancy)
-    no_gap_align.run_logomaker_from_matrix(heights, occupancy, output_file, first_index=first_index, title='Helix C (Pfam)')
+    no_gap_align.run_logomaker_from_matrix(heights, occupancy, output_file, first_index=first_index+shift_numbers, title=title)
 
 def parse_range(range_string: str) -> Tuple[int, int]:
     sfro, sto = range_string.split(':')

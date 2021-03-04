@@ -34,12 +34,13 @@ def parse_args() -> Dict[str, Any]:
     parser.add_argument('--alignments_dir', help='Directory to output alignments', type=str, default=None)
     parser.add_argument('--trees_dir', help='Directory to output trees', type=str, default=None)
     parser.add_argument('--logos_dir', help='Directory to output sequence logos', type=str, default=None)
+    parser.add_argument('--ref_residue', help='Number assigned to the reference residue (i.e. the most conserved), default: 50', type=int, default=50)
     args = parser.parse_args()
     return vars(args)
 
 
 def main(all_annotations_file: str, labels: Union[str, List[str], None] = None, alignments_dir: Optional[str] = None, 
-        trees_dir: Optional[str] = None, logos_dir: Optional[str] = None) -> Optional[int]:
+        trees_dir: Optional[str] = None, logos_dir: Optional[str] = None, ref_residue: int = 50) -> Optional[int]:
     '''Read SSE annotations in SecStrAPI format and perform multiple sequence alignment of SSE sequences (separately for each SSE label).'''
 
     with open(all_annotations_file, 'r', encoding=lib.DEFAULT_ENCODING) as r:
@@ -79,8 +80,8 @@ def main(all_annotations_file: str, labels: Union[str, List[str], None] = None, 
         if alignments_dir is not None:
             aligner.print_tree(output_file=path.join(trees_dir, label + '.txt'))
         if logos_dir is not None:
-            aligner.output_logo(path.join(logos_dir, label + '.png'), tool='logomaker', pivot_as=50, units='bits')
-            aligner.output_logo(path.join(logos_dir, label + '.tif'), tool='logomaker', pivot_as=50, units='bits')
+            aligner.output_logo(path.join(logos_dir, label + '.png'), tool='logomaker', pivot_as=ref_residue, units='bits')
+            aligner.output_logo(path.join(logos_dir, label + '.tif'), tool='logomaker', pivot_as=ref_residue, units='bits')
 
 
 if __name__ == '__main__':

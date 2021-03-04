@@ -6,15 +6,20 @@
 
 # Modifiable constants
 
-TEMPLATE_BASE_COLOR       = 'wheat'  # This color will be used for template residues without annotation.
-QUERY_BASE_COLOR          = 'white'  # This color will be used for query residues without annotation.
+# TEMPLATE_BASE_COLOR       = 'wheat'  # This color will be used for template residues without annotation.  # Optimal for session with black background
+# QUERY_BASE_COLOR          = 'white'  # This color will be used for query residues without annotation.
+TEMPLATE_BASE_COLOR       = 'brown'  # This color will be used for template residues without annotation.  # Better for image with white background
+QUERY_BASE_COLOR          = 'gray50'  # This color will be used for query residues without annotation.
+
 PROTEIN_REPRESENTATIONS   = ['cartoon', 'labels']  # Default visual representations for polymer.
 LIGAND_REPRESENTATIONS    = ['sticks', 'labels']  # Default visual representations for heteroatoms.
+LIGAND_EXTENSION          = 8  # Show ligands within this radius around the protein.
 BOND_REPRESENTATIONS      = ['dashes']  # Default visual representations for hydrogen bonds.
 SHOW_LABELS               = True  # Indicates whether labels with SSE names will be shown.
 LABEL_SIZE                = 30  # Size for the labels (None = default size).
 LABEL_OUTLINE_COLOR       = None  # Outline color for the labels (None = default).
 SYMBOL_INSTEAD_APOSTROPHE = '+'  # Apostrophe is not allowed in PyMOL identifiers and will be changed for this symbol
+IMAGE_SIZE                = (400, 400)  # Size of created PNG image (width, height) or None if no image should be saved
 
 
 # Imports
@@ -68,6 +73,8 @@ QUERY_STRUCT_EXT = ('-aligned' if template is not None else '') +  ('.cif' if US
 TEMPLATE_ANNOT_EXT = '-template.sses.json'
 QUERY_ANNOT_EXT = '-detected.sses.json' if detected else '-annotated.sses.json'
 SESSION_EXT = '-detected.pse' if detected else '-annotated.pse'
+TEMPLATE_PNG_EXT = '-template.png'
+QUERY_PNG_EXT = '-detected.png' if detected else '-annotated.png'
 TEMPLATE_OBJECT_PREFIX = ''
 TEMPLATE_SELECTION_PREFIX = TEMPLATE_OBJECT_PREFIX
 QUERY_OBJECT_PREFIX = ''
@@ -160,7 +167,8 @@ def selection_expression(object_name, chain, ranges, symbol=None):
 def apply_representations(selection, protein_reprs=[], ligand_reprs=[], bonds_reprs=[]):
 	"""Hides everything of selection and shows given representations for HET and NOT HET atoms."""
 	protein_sel = '(' + selection + ') & not het'
-	ligand_sel = '(' + selection + ') & het'
+	ligand_sel = 'byres ((%s) expand %f & het & not resn HOH)' % (selection, LIGAND_EXTENSION)
+
 	cmd.hide('everything', selection)
 	for repr in protein_reprs:
 		cmd.show(repr, protein_sel)
@@ -192,6 +200,8 @@ def create_session(directory, template, query):
 	query_struct_file = path.join(directory, query_id + QUERY_STRUCT_EXT)
 	query_annot_file = path.join(directory, query_id + QUERY_ANNOT_EXT)
 	session_file = path.join(directory, query_id + SESSION_EXT)
+	template_png_file = path.join(directory, query_id + TEMPLATE_PNG_EXT)
+	query_png_file = path.join(directory, query_id + QUERY_PNG_EXT)
 	files.append(query_struct_file)
 	files.append(query_annot_file)
 	
@@ -202,20 +212,37 @@ def create_session(directory, template, query):
 	
 	if template is not None:
 		template_object = TEMPLATE_OBJECT_PREFIX + template_id
+		template_annot_object = template_object + '.sses'
 		cmd.load(template_struct_file, template_object)
-		color_by_annotation(template_id, selection_expression(template_object, template_chain, None), TEMPLATE_BASE_COLOR, template_annot_file, selection_prefix=template_object+'.sses')
-	
-	query_object = QUERY_OBJECT_PREFIX + query_id
-	cmd.load(query_struct_file, query_object)
-	color_by_annotation(query_id, selection_expression(query_object, query_chain, None), QUERY_BASE_COLOR, query_annot_file, selection_prefix=query_object+'.sses')
+		template_selection = selection_expression(template_object, template_chain, None)
+		color_by_annotation(template_id, template_selection, TEMPLATE_BASE_COLOR, template_annot_file, selection_prefix=template_annot_object)
+		cmd.disable(template_object)
+		cmd.disable(template_annot_object)
 
+	query_object = QUERY_OBJECT_PREFIX + query_id
+	query_annot_object = query_object + '.sses'
+	cmd.load(query_struct_file, query_object)
+	query_selection = selection_expression(query_object, query_chain, None)
+	color_by_annotation(query_id, query_selection, QUERY_BASE_COLOR, query_annot_file, selection_prefix=query_annot_object)
+	
 	cmd.hide('everything', 'all')
 	if template is not None:
-		apply_representations(selection_expression(template_object, template_chain, None), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
-	apply_representations(selection_expression(query_object, query_chain, None), protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS, bonds_reprs=BOND_REPRESENTATIONS)
+		apply_representations(template_selection, protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
+	apply_representations(query_selection, protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS, bonds_reprs=BOND_REPRESENTATIONS)
 	cmd.dss()
 	cmd.zoom('vis')
 	cmd.save(session_file)
+	if IMAGE_SIZE is not None:
+		width, height = IMAGE_SIZE
+		cmd.ray(width, height)
+		cmd.png(query_png_file)
+		if template is not None:
+			cmd.enable(template_object)
+			cmd.enable(template_annot_object)
+			cmd.disable(query_object)
+			cmd.disable(query_annot_object)
+			cmd.ray(width, height)
+			cmd.png(template_png_file)
 
 
 # Main script

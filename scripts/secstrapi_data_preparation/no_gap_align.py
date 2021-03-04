@@ -436,10 +436,10 @@ def run_logomaker_from_matrix(matrix, widths, logo_file, first_index=0, dpi=600,
     logo.fig.tight_layout()
     logo.fig.savefig(logo_file, dpi=dpi)
     pyplot.close(logo.fig)
-    if logo_file.endswith(('.tif', '.tiff')):
+    if str(logo_file).endswith(('.tif', '.tiff')):
         compress_tiff(logo_file)
 
-def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits', color_scheme='weblogo_protein'):
+def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits', color_scheme='weblogo_protein', title=None):
     '''Generate sequence logo using Logomaker.
     units: 'bits' or 'probability', color_scheme: 'weblogo_protein', 'hydrophobicity' ...
     # Logomaker documentation: https://logomaker.readthedocs.io/en/latest/'''
@@ -454,7 +454,7 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
         matrix = prob_mat / prob_mat.values.sum(axis=1, keepdims=True)
     else:
         raise ValueError("units must be 'bits' or 'probability'")
-    run_logomaker_from_matrix(matrix, widths, logo_file, first_index=first_index, dpi=dpi, units=units, color_scheme=color_scheme)
+    run_logomaker_from_matrix(matrix, widths, logo_file, first_index=first_index, dpi=dpi, units=units, color_scheme=color_scheme, title=title)
     
 def run_logomaker_backup(alignment_file, logo_file, first_index=0, dpi=600, units='bits', color_scheme='weblogo_protein'):
     '''Generate sequence logo using Logomaker.

@@ -93,57 +93,57 @@ def main(settings_file: str, resume: bool = False) -> None:
     
     pipeline = lib.Pipeline(checkpoint_file=CHECKPOINT_FILE)
 
-    # # Get domains from CATH and Pfam
-    # pipeline.add_task(None, print, '\n=== Get domains from CATH and Pfam ===')
-    # pipeline.add_task('get domains - CATH', domains_from_pdbeapi.main, settings.cath_family_id, join_domains_in_chain=True, stdout='set_cath.simple.json')
-    # pipeline.add_task('get domains - Pfam', domains_from_pdbeapi.main, settings.pfam_family_id, join_domains_in_chain=True, stdout='set_pfam.simple.json')
+    # Get domains from CATH and Pfam
+    pipeline.add_task(None, print, '\n=== Get domains from CATH and Pfam ===')
+    pipeline.add_task('get domains - CATH', domains_from_pdbeapi.main, settings.cath_family_id, join_domains_in_chain=True, stdout='set_cath.simple.json')
+    pipeline.add_task('get domains - Pfam', domains_from_pdbeapi.main, settings.pfam_family_id, join_domains_in_chain=True, stdout='set_pfam.simple.json')
 
-    # # Merge domain lists and format them in SecStrAPI format (also adds UniProt refs)
-    # pipeline.add_task(None, print, '\n=== Merge domain lists and format them in SecStrAPI format (also adds UniProt refs) ===')
-    # pipeline.add_task('merge domain lists', domain_lists_to_SecStrAPI_format.main,
-    #     ['CATH', settings.cath_family_id, 'set_cath.simple.json', 'Pfam', settings.pfam_family_id, 'set_pfam.simple.json'],
-    #     api_version=settings.api_version,
-    #     stdout='set_ALL.json')
+    # Merge domain lists and format them in SecStrAPI format (also adds UniProt refs)
+    pipeline.add_task(None, print, '\n=== Merge domain lists and format them in SecStrAPI format (also adds UniProt refs) ===')
+    pipeline.add_task('merge domain lists', domain_lists_to_SecStrAPI_format.main,
+        ['CATH', settings.cath_family_id, 'set_cath.simple.json', 'Pfam', settings.pfam_family_id, 'set_pfam.simple.json'],
+        api_version=settings.api_version,
+        stdout='set_ALL.json')
 
-    # # Get NCBI taxons and groups (Euka/Bact/Arch/Viru)
-    # pipeline.add_task(None, print, '\n=== Get NCBI taxons and groups (Euka/Bact/Arch/Viru) ===')
-    # pipeline.add_task('download NCBI taxonomy', lib.get_from_ftp, 'ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz', 'taxdump.tar.gz')
-    # pipeline.add_task('unzip NCBI taxonomy', lib.extract_from_tar, 'taxdump.tar.gz', 'nodes.dmp', 'ncbi_taxonomy_nodes.dmp')
-    # pipeline.add_task('get taxids for Set-ALL', get_taxids.main, 'set_ALL.json', stdout='domains_taxons.tsv')
-    # pipeline.add_task('classify domains by superkingdom', classify_taxids.main, 'ncbi_taxonomy_nodes.dmp', 'domains_taxons.tsv', stdout='domains_taxons_groups.tsv')
+    # Get NCBI taxons and groups (Euka/Bact/Arch/Viru)
+    pipeline.add_task(None, print, '\n=== Get NCBI taxons and groups (Euka/Bact/Arch/Viru) ===')
+    pipeline.add_task('download NCBI taxonomy', lib.get_from_ftp, 'ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz', 'taxdump.tar.gz')
+    pipeline.add_task('unzip NCBI taxonomy', lib.extract_from_tar, 'taxdump.tar.gz', 'nodes.dmp', 'ncbi_taxonomy_nodes.dmp')
+    pipeline.add_task('get taxids for Set-ALL', get_taxids.main, 'set_ALL.json', stdout='domains_taxons.tsv')
+    pipeline.add_task('classify domains by superkingdom', classify_taxids.main, 'ncbi_taxonomy_nodes.dmp', 'domains_taxons.tsv', stdout='domains_taxons_groups.tsv')
 
-    # # Select nonredundant set (with best quality)
-    # pipeline.add_task(None, print, '\n=== Select nonredundant set (with best quality) ===')
-    # pipeline.add_task('select Set-NR', select_best_domain_per_uniprot.main, 'set_ALL.json', stdout='set_NR.json')
-    # pipeline.add_task('select Set-NR-Bact', select_by_taxon_group.main, 'set_NR.json', 'domains_taxons_groups.tsv', 'Bact', stdout='set_NR_Bact.json')
-    # pipeline.add_task('select Set-NR-Euka', select_by_taxon_group.main, 'set_NR.json', 'domains_taxons_groups.tsv', 'Euka', stdout='set_NR_Euka.json')
+    # Select nonredundant set (with best quality)
+    pipeline.add_task(None, print, '\n=== Select nonredundant set (with best quality) ===')
+    pipeline.add_task('select Set-NR', select_best_domain_per_uniprot.main, 'set_ALL.json', stdout='set_NR.json')
+    pipeline.add_task('select Set-NR-Bact', select_by_taxon_group.main, 'set_NR.json', 'domains_taxons_groups.tsv', 'Bact', stdout='set_NR_Bact.json')
+    pipeline.add_task('select Set-NR-Euka', select_by_taxon_group.main, 'set_NR.json', 'domains_taxons_groups.tsv', 'Euka', stdout='set_NR_Euka.json')
 
-    # # Simplify domain lists (for SecStrAnnotator)
-    # pipeline.add_task(None, print, '\n=== Simplify domain lists (for SecStrAnnotator) ===')
-    # pipeline.add_task('simplify domain list - Set-ALL', simplify_domain_list.main, 'set_ALL.json', stdout='set_ALL.simple.json')
-    # pipeline.add_task('simplify domain list Set-NR', simplify_domain_list.main, 'set_NR.json', stdout='set_NR.simple.json')
-    # pipeline.add_task('create domain list for SecStrAPI', extract_pdb_domain_list.main, 'set_ALL.json', stdout='AnnotationList.json')
+    # Simplify domain lists (for SecStrAnnotator)
+    pipeline.add_task(None, print, '\n=== Simplify domain lists (for SecStrAnnotator) ===')
+    pipeline.add_task('simplify domain list - Set-ALL', simplify_domain_list.main, 'set_ALL.json', stdout='set_ALL.simple.json')
+    pipeline.add_task('simplify domain list Set-NR', simplify_domain_list.main, 'set_NR.json', stdout='set_NR.simple.json')
+    pipeline.add_task('create domain list for SecStrAPI', extract_pdb_domain_list.main, 'set_ALL.json', stdout='AnnotationList.json')
 
-    # # Download CIF files
-    # pipeline.add_task(None, print, '\n=== Download CIF files ===')
-    # pipeline.add_task('download CIF files', download_from_pdbe.main, 'set_ALL.simple.json', 'structures', structure_format='cif', no_gzip=True, cache=settings.structure_cache_dir)
+    # Download CIF files
+    pipeline.add_task(None, print, '\n=== Download CIF files ===')
+    pipeline.add_task('download CIF files', download_from_pdbe.main, 'set_ALL.simple.json', 'structures', structure_format='cif', no_gzip=True, cache=settings.structure_cache_dir)
 
-    # # Annotate
-    # pipeline.add_task(None, print, '\n=== Annotate ===')
-    # pipeline.add_task('run SecStrAnnotator', SecStrAnnotator_batch.main, 'structures', f'template_{settings.template_domain}', 'set_ALL.simple.json', 
-    #     threads=int(settings.n_threads), dll=secstrannotator_dll, options=settings.secstrannotator_options)
-    # pipeline.add_task('remove accidentally downloaded files', lambda: [os.remove(filename) for filename in glob.glob('*.cif')])  # Remove files accidentally downloaded by PyMOL
+    # Annotate
+    pipeline.add_task(None, print, '\n=== Annotate ===')
+    pipeline.add_task('run SecStrAnnotator', SecStrAnnotator_batch.main, 'structures', f'template_{settings.template_domain}', 'set_ALL.simple.json', 
+        threads=int(settings.n_threads), dll=secstrannotator_dll, options=settings.secstrannotator_options)
+    pipeline.add_task('remove accidentally downloaded files', lambda: [os.remove(filename) for filename in glob.glob('*.cif')])  # Remove files accidentally downloaded by PyMOL
 
-    # # Collect annotations and put them to SecStrAPI format
-    # pipeline.add_task(None, print, '\n=== Collect annotations and put them to SecStrAPI format ===')
-    # pipeline.add_task('collect annotations into annotations_ALL.json', collect_annotations.main, 'set_ALL.json', 'structures', stdout='annotations_ALL.json')
-    # pipeline.add_task('collect annotations into annotations_NR.json', collect_annotations.main, 'set_NR.json', 'structures', stdout='annotations_NR.json')
-    # pipeline.add_task('collect annotations into annotations_NR_Bact.json', collect_annotations.main, 'set_NR_Bact.json', 'structures', stdout='annotations_NR_Bact.json')
-    # pipeline.add_task('collect annotations into annotations_NR_Euka.json', collect_annotations.main, 'set_NR_Euka.json', 'structures', stdout='annotations_NR_Euka.json')
-    # pipeline.add_task('extract sequences - Set-ALL', extract_sequences.main, 'annotations_ALL.json', 'sequences_ALL')
-    # pipeline.add_task('extract sequences - Set-NR', extract_sequences.main, 'annotations_NR.json', 'sequences_NR')
-    # pipeline.add_task('extract sequences - Set-NR-Bact', extract_sequences.main, 'annotations_NR_Bact.json', 'sequences_NR_Bact')
-    # pipeline.add_task('extract sequences - Set-NR-Euka', extract_sequences.main, 'annotations_NR_Euka.json', 'sequences_NR_Euka')
+    # Collect annotations and put them to SecStrAPI format
+    pipeline.add_task(None, print, '\n=== Collect annotations and put them to SecStrAPI format ===')
+    pipeline.add_task('collect annotations into annotations_ALL.json', collect_annotations.main, 'set_ALL.json', 'structures', stdout='annotations_ALL.json')
+    pipeline.add_task('collect annotations into annotations_NR.json', collect_annotations.main, 'set_NR.json', 'structures', stdout='annotations_NR.json')
+    pipeline.add_task('collect annotations into annotations_NR_Bact.json', collect_annotations.main, 'set_NR_Bact.json', 'structures', stdout='annotations_NR_Bact.json')
+    pipeline.add_task('collect annotations into annotations_NR_Euka.json', collect_annotations.main, 'set_NR_Euka.json', 'structures', stdout='annotations_NR_Euka.json')
+    pipeline.add_task('extract sequences - Set-ALL', extract_sequences.main, 'annotations_ALL.json', 'sequences_ALL')
+    pipeline.add_task('extract sequences - Set-NR', extract_sequences.main, 'annotations_NR.json', 'sequences_NR')
+    pipeline.add_task('extract sequences - Set-NR-Bact', extract_sequences.main, 'annotations_NR_Bact.json', 'sequences_NR_Bact')
+    pipeline.add_task('extract sequences - Set-NR-Euka', extract_sequences.main, 'annotations_NR_Euka.json', 'sequences_NR_Euka')
 
     # Perform no-gap sequence alignment and create sequence logos (from Set-NR)
     pipeline.add_task(None, print, '\n=== Perform no-gap sequence alignment and create sequence logos (from Set-NR) ===')
@@ -151,26 +151,26 @@ def main(settings_file: str, resume: bool = False) -> None:
     pipeline.add_task('align sequences - Set-NR-Bact', align_sequences.main, 'annotations_NR_Bact.json', alignments_dir='aligments_NR_Bact', trees_dir='trees_NR_Bact', logos_dir='logos_NR_Bact', stdout='logo_statistics_NR_Bact.tsv')
     pipeline.add_task('align sequences - Set-NR-Euka', align_sequences.main, 'annotations_NR_Euka.json', alignments_dir='aligments_NR_Euka', trees_dir='trees_NR_Euka', logos_dir='logos_NR_Euka', stdout='logo_statistics_NR_Euka.tsv')
 
-    # # Realign sequences from Set-ALL to the alignment from Set-NR and add reference residue information
-    # pipeline.add_task(None, print, '\n=== Realign sequences from Set-ALL to the alignment from Set-NR and add reference residue information ===')
-    # pipeline.add_task('add reference residues - Set-NR', add_reference_residues.main, 'annotations_NR.json', 'aligments_NR', labels=settings.sses_for_generic_numbering, label2auth_dir='structures', stdout='annotations_with_reference_residues_NR.json')
-    # pipeline.add_task('add reference residues - Set-ALL', add_reference_residues.main, 'annotations_ALL.json', 'aligments_NR', labels=settings.sses_for_generic_numbering, label2auth_dir='structures', stdout='annotations_with_reference_residues_ALL.json')
+    # Realign sequences from Set-ALL to the alignment from Set-NR and add reference residue information
+    pipeline.add_task(None, print, '\n=== Realign sequences from Set-ALL to the alignment from Set-NR and add reference residue information ===')
+    pipeline.add_task('add reference residues - Set-NR', add_reference_residues.main, 'annotations_NR.json', 'aligments_NR', labels=settings.sses_for_generic_numbering, label2auth_dir='structures', stdout='annotations_with_reference_residues_NR.json')
+    pipeline.add_task('add reference residues - Set-ALL', add_reference_residues.main, 'annotations_ALL.json', 'aligments_NR', labels=settings.sses_for_generic_numbering, label2auth_dir='structures', stdout='annotations_with_reference_residues_ALL.json')
 
-    # # Divide annotations into per-PDB files
-    # pipeline.add_task(None, print, '\n=== Divide annotations into per-PDB files ===')
-    # pipeline.add_task('remove unnecessary fields from annotations', select_sse_fields.main, 'annotations_with_reference_residues_ALL.json', stdout='annotations_with_reference_residues_ALL-selected_fields.json')
-    # pipeline.add_task('divide annotations 1-PDB-per-file', divide_annotations_by_pdb.main, 'annotations_with_reference_residues_ALL-selected_fields.json', 'annotations_ALL', min_dir='annotations_ALL_min')
+    # Divide annotations into per-PDB files
+    pipeline.add_task(None, print, '\n=== Divide annotations into per-PDB files ===')
+    pipeline.add_task('remove unnecessary fields from annotations', select_sse_fields.main, 'annotations_with_reference_residues_ALL.json', stdout='annotations_with_reference_residues_ALL-selected_fields.json')
+    pipeline.add_task('divide annotations 1-PDB-per-file', divide_annotations_by_pdb.main, 'annotations_with_reference_residues_ALL-selected_fields.json', 'annotations_ALL', min_dir='annotations_ALL_min')
 
-    # # Prepare TSV tables for analyses
-    # pipeline.add_task(None, print, '\n=== Prepare TSV tables for analyses ===')
-    # pipeline.add_task('create TSV table with annotations - Set-NR', annotation_json_to_tsv.main, 'annotations_with_reference_residues_NR.json', add_missing_sses=True, stdout='annotations_with_reference_residues_NR.tsv')
-    # pipeline.add_task('create TSV table with annotations - Set-ALL', annotation_json_to_tsv.main, 'annotations_with_reference_residues_ALL.json', add_missing_sses=True, stdout='annotations_with_reference_residues_ALL.tsv')
-    # pipeline.add_task('create TSV table with beta-bulges - Set-NR', annotation_json_to_bulges_tsv.main, 'annotations_with_reference_residues_NR.json', stdout='beta_bulges_NR.tsv')
-    # pipeline.add_task('create TSV table with beta-bulges - Set-ALL', annotation_json_to_bulges_tsv.main, 'annotations_with_reference_residues_ALL.json', stdout='beta_bulges_ALL.tsv')
+    # Prepare TSV tables for analyses
+    pipeline.add_task(None, print, '\n=== Prepare TSV tables for analyses ===')
+    pipeline.add_task('create TSV table with annotations - Set-NR', annotation_json_to_tsv.main, 'annotations_with_reference_residues_NR.json', add_missing_sses=True, stdout='annotations_with_reference_residues_NR.tsv')
+    pipeline.add_task('create TSV table with annotations - Set-ALL', annotation_json_to_tsv.main, 'annotations_with_reference_residues_ALL.json', add_missing_sses=True, stdout='annotations_with_reference_residues_ALL.tsv')
+    pipeline.add_task('create TSV table with beta-bulges - Set-NR', annotation_json_to_bulges_tsv.main, 'annotations_with_reference_residues_NR.json', stdout='beta_bulges_NR.tsv')
+    pipeline.add_task('create TSV table with beta-bulges - Set-ALL', annotation_json_to_bulges_tsv.main, 'annotations_with_reference_residues_ALL.json', stdout='beta_bulges_ALL.tsv')
 
-    # # Get full sequences
-    # pipeline.add_task(None, print, '\n=== Get full sequences ===')
-    # pipeline.add_task('get full FASTA sequences', get_full_sequences.main, 'set_NR.json', stdout='set_NR.fasta')
+    # Get full sequences
+    pipeline.add_task(None, print, '\n=== Get full sequences ===')
+    pipeline.add_task('get full FASTA sequences', get_full_sequences.main, 'set_NR.json', stdout='set_NR.fasta')
 
     if resume:
         print('\nResuming pipeline')
