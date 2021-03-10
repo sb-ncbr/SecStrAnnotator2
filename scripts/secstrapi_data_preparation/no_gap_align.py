@@ -6,6 +6,7 @@ from os import path
 import shutil
 import sys
 import json
+from io import StringIO
 import heapq
 import itertools
 from typing import List, Tuple, Dict
@@ -375,6 +376,15 @@ def run_weblogo3(alignment_file, logo_file, first_index=0):
     # print(command)
     os.system(command)
 
+def probability_matrix_from_fasta(alignment_fasta):
+    '''Return logomaker-style probability matrix based on aligned sequences in multi-FASTA file, and the total number of aligned sequences.'''
+    inp = SeqIO.parse(alignment_fasta, 'fasta')
+    names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
+    counts_mat = logomaker.alignment_to_matrix(seqs, characters_to_ignore=GAP_CHAR+UNKNOWN_CHAR)
+    n_seqs = len(seqs)
+    prob_mat = counts_mat / n_seqs
+    return prob_mat, n_seqs
+    
 def run_logomaker_from_matrix(matrix, widths, logo_file, first_index=0, dpi=600, units='bits', color_scheme='weblogo_protein', title=None):
     '''Generate sequence logo using Logomaker.
     matrix: pandas dataframe (columns correspond to amino acid letters)
@@ -443,10 +453,7 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
     '''Generate sequence logo using Logomaker.
     units: 'bits' or 'probability', color_scheme: 'weblogo_protein', 'hydrophobicity' ...
     # Logomaker documentation: https://logomaker.readthedocs.io/en/latest/'''
-    inp = SeqIO.parse(alignment_file, 'fasta')
-    names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
-    counts_mat = logomaker.alignment_to_matrix(seqs, characters_to_ignore=GAP_CHAR+UNKNOWN_CHAR)
-    prob_mat = counts_mat / len(seqs)
+    prob_mat, n_seqs = probability_matrix_from_fasta(alignment_file)
     heights, widths, areas = logo_heights_widths_areas(prob_mat.values, first_column_is_gap=False)
     if units == 'bits':
         matrix = heights.reshape((-1, 1)) * prob_mat / prob_mat.values.sum(axis=1, keepdims=True)
@@ -455,7 +462,39 @@ def run_logomaker(alignment_file, logo_file, first_index=0, dpi=600, units='bits
     else:
         raise ValueError("units must be 'bits' or 'probability'")
     run_logomaker_from_matrix(matrix, widths, logo_file, first_index=first_index, dpi=dpi, units=units, color_scheme=color_scheme, title=title)
-    
+
+def encode_array(np_array, fmt='%.3f', delimiter=' ', newline='; '):
+    with StringIO() as w:
+        np.savetxt(w, np_array, fmt=fmt, delimiter=delimiter, newline=newline)
+        text = w.getvalue()
+    return text
+
+def decode_array(np_array_string, dtype=float, delimiter=' ', newline='; '):
+    lines = np_array_string.split(newline)
+    array = np.loadtxt(lines, dtype=dtype, delimiter=delimiter)
+    return array
+
+def make_probability_matrix_file(alignment_fasta, output_file, subst_matrix):
+    prob_mat, n_seqs = probability_matrix_from_fasta(alignment_fasta)
+    alphabet = list(prob_mat.columns)
+    if all(len(letter)==1 for letter in alphabet):
+        alphabet = ''.join(alphabet)
+    print(alphabet)
+    # score_mat = prob_mat @ subst_matrix
+    prob_mat_str = encode_array(prob_mat)
+    js = {'alphabet': alphabet, 'probabilities': prob_mat_str}
+    # js2 = {'alphabet': alphabet, 'probabilities': prob_mat.values}
+    js2 = {'alphabet': alphabet, 
+           'probabilities': prob_mat.values.round(3).tolist(),
+        #    'scores': score_mat.values.round(3).tolist()
+           }
+    with open(output_file+'.tmp', 'w') as w:
+        w.write(encode_array(prob_mat, newline='\n'))
+    # with open(output_file+'.scores.tmp', 'w') as w:
+    #     w.write(encode_array(score_mat))
+    with open(output_file, 'w') as w:
+        json.dump(js2, w, indent=None)
+
 def run_logomaker_backup(alignment_file, logo_file, first_index=0, dpi=600, units='bits', color_scheme='weblogo_protein'):
     '''Generate sequence logo using Logomaker.
     units: 'bits' or 'probability', color_scheme: 'weblogo_protein', 'hydrophobicity' ...
@@ -597,6 +636,24 @@ class NoGapAligner:
         if not keep_order:
             aln_seqs, names = zip(*( (self.aln_seqs[i], self.names[i]) for i in reordering_from_tree(self.tree) ))
         write_fasta(names, aln_seqs, output_file)
+    
+    def output_alignment_matrices(self, output_file, pivot_as=0, units='bits'):
+        prob_mat = self.alignment_matrix
+        alphabet = self.alphabet
+        score_mat = prob_mat @ self.subst_matrix
+        if pivot_as is not None:
+            first_index = pivot_as - get_pivot_column_index(self.alignment_matrix, probability=(units=='probability'))
+        else:
+            first_index = 1
+        js2 = {
+            'alphabet': alphabet, 
+            'first_index': first_index,
+            'probabilities': prob_mat.round(3).tolist(),
+            # 'substitution': self.subst_matrix.round(3).tolist(),
+            'scores': score_mat.round(3).tolist(),
+            }
+        with open(output_file, 'w') as w:
+            json.dump(js2, w, indent=None)
 
     def print_tree(self, output_file=None):
         aln_seqs, names = zip(*( (self.aln_seqs[i], self.names[i])  for i in reordering_from_tree(self.tree) ))
@@ -655,70 +712,3 @@ class Realigner:
         pivot = self.pivot_index - shift
         return shift, pivot
 
-# def main(input_file, output_file, logo_output=None, keep_order=False, print_tree=False, realign=True):
-#     inp = SeqIO.parse(input_file, 'fasta')
-#     names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
-
-#     subst_matrix, alphabet, letter2index = substitution_matrix(MatrixInfo.blosum62, gap_penalty=GAP_PENALTY)
-
-#     # print('Matrix:', subst_matrix)
-#     # print('Alphabet:', alphabet)
-#     # print('Letter2index:', letter2index)
-
-#     sequence_matrices = [ sequence2matrix(seq, letter2index) for seq in seqs ]
-#     matAln, shifts, tree = multialign(sequence_matrices, subst_matrix)
-
-#     if realign:
-#         last_shifts = None
-#         while last_shifts is None or any( last != curr for last, curr in zip(last_shifts, shifts) ):
-#             last_shifts = shifts
-#             matAln, shifts, bestnesses = multirealign(matAln, sequence_matrices, subst_matrix)
-#             # print(f'Bestness: min {min(bestnesses):.4f}, max {max(bestnesses):.4f}, mean {np.mean(bestnesses):.4f}, median{np.median(bestnesses):.4f}')
-
-#     aln_seqs = apply_shifts(seqs, shifts)
-
-#     # print('Aln\n', matAln)
-#     # print('Shifts\n', shifts)
-#     # print('Tree\n', tree)
-
-#     # print_aln(seqs, names=names)
-#     # print('#')
-#     if not keep_order:
-#         aln_seqs, names = zip(*( (aln_seqs[i], names[i])  for i in reordering_from_tree(tree) ))
-#     write_fasta(names, aln_seqs, output_file)
-#     if print_tree:
-#         print_aln(aln_seqs, names=None, tree=tree)
-
-#     if logo_output is not None:
-#         height = 8
-#         width_per_residue = 0.8
-#         n_residues = matAln.shape[0]
-#         max_height_index = get_pivot_column_index(matAln)
-#         # run_weblogo2(output_file, logo_output, first_index=-max_height_index)
-#         run_weblogo3(output_file, logo_output, first_index=-max_height_index)
-            
-# ################################################################################
-
-# if __name__ == "__main__":
-#     # parser = argparse.ArgumentParser()
-#     # parser.add_argument('input', help='Input file with sequences in multi-FASTA format', type=str)
-#     # parser.add_argument('output', help='Output file for aligned sequences in multi-FASTA format', type=str)
-#     # parser.add_argument('--logo_output', help='Output file for aligned sequences in multi-FASTA format', type=str, default=None)
-#     # parser.add_argument('--keep_order', help='Print aligned sequence in the same order as they appeared in the input (otherwise will order them by the tree)', action='store_true')
-#     # args = parser.parse_args()
-
-#     # main(input_file = args.input, output_file = args.output, logo_output = args.logo_output, keep_order = args.keep_order)
-
-#     directory = "/home/adam/Workspace/Python/Ubertemplate/alignment_data/"
-#     labels = ["1a", "1b", "1c", "1d", "1e", "2a", "2b", "3a", "3b", "3c", "4a", "4b", "4c", "A", "A'", "B", "B'", "B''", "B'''", "C", "D", "E", "F", "F'", "G", "G'", "H", "I", "J", "J'", "K", "K'", "K''", "K'''", "L", "L'"]
-#     # labels = ["F"]
-#     os.makedirs(path.join(directory, 'aligned'), exist_ok=True)
-#     os.makedirs(path.join(directory, 'logos'), exist_ok=True)
-#     for label in labels:
-#         print(label)
-#         main(
-#             path.join(directory, 'sequences', f'extracted_sequences_{label}.fasta'),
-#             path.join(directory, 'aligned', f'{label}.fasta'),
-#             logo_output=path.join(directory, 'logos', f'{label}.png'),
-#             keep_order=False, 
-#             print_tree=True)

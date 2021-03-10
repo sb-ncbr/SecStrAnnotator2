@@ -90,6 +90,10 @@ def read_annotation_file_json(filename, pdb_id):
 		annotation = json.load(f)
 	if pdb_id in annotation:
 		return annotation[pdb_id]
+	elif len(annotation) == 1:
+		key = next(iter(annotation.keys()))
+		print('\''+filename+'\' does not contain annotation for '+pdb_id+', taking '+key+' instead')
+		return annotation[key]
 	else:
 		print('\''+filename+'\' does not contain annotation for '+pdb_id)
 		return {}

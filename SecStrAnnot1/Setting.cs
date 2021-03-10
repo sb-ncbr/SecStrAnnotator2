@@ -67,8 +67,6 @@ namespace protein
         public const string DEFAULT_CHAIN_ID = "A";
         public const string DEFAULT_DOMAIN_RANGES_STRING = ":";
 
-        public const bool JSON_INPUT = true;
-        public const bool JSON_OUTPUT = true;
         public const int JSON_OUTPUT_MAX_INDENT_LEVEL = 3;
 
         public const bool LABEL_DETECTED_SSES_AS_NULL = false;
@@ -77,16 +75,17 @@ namespace protein
         public const string ALIGNED_PDB_FILE_EXT = "-aligned.cif";
         public const string ALIGNMENT_FILE_EXT = "-alignment.json";
         public const string RENUMBERED_PDB_FILE_EXT = "-renumbered.cif";
-        public const string TEMPLATE_ANNOTATION_FILE_EXT = "-template.sses";
-        public const string ANNOTATION_FILE_EXT = "-annotated.sses";
-        public const string ANNOTATION_WITH_SEQUENCES_FILE_EXT = "-annotated_with_sequences.sses";
+        public const string TEMPLATE_ANNOTATION_FILE_EXT = "-template.sses.json";
+        public const string ANNOTATION_FILE_EXT = "-annotated.sses.json";
+        public const string ANNOTATION_WITH_SEQUENCES_FILE_EXT = "-annotated_with_sequences.sses.json";
         public const string DSSP_OUTPUT_FILE_EXT = ".dssp";
         public const string LINE_SEGMENTS_FILE_EXT = "-line_segments.cif";
-        public const string INPUT_SSES_FILE_EXT = ".sses";
-        public const string DETECTED_SSES_FILE_EXT = "-detected.sses";
-        public const string JOINED_SSES_FILE_EXT = "-joined.sses";
+        public const string INPUT_SSES_FILE_EXT = ".sses.json";
+        public const string DETECTED_SSES_FILE_EXT = "-detected.sses.json";
+        public const string JOINED_SSES_FILE_EXT = "-joined.sses.json";
         public const string RMSDS_FILE_EXT = "-rmsds.tsv";
         public const string LABEL2AUTH_FILE_EXT = "-label2auth.tsv";
+        public const string SEQUENCE_FILE_EXT = "-sequence.json";
 
         public const string CONFIG_FILE = "SecStrAnnotator_config.json";
 

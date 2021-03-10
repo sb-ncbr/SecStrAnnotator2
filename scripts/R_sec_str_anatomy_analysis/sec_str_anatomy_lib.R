@@ -49,10 +49,23 @@ table_sse_occurrence = function(df, alpha = 0.05) {
     warning('Column Domain not found, using column PDB to count domains')
     n_pdb = n_distinct(df$PDB)
   }
-  data = df %>% filter(length > 0) %>% group_by(label) %>% count() %>% 
-    mutate(freq = n/n_pdb, type = sse_category(label), freq_min = agresti_coull_confidence_interval(n, n_pdb, alpha)[1], freq_max = agresti_coull_confidence_interval(n, n_pdb, alpha)[2])
+  data = df %>% filter(length > 0) %>% group_by(label) %>% summarise(n=n(), mean_length=mean(length), sd_length=sd(length)) %>% 
+    mutate(freq = n/n_pdb, type = sapply(label, sse_category), freq_min = agresti_coull_confidence_interval(n, n_pdb, alpha)[1], freq_max = agresti_coull_confidence_interval(n, n_pdb, alpha)[2])
   data
 }
+
+# # Calculate absolute and relative occurrence for each SSE label + confidence intervals
+# table_sse_occurrence = function(df, alpha = 0.05) {
+#   if (!is.null(df$Domain)) {
+#     n_pdb = n_distinct(df$Domain)
+#   } else {
+#     warning('Column Domain not found, using column PDB to count domains')
+#     n_pdb = n_distinct(df$PDB)
+#   }
+#   data = df %>% filter(length > 0) %>% group_by(label) %>% count() %>% 
+#     mutate(freq = n/n_pdb, type = sse_category(label), freq_min = agresti_coull_confidence_interval(n, n_pdb, alpha)[1], freq_max = agresti_coull_confidence_interval(n, n_pdb, alpha)[2])
+#   data
+# }
 
 # Calculate confidence intervals for binomial distribution
 agresti_coull_confidence_interval = function(successes, total, alpha = 0.05) {

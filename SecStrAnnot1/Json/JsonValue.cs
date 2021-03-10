@@ -176,6 +176,7 @@ namespace protein.Json
             }
         }
 
+        /**Append a value at the end of the JSON list.*/
         public void Add(JsonValue value)
         {
             if (Type == JsonType.List)

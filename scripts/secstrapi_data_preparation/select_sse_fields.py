@@ -18,7 +18,7 @@ from constants import *
 
 #  CONSTANTS  ################################################################################
 
-DEFAULT_FIELDS = 'label,chain_id,start,end,auth_chain_id,auth_start,auth_start_ins_code,auth_end,auth_end_ins_code,type,color,sheet_id,metric_value,confidence,sequence'
+DEFAULT_FIELDS = 'label,chain_id,start,end,auth_chain_id,auth_start,auth_start_ins_code,auth_end,auth_end_ins_code,type,color,sheet_id,metric_value,confidence,sequence,reference_residue'
 OUTPUT_EXT = '.json'
 
 #  FUNCTIONS  ################################################################################

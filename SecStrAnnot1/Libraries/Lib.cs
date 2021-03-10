@@ -82,7 +82,6 @@ namespace protein.Libraries
         /** Runs a command with specified arguments. */
         public static bool RunCommand(String command, String args)
         {
-            Process proc = new Process();
             bool rooted = Path.IsPathRooted(command);
             if (rooted)
             {
@@ -108,8 +107,11 @@ namespace protein.Libraries
             }
             try
             {
-                
+                Process proc = new Process();
                 proc.StartInfo = new ProcessStartInfo();
+                // proc.StartInfo.RedirectStandardInput = false;
+                // proc.StartInfo.RedirectStandardOutput = false;
+                // proc.StartInfo.RedirectStandardError = false;
                 proc.StartInfo.FileName = command;
                 proc.StartInfo.Arguments = args;
                 proc.StartInfo.UseShellExecute = false; // without this it throws something about xdg-open on Linux if the pymol is not installed

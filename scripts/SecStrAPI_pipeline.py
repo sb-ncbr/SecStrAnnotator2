@@ -147,7 +147,8 @@ def main(settings_file: str, resume: bool = False) -> None:
 
     # Perform no-gap sequence alignment and create sequence logos (from Set-NR)
     pipeline.add_task(None, print, '\n=== Perform no-gap sequence alignment and create sequence logos (from Set-NR) ===')
-    pipeline.add_task('align sequences - Set-NR', align_sequences.main, 'annotations_NR.json', alignments_dir='aligments_NR', trees_dir='trees_NR', logos_dir='logos_NR', stdout='logo_statistics_NR.tsv')
+    pipeline.add_task('align sequences - Set-NR', align_sequences.main, 'annotations_NR.json', alignments_dir='aligments_NR', trees_dir='trees_NR', logos_dir='logos_NR', matrices_dir='alignment_matrices_NR', labels_for_matrices=settings.sses_for_generic_numbering, stdout='logo_statistics_NR.tsv')
+    pipeline.add_task('copy matrix file', shutil.copy, path.join('alignment_matrices_NR', 'ALL.json'), 'alignment_matrices_NR.json')
     pipeline.add_task('align sequences - Set-NR-Bact', align_sequences.main, 'annotations_NR_Bact.json', alignments_dir='aligments_NR_Bact', trees_dir='trees_NR_Bact', logos_dir='logos_NR_Bact', stdout='logo_statistics_NR_Bact.tsv')
     pipeline.add_task('align sequences - Set-NR-Euka', align_sequences.main, 'annotations_NR_Euka.json', alignments_dir='aligments_NR_Euka', trees_dir='trees_NR_Euka', logos_dir='logos_NR_Euka', stdout='logo_statistics_NR_Euka.tsv')
 
