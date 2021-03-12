@@ -42,16 +42,23 @@ ALIGNED_RESIDUES = 'aligned_residues'  # dev
 # Auxiliary functions
 
 def convert_ranges(ranges):
-    """Converts changes from SecStrAnnotator format (1:10,15:20) to PyMOL format (1-10+15-20)."""
-    return ranges.replace('-','\-').replace(':','-').replace(',','+')
+	"""Converts changes from SecStrAnnotator format (1:10,15:20) to PyMOL format (1-10+15-20)."""
+	return str(ranges).replace('-','\-').replace(':','-').replace(',','+')
 
-def selection_expression(object_name, chain, ranges, symbol=None):
-    """Creates PyMOL selection expression."""
-    parts = [object_name, 'chain ' + chain, 'resi ' + convert_ranges(ranges)]
-    if symbol is not None:
-        parts.append('symbol ' + symbol)
-    # print(' & '.join(parts) + ' ')
-    return ' & '.join(parts) + ' '
+def selection_expression(object_name, chain, ranges, symbol=None, name=None):
+	"""Creates PyMOL selection expression."""
+	parts = ['('+object_name+')']
+	if chain is not None:
+		if chain=='.' or chain==' ':  # PyMOL ain't like dot and space values.
+			chain = '""'
+		parts.append('chain ' + chain)
+	if ranges is not None:
+		parts.append('resi ' + convert_ranges(ranges))
+	if symbol is not None:
+		parts.append('symbol ' + symbol)
+	if name is not None:
+		parts.append('name ' + name)
+	return ' & '.join(parts) + ' '
 
 def aligned_residues_from_alignment_object(alignment_object_name):
     """Returns a list of paired residues as 4-tuples (template_chain, template_resi, query_chain, query_resi)."""

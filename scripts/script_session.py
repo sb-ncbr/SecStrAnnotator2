@@ -125,8 +125,8 @@ def color_by_annotation(pdb_id, selection, base_color, annotation_file, selectio
 		hbonds = annotation.get(HBONDS, [])
 		distance_name = selection_prefix + '.' + HBONDS_OBJECT_NAME
 		for donor_chain, donor_resi, acceptor_chain, acceptor_resi in hbonds:
-			donor = '(%s) and chain %s and resi %s and name N' % (selection, donor_chain, donor_resi)
-			acceptor = '(%s) and chain %s and resi %s and name O' % (selection, acceptor_chain, acceptor_resi)
+			donor = selection_expression(selection, donor_chain, donor_resi, name='N')
+			acceptor = selection_expression(selection, acceptor_chain, acceptor_resi, name='O')
 			cmd.distance(distance_name, donor, acceptor)
 	cmd.deselect()
 
@@ -155,17 +155,21 @@ def safe_object_name(name):
 
 def convert_ranges(ranges):
 	"""Converts changes from SecStrAnnotator format (1:10,15:20) to PyMOL format (1-10+15-20)."""
-	return ranges.replace('-','\-').replace(':','-').replace(',','+')
+	return str(ranges).replace('-','\-').replace(':','-').replace(',','+')
 
-def selection_expression(object_name, chain, ranges, symbol=None):
+def selection_expression(object_name, chain, ranges, symbol=None, name=None):
 	"""Creates PyMOL selection expression."""
-	parts = [object_name]
+	parts = ['('+object_name+')']
 	if chain is not None:
+		if chain=='.' or chain==' ':  # PyMOL ain't like dot and space values.
+			chain = '""'
 		parts.append('chain ' + chain)
 	if ranges is not None:
 		parts.append('resi ' + convert_ranges(ranges))
 	if symbol is not None:
 		parts.append('symbol ' + symbol)
+	if name is not None:
+		parts.append('name ' + name)
 	return ' & '.join(parts) + ' '
 
 def apply_representations(selection, protein_reprs=[], ligand_reprs=[], bonds_reprs=[]):

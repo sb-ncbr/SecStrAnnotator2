@@ -327,7 +327,7 @@ namespace protein {
 
             if (!onlyDetect) {
                 if (!tProtein.HasChain(templateChainID_)) {
-                    Lib.WriteError("Template protein does not contain chain {0}.", templateChainID_);
+                    Lib.WriteError("Template protein does not contain chain '{0}'.", templateChainID_);
                     return -1;
                 }
             }
@@ -336,7 +336,7 @@ namespace protein {
                 queryChainIDs = new string[] { queryChainID_ };
                 foreach (string c in queryChainIDs) {
                     if (!qProtein.HasChain(c)) {
-                        Lib.WriteError("Query protein does not contain chain {0}.", c);
+                        Lib.WriteError("Query protein does not contain chain '{0}'.", c);
                         return -1;
                     }
                 }
