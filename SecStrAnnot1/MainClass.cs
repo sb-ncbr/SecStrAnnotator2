@@ -49,6 +49,8 @@ namespace protein {
             int maxGapForSoftMatching = Setting.DEFAULT_MAX_GAP_FOR_SOFT_MATCHING;
             int extraResiduesInSequence = Setting.DEFAULT_EXTRA_RESIDUES_IN_SEQUENCE;
 
+            bool includeUnannotatedSSEs = false;
+
             string correctionsFile = null;
 
             bool createPymolSession = false;
@@ -188,6 +190,9 @@ namespace protein {
             );
             options.AddOption(Option.SwitchOption(new string[] { "-S", "--sequence" }, v => { printSequenceFile = v; })
                 .AddHelp("Create an additional file with extracted sequence {query}-sequence.json.")
+            );
+            options.AddOption(Option.SwitchOption(new string[] { "-u", "--unannotated" }, v => { includeUnannotatedSSEs = v; })
+                .AddHelp("Include unannotated SSEs from the query protein in the output (their label prefixed with _).")
             );
 
 #if DEVEL
@@ -570,13 +575,11 @@ namespace protein {
                 } else {
                     tSSEsInSpace = tSSEs.Select(sse => sse as SseInSpace).ToList();
                 }
-
                 if (forceCalculateVectors || !qSSEs.All(sse => sse is SseInSpace)) {
                     qSSEsInSpace = LibAnnotation.SSEsAsLineSegments_GeomVersion(qProtein.GetChain(queryChainID), qSSEs, out dump);
                 } else {
                     qSSEsInSpace = qSSEs.Select(sse => sse as SseInSpace).ToList();
                 }
-
                 times.Add(("Calculate line segments", DateTime.Now.Subtract(stamp)));
                 stamp = DateTime.Now;
                 #endregion
@@ -610,7 +613,6 @@ namespace protein {
                     default:
                         throw new Exception("Unknown MetricMethod: " + metricMethod);
                 }
-
 
                 Lib.WriteLineDebug("Template connections: {0}", tConnectivity.Select(t => tSSEs[t.Item1].Label + "-" + tSSEs[t.Item2].Label).EnumerateWithCommas());
                 Lib.WriteLineDebug("Query connections: {0}", qConnectivity.Select(t => qSSEs[t.Item1].Label + "-" + qSSEs[t.Item2].Label).EnumerateWithCommas());
@@ -669,16 +671,18 @@ namespace protein {
                 }
                 NiceAnnotatorWrapper annotator =
                     correctionsFile == null ?
-                    new NiceAnnotatorWrapper(context, createAnnotator)
-                    : new NiceAnnotatorWrapperWithCorrections(context, createAnnotator, correctionsFile, queryID, qProtein);
+                    new NiceAnnotatorWrapper(context, createAnnotator, includeUnannotatedSSEs: includeUnannotatedSSEs)
+                    : new NiceAnnotatorWrapperWithCorrections(context, createAnnotator, correctionsFile, queryID, qProtein, includeUnannotatedSSEs: includeUnannotatedSSEs);
 
                 DateTime t_BB_0 = DateTime.Now;
-                List<SseInSpace> annotQHelicesInSpace = annotator.GetAnnotatedCandidates().ToList();
-                Lib.WriteLineDebug("Annotated: {0}", annotQHelicesInSpace.EnumerateWithSeparators("\n\t"));
+                SseInSpace[] annotQHelicesInSpace = annotator.GetAnnotatedCandidates();
+                // SseInSpace[] unannotQHelicesInSpace = annotator.GetUnannotatedCandidates();
+                Lib.WriteLineDebug("Annotated:\n\t{0}", annotQHelicesInSpace.EnumerateWithSeparators("\n\t"));
+                // Lib.WriteLineDebug("Unannotated:\n\t{0}", unannotQHelicesInSpace.EnumerateWithSeparators("\n\t"));
                 List<(int, int, int)> annotQConnectivity = annotator.GetAnnotatedConnectivity(qConnectivity);
-                IEnumerable<double> metricList = annotator.GetMetricList();
-                IEnumerable<double> suspiciousnessList = annotator.GetSuspiciousnessList();
-                foreach (var sse in annotator.GetAnnotatedCandidates()) {
+                double[] metricList = annotator.GetMetricList();
+                double[] suspiciousnessList = annotator.GetSuspiciousnessList();
+                foreach (var sse in annotQHelicesInSpace) {
                     if (sse.IsNotFound()) {
                         rmsdLists_AllChains.Add(new List<double>());
                     } else {
@@ -768,26 +772,20 @@ namespace protein {
 
             #region Output of chosen SSEs into a file.
             String comment = $"Automatic annotation for {queryID} based on {templateID} template. Total value of used metric: {totalMetric:0.00}";
-            var extras = Lib.DoWriteDebug ?
-                new Dictionary<string, IEnumerable<object>> {
-                    {LibAnnotation.JsNames.METRIC, metricList_AllChains.Select (x => x as object)},
-                    {LibAnnotation.JsNames.SUSPICIOUSNESS, suspiciousnessList_AllChains.Select (x => x as object)},
-                    {LibAnnotation.JsNames.LIST_RMSD, rmsdLists_AllChains.Select (l => l as object)},
-                    {LibAnnotation.JsNames.COUNT_RMSD, rmsdLists_AllChains.Select (l => l.Count() as object)},
-                    {LibAnnotation.JsNames.FIRST_RMSD, rmsdLists_AllChains.Select (l => l.FirstOrDefault () as object)},
-                    {LibAnnotation.JsNames.LAST_RMSD, rmsdLists_AllChains.Select (l => l.LastOrDefault () as object)},
-                    {LibAnnotation.JsNames.AVG_RMSD, rmsdLists_AllChains.Select (l => l.Count()>=1 ? l.Average () : 0.0 as object)},
-                    {LibAnnotation.JsNames.MAX_RMSD, rmsdLists_AllChains.Select (l => l.Count()>=1 ? l.Max () : 0.0 as object)},
-                    {LibAnnotation.JsNames.ARG_MAX_RMSD, rmsdLists_AllChains.Select (l => l.Count()>=1 ? l.ArgMax () : -1 as object)},
-                    {LibAnnotation.JsNames.MAX_INTERNAL_RMSD, rmsdLists_AllChains.Select (l => l.Count()>=3 ? l.Take (l.Count()-1).Skip (1).Max () : 0.0 as object)},
-                    // {"metric3_value", metric3List_AllChains.Select (x => x as object)},
-                    // {"metric7_value", metric7List_AllChains.Select (x => x as object)},
-                    {LibAnnotation.JsNames.SEQUENCE, annotQSseSequences_AllChains}
-                }
-                : new Dictionary<string, IEnumerable<object>> {
-                    {LibAnnotation.JsNames.METRIC, metricList_AllChains.Select (x => x as object)},
-                    {LibAnnotation.JsNames.SEQUENCE, annotQSseSequences_AllChains}
-                };
+            var extras = new Dictionary<string, IEnumerable<object>>();
+            extras[LibAnnotation.JsNames.METRIC] = metricList_AllChains.Select (x => x as object);
+            extras[LibAnnotation.JsNames.SEQUENCE] = annotQSseSequences_AllChains;
+            if (Lib.DoWriteDebug) {
+                extras[LibAnnotation.JsNames.SUSPICIOUSNESS] = suspiciousnessList_AllChains.Select(x => x as object);
+                // extras[LibAnnotation.JsNames.LIST_RMSD] = rmsdLists_AllChains.Select (l => l as object);
+                // extras[LibAnnotation.JsNames.COUNT_RMSD] = rmsdLists_AllChains.Select (l => l.Count() as object);
+                // extras[LibAnnotation.JsNames.FIRST_RMSD] = rmsdLists_AllChains.Select (l => l.FirstOrDefault () as object);
+                // extras[LibAnnotation.JsNames.LAST_RMSD] = rmsdLists_AllChains.Select (l => l.LastOrDefault () as object);
+                // extras[LibAnnotation.JsNames.AVG_RMSD] = rmsdLists_AllChains.Select (l => l.Count()>=1 ? l.Average () : 0.0 as object);
+                // extras[LibAnnotation.JsNames.MAX_RMSD] = rmsdLists_AllChains.Select (l => l.Count()>=1 ? l.Max () : 0.0 as object);
+                // extras[LibAnnotation.JsNames.ARG_MAX_RMSD] = rmsdLists_AllChains.Select (l => l.Count()>=1 ? l.ArgMax () : -1 as object);
+                extras[LibAnnotation.JsNames.MAX_INTERNAL_RMSD] = rmsdLists_AllChains.Select(l => l.Count()>=3 ? l.Take(l.Count()-1).Skip(1).Max() : 0.0 as object);
+            };
             LibAnnotation.WriteAnnotationFile_Json(fileQueryAnnotatedHelices, queryID,
                 annotQHelicesInSpace_AllChains,
                 extras,

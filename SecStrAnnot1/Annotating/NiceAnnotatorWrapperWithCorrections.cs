@@ -20,8 +20,8 @@ namespace protein.Annotating
             Func<AnnotationContext, IAnnotator> innerAnnotatorConstructor,
             String correctionsFile,
             String pdbId,
-            Protein p)
-            : base(context, innerAnnotatorConstructor)
+            Protein p, bool includeUnannotatedSSEs = false)
+            : base(context, innerAnnotatorConstructor, includeUnannotatedSSEs: includeUnannotatedSSEs)
         {
             using (StreamReader r = new StreamReader(correctionsFile))
             {
@@ -30,9 +30,9 @@ namespace protein.Annotating
             this.protein = p;
         }
         
-        public override IEnumerable<SseInSpace> GetAnnotatedCandidates()
+        protected override SseInSpace[] CalculateAnnotatedCandidates()
         {
-            SseInSpace[] result = base.GetAnnotatedCandidates().ToArray();
+            SseInSpace[] result = base.CalculateAnnotatedCandidates().ToArray();
             for (int i = 0; i < result.Length; i++)
             {
                 List<String> correction = corrs.Where(l => l[1] == Context.Templates[i].Label).DefaultIfEmpty(null).FirstOrDefault();
