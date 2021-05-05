@@ -114,6 +114,7 @@ print_png(full_path('plots/contained_types-setNR.png'), width = 4000, height = 2
 plot_contained_helix_types(helicesNR, y_label = 'Fraction', legend_position = 'right')
 print_png(full_path('plots/contained_types-setNR-wide.png'), width = 4000, height = 2000, res = 500)
 
+# Run line: Ctrl+Enter
 # Comment: Ctrl+Shift+C
 # Go to function definition: F2 / Ctrl+Click
 # Fold all: Alt+O

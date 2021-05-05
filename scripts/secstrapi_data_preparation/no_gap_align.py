@@ -381,16 +381,38 @@ def probability_matrix_from_fasta(alignment_fasta):
     inp = SeqIO.parse(alignment_fasta, 'fasta')
     names, seqs = zip(*( (x.id, str(x.seq)) for x in inp ))
     counts_mat = logomaker.alignment_to_matrix(seqs, characters_to_ignore=GAP_CHAR+UNKNOWN_CHAR)
+    # print(counts_mat)
     n_seqs = len(seqs)
     prob_mat = counts_mat / n_seqs
     return prob_mat, n_seqs
     
-def run_logomaker_from_matrix(matrix, widths, logo_file, first_index=0, dpi=600, units='bits', color_scheme='weblogo_protein', title=None):
+def prepend_zero_rows(dataframe, n_rows):
+    dataframe.index += n_rows
+    for i in range(n_rows):
+        dataframe.loc[i] = 0
+    dataframe.sort_index(inplace=True)
+
+def append_zero_rows(dataframe, n_rows):
+    n = len(dataframe.index)
+    for i in range(n_rows):
+        dataframe.loc[n+i] = 0
+
+def run_logomaker_from_matrix(matrix, widths, logo_file, first_index=0, dpi=600, units='bits', color_scheme='weblogo_protein', title=None, 
+        add_positions_before=0, add_positions_after=0):
     '''Generate sequence logo using Logomaker.
     matrix: pandas dataframe (columns correspond to amino acid letters)
     widths: array of widths of individual columns
     units: 'bits' or 'probability', color_scheme: 'weblogo_protein', 'hydrophobicity' ...
     # Logomaker documentation: https://logomaker.readthedocs.io/en/latest/'''
+
+    if add_positions_before != 0:
+        prepend_zero_rows(matrix, add_positions_before)
+        widths = np.concatenate((np.zeros(add_positions_before), widths))
+        first_index -= add_positions_before
+    if add_positions_after != 0:
+        append_zero_rows(matrix, add_positions_after)
+        widths = np.concatenate((widths, np.zeros(add_positions_after)))
+
     scale = 1.0
     height = 3.0
     width_per_residue = 0.3  # 0.35

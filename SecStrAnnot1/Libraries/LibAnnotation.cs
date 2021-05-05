@@ -461,9 +461,10 @@ namespace protein.Libraries
                         int first = result.FindIndex(sse => sse.Label == connection[0].String);
                         int last = result.FindIndex(sse => sse.Label == connection[1].String);
                         if (first == -1)
-                            throw new FormatException(JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY, i, 0) + " is not a label found in " + JsNames.SSES + ".");
+                            throw new FormatException($"{JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY, i, 0)} \"{connection[0].String}\" is not a label found in {JsNames.SSES}.");
                         if (last == -1)
-                            throw new FormatException(JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY, i, 1) + " is not a label found in " + JsNames.SSES + ".");
+                            throw new FormatException($"{JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY, i, 1)} \"{connection[1].String}\" is not a label found in {JsNames.SSES}.");
+                            // throw new FormatException(JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY, i, 1) + " is not a label found in " + JsNames.SSES + ".");
                         betaConnectivity.Add((first, last, connection[2].Int));
                     }
                     else

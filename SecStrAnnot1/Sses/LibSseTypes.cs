@@ -65,6 +65,8 @@ namespace protein.Sses
 
 
         public static string AsString(this SseType type, bool full = false) => full ? type.ToString() : sseTypeToString[type];
+        
+        public static string AsTwoClassString(this SseType type) => type.IsHelix() ? "H" : type.IsSheet() ? "E" : type.ToString();
 
         public static SseType Type(string typeString) => stringToSseType[typeString];
 

@@ -25,7 +25,8 @@ namespace protein.SecStrAssigning
         public SecStrAssignment GetSecStrAssignment(){
             SecStrAssignment result = InnerAssigner.GetSecStrAssignment ();
             result.SSEs=result.SSEs
-                .Select ((sse, i) => sse.RelabeledCopy (SetAllLabelsToNull ? null: Prefix + sse.Type.AsString() + i.ToString ()))
+                // .Select ((sse, i) => sse.RelabeledCopy (SetAllLabelsToNull ? null: Prefix + sse.Type.AsString() + i.ToString ()))
+                .Select ((sse, i) => sse.RelabeledCopy (SetAllLabelsToNull ? null: Prefix + sse.Type.AsTwoClassString() + i.ToString ()))
                 .ToList ();
             return result;
         }
