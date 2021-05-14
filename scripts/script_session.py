@@ -246,18 +246,25 @@ def create_session(directory, template, query):
             print('ERROR: File not found: ' + filename)
             cmd.quit(1)
     
+    query_object = QUERY_OBJECT_PREFIX + query_id
+    query_annot_object = query_object + '.sses'
+
     if template is not None:
         template_object = TEMPLATE_OBJECT_PREFIX + template_id
+        if template_object == query_object:
+            template_object = template_object + '_'
         template_annot_object = template_object + '.sses'
         cmd.load(template_struct_file, template_object)
+        if template_chain is not None:
+            cmd.remove(f'{template_object} and not chain {template_chain}')
         template_selection = selection_expression(template_object, template_chain, None)
         color_by_annotation(template_id, template_selection, TEMPLATE_BASE_COLOR, template_annot_file, selection_prefix=template_annot_object)
         cmd.disable(template_object)
         cmd.disable(template_annot_object)
 
-    query_object = QUERY_OBJECT_PREFIX + query_id
-    query_annot_object = query_object + '.sses'
     cmd.load(query_struct_file, query_object)
+    if query_chain is not None:
+        cmd.remove(f'{query_object} and not chain {query_chain}')
     query_selection = selection_expression(query_object, query_chain, None)
     color_by_annotation(query_id, query_selection, QUERY_BASE_COLOR, query_annot_file, selection_prefix=query_annot_object)
     
@@ -270,6 +277,12 @@ def create_session(directory, template, query):
     cmd.save(session_file)
     if IMAGE_SIZE is not None:
         width, height = IMAGE_SIZE
+        if template is not None:
+            cmd.orient(template_selection)
+        else:
+            cmd.hide('labels')
+            cmd.orient(query_selection)
+        cmd.zoom('vis')
         cmd.ray(width, height)
         cmd.png(query_png_file)
         if template is not None:
