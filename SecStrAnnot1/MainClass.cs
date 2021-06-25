@@ -41,7 +41,7 @@ namespace protein {
 
             Setting.SecStrMethod secStrMethod = Setting.DEFAULT_SEC_STR_METHOD;
             bool joinHelices = false;
-            bool forceCalculateVectors = true;
+            bool forceCalculateVectors = false;
 
             Setting.SelectionMethod selectionMethod = Setting.DEFAULT_SELECTION_METHOD;
             bool alternativeMatching = false;
@@ -79,9 +79,11 @@ namespace protein {
 
 
             #region Processing options and arguments.
+            Console.WriteLine($"{Setting.NAME} {Setting.VERSION}");
+
             Setting.CommandLineArguments = args;
             Options options = new Options();
-            options.GlobalHelp = Setting.NAME + " " + Setting.VERSION;
+            // options.GlobalHelp = Setting.NAME + " " + Setting.VERSION;
 
             options.AddArgument(new Argument("DIRECTORY")
                 .AddHelp("Directory for all input and output files.")

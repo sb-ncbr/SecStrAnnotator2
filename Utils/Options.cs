@@ -93,7 +93,9 @@ namespace SecStrAnnotator2.Utils
 
         public void PrintHelp()
         {
-            Console.WriteLine(GlobalHelp);
+            if (GlobalHelp != null){
+                Console.WriteLine(GlobalHelp);
+            }
 
             Console.WriteLine("\nUsage:");
             Console.WriteLine(OPTION_INDENT + "dotnet " + System.AppDomain.CurrentDomain.FriendlyName + ".dll [OPTIONS] " + string.Join(" ", ArgumentList.Select(a => a.Name)));
