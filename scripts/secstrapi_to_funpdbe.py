@@ -17,7 +17,7 @@ MERGE_SITES_BY_LABEL = True
 INCLUDE_GENERIC_NUMBERING = False
 DECIDE_CONFIDENCE_FROM_METRIC = True
 
-SOFTWARE_VERSION = 'SecStrAnnotator 2.0'  # SecStrAnnotator version TODO put automatically assigned full version of SecStrAnnotator
+SOFTWARE_VERSION = 'SecStrAnnotator 2.2'  # SecStrAnnotator version TODO put automatically assigned full version of SecStrAnnotator
 
 DATA_RESOURCE = 'SecStrAPI'
 RESOURCE_ENTRY_URL_BASE = 'https://webchem.ncbr.muni.cz/API/SecStr/Annotation/'

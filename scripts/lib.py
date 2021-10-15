@@ -1,5 +1,6 @@
 import sys
 import json
+import math
 import requests
 import shutil
 import ftplib
@@ -144,33 +145,84 @@ class Label2AuthConverter:
 
 
 class UniProtManager:
-    UNIPROT = 'UniProt'
-    UNIPROT_NAME = 'name'
-    MAPPINGS = 'mappings'
-    CHAIN = 'struct_asym_id'
+    # UNIPROT = 'UniProt'
+    # UNIPROT_NAME = 'name'
+    # MAPPINGS = 'mappings'
+    # CHAIN = 'struct_asym_id'
     def __init__(self, source_url='http://www.ebi.ac.uk/pdbe/api/mappings/uniprot/'):
-        self.pdbchain2uniidname = {}
+        # self.pdbchain2uniidname = {}
+        self.pdb2chain2rangeuniidnames: Dict[str, Dict[str, List[Tuple[int,int,str,str]]]] = {}
         self.source_url = source_url
-    def get_uniprot_id_and_name(self, pdb: str, chain: str) -> Tuple[str, str]:  
-        if (pdb, chain) not in self.pdbchain2uniidname:
+    # def get_uniprot_id_and_name(self, pdb: str, chain: str) -> Tuple[str, str]:  
+    #     if (pdb, chain) not in self.pdbchain2uniidname:
+    #         self._add_pdb(pdb)
+    #         if (pdb, chain) not in self.pdbchain2uniidname:
+    #             self.pdbchain2uniidname[(pdb, chain)] = (None, None)
+    #     return self.pdbchain2uniidname[(pdb, chain)]
+    def get_uniprot_id_and_name(self, pdb: str, chain: str, ranges_str: List[Tuple[int,int]]) -> Tuple[str, str]:
+        ranges = self._parse_ranges(ranges_str)
+        if pdb not in self.pdb2chain2rangeuniidnames:
             self._add_pdb(pdb)
-            if (pdb, chain) not in self.pdbchain2uniidname:
-                self.pdbchain2uniidname[(pdb, chain)] = (None, None)
-        return self.pdbchain2uniidname[(pdb, chain)]
+        chain2rangeuniidnames = self.pdb2chain2rangeuniidnames[pdb]
+        rangeuniidnames = chain2rangeuniidnames.get(chain, [])
+        result_id = None
+        result_name = None
+        result_range = None
+        for start, end, uniid, uniname in rangeuniidnames:
+            if self._multiranges_overlap((start, end), ranges):
+                if result_id is not None and result_id != uniid:
+                    raise Exception(f'Domain in {pdb} chain {chain} residues {ranges_str} map to more than one UniprotID: residues {result_range[0]}:{result_range[1]} map to {result_id}, but residues {start}:{end} map to {uniid}')
+                else:
+                    result_id = uniid
+                    result_name = uniname
+                    result_range = (start, end)
+        print (pdb, chain, ranges_str, ranges, 'map to', result_id, file=sys.stderr)
+        return (result_id, result_name)
     def _add_pdb(self, pdb: str) -> None:
         url = f'{self.source_url}/{pdb}'
         r = json.loads(requests.get(url).text)
-        unip = r[pdb][self.UNIPROT]
+        unip = r[pdb]['UniProt']
+        chain2rangeuniidnames: Dict[str, List[Tuple[int,int,str,str]]] = {}
         for uni_id, uni_annot in unip.items():
-            uni_name = uni_annot[self.UNIPROT_NAME]
-            for mapping in uni_annot[self.MAPPINGS]:
-                chain = mapping[self.CHAIN]
-                if (pdb, chain) in self.pdbchain2uniidname and self.pdbchain2uniidname[(pdb, chain)] != (uni_id, uni_name):
-                    old_id, old_name = self.pdbchain2uniidname[(pdb, chain)]
-                    raise Exception(f'{pdb} chain {chain} has an ambiguous mapping to Uniprot: {old_id} vs {uni_id}')
-                else:
-                    self.pdbchain2uniidname[(pdb, chain)] = (uni_id, uni_name)
-
+            uni_name = uni_annot['name']
+            for mapping in uni_annot['mappings']:
+                chain = mapping['struct_asym_id']
+                start = mapping['start']['residue_number']
+                end = mapping['end']['residue_number']
+                if chain not in chain2rangeuniidnames:
+                    chain2rangeuniidnames[chain] = []
+                rangeuniidnames = chain2rangeuniidnames[chain]
+                for (old_start, old_end, old_id, old_name) in rangeuniidnames:
+                    if self._ranges_overlap((old_start, old_end), (start, end)) and old_id != uni_id:
+                        raise Exception(f'{pdb} chain {chain} has ambiguous mappings to Uniprot: residues {old_start}:{old_end} map to {old_id}, residues {start}:{end} map to {uni_id}')
+                rangeuniidnames.append((start, end, uni_id, uni_name))
+                # if (pdb, chain) in self.pdbchain2uniidname and self.pdbchain2uniidname[(pdb, chain)] != (uni_id, uni_name):
+                #     old_id, old_name = self.pdbchain2uniidname[(pdb, chain)]
+                #     raise Exception(f'{pdb} chain {chain} has an ambiguous mapping to Uniprot: {old_id} vs {uni_id}')
+                # else:
+                #     self.pdbchain2uniidname[(pdb, chain)] = (uni_id, uni_name)
+        self.pdb2chain2rangeuniidnames[pdb] = chain2rangeuniidnames
+        print('UniProtManager:', pdb, chain2rangeuniidnames, file=sys.stderr)
+    @staticmethod
+    def _ranges_overlap(startend1: Tuple[int,int], startend2: Tuple[int,int]) -> bool:
+        return startend1[0] <= startend2[1] and startend2[0] <= startend1[1]
+    @staticmethod
+    def _multiranges_overlap(startend1: Tuple[int,int], multistartends2: List[Tuple[int,int]]) -> bool:
+        for startend2 in multistartends2:
+            if startend1[0] <= startend2[1] and startend2[0] <= startend1[1]:
+                return True
+        return False
+    @staticmethod
+    def _parse_ranges(string: str) -> List[Tuple[int, int]]:
+        string = string.replace(' ', '')
+        result = []
+        for piece in string.split(','):
+            s_start, s_end = piece.split(':')
+            start = int(s_start) if s_start != '' else -math.inf
+            end = int(s_end) if s_end != '' else math.inf
+            result.append((start, end))
+        assert ','.join(f'{start}:{end}' for start, end in result) == string
+        return result
 
 class RedirectIO:
 

@@ -75,7 +75,8 @@ def main(lists: List[str], api_version: str = None, domain_naming: str = 'auth')
                 if len(to_unify) == 0:  # create a new domain
                     our_domain_id = lib.create_domain_id(pdb, chain if domain_naming=='label' else auth_chain)
                     dom = { PDB: pdb, CHAIN: chain, RANGES: ':', AUTH_CHAIN: auth_chain, AUTH_RANGES: ':' }  # Take whole chain always
-                    dom[UNIPROT_ID], dom[UNIPROT_NAME] = uniprot_manager.get_uniprot_id_and_name(pdb, chain)
+                    # dom[UNIPROT_ID], dom[UNIPROT_NAME] = uniprot_manager.get_uniprot_id_and_name(pdb, chain)
+                    dom[UNIPROT_ID], dom[UNIPROT_NAME] = uniprot_manager.get_uniprot_id_and_name(pdb, chain, ranges)
                     dom[MAPPINGS] = []
                     if DOMAINS_IN_DICT:
                         annotations[pdb][our_domain_id] = dom

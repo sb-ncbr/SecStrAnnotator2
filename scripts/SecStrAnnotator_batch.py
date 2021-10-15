@@ -86,8 +86,24 @@ def read_domains_json(filename):
     result = try_read_json(filename)
     if check_json_type(result, {'PDB':[['']]}):
         return result
+    elif check_json_type(result, {'PDB':[{}]}):
+        return convert_dict_domains_to_tuple_domains(result)
     else:
-        raise Exception(f'Expected a JSON format {PDB:[[domain_name,chain,ranges]]} in "{filename}" \n')
+        raise Exception(f'Expected a JSON format {{PDB:[[domain_name,chain,ranges]]}} in "{filename}" \n')
+
+def convert_dict_domains_to_tuple_domains(js: Dict[str, List[dict]]) -> Dict[str, List[List[str]]]:
+    '''Reformat json object from {PDB:[{"domain": domain_name, "chain_id": chain, "ranges": ranges}]} to {PDB:[[domain_name,chain,ranges]]}'''
+    result = {}
+    for pdb, domains in js.items():
+        simple_domains = []
+        for i, domain in enumerate(domains):
+            try:
+                simple_domains.append((domain['domain'], domain['chain_id'], domain['ranges']))
+            except KeyError as err:
+                missing_key = err.args[0]
+                raise Exception(f"Wrong input format: missing key '{missing_key}' in PDB {pdb}, domain #{i+1} ({dict(domain)})")
+        result[pdb] = simple_domains
+    return result
 
 def run_in_threads (do_job, jobs, n_threads, progress_bar=None, initialize_thread_sync=None, finalize_thread_sync=None):
     q = queue.Queue()
@@ -144,7 +160,7 @@ class ProgressBar:
         if n_steps == 0 and not force:
             return
         self.done = min(self.done + n_steps, self.n_steps)
-        progress = self.done / self.n_steps
+        progress = self.done / self.n_steps if self.n_steps > 0 else 1.0
         new_shown = int(self.width * progress)
         if new_shown != self.shown or force:
             self.writer.write(f'\r{self.prefix} └')
@@ -165,9 +181,10 @@ def parse_args() -> Dict[str, Any]:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory', type=str, help='directory with the input and output files (argument DIRECTORY for SecStrAnnotator)')
     parser.add_argument('template', type=str, help='template domain specification (argument TEMPLATE for SecStrAnnotator)')
-    parser.add_argument('queries_file', type=str, help='JSON file with the list of domains to be annotated (in format {PDB:[[domain_name,chain,ranges]]}, will be processed to QUERY arguments for SecStrAnnotator)')
-    parser.add_argument('--options', type=str, default='', help='Any options that are to be passed to SecStrAnnotator (must be enclosed in quotes and contain spaces, not to be confused with Python arguments, e.g. --options \'--ssa dssp --soft\' or \' --soft\')')
+    parser.add_argument('queries_file', type=str, help='JSON file with the list of domains to be annotated (in format {PDB:[[domain_name,chain,ranges]]}, will be processed to QUERY arguments for SecStrAnnotator. The alternative format is {PDB:[{"domain": domain_name, "chain_id": chain, "ranges": ranges}]})')
+    parser.add_argument('--options', type=str, default='', help="Any options that are to be passed to SecStrAnnotator (must be enclosed in quotes and contain spaces, not to be confused with Python arguments, e.g. --options '--ssa dssp --soft' or ' --soft')")
     parser.add_argument('--by_pdb', action='store_true', help='Process queries PDB-by-PDB, ignore domain information (usable only with --options " --onlyssa")')
+    parser.add_argument('--files_by_domain_name', action='store_true', help='Input files will be <domain_name>.cif instead of <PDB>.cif')
     parser.add_argument('--threads', type=int, default=1, help='Number of parallel threads (default: 1)')
     parser.add_argument('--dll', type=str, default=DEFAULT_SECSTRANNOTATOR_DLL, help=f'Path to the SecStrAnnotator DLL (default: {DEFAULT_SECSTRANNOTATOR_DLL})')
     args = parser.parse_args()
@@ -175,8 +192,11 @@ def parse_args() -> Dict[str, Any]:
 
 
 def main(directory: str, template: str, queries_file: str, options: Union[str, List[str]] = '', 
-        by_pdb: bool = False, threads: int = 1, dll: str = DEFAULT_SECSTRANNOTATOR_DLL) -> Optional[int]:
+        by_pdb: bool = False, files_by_domain_name: bool = False, threads: int = 1, dll: str = DEFAULT_SECSTRANNOTATOR_DLL) -> Optional[int]:
     '''Run SecStrAnnotator on multiple query protein domains.'''
+
+    if by_pdb and files_by_domain_name:
+        raise Exception('You cannot set --by_pdb and --files_by_domain_name simultaneously')
 
     if isinstance(options, str):
         options = options.split()
@@ -212,22 +232,42 @@ def main(directory: str, template: str, queries_file: str, options: Union[str, L
     pdbs = sorted(domains)
     if not path.isdir(directory):
         raise NotADirectoryError(f'"{directory}" is not a directory\n')
-        # sys.stderr.write('Error: "' + directory + '" is not a directory\n')
-        # return 1
     print(directory)
-    found_pdbs = [pdb for pdb in pdbs if path.isfile(path.join(directory, pdb+'.cif'))]
-    not_found_pdbs = [pdb for pdb in pdbs if not path.isfile(path.join(directory, pdb+'.cif'))]
     n_domains = sum(len(domains[pdb]) for pdb in pdbs)
-    n_found_domains = sum(len(domains[pdb]) for pdb in found_pdbs)
-    not_found_domains = [domain for pdb in not_found_pdbs for domain in domains[pdb] ]
+    if files_by_domain_name:
+        found_pdbs = []
+        not_found_pdbs = []
+        found_domains = []
+        not_found_domains = []
+        for pdb, doms in domains.items():
+            pdb_found = False
+            for domain in doms:
+                domain_name = domain[0]
+                if path.isfile(path.join(directory, f'{domain_name}.cif')):
+                    found_domains.append(domain)
+                    pdb_found = True
+                else:
+                    not_found_domains.append(domain)
+            if pdb_found:
+                found_pdbs.append(pdb)
+            else:
+                not_found_pdbs.append(pdb)
+        n_found_domains = len(found_domains)
+    else:
+        found_pdbs = [pdb for pdb in pdbs if path.isfile(path.join(directory, f'{pdb}.cif'))]
+        not_found_pdbs = [pdb for pdb in pdbs if not path.isfile(path.join(directory, f'{pdb}.cif'))]
+        n_found_domains = sum(len(domains[pdb]) for pdb in found_pdbs)
+        not_found_domains = [domain for pdb in not_found_pdbs for domain in domains[pdb] ]
+    
+    not_found_domain_set = set(name for name, chain, rang in not_found_domains)
 
-    print('Listed ' + str(len(pdbs)) + ' PDBs (' + str(n_domains) + ' domains), found ' + str(len(found_pdbs)) + ' PDBs (' + str(n_found_domains) + ' domains)')
+    print(f'Listed {len(pdbs)} PDBs ({n_domains} domains), found {len(found_pdbs)} PDBs ({n_found_domains} domains)')
 
     all_annotations = OrderedDict()
     failed = []
 
     def process_pdb(pdb):
-        remove_file(path.join(directory, pdb + '.label2auth.tsv'))
+        remove_file(path.join(directory, f'{pdb}.label2auth.tsv'))
         if by_pdb:
             process_domain(pdb, pdb)
         else:
@@ -235,13 +275,16 @@ def main(directory: str, template: str, queries_file: str, options: Union[str, L
                 process_domain(domain_name, pdb, chain, ranges)
 
     def process_domain(domain_name, pdb, chain=None, ranges=None):
-        query = pdb
+        if domain_name in not_found_domain_set:
+            return
+        namebase = domain_name if files_by_domain_name else pdb
+        query = namebase
         if chain is not None:
             query += ',' + chain 
         if ranges is not None:
             query += ',' + ranges
-        thread_out = path.join(directory, 'stdout_thread_' + threading.current_thread().name + '.txt')
-        thread_err = path.join(directory, 'stderr_thread_' + threading.current_thread().name + '.txt')
+        thread_out = path.join(directory, f'stdout_thread_{threading.current_thread().name}.txt')
+        thread_err = path.join(directory, f'stderr_thread_{threading.current_thread().name}.txt')
         with open(thread_out, 'a') as w_out:
             with open(thread_err, 'a') as w_err:
                 w_out.write('\n' + '-'*70 + '\n' + domain_name + '\n')
@@ -249,17 +292,18 @@ def main(directory: str, template: str, queries_file: str, options: Union[str, L
                 w_out.flush()
                 w_err.flush()
                 regular_arguments = [directory, template, query] if not onlyssa else [directory, query]
-                exit_code = subprocess.call(secstrannotator_commands + regular_arguments + options, stdout=w_out, stderr=w_err)
+                arguments = secstrannotator_commands + regular_arguments + options
+                exit_code = subprocess.call(arguments, stdout=w_out, stderr=w_err)
         if exit_code == 0:
             for ext in out_files_extensions:
-                try_rename_file(path.join(directory, pdb + ext), path.join(directory, domain_name + ext))
+                try_rename_file(path.join(directory, namebase + ext), path.join(directory, domain_name + ext))
             try:
-                copy_file(path.join(directory, pdb + '-label2auth.tsv'), path.join(directory, pdb + '.label2auth.tsv'), append=True)
-                remove_file(path.join(directory, pdb + '-label2auth.tsv'))
+                copy_file(path.join(directory, f'{namebase}-label2auth.tsv'), path.join(directory, f'{pdb}.label2auth.tsv'), append=True)
+                remove_file(path.join(directory, f'{namebase}-label2auth.tsv'))
             except:
                 pass
             if not onlyssa:
-                annotation = try_read_json(path.join(directory, domain_name + '-annotated.sses.json')).get(pdb, {})
+                annotation = try_read_json(path.join(directory, f'{domain_name}-annotated.sses.json')).get(pdb, {})
                 annotation['domain'] = { 'name': domain_name, 'pdb': pdb, 'chain': chain, 'ranges': ranges }
                 all_annotations[domain_name] = annotation
         else:
