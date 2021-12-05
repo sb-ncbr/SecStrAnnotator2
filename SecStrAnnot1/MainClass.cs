@@ -26,6 +26,7 @@ namespace protein {
             DateTime stamp = DateTime.Now;
 
             bool onlyDetect = false;
+            bool batchMode = false;
 
             string templateID = null;
             string templateChainID_ = Setting.DEFAULT_CHAIN_ID;
@@ -128,6 +129,10 @@ namespace protein {
             options.AddOption(Option.SwitchOption(new string[] { "-o", "--onlyssa" }, v => { onlyDetect = v; })
                 .AddHelp("Run only secondary structure assignment (SSA), do not run annotation.")
                 .AddHelp("Changes usage: dotnet " + System.AppDomain.CurrentDomain.FriendlyName + ".dll --onlyssa [OPTIONS] DIRECTORY QUERY")
+            );
+            options.AddOption(Option.SwitchOption(new string[] { "-b", "--batch" }, v => { batchMode = v; })
+                .AddHelp("If used, the QUERY argument is not interpreted as a domain list but as a file containing the domain list.")
+                .AddHelp("(Domains in the file can be separated by a semicolon and/or newline.)")
             );
             options.AddOption(Option.DoubleOption(new string[] { "-l", "--limit" }, v => { rmsdLimit = v; })
                 .AddParameter("LIMIT")
@@ -242,13 +247,7 @@ namespace protein {
                 }
                 Setting.Directory = otherArgs[0];
                 queryDomainString = otherArgs[1];
-                try {
-                    queries = ParseMultiDomainSpecification(queryDomainString);
-                } catch (FormatException e) {
-                    Options.PrintError("Invalid value of the 2nd argument \"" + queryDomainString + "\"\n"
-                        + e.Message);
-                    Environment.Exit(1);
-                }
+                templateDomainString = null;
             } else {
                 // Normal execution: SecStrAnnotator.exe DIR TEMPLATE TEMPLATE QUERY
                 if (otherArgs.Count != 3) {
@@ -258,20 +257,29 @@ namespace protein {
                 Setting.Directory = otherArgs[0];
                 templateDomainString = otherArgs[1];
                 queryDomainString = otherArgs[2];
+            }
+            if (batchMode){
+                using (StreamReader r = new StreamReader(queryDomainString))
+                {
+                    queryDomainString = r.ReadToEnd();
+                }
+            }
+
+            if (!onlyDetect){
                 try {
                     (templateID, templateChainID_, templateDomainRanges) = ParseDomainSpecification(templateDomainString, defaultChain: Setting.DEFAULT_CHAIN_ID);
                 } catch (FormatException e) {
-                    Options.PrintError("Invalid value of the 2nd argument \"" + templateDomainString + "\"\n"
+                    Options.PrintError("Invalid value of the TEMPLATE argument \"" + templateDomainString + "\"\n"
                         + e.Message);
                     Environment.Exit(1);
                 }
-                try {
-                    queries = ParseMultiDomainSpecification(queryDomainString);
-                } catch (FormatException e) {
-                    Options.PrintError("Invalid value of the 3rd argument \"" + queryDomainString + "\"\n"
-                        + e.Message);
-                    Environment.Exit(1);
-                }
+            }
+            try {
+                queries = ParseMultiDomainSpecification(queryDomainString);
+            } catch (FormatException e) {
+                Options.PrintError("Invalid value of the QUERY argument \"" + queryDomainString + "\"\n"
+                    + e.Message);
+                Environment.Exit(1);
             }
             #endregion
 
@@ -895,8 +903,9 @@ namespace protein {
         }
 
         private static (string pdb, string chain, List<(int, int)> ranges)[] ParseMultiDomainSpecification(string domains, string defaultChain = null) {
-            string[] domainArray = domains.Split(';');
-            return domainArray.Select(d => ParseDomainSpecification(d.Trim())).ToArray();
+            char[] SEPARATORS = {';', '\n'};
+            string[] domainArray = domains.Split(SEPARATORS).Select(d => d.Trim()).Where(d => d.Length > 0).ToArray();
+            return domainArray.Select(d => ParseDomainSpecification(d)).ToArray();
         }
     }
 }
