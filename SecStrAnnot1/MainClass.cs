@@ -521,6 +521,11 @@ namespace protein {
 
                         Lib.Shuffler shuffler;
                         List<Sse> tSSEs = templateSSA.SSEs.WhereAndGetShuffler(sse => sse.ChainID == templateChainID_, out shuffler).ToList();
+
+                        // Lib.WriteLineDebug("KOALA 1");
+                        // foreach (var sse in tSSEs){
+                        //     Lib.WriteLineDebug(sse.ToString());
+                        // }
                         List<(int, int, int)> tConnectivity = shuffler.UpdateIndices(templateSSA.Connectivity).ToList();
                         List<Sse> qSSEs = querySSA.SSEs.WhereAndGetShuffler(sse => sse.ChainID == queryChainID, out shuffler).ToList();
                         List<(int, int, int)> qConnectivity = shuffler.UpdateIndices(querySSA.Connectivity).ToList();
@@ -641,7 +646,7 @@ namespace protein {
                                     createAnnotator = cont => new FallbackAnnotator(
                                         new MOMAnnotator(cont, softMatching),
                                         momTimeoutSeconds.Value,
-                                        "MOM annotator timeout, falling back to DP annotator",
+                                        $"MOM annotator timeout after {momTimeoutSeconds.Value} seconds, falling back to DP annotator",
                                         new DynProgAnnotator(cont));
                                 } else {
                                     createAnnotator = cont => new MOMAnnotator(cont, softMatching);
@@ -657,6 +662,13 @@ namespace protein {
                             default:
                                 throw new NotImplementedException("Not implemented for this selection method: " + selectionMethod.ToString());
                         }
+                        // IAnnotator ann = createAnnotator(context);
+                        // var matching = ann.GetMatching();
+                        // Lib.WriteLineDebug("KOALA 2");
+                        // foreach (var m in matching){
+                        //     Lib.WriteLineDebug(m.ToString());
+                        // }
+
                         NiceAnnotatorWrapper annotator =
                             correctionsFile == null ?
                             new NiceAnnotatorWrapper(context, createAnnotator, includeUnannotatedSSEs: includeUnannotatedSSEs)
@@ -664,6 +676,12 @@ namespace protein {
 
                         DateTime t_BB_0 = DateTime.Now;
                         SseInSpace[] annotQHelicesInSpace = annotator.GetAnnotatedCandidates();
+
+                        // Lib.WriteLineDebug("KOALA 3");
+                        // foreach (var sse in annotQHelicesInSpace){
+                        //     Lib.WriteLineDebug(sse.ToString());
+                        // }
+
                         // SseInSpace[] unannotQHelicesInSpace = annotator.GetUnannotatedCandidates();
                         Lib.WriteLineDebug("Annotated:\n\t{0}", annotQHelicesInSpace.EnumerateWithSeparators("\n\t"));
                         // Lib.WriteLineDebug("Unannotated:\n\t{0}", unannotQHelicesInSpace.EnumerateWithSeparators("\n\t"));

@@ -11,7 +11,7 @@ using protein.Libraries;
 
 namespace protein.Annotating
 {
-    class MOMAnnotator : IAnnotator
+    class MOMAnnotator : ICancellableAnnotator
     {
         public MOMAnnotationContext MContext { get; private set; }
         public bool SoftOrderConsistency { get; private set; }
@@ -23,6 +23,13 @@ namespace protein.Annotating
         }
 
         public List<(int, int)> GetMatching()
+        {
+            return GetMatchingAux(null);
+        }
+        public List<(int, int)> GetMatching(System.Threading.CancellationToken cancellationToken){
+            return GetMatchingAux(cancellationToken);
+        }
+        private List<(int, int)> GetMatchingAux(System.Threading.CancellationToken? cancellationToken)
         {
             MContext.Context.ValidateOrdering();
             int m = MContext.TemplateFST.Length;
@@ -81,11 +88,12 @@ namespace protein.Annotating
             MyStopwatch watch = new MyStopwatch(Lib.WriteLineDebug);
 
             List<(int, int)> bestMOM = LibAnnotation.MaxWeightMixedOrderedMatching(m, n,
-                MContext.TemplateFST.Select(t => t.Item1).ToArray(),
-                MContext.TemplateFST.Select(t => t.Item2).ToArray(),
-                MContext.CandidateFST.Select(t => t.Item1).ToArray(),
-                MContext.CandidateFST.Select(t => t.Item2).ToArray(),
-                scores, SoftOrderConsistency).OrderBy(x => x).ToList();
+                    MContext.TemplateFST.Select(t => t.Item1).ToArray(),
+                    MContext.TemplateFST.Select(t => t.Item2).ToArray(),
+                    MContext.CandidateFST.Select(t => t.Item1).ToArray(),
+                    MContext.CandidateFST.Select(t => t.Item2).ToArray(),
+                    scores, SoftOrderConsistency, cancellationToken)
+                .OrderBy(x => x).ToList();
 
             watch.Stop("MOMAnnotator.GetAnnotation()");
 

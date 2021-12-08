@@ -2029,7 +2029,8 @@ namespace protein.Libraries
 			nG, nH - number of vertices of G, H
 			edgesG, edgesH - adjacency matrices of G, H (0 = no edge, 1 = edge; if other values are used, they serve as edge labels - only edges with same label can be matched)
 			score[i,j] - score for matching i-th vertex of G to j-th vertex of H*/
-        public static List<(int, int)> MaxWeightOrderedMatching(int nG, int nH, int[,] edgesG, int[,] edgesH, double[,] score, bool[,] conflictsG, bool[,] conflictsH)
+        public static List<(int, int)> MaxWeightOrderedMatching(int nG, int nH, int[,] edgesG, int[,] edgesH, double[,] score, 
+            bool[,] conflictsG, bool[,] conflictsH)
         {
             if (edgesG.GetLength(0) != nG || edgesG.GetLength(1) != nG)
                 throw new Exception("Incorrect size of parameter edgesG.");
@@ -2054,13 +2055,13 @@ namespace protein.Libraries
                 && w[v] > 0;
             int maxExpectedMatchingSize = Math.Min(nG, nH);
 
-            List<int> maxWeightClique = MaxWeightClique(nM, edgesM, w, maxExpectedMatchingSize);
+            List<int> maxWeightClique = MaxWeightClique(nM, edgesM, w, maxExpectedMatchingSize, null);
             return maxWeightClique.Select(u => (u / nH, u % nH)).ToList();
         }
 
         public static List<(int, int)> MaxWeightMixedOrderedMatching(int nG, int nH,
             int[] rank0G, int[] rank1G, int[] rank0H, int[] rank1H,
-            double[,] score, bool softOrderConsistence /*, bool[,] conflictsG, bool[,] conflictsH*/ /*, int? maxModularProductVertices, double[,] scoreScales*/)
+            double[,] score, bool softOrderConsistence, System.Threading.CancellationToken? cancellationToken)
         {
 
             if (rank0G.Length != nG)
@@ -2119,13 +2120,13 @@ namespace protein.Libraries
                 && w[v] > 0;
             int maxExpectedMatchingSize = Math.Min(nG, nH);
 
-            List<int> maxWeightClique = MaxWeightClique(nM, edgesM, w, maxExpectedMatchingSize);
+            List<int> maxWeightClique = MaxWeightClique(nM, edgesM, w, maxExpectedMatchingSize, cancellationToken);
             return maxWeightClique.Select(u => (u / nH, u % nH)).ToList();
         }
 
         /** Returns inclusion-maximal clique with maximal total w. 
 			Uses branch-and-bound algorithm.*/
-        private static List<int> MaxWeightClique(int nM, Func<int, int, bool> edgesM, double[] w, int maxExpectedSize /*, double? timeoutSeconds = null*/)
+        private static List<int> MaxWeightClique(int nM, Func<int, int, bool> edgesM, double[] w, int maxExpectedSize, System.Threading.CancellationToken? cancellationToken)
         {
             if (w.Length != nM)
                 throw new Exception("Incorrect size of parameter w.");
@@ -2144,6 +2145,9 @@ namespace protein.Libraries
             int p = 0; //index of current vertex
             bool forward = true; //direction of backtracking
             int iterationCounter = 0;
+
+            const int CANCELLATION_CHECK_CYCLE = 10_000; // iterations
+            bool cancelled = false;
 
             DateTime startTime = DateTime.Now;
 
@@ -2220,12 +2224,17 @@ namespace protein.Libraries
                     }
                 }
                 iterationCounter++;
-                // if (iterationCounter % 10000 == 0 && timeoutSeconds.HasValue && (DateTime.Now - startTime).TotalSeconds > timeoutSeconds.Value){
-                // 	throw new TimeoutException($"MaxWeightClique() exceeded time limit {timeoutSeconds.Value} s");
-                // }
+                if (iterationCounter % CANCELLATION_CHECK_CYCLE == 0 && cancellationToken.HasValue && cancellationToken.Value.IsCancellationRequested){
+                    cancelled = true;
+                    break;
+                }
             }
             TimeSpan time = DateTime.Now - startTime;
             Lib.WriteLineDebug($"MaxWeightClique: {nS} eligible vertices, {K.Count} selected vertices, {iterationCounter} iterations, {time.TotalSeconds} seconds");
+            if (cancelled) {
+                Lib.WriteLineDebug($"MaxWeightClique: Cancelled after {iterationCounter} iterations");
+                cancellationToken.Value.ThrowIfCancellationRequested();
+            }
             return K.Select(i => S[i]).ToList();
         }
 
