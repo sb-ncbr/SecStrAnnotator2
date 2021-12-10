@@ -13,7 +13,7 @@ namespace protein.Json
 {
     public class JsonValue : IEnumerable<JsonValue>
     {
-        public static String IndentString = "    ";
+        public const string INDENT_STRING = "  ";
 
         public object Content { get; private set; }
         

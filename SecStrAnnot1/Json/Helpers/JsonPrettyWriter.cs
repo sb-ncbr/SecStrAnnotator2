@@ -26,7 +26,7 @@ namespace protein.Json.Helpers
             return stringBuilder.ToString();
         }
 
-        private static void AppendIndent(StringBuilder stringBuilder, int indent, int maxIndent)
+        private static void AppendIndent(StringBuilder stringBuilder, int indent, int maxIndent, bool space)
         {
             // Print indent
             if (indent <= maxIndent)
@@ -34,11 +34,9 @@ namespace protein.Json.Helpers
                 stringBuilder.Append('\n');
                 for (int i = 0; i < indent; i++)
                 {
-                    stringBuilder.Append(JsonValue.IndentString);
+                    stringBuilder.Append(JsonValue.INDENT_STRING);
                 }
-            }
-            else
-            {
+            } else if (space) {
                 stringBuilder.Append(' ');
             }
         }
@@ -78,7 +76,7 @@ namespace protein.Json.Helpers
                 if (list.Count == 0)
                 {
                     // Empty array
-                    stringBuilder.Append("[ ]");
+                    stringBuilder.Append("[]");
                 }
                 else
                 {
@@ -91,16 +89,12 @@ namespace protein.Json.Helpers
                         {
                             stringBuilder.Append(',');
                         }
-                        AppendIndent(stringBuilder, currentIndent + 1, maxIndent);
+                        AppendIndent(stringBuilder, currentIndent + 1, maxIndent, i > 0);
                         AppendValue(stringBuilder, list[i], currentIndent + 1, maxIndent);
                     }
                     if (currentIndent < maxIndent)
                     {
-                        AppendIndent(stringBuilder, currentIndent, maxIndent);
-                    }
-                    else
-                    {
-                        stringBuilder.Append(' ');
+                        AppendIndent(stringBuilder, currentIndent, maxIndent, false);
                     }
                     stringBuilder.Append(']');
                 }
@@ -113,7 +107,7 @@ namespace protein.Json.Helpers
                 //Refuse to output dictionary keys that aren't of type string
                 if (keyType != typeof(string))
                 {
-                    stringBuilder.Append("{ }");
+                    stringBuilder.Append("{}");
                     return;
                 }
 
@@ -121,7 +115,7 @@ namespace protein.Json.Helpers
                 if (dict.Count == 0)
                 {
                     // Empty dictionary
-                    stringBuilder.Append("{ }");
+                    stringBuilder.Append("{}");
                 }
                 else
                 {
@@ -130,23 +124,19 @@ namespace protein.Json.Helpers
                     bool isFirst = true;
                     foreach (object key in dict.Keys)
                     {
-                        if (isFirst)
-                            isFirst = false;
-                        else
+                        if (!isFirst){
                             stringBuilder.Append(',');
-                        AppendIndent(stringBuilder, currentIndent + 1, maxIndent);
+                        }
+                        AppendIndent(stringBuilder, currentIndent + 1, maxIndent, !isFirst);
                         stringBuilder.Append('\"');
                         stringBuilder.Append((string)key);
                         stringBuilder.Append("\": ");
                         AppendValue(stringBuilder, dict[key], currentIndent + 1, maxIndent);
+                        isFirst = false;
                     }
                     if (currentIndent < maxIndent)
                     {
-                        AppendIndent(stringBuilder, currentIndent, maxIndent);
-                    }
-                    else
-                    {
-                        stringBuilder.Append(' ');
+                        AppendIndent(stringBuilder, currentIndent, maxIndent, false);
                     }
                     stringBuilder.Append('}');
                 }
@@ -199,11 +189,7 @@ namespace protein.Json.Helpers
                 }
                 if (currentIndent < maxIndent)
                 {
-                    AppendIndent(stringBuilder, currentIndent, maxIndent);
-                }
-                else
-                {
-                    stringBuilder.Append(' ');
+                    AppendIndent(stringBuilder, currentIndent, maxIndent, false);
                 }
                 stringBuilder.Append('}');
             }
