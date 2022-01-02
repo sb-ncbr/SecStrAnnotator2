@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj": {}
+    "/home/adam/Workspace/C#/secstrannot2/SecStrAnnotator.csproj": {}
   },
   "projects": {
-    "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj": {
+    "/home/adam/Workspace/C#/secstrannot2/SecStrAnnotator.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj",
+        "projectUniqueName": "/home/adam/Workspace/C#/secstrannot2/SecStrAnnotator.csproj",
         "projectName": "SecStrAnnotator",
-        "projectPath": "/home/adam/Workspace/C#/SecStrAnnot2/SecStrAnnotator.csproj",
+        "projectPath": "/home/adam/Workspace/C#/secstrannot2/SecStrAnnotator.csproj",
         "packagesPath": "/home/adam/.nuget/packages/",
-        "outputPath": "/home/adam/Workspace/C#/SecStrAnnot2/obj/",
+        "outputPath": "/home/adam/Workspace/C#/secstrannot2/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/adam/.nuget/NuGet/NuGet.Config"
@@ -64,7 +64,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/3.1.404/RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/home/adam/.dotnet/sdk/3.1.416/RuntimeIdentifierGraph.json"
         }
       }
     }

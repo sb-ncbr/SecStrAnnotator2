@@ -31,6 +31,15 @@ namespace protein.Geometry
             Point newPoint = new Point(newMatrix.ToRowVectors()[0]);
             return newPoint;
         }
+
+        public override String ToString()
+        {
+            return String.Format("({0},{1},{2})", X, Y, Z);
+        }
+        public String ToString(String format)
+        {
+            return String.Format("({0},{1},{2})", X.ToString(format), Y.ToString(format), Z.ToString(format));
+        }
     }
 }
 

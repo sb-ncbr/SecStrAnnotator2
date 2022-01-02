@@ -10,17 +10,14 @@ using protein.Sses;
 using protein.Geometry;
 using protein.Json;
 
-namespace protein.Libraries
-{
-    public static class LibAnnotation
-    {
+namespace protein.Libraries {
+    public static class LibAnnotation {
         public static bool alternativeLocationWarningPrinted = false;
         public const char SEPARATOR = '\t';
         public const char COMMENT_SIGN_READ = '#';
         public const String COMMENT_SIGN_WRITE = "# ";
 
-        public class JsNames
-        {
+        public class JsNames {
             public const string LABEL = "label";
             public const string CHAIN_ID = "chain_id";
             public const string START_RESI = "start";
@@ -34,6 +31,7 @@ namespace protein.Libraries
             public const string SHEET_ID = "sheet_id";
             public const string START_VECTOR = "start_vector";
             public const string END_VECTOR = "end_vector";
+            public const string MINOR_AXIS = "minor_axis";
             public const string COMMENT = "comment";
             public const string COLOR = "color";
             public const string RAINBOW = "rainbow";
@@ -86,17 +84,14 @@ namespace protein.Libraries
         /** Reads annotation data from file fileName in CSV format.
 			CSV format: 1. column = Label, 2. column = ChainID, 3. column = Start, 4. column = End, 5. column = Type. 
 						Columns are separated by SEPARATOR and comments are introduced by COMMENT_SIGN_READ. */
-        public static List<Sse> ReadAnnotationFile(String fileName)
-        {
+        public static List<Sse> ReadAnnotationFile(String fileName) {
             List<List<String>> table;
             List<Sse> result = new List<Sse>();
             HashSet<String> labels = new HashSet<String>(); // to check for duplicities
-            using (StreamReader r = new StreamReader(fileName))
-            {
+            using (StreamReader r = new StreamReader(fileName)) {
                 table = Lib.ReadCSV(r, 5, SEPARATOR, COMMENT_SIGN_READ);
             }
-            foreach (List<String> sse in table)
-            {
+            foreach (List<String> sse in table) {
                 string chainID;
                 int start;
                 int end;
@@ -104,28 +99,19 @@ namespace protein.Libraries
                 if (!labels.Add(sse[0]))
                     Lib.WriteWarning("Multiple definition of \"{0}\" in file \"{1}\".", sse[0], fileName);
                 chainID = sse[1];
-                try
-                {
+                try {
                     start = Convert.ToInt32(sse[2]);
-                }
-                catch (FormatException f)
-                {
+                } catch (FormatException f) {
                     throw new FormatException("ReadAnnotationFile: Wrong format. Start must be an integer, but \"" + sse[2] + "\" was found in file \"\"+fileName+\"\".", f);
                 }
-                try
-                {
+                try {
                     end = Convert.ToInt32(sse[3]);
-                }
-                catch (FormatException f)
-                {
+                } catch (FormatException f) {
                     throw new FormatException("ReadAnnotationFile: Wrong format. End must be an integer, but \"" + sse[2] + "\" was found in file \"" + fileName + "\".", f);
                 }
-                try
-                {
+                try {
                     type = LibSseTypes.Type(sse[4]);
-                }
-                catch (KeyNotFoundException)
-                {
+                } catch (KeyNotFoundException) {
                     throw new FormatException($"ReadAnnotationFile: Wrong format. Unknown SSE type \"{sse[4]}\" found in file \"{fileName}\".");
                 }
                 result.Add(new Sse(sse[0], chainID, start, end, type, null));
@@ -136,8 +122,7 @@ namespace protein.Libraries
         /** Write annotation data tofile fileName in CSV format.
 			CSV format: 1. column = Label, 2. column = ChainID, 3. column = Start, 4. column = End, 5. column = Type. 
 						Columns are separated by SEPARATOR and comments are introduced by COMMENT_SIGN_READ. */
-        public static void WriteAnnotationFile(String fileName, IEnumerable<Sse> sses, String comment)
-        {
+        public static void WriteAnnotationFile(String fileName, IEnumerable<Sse> sses, String comment) {
             List<List<String>> table = sses.Where(x => x != null).Select(x => new List<String> {
                 x.Label,
                 x.ChainID.ToString (),
@@ -146,8 +131,7 @@ namespace protein.Libraries
                 x.Type.AsString (),
                 x.Comment
             }).ToList();
-            using (StreamWriter w = new StreamWriter(fileName))
-            {
+            using (StreamWriter w = new StreamWriter(fileName)) {
                 Lib.WriteCSVWithComments(w, table, SEPARATOR, COMMENT_SIGN_WRITE, comment + "\n\nlabel\tchainID\tstart\tend\ttype");
             }
         }
@@ -155,8 +139,7 @@ namespace protein.Libraries
         /** Write annotation data tofile fileName in CSV format.
 			CSV format: 1. column = Label, 2. column = ChainID, 3. column = Start, 4. column = End, 5. column = Type, 6. column = Sequence. 
 						Columns are separated by SEPARATOR and comments are introduced by COMMENT_SIGN_READ. */
-        public static void WriteAnnotationFileWithSequences(String fileName, IEnumerable<(Sse, String)> sses, String comment)
-        {
+        public static void WriteAnnotationFileWithSequences(String fileName, IEnumerable<(Sse, String)> sses, String comment) {
             List<List<String>> table = sses.Select(t => new List<String> {
                 t.Item1.Label,
                 t.Item1.ChainID.ToString (),
@@ -166,14 +149,12 @@ namespace protein.Libraries
                 t.Item2,
                 t.Item1.Comment
             }).ToList();
-            using (StreamWriter w = new StreamWriter(fileName))
-            {
+            using (StreamWriter w = new StreamWriter(fileName)) {
                 Lib.WriteCSVWithComments(w, table, SEPARATOR, COMMENT_SIGN_WRITE, comment + "\n\nlabel\tchainID\tstart\tend\ttype\tsequence");
             }
         }
 
-        public static JsonValue SSEToJson(Sse sse, IDictionary<string, IEnumerator<object>> extraEnumerators/*IEnumerator<double> metricEnumerator,IEnumerator<double> suspiciousEnumerator,IEnumerator<String> sequenceEnumerator*/)
-        {
+        public static JsonValue SSEToJson(Sse sse, IDictionary<string, IEnumerator<object>> extraEnumerators/*IEnumerator<double> metricEnumerator,IEnumerator<double> suspiciousEnumerator,IEnumerator<String> sequenceEnumerator*/) {
             JsonValue elem = JsonValue.MakeObject();
             elem[JsNames.LABEL] = new JsonValue(sse.Label);
             elem[JsNames.CHAIN_ID] = new JsonValue(sse.ChainID.ToString());
@@ -193,15 +174,16 @@ namespace protein.Libraries
                 elem[JsNames.RAINBOW] = new JsonValue(sse.Rainbow);
             if (sse.Comment != null)
                 elem[JsNames.COMMENT] = new JsonValue(sse.Comment);
-            if (WRITE_VECTORS && sse is SseInSpace)
-            {
+            if (WRITE_VECTORS && sse is SseInSpace) {
                 elem[JsNames.START_VECTOR] = new JsonValue((sse as SseInSpace).StartPoint.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
                 elem[JsNames.END_VECTOR] = new JsonValue((sse as SseInSpace).EndPoint.Vector.Round(DEFAULT_DOUBLE_DIGITS).AsList());
+                if (sse.IsSheet) {
+                    Vector? minAxis = (sse as SseInSpace).MinorAxis;
+                    elem[JsNames.MINOR_AXIS] = new JsonValue(minAxis.HasValue ? minAxis.Value.Round(DEFAULT_DOUBLE_DIGITS).AsList() : null);
+                }
             }
-            if (extraEnumerators != null)
-            {
-                foreach (var kv in extraEnumerators)
-                {
+            if (extraEnumerators != null) {
+                foreach (var kv in extraEnumerators) {
                     if (!kv.Value.MoveNext())
                         throw new Exception();
                     if (kv.Value.Current is double)
@@ -218,20 +200,16 @@ namespace protein.Libraries
                         throw new Exception("Unsupported type: " + kv.Value.Current.GetType().ToString());
                 }
             }
-            if (WRITE_NESTED_SSES && sse.NestedSSEs != null)
-            {
+            if (WRITE_NESTED_SSES && sse.NestedSSEs != null) {
                 JsonValue nested = JsonValue.MakeList();
                 bool anyNested = false;
-                foreach (Sse nestedSSE in sse.NestedSSEs)
-                {
-                    if (Lib.DoWriteDebug || nestedSSE.Label != null)
-                    {
+                foreach (Sse nestedSSE in sse.NestedSSEs) {
+                    if (Lib.DoWriteDebug || nestedSSE.Label != null) {
                         nested.Add(SSEToJson(nestedSSE, null));
                         anyNested = true;
                     }
                 }
-                if (anyNested)
-                {
+                if (anyNested) {
                     elem[JsNames.NESTED_SSES] = nested;
                 }
             }
@@ -240,14 +218,12 @@ namespace protein.Libraries
 
         public static void WriteAnnotationFile_Json(String fileName, String name,
             IEnumerable<Sse> sses, IDictionary<String, IEnumerable<object>> extras, List<(int, int, int)> betaConnectivity,
-            List<(Residue, Residue)> hBonds, JsonValue rotationMatrix, String comment)
-        {
+            List<(Residue, Residue)> hBonds, JsonValue rotationMatrix, String comment) {
 
             JsonValue ssesJson = JsonValue.MakeList();
             Dictionary<String, IEnumerator<object>> extraEnumerators = extras?.ToDictionary(kv => kv.Key, kv => kv.Value.GetEnumerator());
 
-            foreach (Sse sse in sses.Where(x => x != null))
-            {
+            foreach (Sse sse in sses.Where(x => x != null)) {
                 JsonValue elem = SSEToJson(sse, extraEnumerators);
                 if (OUTPUT_NOT_FOUND_SSES || !sse.IsNotFound())
                     ssesJson.Add(elem);
@@ -260,8 +236,8 @@ namespace protein.Libraries
             json[name][JsNames.SOFTWARE_INFO] = new JsonValue(Setting.NAME + " " + Setting.VERSION);
             json[name][JsNames.COMMAND_LINE_ARGUMENTS] = new JsonValue(Setting.CommandLineArguments.EnumerateWithSeparators(" "));
             json[name][JsNames.FOUND_COUNT] = new JsonValue(sses.Count(sse => !sse.IsNotFound()));
-            if (WRITE_METRIC && extras != null && extras.ContainsKey(JsNames.METRIC)){
-                double totalMetric = extras[JsNames.METRIC].Select(x => (double) x).Where(x => !Double.IsInfinity(x) && !Double.IsNaN(x)).Sum();
+            if (WRITE_METRIC && extras != null && extras.ContainsKey(JsNames.METRIC)) {
+                double totalMetric = extras[JsNames.METRIC].Select(x => (double)x).Where(x => !Double.IsInfinity(x) && !Double.IsNaN(x)).Sum();
                 json[name][JsNames.TOTAL_METRIC] = new JsonValue(RoundDouble(totalMetric));
                 // json[name][JsNames.TOTAL_METRIC] = new JsonValue(extras[JsNames.METRIC].Select(x => RoundDouble((double)x)).Where(x => !Double.IsInfinity(x) && !Double.IsNaN(x)).Sum());
             }
@@ -274,17 +250,14 @@ namespace protein.Libraries
                 json[name][JsNames.ROTATION_MATRIX] = rotationMatrix;
 
 
-            using (StreamWriter w = new StreamWriter(fileName))
-            {
+            using (StreamWriter w = new StreamWriter(fileName)) {
                 w.Write(json.ToString(Setting.JSON_OUTPUT_MAX_INDENT_LEVEL));
             }
         }
 
-        public static JsonValue HBondsToJson(List<(Residue, Residue)> hBonds)
-        {
+        public static JsonValue HBondsToJson(List<(Residue, Residue)> hBonds) {
             JsonValue hBondsJson = JsonValue.MakeList();
-            foreach ((Residue donor, Residue acceptor) in hBonds)
-            {
+            foreach ((Residue donor, Residue acceptor) in hBonds) {
                 JsonValue bondJson = JsonValue.MakeList();
                 bondJson.Add(new JsonValue(donor.ChainId.ToString()));
                 bondJson.Add(new JsonValue(donor.SeqNumber));
@@ -295,26 +268,21 @@ namespace protein.Libraries
             return hBondsJson;
         }
 
-        public static JsonValue BetaConnectivityToJson(List<(int, int, int)> betaConnectivity, IEnumerable<Sse> sses)
-        {
+        public static JsonValue BetaConnectivityToJson(List<(int, int, int)> betaConnectivity, IEnumerable<Sse> sses) {
             if (betaConnectivity == null)
                 return new JsonValue();
             List<String> labels = sses.Select(sse => sse.Label).ToList();
             JsonValue connsJson = JsonValue.MakeList();
-            foreach (var conn in betaConnectivity)
-            {
+            foreach (var conn in betaConnectivity) {
                 JsonValue connJson = JsonValue.MakeList();
-                try
-                {
+                try {
                     //connJson.Add (new JsonValue(conn.Item1));
                     //connJson.Add (new JsonValue(conn.Item2));
                     connJson.Add(new JsonValue(labels[conn.Item1]));
                     connJson.Add(new JsonValue(labels[conn.Item2]));
                     connJson.Add(new JsonValue(conn.Item3));
                     connsJson.Add(connJson);
-                }
-                catch (ArgumentOutOfRangeException e)
-                {
+                } catch (ArgumentOutOfRangeException e) {
                     // do not output this conn
                 }
             }
@@ -322,28 +290,22 @@ namespace protein.Libraries
         }
 
         /* Takes the first entity in the file. */
-        public static List<Sse> ReadAnnotationFile_Json(String fileName)
-        {
+        public static List<Sse> ReadAnnotationFile_Json(String fileName) {
             String dump;
             List<(int, int, int)> dump2;
             List<(String, int, int)> dump3;
             return ReadAnnotationFile_Json(fileName, null, out dump, out dump2, out dump3, false);
         }
 
-        public static JsonValue ReadRotationMatrixFromAlignmentFile(string fileName)
-        {
+        public static JsonValue ReadRotationMatrixFromAlignmentFile(string fileName) {
             string str;
-            using (StreamReader r = new StreamReader(fileName))
-            {
+            using (StreamReader r = new StreamReader(fileName)) {
                 str = r.ReadToEnd();
             }
             JsonValue json;
-            try
-            {
+            try {
                 json = JsonValue.FromString(str);
-            }
-            catch (Exception)
-            { //TODO put actual exception type here
+            } catch (Exception) { //TODO put actual exception type here
                 throw new FormatException(fileName + " is not a valid JSON.");
             }
             return json["rotation_matrix"];
@@ -351,21 +313,16 @@ namespace protein.Libraries
 
         /* If name==null, takes the first entity in the file. */
         public static List<Sse> ReadAnnotationFile_Json(String fileName, String name, out String comment,
-                out List<(int, int, int)> betaConnectivity, out List<(String, int, int)> merging, bool takeTheOnlyEntryEvenIfNameDoesntMatch)
-        {
+                out List<(int, int, int)> betaConnectivity, out List<(String, int, int)> merging, bool takeTheOnlyEntryEvenIfNameDoesntMatch) {
             List<Sse> result = new List<Sse>();
             String str;
-            using (StreamReader r = new StreamReader(fileName))
-            {
+            using (StreamReader r = new StreamReader(fileName)) {
                 str = r.ReadToEnd();
             }
             JsonValue json;
-            try
-            {
+            try {
                 json = JsonValue.FromString(str);
-            }
-            catch (Exception)
-            { //TODO put actual exception type here
+            } catch (Exception) { //TODO put actual exception type here
                 throw new FormatException(fileName + " is not a valid JSON.");
             }
 
@@ -375,15 +332,11 @@ namespace protein.Libraries
                 throw new FormatException(fileName + " is an empty JSON object.");
             if (name == null)
                 name = json.Key(0);
-            if (!json.Contains(name))
-            {
-                if (json.Count == 1)
-                {
+            if (!json.Contains(name)) {
+                if (json.Count == 1) {
                     Lib.WriteWarning(fileName + " does not contain entry '" + name + "', taking '" + json.Key(0) + "' instead.");
                     name = json.Key(0);
-                }
-                else
-                {
+                } else {
                     throw new FormatException(fileName + " does not contain key " + name + ".");
                 }
             }
@@ -397,25 +350,28 @@ namespace protein.Libraries
             JsonValue sses = entry[JsNames.SSES];
             if (sses.Type != JsonType.List)
                 throw new FormatException(JsonLocationString(fileName, name, JsNames.SSES) + " is not a JSON list.");
-            for (int i = 0; i < sses.Count; i++)
-            {
+            for (int i = 0; i < sses.Count; i++) {
                 JsonValue sse = sses[i];
                 if (sse.Type != JsonType.Object)
                     throw new FormatException(JsonLocationString(fileName, name, JsNames.SSES, i) + "  is not a JSON object.");
-                try
-                {
+                try {
                     String chainId = sse[JsNames.CHAIN_ID].String;
                     String type = sse[JsNames.TYPE].String;
                     int? sheetId = sse.Contains(JsNames.SHEET_ID) ? sse[JsNames.SHEET_ID].Int as int? : null;
                     Sse s = new Sse(sse[JsNames.LABEL].String, chainId, sse[JsNames.START_RESI].Int, sse[JsNames.END_RESI].Int, LibSseTypes.Type(type), sheetId);
 
-                    if (sse.Contains(JsNames.START_VECTOR) && sse.Contains(JsNames.END_VECTOR))
-                    {
+                    if (sse.Contains(JsNames.START_VECTOR) && sse.Contains(JsNames.END_VECTOR)) {
                         JsonValue vec = sse[JsNames.START_VECTOR];
                         Point startVector = new Point(vec[0].Double, vec[1].Double, vec[2].Double);
                         vec = sse[JsNames.END_VECTOR];
                         Point endVector = new Point(vec[0].Double, vec[1].Double, vec[2].Double);
                         s = new SseInSpace(s, startVector, endVector);
+                        if (sse.Contains(JsNames.MINOR_AXIS)) {
+                            vec = sse[JsNames.MINOR_AXIS];
+                            if (vec.Type != JsonType.Null) {
+                                (s as SseInSpace).MinorAxis = new Vector(vec[0].Double, vec[1].Double, vec[2].Double);
+                            }
+                        }
                     }
                     if (sse.Contains(JsNames.COMMENT))
                         s.AddComment(sse[JsNames.COMMENT].String);
@@ -424,13 +380,9 @@ namespace protein.Libraries
                     if (sse.Contains(JsNames.RAINBOW))
                         s.Rainbow = sse[JsNames.RAINBOW].String;
                     result.Add(s);
-                }
-                catch (JsonKeyNotFoundException e)
-                {
+                } catch (JsonKeyNotFoundException e) {
                     throw new FormatException("Error in parsing JSON object " + JsonLocationString(fileName, name, JsNames.SSES, i) + ". " + "Does not contain key \"" + e.MissingKey + "\".");
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     throw new FormatException("Error in parsing JSON object " + JsonLocationString(fileName, name, JsNames.SSES, i) + ".", e);
                 }
             }
@@ -438,24 +390,19 @@ namespace protein.Libraries
             // Reading beta-connectivity
             bool labelDuplicates = result.Select(sse => sse.Label).Distinct().Count() != result.Count;
             betaConnectivity = new List<(int, int, int)>();
-            if (entry.Contains(JsNames.BETA_CONNECTIVITY))
-            {
+            if (entry.Contains(JsNames.BETA_CONNECTIVITY)) {
                 JsonValue connections = entry[JsNames.BETA_CONNECTIVITY];
                 if (connections.Type != JsonType.List)
                     throw new FormatException(JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY) + " is not a JSON list.");
                 JsonValue[] connsList = connections.Where(c => c.Type != JsonType.Null).ToArray(); //This null think must be here cuz the Json parser sucks.
-                for (int i = 0; i < connsList.Length; i++)
-                {
+                for (int i = 0; i < connsList.Length; i++) {
                     //foreach (JsonValue connection in connections.Where (c=>c.Type!=JsonType.Null)/*This null think must be here cuz the Json parser sucks.*/) {
                     JsonValue connection = connsList[i];
                     if (connection.Type != JsonType.List || connection.Count != 3)
                         throw new FormatException(JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY, i) + " is not a JSON list with three 3 elements.");
-                    if (connection.All(v => v.Type == JsonType.Int))
-                    {
+                    if (connection.All(v => v.Type == JsonType.Int)) {
                         betaConnectivity.Add((connection[0].Int, connection[1].Int, connection[2].Int));
-                    }
-                    else if (connection[0].Type == JsonType.String && connection[1].Type == JsonType.String && connection[2].Type == JsonType.Int)
-                    {
+                    } else if (connection[0].Type == JsonType.String && connection[1].Type == JsonType.String && connection[2].Type == JsonType.Int) {
                         if (labelDuplicates)
                             throw new FormatException(JsonLocationString(fileName, name, JsNames.SSES) + " contains label duplicates. Cannot unambigously read " + JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY));
                         int first = result.FindIndex(sse => sse.Label == connection[0].String);
@@ -464,11 +411,9 @@ namespace protein.Libraries
                             throw new FormatException($"{JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY, i, 0)} \"{connection[0].String}\" is not a label found in {JsNames.SSES}.");
                         if (last == -1)
                             throw new FormatException($"{JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY, i, 1)} \"{connection[1].String}\" is not a label found in {JsNames.SSES}.");
-                            // throw new FormatException(JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY, i, 1) + " is not a label found in " + JsNames.SSES + ".");
+                        // throw new FormatException(JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY, i, 1) + " is not a label found in " + JsNames.SSES + ".");
                         betaConnectivity.Add((first, last, connection[2].Int));
-                    }
-                    else
-                    {
+                    } else {
                         throw new FormatException(JsonLocationString(fileName, name, JsNames.BETA_CONNECTIVITY, i) + " must be a JSON list with three 3 elements (labels/indices of 2 SSEs and an integer for direction of the connection (1=parallel,-1=antiparallel)).");
                     }
                 }
@@ -476,23 +421,18 @@ namespace protein.Libraries
 
             // Reading mergeable SSEs
             merging = new List<(string, int, int)>();
-            if (entry.Contains(JsNames.SSE_MERGING))
-            {
+            if (entry.Contains(JsNames.SSE_MERGING)) {
                 JsonValue mergs = entry[JsNames.SSE_MERGING];
                 if (mergs.Type != JsonType.List)
                     throw new FormatException(JsonLocationString(fileName, name, JsNames.SSE_MERGING) + " is not a JSON list.");
                 JsonValue[] mergsList = mergs.Where(m => m.Type != JsonType.Null).ToArray(); //This null think must be here cuz the Json parser sucks.
-                for (int i = 0; i < mergsList.Length; i++)
-                {
+                for (int i = 0; i < mergsList.Length; i++) {
                     JsonValue merg = mergsList[i];
                     if (merg.Type != JsonType.List || merg.Count != 3)
                         throw new FormatException(JsonLocationString(fileName, name, JsNames.SSE_MERGING, null) + " is not a JSON list with three 3 elements.");
-                    if (merg[0].Type == JsonType.String && merg[1].Type == JsonType.Int && merg[2].Type == JsonType.Int)
-                    {
+                    if (merg[0].Type == JsonType.String && merg[1].Type == JsonType.Int && merg[2].Type == JsonType.Int) {
                         merging.Add((merg[0].String, merg[1].Int, merg[2].Int));
-                    }
-                    else if (merg.All(m => m.Type == JsonType.String))
-                    {
+                    } else if (merg.All(m => m.Type == JsonType.String)) {
                         if (labelDuplicates)
                             throw new FormatException(JsonLocationString(fileName, name, JsNames.SSES) + " contains label duplicates. Cannot unambigously read " + JsonLocationString(fileName, name, JsNames.SSE_MERGING));
                         int first = result.FindIndex(sse => sse.Label == merg[1].String);
@@ -502,9 +442,7 @@ namespace protein.Libraries
                         if (last == -1)
                             throw new FormatException(JsonLocationString(fileName, name, JsNames.SSE_MERGING, i, 2) + " is not a label found in " + JsonLocationString(fileName, name, JsNames.SSES) + ".");
                         merging.Add((merg[0].String, first, last));
-                    }
-                    else
-                    {
+                    } else {
                         throw new FormatException(JsonLocationString(fileName, name, JsNames.SSE_MERGING, i) + " must be a JSON list with three 3 elements (1 label of merged SSE and 2 labels/indices of first and last SSE to be merge).");
                     }
                 }
@@ -513,8 +451,7 @@ namespace protein.Libraries
         }
 
         /* null in keys will be formatted as unknown index _ */
-        private static String JsonLocationString(string filename, params object[] keys)
-        {
+        private static String JsonLocationString(string filename, params object[] keys) {
             return filename + keys.Select(k => "[" + (k == null ? "_" : k is string ? "\"" + k + "\"" : k.ToString()) + "]").EnumerateWithSeparators("");
         }
 
@@ -522,8 +459,7 @@ namespace protein.Libraries
 			return JsonLocationString(filename,keys) + ": " + (value == null ? "null" : value is string ? "\"" + value + "\"" : value.ToString ());
 		}*/
 
-        private static double RoundDouble(double x)
-        {
+        private static double RoundDouble(double x) {
             return Math.Round(x, DEFAULT_DOUBLE_DIGITS);
         }
 
@@ -635,26 +571,22 @@ namespace protein.Libraries
         // 	|| (lastStrand1 == ' ' && lastStrand2 == ' ');
         // }
 
-        public class JoiningCriteriaValues
-        {
+        public class JoiningCriteriaValues {
             public int Gap { get; private set; }
             public double Angle { get; private set; }
             public double Stagger { get; private set; }
-            public JoiningCriteriaValues(int gap, double angle, double stagger)
-            {
+            public JoiningCriteriaValues(int gap, double angle, double stagger) {
                 Gap = gap;
                 Angle = angle;
                 Stagger = stagger;
             }
-            public override String ToString()
-            {
+            public override String ToString() {
                 return this.GetType().Name + " [gap: " + Gap + ", angle: " + Angle.ToString("0.00") + " deg, stagger: " + Stagger.ToString("0.00") + " A]";
             }
         }
 
         /** A class encapsulating parameters for joining neighboring SSEs. */
-        public class JoiningParameters
-        {
+        public class JoiningParameters {
             public SseType[] AcceptedTypes { get; private set; }
             public double GapPenalty { get; private set; }
             public double AnglePenalty { get; private set; } // angles in degrees! 
@@ -662,8 +594,7 @@ namespace protein.Libraries
             public int GapThreshold { get; private set; }
             public double PenaltyThreshold { get; private set; }
 
-            public JoiningParameters(SseType[] acceptedTypes, double gapPenalty, double anglePenaltyPerDegree, double staggerPenalty, int gapThreshold, double penaltyThreshold)
-            {
+            public JoiningParameters(SseType[] acceptedTypes, double gapPenalty, double anglePenaltyPerDegree, double staggerPenalty, int gapThreshold, double penaltyThreshold) {
                 AcceptedTypes = acceptedTypes;
                 GapPenalty = gapPenalty;
                 AnglePenalty = anglePenaltyPerDegree;
@@ -671,8 +602,7 @@ namespace protein.Libraries
                 GapThreshold = gapThreshold;
                 PenaltyThreshold = penaltyThreshold;
             }
-            public override String ToString()
-            {
+            public override String ToString() {
                 return "AcceptedTypes = " + AcceptedTypes.Aggregate("", (x, y) => x + y)
                 + ", GapPenalty = " + GapPenalty
                 + ", AnglePenalty = " + AnglePenalty
@@ -682,8 +612,7 @@ namespace protein.Libraries
         }
 
         /** Joins neighboring SSEs if they fulfil some conditions. */
-        public static List<SseInSpace> JoinSSEs(List<SseInSpace> sses, JoiningParameters parameters)
-        {
+        public static List<SseInSpace> JoinSSEs(List<SseInSpace> sses, JoiningParameters parameters) {
             List<SseInSpace> result = new List<SseInSpace>();
             if (sses.Count == 0)
                 return result;
@@ -691,16 +620,12 @@ namespace protein.Libraries
             JoiningCriteriaValues criteria;
 
             SseInSpace a = sses[0];
-            foreach (SseInSpace b in sses.Skip(1))
-            {
-                if (ShouldJoin(a, b, parameters, out criteria))
-                {
+            foreach (SseInSpace b in sses.Skip(1)) {
+                if (ShouldJoin(a, b, parameters, out criteria)) {
                     Console.WriteLine("Joining {0} ({1}-{2}) and {3} ({4}-{5}) with gap {6} and angle {7}°.", a.Label, a.Start, a.End, b.Label, b.Start, b.End, b.Start - a.End - 1, 180 / Math.PI * LibGeometry.AngleInRadians(a.EndPoint - a.StartPoint, b.EndPoint - b.StartPoint));
                     a = SseInSpace.Join(a, b);
                     a.AddComment(criteria.ToString());
-                }
-                else
-                {
+                } else {
                     result.Add(a);
                     a = b;
                 }
@@ -710,15 +635,12 @@ namespace protein.Libraries
         }
 
         /** Says whether too SSEs should be joined. */
-        private static bool ShouldJoin(SseInSpace sse1, SseInSpace sse2, JoiningParameters parameters, out JoiningCriteriaValues criteria)
-        {
-            if (!parameters.AcceptedTypes.Contains(sse1.Type) || !parameters.AcceptedTypes.Contains(sse2.Type))
-            {
+        private static bool ShouldJoin(SseInSpace sse1, SseInSpace sse2, JoiningParameters parameters, out JoiningCriteriaValues criteria) {
+            if (!parameters.AcceptedTypes.Contains(sse1.Type) || !parameters.AcceptedTypes.Contains(sse2.Type)) {
                 criteria = null;
                 return false;
             }
-            if (sse1.ChainID != sse2.ChainID)
-            {
+            if (sse1.ChainID != sse2.ChainID) {
                 criteria = null;
                 return false;
             }
@@ -735,18 +657,15 @@ namespace protein.Libraries
         }
 
         /** Joins neighboring SSEs if they fulfil some conditions. */
-        public static List<Sse> JoinSSEs_GeomVersion(Protein p, List<Sse> sses, double rmsdLimit, Func<SseType, SseType, SseType?> typeCombining)
-        {
+        public static List<Sse> JoinSSEs_GeomVersion(Protein p, List<Sse> sses, double rmsdLimit, Func<SseType, SseType, SseType?> typeCombining) {
             List<Sse> result = new List<Sse>();
 
-            foreach (Chain chain in p.GetChains())
-            {
+            foreach (Chain chain in p.GetChains()) {
                 List<Sse> chainSSEs = sses.Where(x => x.ChainID == chain.Id).OrderBy(x => x.Start).ToList();
 
                 List<(int, int)> ranges = new List<(int, int)>();
                 List<SseType?> checkTypes = new List<SseType?>();
-                for (int i = 0; i < chainSSEs.Count - 1; i++)
-                {
+                for (int i = 0; i < chainSSEs.Count - 1; i++) {
                     ranges.Add((chainSSEs[i].End - 3, chainSSEs[i + 1].Start + 3));
                     checkTypes.Add(typeCombining(chainSSEs[i].Type, chainSSEs[i + 1].Type));
                 }
@@ -754,21 +673,16 @@ namespace protein.Libraries
                 double[] rmsds = new double[ranges.Count];
                 List<GeometryCheckResult> checkResults = chain.GetResidues(ranges).Select((l, i) => checkTypes[i] == null ? GeometryCheckResult.NOK : CheckGeometry(l, (SseType)checkTypes[i], rmsdLimit, out rmsds[i])).ToList();
 
-                if (chainSSEs.Count > 0)
-                {
+                if (chainSSEs.Count > 0) {
                     result.Add(chainSSEs[0]);
                 }
-                for (int i = 1; i < chainSSEs.Count; i++)
-                {
-                    if (checkResults[i - 1] == GeometryCheckResult.OK)
-                    {
+                for (int i = 1; i < chainSSEs.Count; i++) {
+                    if (checkResults[i - 1] == GeometryCheckResult.OK) {
                         Console.WriteLine("Joining {0} ({1}-{2}) and {3} ({4}-{5}).",
                             result[result.Count - 1].Label, result[result.Count - 1].Start, result[result.Count - 1].End, chainSSEs[i].Label, chainSSEs[i].Start, chainSSEs[i].End);
                         result[result.Count - 1] = Sse.Join(result[result.Count - 1], chainSSEs[i]);
                         result[result.Count - 1].AddComment("Max RMSD: " + rmsds[i - 1].ToString("0.000") + " A");
-                    }
-                    else
-                    {
+                    } else {
                         result.Add(chainSSEs[i]);
                     }
                 }
@@ -777,8 +691,7 @@ namespace protein.Libraries
         }
 
         /** Calculates the "stagger" metric for two helices, which is a measure of their continuity. The value is in Angstroms. */
-        private static double Stagger(SseInSpace sse1, SseInSpace sse2)
-        {
+        private static double Stagger(SseInSpace sse1, SseInSpace sse2) {
             Point A = sse1.StartPoint;
             Point B = sse1.EndPoint;
             Point C = sse2.StartPoint;
@@ -786,12 +699,9 @@ namespace protein.Libraries
             Plane rho = new Plane(LibGeometry.Middle(B, C), D - A);
             Point? P = LibGeometry.Intersection(new Line(A, B), rho);
             Point? Q = LibGeometry.Intersection(new Line(C, D), rho);
-            if (P.HasValue && Q.HasValue)
-            {
+            if (P.HasValue && Q.HasValue) {
                 return LibGeometry.Distance(P.Value, Q.Value);
-            }
-            else
-            {
+            } else {
                 return Double.PositiveInfinity; // a special case where one of the SSEs is (almost) parallel to the plane
             }
         }
@@ -802,8 +712,7 @@ namespace protein.Libraries
         // 	return a.AltLoc == Cif.Tables.AtomTable.DEFAULT_ALT_LOC || a.AltLoc == "A";
         // }
 
-        private static List<Atom> SelectOneOrZeroCAlphas(IEnumerable<Residue> residues)
-        {
+        private static List<Atom> SelectOneOrZeroCAlphas(IEnumerable<Residue> residues) {
             return residues
                 .Select(r => r.GetCAlphas())
                 .Where(la => la.Count() > 0)
@@ -811,8 +720,7 @@ namespace protein.Libraries
                 .ToList();
         }
 
-        public static GeometryCheckResult CheckGeometry(IEnumerable<Residue> residues, SseType sseType, double RMSDLimit, out double maxRMSD)
-        {
+        public static GeometryCheckResult CheckGeometry(IEnumerable<Residue> residues, SseType sseType, double RMSDLimit, out double maxRMSD) {
             maxRMSD = 0;
             //Lib.WriteDebug ("Geometry check on {0} {1,3} - {2,3}: ", residues.First ().ChainID, residues.First ().ResSeq, residues.Last ().ResSeq);
 
@@ -829,12 +737,10 @@ namespace protein.Libraries
             // 	CAlphas = CAlphas.Where (a => IsAltLocOK(a)).ToList ();
             // }
 
-            for (int i = 0; i <= CAlphas.Count - 4; i++)
-            {
+            for (int i = 0; i <= CAlphas.Count - 4; i++) {
                 List<Atom> quad = CAlphas.GetRange(i, 4);
                 //Lib.WriteLineDebug ("quad [{0}]: {1}", quad.Count(), quad.EnumerateWithCommas());
-                if (quad.Select((x, j) => x.ResidueSeqNumber - j).Distinct().Count() != 1)
-                {
+                if (quad.Select((x, j) => x.ResidueSeqNumber - j).Distinct().Count() != 1) {
                     Lib.WriteLineDebug("Missing residues somewhere between {0} and {1}", quad[0].ResidueSeqNumber, quad[3].ResidueSeqNumber);
                     return GeometryCheckResult.IncompleteChain;
                 }
@@ -845,8 +751,7 @@ namespace protein.Libraries
                 LibAlgebra.Align(mobile, IdealShapes.GetShape(sseType).Points, out trans, out rot, out rmsd);
                 maxRMSD = Math.Max(maxRMSD, rmsd);
                 //Console.WriteLine ("<{0,3}> {1,8}", quad [1].ResSeq, rmsd);
-                if (rmsd > RMSDLimit)
-                {
+                if (rmsd > RMSDLimit) {
                     //Lib.WriteLineDebug ("High RMSD ({0}) on {1,3} - {2,3}.", rmsd.ToString ("0.00"), quad [0].ResSeq, quad [3].ResSeq);
                     return GeometryCheckResult.NOK;
                 }
@@ -855,8 +760,7 @@ namespace protein.Libraries
             return GeometryCheckResult.OK;
         }
 
-        public static GeometryCheckResult CheckGeometryOf1Unit(IEnumerable<Residue> residues, SseType sseType, double RMSDLimit, out double rmsd)
-        {
+        public static GeometryCheckResult CheckGeometryOf1Unit(IEnumerable<Residue> residues, SseType sseType, double RMSDLimit, out double rmsd) {
             rmsd = 0;
             int unitLength = residues.Count();
             List<Atom> unit = SelectOneOrZeroCAlphas(residues);
@@ -875,13 +779,11 @@ namespace protein.Libraries
             // 	}
             // 	unit = unit.Where (a => IsAltLocOK(a)).ToList ();
             // }
-            if (unit.Count != unitLength)
-            {
+            if (unit.Count != unitLength) {
                 return GeometryCheckResult.NOK; //some of the input residues miss CAlpha atom
             }
 
-            if (unit.Select((x, j) => x.ResidueSeqNumber - j).Distinct().Count() != 1)
-            {
+            if (unit.Select((x, j) => x.ResidueSeqNumber - j).Distinct().Count() != 1) {
                 Lib.WriteLineDebug("Missing residues somewhere between {0} and {1}", unit[0].ResidueSeqNumber, unit[3].ResidueSeqNumber);
                 return GeometryCheckResult.IncompleteChain;
             }
@@ -893,20 +795,17 @@ namespace protein.Libraries
             return (rmsd <= RMSDLimit) ? GeometryCheckResult.OK : GeometryCheckResult.NOK;
         }
 
-        public static GeometryCheckResult CheckSSEGeometry(Protein p, Sse sse, double RMSDLimit, out double maxRMSD)
-        {
+        public static GeometryCheckResult CheckSSEGeometry(Protein p, Sse sse, double RMSDLimit, out double maxRMSD) {
             (int, int)[] ranges = new (int, int)[] { (sse.Start, sse.End) };
             IEnumerable<Residue> residues = p.GetChain(sse.ChainID).GetResidues(ranges).First();
             return CheckGeometry(residues, sse.Type, RMSDLimit, out maxRMSD);
         }
 
-        public static Vector DirectionVector(IList<Atom> helix)
-        {
+        public static Vector DirectionVector(IList<Atom> helix) {
             if (helix.Count < 3)
                 throw new ArgumentException("Backbone of the helix must contain at least 3 atoms.");
             Vector v = new Vector(0, 0, 0);
-            for (int i = 0; i < helix.Count - 2; i++)
-            {
+            for (int i = 0; i < helix.Count - 2; i++) {
                 Point a = helix[i].Position();
                 Point b = helix[i + 1].Position();
                 Point c = helix[i + 2].Position();
@@ -916,8 +815,7 @@ namespace protein.Libraries
         }
 
 
-        public static Vector DirectionVector_LinRegVersionAlphaHelix(IList<Atom> helix)
-        {
+        public static Vector DirectionVector_LinRegVersionAlphaHelix(IList<Atom> helix) {
             double rotationPerAtom = 2 * Math.PI / 3.6 / 3;
             if (helix.Count < 3)
                 throw new ArgumentException("Backbone of the helix must contain at least 3 atoms.");
@@ -931,8 +829,7 @@ namespace protein.Libraries
             myHelix.MeanCenterVertically();
             Matrix rotMatrix = niceHelixTransposed * myHelix;
             rotMatrix.NormalizeRows();
-            if (helix[0].ResidueSeqNumber == 172)
-            {
+            if (helix[0].ResidueSeqNumber == 172) {
                 Console.WriteLine(rotMatrix.ToRowVectors()[0]);
                 Console.WriteLine(rotMatrix.ToRowVectors()[1]);
                 Console.WriteLine(rotMatrix.ToRowVectors()[2]);
@@ -943,57 +840,46 @@ namespace protein.Libraries
         /**Calculate a line segment that best describes an SSE given as a list of residues. 
 		 * numExtraResidues - indicates the number of residues at both the beginning and the end of the list which are not the part of the SSE but should be used in geometrical calculations.
 		 */
-        //private static (Vector, Vector) SSEAsLineSegment_GeomVersion(IEnumerable<Residue> residues, char sseType, int numExtraResidues, out List<double> rmsdList){
-        private static (Point, Point) SSEAsLineSegment_GeomVersion(List<Residue> residues, Sse sse, out List<double> rmsdList)
-        {
+        private static (Point, Point) SSEAsLineSegment_GeomVersion(List<Residue> residues, Sse sse, out List<double> rmsdList) {
             rmsdList = new List<double>();
 
-            if (sse.IsNotFound())
-            {
+            if (sse.IsNotFound()) {
                 return (new Point(Vector.ZERO), new Point(Vector.ZERO));
             }
 
             int startIndex = 0;
             int endIndex = residues.Count() - 1;
-            try
-            {
+            try {
                 startIndex = residues.IndicesWhere(r => r.SeqNumber == sse.Start).First();
                 endIndex = residues.IndicesWhere(r => r.SeqNumber == sse.End).First();
-            }
-            catch (Exception)
-            {
+            } catch (Exception) {
                 Lib.WriteErrorAndExit("SSE starting or ending residue is missing: {0}", sse);
             }
 
             List<Point> caCoords = residues.Select(r => r.GetCAlpha()).Where(a => a != null).Select(a => ((Atom)a).Position()).ToList();
             Point? startingCoord_ = residues[startIndex].GetNAmide()?.Position() ?? residues[startIndex].GetCAlpha()?.Position();
             Point? endingCoord_ = residues[endIndex].GetCCarb()?.Position() ?? residues[endIndex].GetCAlpha()?.Position();
-            if (!startingCoord_.HasValue)
-            {
+            if (!startingCoord_.HasValue) {
                 throw new Exception($"First residue of {sse} is missing amide N atom and C-alpha atom.");
             }
-            if (!endingCoord_.HasValue)
-            {
+            if (!endingCoord_.HasValue) {
                 throw new Exception($"Last residue of {sse} is missing carbonyl C atom and C-alpha atom.");
             }
             Point startingCoord = startingCoord_.Value;
             Point endingCoord = endingCoord_.Value;
 
-            if (residues.Count() < 4 || !residues.All(r => r.HasCAlpha()))
-            {
+            if (residues.Count() < 4 || !residues.All(r => r.HasCAlpha())) {
                 // Lib.WriteWarning ($"At least 4 residues are needed to calculate line segment. Less than 4 residues are given for {sse}, so atom coordinates will be used instead of line segment approximation.");
                 return (startingCoord, endingCoord);
             }
-            if (residues.Select((r, i) => r.SeqNumber - i).Distinct().Count() != 1)
-            {
+            if (residues.Select((r, i) => r.SeqNumber - i).Distinct().Count() != 1) {
                 Lib.WriteWarning("Missing residues around " + sse.ToString() + ". Atom coordinates will be used instead of line segment approximation.");
                 return (startingCoord, endingCoord);
             }
 
             Vector sumAxes = Vector.ZERO;
             Vector sumOrigins = Vector.ZERO;
-            for (int i = 0; i < caCoords.Count - 3; i++)
-            {
+            for (int i = 0; i < caCoords.Count - 3; i++) {
                 Matrix mobile = Matrix.FromRows(caCoords.GetRange(i, 4));
                 Matrix trans;
                 Matrix rot;
@@ -1001,92 +887,125 @@ namespace protein.Libraries
                 LibAlgebra.Align(mobile, IdealShapes.GetShape(sse.Type).Points, out trans, out rot, out rmsd);
                 Matrix rotBack = rot.Transpose();
                 sumAxes += (IdealShapes.GetShape(sse.Type).Axis * rotBack).ToRowVectors()[0];
-                // sumOrigins += (IdealShapes.GetShape(sse.Type).Origin * rotBack - trans).ToRowVectors()[0];
                 sumOrigins += ((IdealShapes.GetShape(sse.Type).Origin - trans) * rotBack).ToRowVectors()[0];
                 rmsdList.Add(rmsd);
-                // if (Double.IsNaN(sumAxes.X)) Lib.WriteLineDebug($"    SumAxes {sumAxes}, SumOrigins {sumOrigins}, Mobile {mobile}, Rot {rot}, Trans {trans}");
-                //Console.WriteLine ("<{0,3}> {1,8}", quad [1].ResSeq, rmsd);
             }
             Vector axis = sumAxes.Normalize();
             Point origin = new Point(sumOrigins / (caCoords.Count - 3));
             Point u = origin + ((startingCoord - origin) * axis) * axis;
             Point v = origin + ((endingCoord - origin) * axis) * axis;
-            // Lib.WriteLineDebug($"Axis {axis}, SumAxes {sumAxes}, Origin {origin}, {Double.IsNaN(u.X)}");
             return (u, v);
         }
 
-        public static List<SseInSpace> SSEsAsLineSegments_GeomVersion(Chain chain, List<Sse> sses, out List<double>[] rmsdLists)
-        {
+        /** Determine the minor axis for a beta-strand, which defines the strand plane along with the major axis (start-end vector). */
+        private static Vector StrandMinorAxis(List<Residue> residues, Sse sse, Vector majorAxis) {
+            // It is expected that 'residues' contains one extra residue before and after the strand.
+            int n = residues.Count();
+            Point?[] CAs = residues.Select(r => r.GetCAlpha()?.Position()).ToArray();
+            Point?[] Ns = residues.Select(r => r.GetNAmide()?.Position()).ToArray();
+            Point?[] Cs = residues.Select(r => r.GetCCarb()?.Position()).ToArray();
+            List<Vector> partialMinorAxes = new List<Vector>(n);
+            for (int i = 0; i < n - 1; i++) {
+                Point? p1 = CAs[i];
+                Point? p2 = Cs[i];
+                Point? p3 = Ns[i + 1];
+                Point? p4 = CAs[i + 1];
+                if (p1.HasValue && p2.HasValue && p3.HasValue && p4.HasValue) {
+                    Vector peptideBondNormal = ((p4.Value - p1.Value) % (p3.Value - p2.Value));
+                    Vector minAxis = (majorAxis % peptideBondNormal).Normalize();
+                    partialMinorAxes.Add(minAxis);
+                }
+            }
+            return CombineMinorAxes(partialMinorAxes, majorAxis, sse);
+        }
+
+        public static Vector CombineMinorAxes(List<Vector> partialMinorAxes, Vector majorAxis, Sse sse) {
+            Vector minorAxis;
+            if (partialMinorAxes.Count == 0) {
+                string message = sse != null ?
+                    $"Not enough atoms to calculate secondary axis for {sse} (must contain at least one CA-C-N-CA sequence, including one residue before and after)."
+                    : "Cannot combine zero minor axes";
+                throw new Exception(message);
+            } else if (partialMinorAxes.Count == 1) {
+                minorAxis = partialMinorAxes[0];
+            } else if (partialMinorAxes.Count == 2) {
+                minorAxis = partialMinorAxes[0] * partialMinorAxes[1] >= 0 ? partialMinorAxes[0] + partialMinorAxes[1] : partialMinorAxes[0] - partialMinorAxes[1];
+            } else {
+                var (U, S, V) = LibAlgebra.SVD(Matrix.FromRows(partialMinorAxes));
+                minorAxis = V.ToRowVectors()[0];
+            }
+            minorAxis = ((majorAxis % minorAxis) % majorAxis).Normalize();
+            return minorAxis;
+        }
+
+        public static List<SseInSpace> SSEsAsLineSegments_GeomVersion(Chain chain, List<Sse> sses, out List<double>[] rmsdLists) {
             if (sses.Any(x => x.ChainID != chain.Id))
                 throw new ArgumentException(System.Reflection.MethodBase.GetCurrentMethod().Name + ": Some SSEs are not from this chain (" + chain.Id + ").");
             IEnumerable<(int, int)> ranges = sses.Select(sse => (sse.Start - NumExtraResidues(sse), sse.End + NumExtraResidues(sse)));
             List<List<Residue>> residueLists = chain.GetResidues(ranges).ToList();
-            for (int i = 0; i < sses.Count; i++)
-            {
-                if (residueLists[i].Count != sses[i].Length() + 2 * NumExtraResidues(sses[i]))
-                {
+            for (int i = 0; i < sses.Count; i++) {
+                if (residueLists[i].Count != sses[i].Length() + 2 * NumExtraResidues(sses[i])) {
                     Lib.WriteWarning(System.Reflection.MethodBase.GetCurrentMethod().Name + ": Some residues might be missing between " + (sses[i].Start - NumExtraResidues(sses[i])) + " and " + (sses[i].End + NumExtraResidues(sses[i])) + " in chain " + sses[i].ChainID + ": " + residueLists[i].Aggregate("", (s, r) => s + ", " + r.ToString(), s => s.Length >= 2 ? s.Substring(2) : s));
                 }
             }
-            //for (int i = 0; i < residueLists.Count; i++) { Console.WriteLine ("{0} in {1} {2}-{3}: {4}", sses [i].Label, sses [i].ChainID, sses [i].Start, sses [i].End, residueLists [i].Aggregate ("", (x, y) => x + ", " + y.ToString ())); }
             List<double>[] rmsdLists_ = new List<double>[sses.Count];
-            List<SseInSpace> ssesInSpace =
-                sses.Select((sse, i) => new SseInSpace(sse, LibAnnotation.SSEAsLineSegment_GeomVersion(residueLists[i], sse, out rmsdLists_[i]))).ToList();
+            List<SseInSpace> ssesInSpace = new List<SseInSpace>(sses.Count);
+            for (int i = 0; i < sses.Count; i++) {
+                Sse sse = sses[i];
+                (Point, Point) lineSegment = LibAnnotation.SSEAsLineSegment_GeomVersion(residueLists[i], sse, out rmsdLists_[i]);
+                SseInSpace newSSE = new SseInSpace(sse, lineSegment);
+                if (sse.IsSheet) {
+                    newSSE.MinorAxis = LibAnnotation.StrandMinorAxis(residueLists[i], sse, lineSegment.Item2 - lineSegment.Item1);
+                }
+                ssesInSpace.Add(newSSE);
+            }
             rmsdLists = rmsdLists_;
             return ssesInSpace;
         }
 
-        public static List<SseInSpace> SSEsAsLineSegments_GeomVersion(Protein protein, List<Sse> sses){
+        public static List<SseInSpace> SSEsAsLineSegments_GeomVersion(Protein protein, List<Sse> sses) {
             var chainToSseIndices = new Dictionary<string, List<int>>();
-            for (int i = 0; i < sses.Count; i++)
-            {
+            for (int i = 0; i < sses.Count; i++) {
                 string chainId = sses[i].ChainID;
-                if (!chainToSseIndices.ContainsKey(chainId)){
+                if (!chainToSseIndices.ContainsKey(chainId)) {
                     chainToSseIndices[chainId] = new List<int>();
                 }
                 chainToSseIndices[chainId].Add(i);
             }
 
             var result = Enumerable.Repeat<SseInSpace>(null, sses.Count).ToList();
-            foreach (string chainId in chainToSseIndices.Keys){
+            foreach (string chainId in chainToSseIndices.Keys) {
                 List<double>[] dump;
                 List<SseInSpace> ssesInThisChain = SSEsAsLineSegments_GeomVersion(protein.GetChain(chainId), chainToSseIndices[chainId].Select(i => sses[i]).ToList(), out dump);
-                for (int i = 0; i < ssesInThisChain.Count; i++)
-                {
+                for (int i = 0; i < ssesInThisChain.Count; i++) {
                     result[chainToSseIndices[chainId][i]] = ssesInThisChain[i];
-                }           
+                }
             }
             return result;
         }
 
-        private static int NumExtraResidues(Sse sse)
-        {
+        private static int NumExtraResidues(Sse sse) {
             return 1;
-            // return (sse.Length () >= 4) ? 0 : (sse.Length () >= 2) ? 1 : 2;
         }
 
-        public static double MetricNo3Neg(SseInSpace sse1, SseInSpace sse2)
-        {
+        public static double MetricNo3Neg(SseInSpace sse1, SseInSpace sse2) {
             //this metric is to be maximized (minimized in absolute value)
             return -MetricNo3Pos(sse1, sse2);
         }
 
-        public static double MetricNo3Pos(SseInSpace sse1, SseInSpace sse2)
-        {
+        public static double MetricNo3Pos(SseInSpace sse1, SseInSpace sse2) {
             //this metric is to be minimized
             return (sse1.StartPoint - sse2.StartPoint).Size
                 + (sse1.EndPoint - sse2.EndPoint).Size;
         }
 
-        public static double MetricNo4(SseInSpace sse1, SseInSpace sse2)
-        {
+        public static double MetricNo4(SseInSpace sse1, SseInSpace sse2) {
             //this metric is to be maximized (minimized in absolute value)
             return -(sse1.StartPoint - sse2.StartPoint).SqSize
                 - (sse1.StartPoint - sse2.StartPoint).SqSize;
         }
 
-        public static double MetricNo5Pos(SseInSpace sse1, SseInSpace sse2)
-        {
+        public static double MetricNo5Pos(SseInSpace sse1, SseInSpace sse2) {
             //this metric is to be minimized
             double m3 = (sse1.StartPoint - sse2.StartPoint).Size
                         + (sse1.EndPoint - sse2.EndPoint).Size;
@@ -1096,8 +1015,7 @@ namespace protein.Libraries
             return m3 * angleScaling;
         }
 
-        private static double PartialMetricNo6(Point[] ra, Point[] rb, int d)
-        {
+        private static double PartialMetricNo6(Point[] ra, Point[] rb, int d) {
             double sum = 0;
             //extras in ra before
             for (int i = 0; i < d; i++)
@@ -1118,38 +1036,29 @@ namespace protein.Libraries
             return sum / (Math.Max(ra.Length, rb.Length + d) - Math.Min(0, d));
         }
 
-        public static double MetricNo6Pos(Sse sse1, Sse sse2, Chain chain1, Chain chain2)
-        {
+        public static double MetricNo6Pos(Sse sse1, Sse sse2, Chain chain1, Chain chain2) {
             Point[] ra = chain1.GetResidues(new (int, int)[] { (sse1.Start, sse1.End) })[0].Select(r => r.GetCAlphas().First().Position()).ToArray();
             Point[] rb = chain2.GetResidues(new (int, int)[] { (sse2.Start, sse2.End) })[0].Select(r => r.GetCAlphas().First().Position()).ToArray();
             int minDisplacement = -rb.Length + 1;
             int maxDisplacement = ra.Length - 1;
             IEnumerable<int> displacements = Enumerable.Range(minDisplacement, maxDisplacement - minDisplacement + 1);
-            //Lib.WriteLineDebug ("\n{0} [{1}] {2} [{3}] ",sse1, ra.Length,sse2, rb.Length);
-            //Lib.WriteLineDebug ("Displacements: {0}", Lib.EnumerateWithCommas (displacements));
             return displacements.Select(d => PartialMetricNo6(ra, rb, d)).Min();
         }
 
-        public static double MetricNo7Pos(Sse sse1, Sse sse2, List<(int?, int?, double)> alignment, Dictionary<int, int> tResiToAli, Dictionary<int, int> qResiToAli)
-        {
-            try
-            {
-                // Lib.WriteLineDebug($"m7: {sse1.Start}-{sse1.End} vs {sse2.Start}-{sse2.End}");
+        public static double MetricNo7Pos(Sse sse1, Sse sse2, List<(int?, int?, double)> alignment, Dictionary<int, int> tResiToAli, Dictionary<int, int> qResiToAli) {
+            try {
                 int s1 = tResiToAli[sse1.Start];
                 int s2 = qResiToAli[sse2.Start];
                 int e1 = tResiToAli[sse1.End];
                 int e2 = qResiToAli[sse2.End];
                 int deltaStart = Math.Abs(s1 - s2);
-                if (s1 < s2)
-                {
+                if (s1 < s2) {
                     int j = s2;
                     while (j < alignment.Count && alignment[j].Item1 == null)
                         j++;
                     if (j < alignment.Count)
                         deltaStart = Math.Min(deltaStart, (int)alignment[j].Item1 - (int)alignment[s1].Item1);
-                }
-                else
-                {
+                } else {
                     int j = s1;
                     while (j < alignment.Count && alignment[j].Item2 == null)
                         j++;
@@ -1157,16 +1066,13 @@ namespace protein.Libraries
                         deltaStart = Math.Min(deltaStart, (int)alignment[j].Item2 - (int)alignment[s2].Item2);
                 }
                 int deltaEnd = Math.Abs(e1 - e2);
-                if (e1 > e2)
-                {
+                if (e1 > e2) {
                     int j = e2;
                     while (j >= 0 && alignment[j].Item1 == null)
                         j--;
                     if (j >= 0)
                         deltaEnd = Math.Min(deltaEnd, (int)alignment[e1].Item1 - (int)alignment[j].Item1);
-                }
-                else
-                {
+                } else {
                     int j = e1;
                     while (j >= 0 && alignment[j].Item2 == null)
                         j--;
@@ -1175,16 +1081,13 @@ namespace protein.Libraries
                 }
 
                 return deltaStart + deltaEnd;
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 Lib.WriteLineDebug("m7: {0} {1} {2} {3}", sse1.Start, sse2.Start, sse1.End, sse2.End);
                 throw e;
             }
         }
 
-        public static double LengthDiffPenalty(Sse sse1, Sse sse2)
-        {
+        public static double LengthDiffPenalty(Sse sse1, Sse sse2) {
             // TODO implement distinction between helices and strands (e.g. count H-bonds instead of residues)
             const double ALPHA = 10;
             const double BETA_SQ = 9;
@@ -1193,73 +1096,46 @@ namespace protein.Libraries
             return ALPHA * Math.Abs(len1 - len2) / Math.Sqrt(len1 * len2 + BETA_SQ);
         }
 
-        /*public static int FindBestCounterpart((Vector, Vector) myHelix, 
-			List<(Vector, Vector)> candidateHelices, 
-			Func<(Vector, Vector),(Vector, Vector),double> metric)
-		{
-			if (candidateHelices.Count < 1)
-				throw new InvalidDataException ("At least 1 candidate helix needed.");
-			int best=0;
-			double max=Double.MinValue;
-			for (int i=0; i<candidateHelices.Count; i++) {	
-				double value = metric (myHelix, candidateHelices [i]);
-				if (value > max) {
-					best = i;
-					max = value;
-				}
-			}
-			return best;
-		}*/
 
-        private class SSET<T_>
-        {
+        private class SSET<T_> {
             public Sse SSE { get; set; }
             public T_ T { get; set; }
-            public SSET(Sse sse, T_ t)
-            {
+            public SSET(Sse sse, T_ t) {
                 SSE = sse;
                 T = t;
             }
         }
 
-        private class SSETint<T_>
-        {
+        private class SSETint<T_> {
             public Sse SSE { get; set; }
             public T_ T { get; set; }
             public int Int { get; set; }
-            public SSETint(Sse sse, T_ t, int i)
-            {
+            public SSETint(Sse sse, T_ t, int i) {
                 SSE = sse;
                 T = t;
                 Int = i;
             }
         }
 
-        private class SSEInSpaceInt
-        {
+        private class SSEInSpaceInt {
             public SseInSpace SSE { get; set; }
             public int Int { get; set; }
-            public SSEInSpaceInt(SseInSpace sse, int i)
-            {
+            public SSEInSpaceInt(SseInSpace sse, int i) {
                 SSE = sse;
                 Int = i;
             }
         }
 
         /** Returns index of best counterpart in candidateHelices and the value of metric. Returns null if not found. */
-        private static (int, double)? FindBestCounterpartNew(SSEInSpaceInt myHelixT, List<SSEInSpaceInt> candidateHelices, int iFrom, int iTo, Func<SseType, SseType, bool> typeMatching, Func<SseInSpace, SseInSpace, double> metricToMax)
-        {
+        private static (int, double)? FindBestCounterpartNew(SSEInSpaceInt myHelixT, List<SSEInSpaceInt> candidateHelices, int iFrom, int iTo, Func<SseType, SseType, bool> typeMatching, Func<SseInSpace, SseInSpace, double> metricToMax) {
             if (iFrom > iTo || iFrom > candidateHelices.Count - 1 || iTo < 0)
                 return null; // not found
             int best = -1; // not found
             double max = Double.MinValue;
-            for (int i = iFrom; i <= iTo; i++)
-            {
-                if (candidateHelices[i].Int == -1 && typeMatching(myHelixT.SSE.Type, candidateHelices[i].SSE.Type))
-                { // not annotated yet and having matching type
+            for (int i = iFrom; i <= iTo; i++) {
+                if (candidateHelices[i].Int == -1 && typeMatching(myHelixT.SSE.Type, candidateHelices[i].SSE.Type)) { // not annotated yet and having matching type
                     double value = metricToMax(myHelixT.SSE, candidateHelices[i].SSE);
-                    if (value > max)
-                    { // so far the best
+                    if (value > max) { // so far the best
                         best = i;
                         max = value;
                     }
@@ -1273,24 +1149,21 @@ namespace protein.Libraries
 			chainMapping indicates SSEs from which template chain should be looked for in which protein chain.
 			SSEs are choose in such way that the value of metric is minimized.
 			*/
-        public static List<(SseInSpace, double)> FindCounterpartsNew(IEnumerable<SseInSpace> templates, IEnumerable<SseInSpace> candidates, Dictionary<string, string> chainMapping, Func<SseType, SseType, bool> typeMatching, Func<SseInSpace, SseInSpace, double> metricToMax)
-        {
+        public static List<(SseInSpace, double)> FindCounterpartsNew(IEnumerable<SseInSpace> templates, IEnumerable<SseInSpace> candidates, Dictionary<string, string> chainMapping, Func<SseType, SseType, bool> typeMatching, Func<SseInSpace, SseInSpace, double> metricToMax) {
 
             Dictionary<string, List<SSEInSpaceInt>> templatesByResseq = new Dictionary<string, List<SSEInSpaceInt>>(); // list of SSEs for each template chain sorted by starting resseq
             Dictionary<string, List<SSEInSpaceInt>> templatesByPriority = new Dictionary<string, List<SSEInSpaceInt>>(); // list of SSEs for each template chain sorted by their order of processing
             Dictionary<string, List<SSEInSpaceInt>> candidatesByResseq = new Dictionary<string, List<SSEInSpaceInt>>(); // list of SSEs for each template chain sorted by starting resseq
             List<(SseInSpace, double)> result = new List<(SseInSpace, double)>();
 
-            foreach (string chain in chainMapping.Keys)
-            {
+            foreach (string chain in chainMapping.Keys) {
                 templatesByResseq[chain] = new List<SSEInSpaceInt>();
                 templatesByPriority[chain] = new List<SSEInSpaceInt>();
                 candidatesByResseq[chainMapping[chain]] = new List<SSEInSpaceInt>();
             }
 
             foreach (SseInSpace template in templates)
-                if (templatesByResseq.ContainsKey(template.ChainID))
-                {
+                if (templatesByResseq.ContainsKey(template.ChainID)) {
                     templatesByResseq[template.ChainID].Add(new SSEInSpaceInt(template, -1)); //-1=no counterpart selected
                     templatesByPriority[template.ChainID].Add(new SSEInSpaceInt(template, -1)); //-1=undefined
                 }
@@ -1299,16 +1172,12 @@ namespace protein.Libraries
                 if (candidatesByResseq.ContainsKey(candidate.ChainID))
                     candidatesByResseq[candidate.ChainID].Add(new SSEInSpaceInt(candidate, -1)); // -1=not annotated yet
 
-            foreach (string chain in chainMapping.Keys)
-            {
+            foreach (string chain in chainMapping.Keys) {
                 templatesByResseq[chain].Sort((x, y) => x.SSE.Start.CompareTo(y.SSE.Start));
                 candidatesByResseq[chainMapping[chain]].Sort((x, y) => x.SSE.Start.CompareTo(y.SSE.Start));
-                /*templatesByResseq [chain].ForEach (x => Console.WriteLine (x.SSE.ToString ()));
-				candidatesByResseq [chainMapping[chain]].ForEach (x => Console.WriteLine (x.SSE.ToString ()));*/
             }
 
-            foreach (SseInSpace t in templates.Where(x => chainMapping.ContainsKey(x.ChainID)))
-            {
+            foreach (SseInSpace t in templates.Where(x => chainMapping.ContainsKey(x.ChainID))) {
                 var temps = templatesByResseq[t.ChainID];
                 var cands = candidatesByResseq[chainMapping[t.ChainID]];
                 int i = temps.FindIndex(x => x.SSE.Equals(t));
@@ -1318,35 +1187,22 @@ namespace protein.Libraries
                     before--;
                 while (after < temps.Count && temps[after].Int == -1)
                     after++;
-                /*Console.WriteLine ("Searching " + temps [i].SSE.Label);
-				cands.ForEach (x => Console.Write (x.SSE.Start.ToString ()+ "\t"));
-				Console.WriteLine ();
-				cands.ForEach (x => Console.Write (before>=0&&cands.IndexOf(x)==temps[before].Int+1?">\t":after<temps.Count&&cands.IndexOf(x)==temps[after].Int-1?"<\t":x.Int==-1?"\t":x.Int.ToString () + "\t"));
-				Console.WriteLine ();
-				cands.ForEach (x => Console.Write (metric(x.SSE,t).ToString()+ "\t"));
-				Console.WriteLine ();*/
                 (int, double)? match = FindBestCounterpartNew(temps[i], cands, before >= 0 ? temps[before].Int + 1 : 0, after < temps.Count ? temps[after].Int - 1 : cands.Count - 1, typeMatching, metricToMax);
-                if (match != null)
-                {
+                if (match != null) {
                     (int index, double metric) = match.Value;
                     temps[i].Int = index;
                     cands[index].Int = i; // already annotated
                     result.Add((cands[index].SSE.RelabeledCopy(t.Label), metric));
-                }
-                else
-                {
+                } else {
                     result.Add((SseInSpace.NewNotFound(t.Label), Double.NegativeInfinity)); // counterpart not found
                 }
-                /*Console.WriteLine ("Found at " + (match==null? "nowhere": match.Item1.ToString())+".");
-				Console.WriteLine ();*/
             }
 
             return result;
         }
 
         public static List<(SseInSpace, double)> FindCounterparts_DynProg(IList<SseInSpace> templates, IList<SseInSpace> candidates, Func<SseType, SseType, bool> typeMatching,
-            Func<SseInSpace, SseInSpace, double> metricToMin, Func<SseInSpace, double> skipTemplatePenalty, Func<SseInSpace, double> skipCandidatePenalty, out List<double> suspiciousnessList)
-        {
+            Func<SseInSpace, SseInSpace, double> metricToMin, Func<SseInSpace, double> skipTemplatePenalty, Func<SseInSpace, double> skipCandidatePenalty, out List<double> suspiciousnessList) {
 
             if (templates.Select(x => x.ChainID).Distinct().Count() > 1)
                 Lib.WriteWarning("{0}: passed template SSEs from more than one chain.", System.Reflection.MethodBase.GetCurrentMethod().Name);
@@ -1374,10 +1230,8 @@ namespace protein.Libraries
             //   0: optimum was obtained from diagonal neighbor (pair a template and candidate SSE)
 
             // Calculation of the matrix of metric.
-            for (int i = 0; i < m - 1; i++)
-            {
-                for (int j = 0; j < n - 1; j++)
-                {
+            for (int i = 0; i < m - 1; i++) {
+                for (int j = 0; j < n - 1; j++) {
                     metricMatrix[i, j] = metricToMin(templateArray[i], candidateArray[j]);
                 }
             }
@@ -1385,46 +1239,37 @@ namespace protein.Libraries
             // Calculation of dynamic programming matrix.
             dynProgMatrix[0, 0] = 0.0;
 
-            for (int i = 1; i < m; i++)
-            {
+            for (int i = 1; i < m; i++) {
                 reconstrMatrix[i, 0] = 1;
                 dynProgMatrix[i, 0] = dynProgMatrix[i - 1, 0] + skipTemplatePenalty(templateArray[i - 1]);
             }
 
-            for (int j = 1; j < n; j++)
-            {
+            for (int j = 1; j < n; j++) {
                 reconstrMatrix[0, j] = -1;
                 dynProgMatrix[0, j] = dynProgMatrix[0, j - 1] + skipCandidatePenalty(candidateArray[j - 1]);
             }
 
-            for (int i = 1; i < m; i++)
-            {
-                for (int j = 1; j < n; j++)
-                {
+            for (int i = 1; i < m; i++) {
+                for (int j = 1; j < n; j++) {
                     SseInSpace temp = templateArray[i - 1];
                     SseInSpace cand = candidateArray[j - 1];
 
                     double valueUp = dynProgMatrix[i - 1, j] + skipTemplatePenalty(temp);
                     double valueLeft = dynProgMatrix[i, j - 1] + skipCandidatePenalty(cand);
 
-                    if (valueUp <= valueLeft)
-                    {
+                    if (valueUp <= valueLeft) {
                         //skip template
                         reconstrMatrix[i, j] = 1;
                         dynProgMatrix[i, j] = valueUp;
-                    }
-                    else
-                    {
+                    } else {
                         //skip candidate
                         reconstrMatrix[i, j] = -1;
                         dynProgMatrix[i, j] = valueLeft;
                     }
 
-                    if (typeMatching(temp.Type, cand.Type))
-                    {
+                    if (typeMatching(temp.Type, cand.Type)) {
                         double valueDiag = dynProgMatrix[i - 1, j - 1] + metricToMin(temp, cand);
-                        if (valueDiag <= dynProgMatrix[i, j])
-                        {
+                        if (valueDiag <= dynProgMatrix[i, j]) {
                             //pair template with candidate
                             reconstrMatrix[i, j] = 0;
                             dynProgMatrix[i, j] = valueDiag;
@@ -1435,21 +1280,17 @@ namespace protein.Libraries
 
 
             // print raw metric matrix 
-            if (Lib.DoWriteDebug)
-            {
+            if (Lib.DoWriteDebug) {
                 TextWriter w = new StreamWriter(Path.Combine(Setting.Directory, "metric_matrix.tsv"));
                 w.Write("\t<length>\t");
-                for (int j = 0; j < candidateArray.Length; j++)
-                {
+                for (int j = 0; j < candidateArray.Length; j++) {
                     w.Write(candidateArray[j].Label + "\t");
                 }
                 w.WriteLine();
-                for (int i = 0; i < templateArray.Length; i++)
-                {
+                for (int i = 0; i < templateArray.Length; i++) {
                     w.Write(templateArray[i].Label + "\t");
                     w.Write((templateArray[i].EndPoint - templateArray[i].StartPoint).Size.ToString("0.0") + "\t");
-                    for (int j = 0; j < candidateArray.Length; j++)
-                    {
+                    for (int j = 0; j < candidateArray.Length; j++) {
                         w.Write(metricToMin(templateArray[i], candidateArray[j]).ToString("0.0") + "\t");
                     }
                     w.WriteLine();
@@ -1460,27 +1301,22 @@ namespace protein.Libraries
             }
 
             // print dynamic programming matrix
-            if (Lib.DoWriteDebug)
-            {
+            if (Lib.DoWriteDebug) {
                 TextWriter w = new StreamWriter(Path.Combine(Setting.Directory, "dyn_prog_matrix.tsv"));
                 w.Write("\t");
-                for (int j = 0; j < n; j++)
-                {
+                for (int j = 0; j < n; j++) {
                     w.Write(j == 0 ? "-\t" : candidateArray[j - 1].Label + "\t");
                 }
                 w.WriteLine();
-                for (int i = 0; i < m; i++)
-                {
+                for (int i = 0; i < m; i++) {
                     w.Write("\t");
-                    for (int j = 0; j < n; j++)
-                    {
+                    for (int j = 0; j < n; j++) {
                         w.Write(reconstrMatrix[i, j] == -1 ? ">" : reconstrMatrix[i, j] == 1 ? "v" : "\\");
                         w.Write("\t");
                     }
                     w.WriteLine();
                     w.Write(i == 0 ? "-\t" : templateArray[i - 1].Label + "\t");
-                    for (int j = 0; j < n; j++)
-                    {
+                    for (int j = 0; j < n; j++) {
                         w.Write(dynProgMatrix[i, j].ToString("0.0") + "\t");
                     }
                     w.WriteLine();
@@ -1491,10 +1327,8 @@ namespace protein.Libraries
             // Reconstruction of the best solution.
             int row = m - 1;
             int col = n - 1;
-            while (row != 0 || col != 0)
-            {
-                switch (reconstrMatrix[row, col])
-                {
+            while (row != 0 || col != 0) {
+                switch (reconstrMatrix[row, col]) {
                     case -1:
                         // skipped candidate SSE
                         col--;
@@ -1519,10 +1353,8 @@ namespace protein.Libraries
 
             // Finding possibly ambiguous annotations.
             double[] suspiciousnessArray = new double[m - 1];
-            for (int i = 0; i < m - 1; i++)
-            {
-                if (selectedJ[i] >= 0)
-                {
+            for (int i = 0; i < m - 1; i++) {
+                if (selectedJ[i] >= 0) {
                     double otherMinInRow = Enumerable.Range(0, n - 1)
                         .Where(j => typeMatching(templateArray[i].Type, candidateArray[j].Type))
                         .Where(j => j != selectedJ[i])
@@ -1535,58 +1367,43 @@ namespace protein.Libraries
                         .Min();
                     double otherMin = Math.Min(otherMinInRow, otherMinInColumn);
                     suspiciousnessArray[i] = metricArray[i] / (otherMin + metricArray[i]);
-                    if (suspiciousnessArray[i] >= SUSPICIOUSNESS_THRESHOLD)
-                    {
+                    if (suspiciousnessArray[i] >= SUSPICIOUSNESS_THRESHOLD) {
                         Lib.WriteWarning("Possibly ambiguous annotation around \"{0}\" (annotated / (alternative+annotated) = {1}).", templateArray[i].Label, suspiciousnessArray[i].ToString("0.00"));
                     }
-                }
-                else
-                {
+                } else {
                     suspiciousnessArray[i] = Double.NaN;
                 }
             }
 
             //checking sheet ID correspondence
-            if (templateArray.Any(sse => sse.IsSheet && sse.SheetId == null) || selectedCandidateArray.Any(sse => sse.IsSheet && sse.SheetId == null))
-            {
+            if (templateArray.Any(sse => sse.IsSheet && sse.SheetId == null) || selectedCandidateArray.Any(sse => sse.IsSheet && sse.SheetId == null)) {
                 //skip checking (some strand miss sheet ID)
-            }
-            else
-            {
+            } else {
                 Dictionary<int?, List<int?>> dictSheetIdByTemplate = new Dictionary<int?, List<int?>>();
                 Dictionary<int?, List<int?>> dictSheetIdByCandidate = new Dictionary<int?, List<int?>>();
-                foreach (int rank in templateRanks)
-                {
+                foreach (int rank in templateRanks) {
                     Sse template = templateArray[rank];
                     Sse candidate = selectedCandidateArray[rank];
-                    if (template.IsSheet && candidate.IsSheet)
-                    {
+                    if (template.IsSheet && candidate.IsSheet) {
                         dictSheetIdByTemplate.MultidictionaryAdd(template.SheetId, candidate.SheetId);
                         dictSheetIdByCandidate.MultidictionaryAdd(candidate.SheetId, template.SheetId);
                     }
                 }
-                if (dictSheetIdByTemplate.Values.Any(l => l.Distinct().Count() > 1) || dictSheetIdByCandidate.Values.Any(l => l.Distinct().Count() > 1))
-                {
+                if (dictSheetIdByTemplate.Values.Any(l => l.Distinct().Count() > 1) || dictSheetIdByCandidate.Values.Any(l => l.Distinct().Count() > 1)) {
                     // sheet ID mismatch found
                     Lib.WriteWarning("Some beta-strands caused a sheet ID mismatch!");
-                    foreach (var kv in dictSheetIdByTemplate.Where(kv => kv.Value.Distinct().Count() > 1))
-                    {
+                    foreach (var kv in dictSheetIdByTemplate.Where(kv => kv.Value.Distinct().Count() > 1)) {
                         Lib.WriteWarning("Template sheet {0} matched to query sheets {1}. ", kv.Key, kv.Value.Distinct().EnumerateWithCommas());
                     }
-                    foreach (var kv in dictSheetIdByCandidate.Where(kv => kv.Value.Distinct().Count() > 1))
-                    {
+                    foreach (var kv in dictSheetIdByCandidate.Where(kv => kv.Value.Distinct().Count() > 1)) {
                         Lib.WriteWarning("Query sheet {0} matched to template sheets {1}. ", kv.Key, kv.Value.Distinct().EnumerateWithCommas());
                     }
-                }
-                else
-                {
+                } else {
                     // OK -> renaming sheet IDs
-                    foreach (int rank in templateRanks)
-                    {
+                    foreach (int rank in templateRanks) {
                         Sse template = templateArray[rank];
                         Sse candidate = selectedCandidateArray[rank];
-                        if (template.IsSheet && candidate.IsSheet)
-                        {
+                        if (template.IsSheet && candidate.IsSheet) {
                             candidate.SheetId = dictSheetIdByTemplate[template.SheetId][0];
                         }
                     }
@@ -1597,12 +1414,10 @@ namespace protein.Libraries
             return templateRanks.Select(rank => (selectedCandidateArray[rank], metricArray[rank])).ToList();
         }
 
-        public static (List<int>, List<int>) AlignmentToPositions(List<(int?, int?, double)> alignment)
-        {
+        public static (List<int>, List<int>) AlignmentToPositions(List<(int?, int?, double)> alignment) {
             List<int> tPositions = new List<int>();
             List<int> qPositions = new List<int>();
-            for (int i = 0; i < alignment.Count; i++)
-            {
+            for (int i = 0; i < alignment.Count; i++) {
                 if (alignment[i].Item1 != null)
                     tPositions.Add(i);
                 if (alignment[i].Item2 != null)
@@ -1611,20 +1426,17 @@ namespace protein.Libraries
             return (tPositions, qPositions);
         }
 
-        public static Dictionary<int, int> DictResiToAli(List<Residue> residues, List<int> positions)
-        {
+        public static Dictionary<int, int> DictResiToAli(List<Residue> residues, List<int> positions) {
             if (residues.Count != positions.Count)
                 throw new ArgumentException();
             Dictionary<int, int> dictResiToAli = new Dictionary<int, int>();
-            for (int i = 0; i < residues.Count; i++)
-            {
+            for (int i = 0; i < residues.Count; i++) {
                 dictResiToAli.Add(residues[i].SeqNumber, positions[i]);
             }
             return dictResiToAli;
         }
 
-        public static List<(int?, int?, double)> AlignPoints_DynProg(int m, int n, Func<int, int, double> scoreFunction)
-        {
+        public static List<(int?, int?, double)> AlignPoints_DynProg(int m, int n, Func<int, int, double> scoreFunction) {
             double[,] scoreMatrix = new double[m, n];
             double[,] dynprogMatrix = new double[m + 1, n + 1];
             int[,] reconstrMatrix = new int[m + 1, n + 1];
@@ -1635,61 +1447,46 @@ namespace protein.Libraries
             //   0: optimum was obtained from diagonal neighbor (pair a template and candidate SSE)
 
             // Calculation of score matrix.
-            for (int i = 0; i < m; i++)
-            {
-                for (int j = 0; j < n; j++)
-                {
+            for (int i = 0; i < m; i++) {
+                for (int j = 0; j < n; j++) {
                     scoreMatrix[i, j] = scoreFunction(i, j);
                 }
             }
 
             // Calculation of dynamic programming matrix.
 
-            for (int i = 0; i <= m; i++)
-            {
+            for (int i = 0; i <= m; i++) {
                 reconstrMatrix[i, 0] = 1;
                 dynprogMatrix[i, 0] = 0.0;
             }
 
-            for (int j = 1; j <= n; j++)
-            {
+            for (int j = 1; j <= n; j++) {
                 reconstrMatrix[0, j] = -1;
                 dynprogMatrix[0, j] = 0.0;
             }
 
-            for (int i = 1; i <= m; i++)
-            {
-                for (int j = 1; j <= n; j++)
-                {
+            for (int i = 1; i <= m; i++) {
+                for (int j = 1; j <= n; j++) {
                     double valueUp = dynprogMatrix[i - 1, j];
                     double valueLeft = dynprogMatrix[i, j - 1];
                     double valueDiag = dynprogMatrix[i - 1, j - 1] + scoreMatrix[i - 1, j - 1];
 
-                    if (valueDiag >= valueLeft)
-                    {
-                        if (valueDiag >= valueUp)
-                        {
+                    if (valueDiag >= valueLeft) {
+                        if (valueDiag >= valueUp) {
                             //diag (match)
                             reconstrMatrix[i, j] = 0;
                             dynprogMatrix[i, j] = valueDiag;
-                        }
-                        else
-                        {
+                        } else {
                             //up (skip template)
                             reconstrMatrix[i, j] = 1;
                             dynprogMatrix[i, j] = valueUp;
                         }
-                    }
-                    else
-                    {
-                        if (valueLeft >= valueUp)
-                        {
+                    } else {
+                        if (valueLeft >= valueUp) {
                             //left (skip candidate)
                             reconstrMatrix[i, j] = -1;
                             dynprogMatrix[i, j] = valueLeft;
-                        }
-                        else
-                        {
+                        } else {
                             //up (skip template)
                             reconstrMatrix[i, j] = 1;
                             dynprogMatrix[i, j] = valueUp;
@@ -1699,26 +1496,20 @@ namespace protein.Libraries
             }
 
             // print score matrix and dynamic programming matrix
-            if (Lib.DoWriteDebug)
-            {
+            if (Lib.DoWriteDebug) {
                 StreamWriter w = new StreamWriter(Path.Combine(Setting.Directory, "score_matrix-residue_alignment.tsv"));
-                for (int i = 0; i < m; i++)
-                {
-                    for (int j = 0; j < n; j++)
-                    {
+                for (int i = 0; i < m; i++) {
+                    for (int j = 0; j < n; j++) {
                         w.Write(scoreMatrix[i, j] + "\t");
                     }
                     w.WriteLine();
                 }
                 w.Close();
             }
-            if (Lib.DoWriteDebug)
-            {
+            if (Lib.DoWriteDebug) {
                 StreamWriter w = new StreamWriter(Path.Combine(Setting.Directory, "dynprog_matrix-residue_alignment.tsv"));
-                for (int i = 0; i <= m; i++)
-                {
-                    for (int j = 0; j <= n; j++)
-                    {
+                for (int i = 0; i <= m; i++) {
+                    for (int j = 0; j <= n; j++) {
                         w.Write(dynprogMatrix[i, j] + "\t");
                     }
                     w.WriteLine();
@@ -1730,10 +1521,8 @@ namespace protein.Libraries
             int row = m;
             int col = n;
             int alignmentPosition = 0;
-            while (row != 0 || col != 0)
-            {
-                switch (reconstrMatrix[row, col])
-                {
+            while (row != 0 || col != 0) {
+                switch (reconstrMatrix[row, col]) {
                     case -1:
                         // skipped candidate SSE
                         alignment.Add((null, col - 1, 0));
@@ -1761,22 +1550,17 @@ namespace protein.Libraries
             return alignment;
         }
 
-        private static double AlignmentScore(double[,] sqDistances, double R)
-        {
-            if (R == 0.0)
-            {
+        private static double AlignmentScore(double[,] sqDistances, double R) {
+            if (R == 0.0) {
                 return 0.0;
-            }
-            else
-            {
+            } else {
                 double scalingFactor = 1.0 / (R * R);
                 Func<int, int, double> scoreFunction = (i, j) => 1 / (1 + scalingFactor * sqDistances[i, j]);
                 return AlignPoints_DynProg(sqDistances.GetLength(0), sqDistances.GetLength(1), scoreFunction).Select(t => t.Item3).Sum();
             }
         }
 
-        public static double CharacteristicDistanceOfAlignment(IList<Residue> templates, IList<Residue> candidates)
-        {
+        public static double CharacteristicDistanceOfAlignment(IList<Residue> templates, IList<Residue> candidates) {
             if (templates.Any(r => !r.HasCAlpha()))
                 throw new ArgumentException("Some template residues do not have C-alpha atom.");
             if (candidates.Any(r => !r.HasCAlpha()))
@@ -1788,10 +1572,8 @@ namespace protein.Libraries
             Point[] qVectors = candidates.Select(r => r.GetCAlphas().First().Position()).ToArray();
             DateTime stamp = DateTime.Now;
             double[,] sqDistances = new double[tVectors.Length, qVectors.Length];
-            for (int i = 0; i < tVectors.Length; i++)
-            {
-                for (int j = 0; j < qVectors.Length; j++)
-                {
+            for (int i = 0; i < tVectors.Length; i++) {
+                for (int j = 0; j < qVectors.Length; j++) {
                     sqDistances[i, j] = (tVectors[i] - qVectors[j]).SqSize;
                 }
             }
@@ -1803,26 +1585,21 @@ namespace protein.Libraries
             double Rhigh = R_GUESS;
             double scoreLow = AlignmentScore(sqDistances, Rlow);
             double scoreHigh = AlignmentScore(sqDistances, Rhigh);
-            while (scoreHigh < goalScore)
-            {
+            while (scoreHigh < goalScore) {
                 Rlow = Rhigh;
                 scoreLow = scoreHigh;
                 Rhigh = 2 * Rhigh;
                 scoreHigh = AlignmentScore(sqDistances, Rhigh);
                 // Console.WriteLine($"R = {Rhigh}, norm_score = {scoreHigh/N}");
             }
-            do
-            {
+            do {
                 double Rnew = 0.5 * (Rlow + Rhigh);
                 double scoreNew = AlignmentScore(sqDistances, Rnew);
                 // Console.WriteLine($"R = {Rnew}, norm_score = {scoreNew/N}");
-                if (scoreNew < goalScore)
-                {
+                if (scoreNew < goalScore) {
                     Rlow = Rnew;
                     scoreLow = scoreNew;
-                }
-                else
-                {
+                } else {
                     Rhigh = Rnew;
                     scoreHigh = scoreNew;
                 }
@@ -1831,8 +1608,7 @@ namespace protein.Libraries
             return Rhigh;
         }
 
-        public static List<(int?, int?, double)> AlignResidues_DynProg(IList<Residue> templates, IList<Residue> candidates)
-        {
+        public static List<(int?, int?, double)> AlignResidues_DynProg(IList<Residue> templates, IList<Residue> candidates) {
             if (templates.Any(r => !r.HasCAlpha()))
                 throw new ArgumentException("Some template residues do not have C-alpha atom.");
             if (candidates.Any(r => !r.HasCAlpha()))
@@ -1843,12 +1619,10 @@ namespace protein.Libraries
             Point[] tPoints = templates.Select(r => r.GetCAlphas().First().Position()).ToArray();
             Point[] qPoints = candidates.Select(r => r.GetCAlphas().First().Position()).ToArray();
 
-            if (Lib.DoWriteDebug)
-            {
+            if (Lib.DoWriteDebug) {
                 //TODO implement this somehow!
                 ModelBuilder builder = new ModelBuilder();
-                foreach (Point v in tPoints)
-                {
+                foreach (Point v in tPoints) {
                     builder.AddAtom(new AtomInfo(Atom.NAME_C_ALPHA, Atom.ELEMENT_C, AtomTable.DEFAULT_ALT_LOC, false, v.X, v.Y, v.Z));
                     builder.StartResidue();
                 }
@@ -1865,8 +1639,7 @@ namespace protein.Libraries
 
             List<(int?, int?, double)> alignment = AlignPoints_DynProg(tPoints.Length, qPoints.Length, scoreFunction1);
 
-            if (Lib.DoWriteDebug)
-            {
+            if (Lib.DoWriteDebug) {
                 StreamWriter w = new StreamWriter(Path.Combine(Setting.Directory, "residue_alignment.tsv"));
                 List<List<String>> alignmentTable = alignment.Select(t => new List<String> {
                     t.Item1 == null ? "-" : templates [t.Item1.Value].ChainId.ToString (),
@@ -1885,15 +1658,11 @@ namespace protein.Libraries
             return alignment;
         }
 
-        private static double LocalRMSDScore(Point[] template, Point[] query, int i, int j, int window, double scalingR)
-        {
+        private static double LocalRMSDScore(Point[] template, Point[] query, int i, int j, int window, double scalingR) {
             double scalingFactor = 1 / scalingR;
-            if (i < window || i + window >= template.Length || j < window || j + window >= query.Length)
-            {
+            if (i < window || i + window >= template.Length || j < window || j + window >= query.Length) {
                 return 0;
-            }
-            else
-            {
+            } else {
                 Matrix dump1;
                 Matrix dump2;
                 double rmsd;
@@ -1912,33 +1681,28 @@ namespace protein.Libraries
             }
         }
 
-        private static Vector[] Smooth(Vector[] orig, int window)
-        {
+        private static Vector[] Smooth(Vector[] orig, int window) {
             int n = orig.Length;
             Vector[] result = new Vector[n];
             double invCount = 1.0 / (2 * window + 1);
-            for (int i = 0; i < window; i++)
-            {
+            for (int i = 0; i < window; i++) {
                 result[i] = orig[i];
                 result[n - i - 1] = orig[n - i - 1];
             }
-            for (int i = window + 1; i < n - window - 1; i++)
-            {
+            for (int i = window + 1; i < n - window - 1; i++) {
                 result[i] = invCount * orig.GetRange(i - window, 2 * window + 1).Aggregate((u, v) => u + v);
             }
             return result;
         }
 
-        public static List<String> GetSequences(Chain ch, IEnumerable<Sse> sses)
-        {
+        public static List<String> GetSequences(Chain ch, IEnumerable<Sse> sses) {
             if (sses.Any(sse => sse.ChainID != ch.Id))
                 throw new Exception("Some SSEs belong to another chain");
             return ch.GetResidues(sses.Select(s => (s.Start, s.End)))
                 .Select(s => String.Concat(s.Select(r => r.ShortName))).ToList();
         }
 
-        public static List<List<(int, int)>> FindMaximalMatchings(int nG, List<(int, int)> edgesG, int nH, List<(int, int)> edgesH, Func<int, int, bool> subsequentInG, Func<int, int, bool> subsequentInH)
-        {
+        public static List<List<(int, int)>> FindMaximalMatchings(int nG, List<(int, int)> edgesG, int nH, List<(int, int)> edgesH, Func<int, int, bool> subsequentInG, Func<int, int, bool> subsequentInH) {
             //TODO put only pairs with low metric to modular product graph
             //TODO sort modular product graph vertices by metric
             //TODO use branch and bound in finding the best clique
@@ -1948,38 +1712,31 @@ namespace protein.Libraries
             ISet<int> subseqG = new HashSet<int>();
             for (int u = 0; u < nG; u++)
                 for (int v = 0; v < nG; v++)
-                    if (subsequentInG(u, v))
-                    {
+                    if (subsequentInG(u, v)) {
                         subseqG.Add(u * nG + v);
                         subseqG.Add(v * nG + u);
                     }
             ISet<int> subseqH = new HashSet<int>();
             for (int u = 0; u < nH; u++)
                 for (int v = 0; v < nH; v++)
-                    if (subsequentInH(u, v))
-                    {
+                    if (subsequentInH(u, v)) {
                         subseqG.Add(u * nH + v);
                         subseqG.Add(v * nH + u);
                     }
 
             int nM = nG * nH;
             bool[,] M = new bool[nM, nM];
-            for (int u = 0; u < nG; u++)
-            {
-                for (int v = 0; v < nG; v++)
-                {
-                    for (int u_ = 0; u_ < nH; u_++)
-                    {
-                        for (int v_ = 0; v_ < nH; v_++)
-                        {
+            for (int u = 0; u < nG; u++) {
+                for (int v = 0; v < nG; v++) {
+                    for (int u_ = 0; u_ < nH; u_++) {
+                        for (int v_ = 0; v_ < nH; v_++) {
                             if (u != v && u_ != v_ && (u < v) == (u_ < v_) &&
                                 (EG.Contains(u * nG + v) && EH.Contains(u_ * nH + v_)
                                 || EG.Contains(v * nG + u) && EH.Contains(v_ * nH + u_)
                                 || !EG.Contains(u * nG + v) && !EG.Contains(v * nG + u) && !EH.Contains(u_ * nH + v_) && !EH.Contains(v_ * nH + u_)
                                 || u == v && subseqH.Contains(u_ * nH + v_)
                                 || subseqG.Contains(u * nG + v_) && u_ == v_
-                            ))
-                            {
+                            )) {
                                 M[u * nH + u_, v * nH + v_] = true; //tuple (u,u_) is coded as u*nH+u_
                                 M[v * nH + v_, u * nH + u_] = true;
                             }
@@ -1991,36 +1748,30 @@ namespace protein.Libraries
             return cliques.Select(c => c.Select(v => (v / nH, v % nH)).ToList()).ToList();
         }
 
-        public static List<List<int>> ListMaximalCliques(int n, bool[,] neibMatrix)
-        {
+        public static List<List<int>> ListMaximalCliques(int n, bool[,] neibMatrix) {
             List<List<int>> cliques = new List<List<int>>();
             ListMaximalCliques(n, neibMatrix, new List<int>(), 0, cliques);
             return cliques;
         }
 
-        private static void ListMaximalCliques(int n, bool[,] neibMatrix, List<int> byNow, int firstAllowed, List<List<int>> output)
-        {
+        private static void ListMaximalCliques(int n, bool[,] neibMatrix, List<int> byNow, int firstAllowed, List<List<int>> output) {
             bool largerFound = false;
-            for (int i = firstAllowed; i < n; i++)
-            {
-                if (byNow.All(j => neibMatrix[i, j]))
-                {
+            for (int i = firstAllowed; i < n; i++) {
+                if (byNow.All(j => neibMatrix[i, j])) {
                     largerFound = true;
                     byNow.Add(i);
                     ListMaximalCliques(n, neibMatrix, byNow, i + 1, output);
                     byNow.RemoveAt(byNow.Count - 1);
                 }
             }
-            if (!largerFound)
-            {
+            if (!largerFound) {
                 //this is a maximal clique
                 if (output.All(c => !IsSubset(byNow, c)))
                     output.Add(new List<int>(byNow));
             }
         }
 
-        private static bool IsSubset(List<int> sub, List<int> super)
-        {
+        private static bool IsSubset(List<int> sub, List<int> super) {
             return sub.Except(super).Count() == 0;
         }
 
@@ -2029,9 +1780,8 @@ namespace protein.Libraries
 			nG, nH - number of vertices of G, H
 			edgesG, edgesH - adjacency matrices of G, H (0 = no edge, 1 = edge; if other values are used, they serve as edge labels - only edges with same label can be matched)
 			score[i,j] - score for matching i-th vertex of G to j-th vertex of H*/
-        public static List<(int, int)> MaxWeightOrderedMatching(int nG, int nH, int[,] edgesG, int[,] edgesH, double[,] score, 
-            bool[,] conflictsG, bool[,] conflictsH)
-        {
+        public static List<(int, int)> MaxWeightOrderedMatching(int nG, int nH, int[,] edgesG, int[,] edgesH, double[,] score,
+            bool[,] conflictsG, bool[,] conflictsH) {
             if (edgesG.GetLength(0) != nG || edgesG.GetLength(1) != nG)
                 throw new Exception("Incorrect size of parameter edgesG.");
             if (edgesH.GetLength(0) != nH || edgesH.GetLength(1) != nH)
@@ -2061,8 +1811,7 @@ namespace protein.Libraries
 
         public static List<(int, int)> MaxWeightMixedOrderedMatching(int nG, int nH,
             int[] rank0G, int[] rank1G, int[] rank0H, int[] rank1H,
-            double[,] score, bool softOrderConsistence, System.Threading.CancellationToken? cancellationToken)
-        {
+            double[,] score, bool softOrderConsistence, System.Threading.CancellationToken? cancellationToken) {
 
             if (rank0G.Length != nG)
                 throw new Exception("Incorrect size of parameter rank0G.");
@@ -2081,13 +1830,10 @@ namespace protein.Libraries
 
             Func<int, int, int> ord; // order descriptor (allowed values: 0...k-1)
             bool[,] ordConsistencyMatrix; // order consistency matrix [k*k]
-            if (softOrderConsistence)
-            {
+            if (softOrderConsistence) {
                 ord = (x, y) => Math.Min(Math.Max(-2, x - y), 2) + 2; // 5-state order descriptor (2 for equal, 1/3 for predecessor/successor, 0/4 for further less/greater)
                 ordConsistencyMatrix = new int[,] { { 1, 1, 0, 0, 0 }, { 1, 1, 1, 0, 0 }, { 0, 1, 1, 1, 0 }, { 0, 0, 1, 1, 1 }, { 0, 0, 0, 1, 1 } }.Select2D(x => x != 0); // soft order consistency matrix
-            }
-            else
-            {
+            } else {
                 ord = (x, y) => Math.Sign(x - y) + 1; // 3-state order descriptor (1 for equal, 0 for less, 2 for greater)
                 ordConsistencyMatrix = new int[,] { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } }.Select2D(x => x != 0); // hard order consistency matrix
             }
@@ -2126,8 +1872,7 @@ namespace protein.Libraries
 
         /** Returns inclusion-maximal clique with maximal total w. 
 			Uses branch-and-bound algorithm.*/
-        private static List<int> MaxWeightClique(int nM, Func<int, int, bool> edgesM, double[] w, int maxExpectedSize, System.Threading.CancellationToken? cancellationToken)
-        {
+        private static List<int> MaxWeightClique(int nM, Func<int, int, bool> edgesM, double[] w, int maxExpectedSize, System.Threading.CancellationToken? cancellationToken) {
             if (w.Length != nM)
                 throw new Exception("Incorrect size of parameter w.");
 
@@ -2151,44 +1896,34 @@ namespace protein.Libraries
 
             DateTime startTime = DateTime.Now;
 
-            while (p >= 0)
-            {
+            while (p >= 0) {
                 //Lib.WriteLineDebug ("{5} S[p]: {0}, Current: [{1}], ExpAdded: {2}, ExpScore: {3}, BestScore: {4}", p<nM?S [p]:-1, J.Select (u=>"("+u/12+","+u%12+")").EnumerateWithCommas (), maxExpAdded, maxExpScore, wK, forward?">":"<");
-                if (forward)
-                {
-                    if (p == nS || J.Count == maxExpectedSize)
-                    {
+                if (forward) {
+                    if (p == nS || J.Count == maxExpectedSize) {
                         //found new inclusion-maximal clique or all future vertices have nonpositive weights(useless to add them)
                         //Lib.WriteLineDebug ("A");
-                        if (wJ > wK)
-                        {
+                        if (wJ > wK) {
                             K = new List<int>(J);
                             wK = wJ;
                         }
                         forward = false; p--;
-                    }
-                    else if (!Allowed[J.Count, p])
-                    {
+                    } else if (!Allowed[J.Count, p]) {
                         //do not add vertex and go on forward
                         //Lib.WriteLineDebug ("B");
                         forward = true; p++;
-                    }
-                    else
-                    {
+                    } else {
                         int maxExpAdded = Math.Min(maxExpectedSize - J.Count, nS - p);
                         double maxExpScore = wJ + Enumerable.Range(p, nS - p)
                             .Where(i => Allowed[J.Count, i])
                             .Take(maxExpAdded)
                             .Select(i => w[S[i]])
                             .Sum();
-                        if (maxExpScore > wK)
-                        {
+                        if (maxExpScore > wK) {
                             //add new vertex and go on forward
                             //Lib.WriteLineDebug ("C");
                             J.Add(p);
                             wJ = wJ + w[S[p]];
-                            if (J.Count < maxExpectedSize)
-                            {
+                            if (J.Count < maxExpectedSize) {
                                 //prepare updated version of Allowed vector for the next iteration
                                 Array.Copy(Allowed, (J.Count - 1) * nS + p, Allowed, J.Count * nS + p, nS - p);
                                 for (int i = p + 1; i < nS; i++)
@@ -2196,35 +1931,28 @@ namespace protein.Libraries
                                         Allowed[J.Count, i] = false;
                             }
                             forward = true; p++;
-                        }
-                        else
-                        {
+                        } else {
                             //non-perspective branch
                             //Lib.WriteLineDebug ("D");
                             forward = false; p--;
                         }
                     }
-                }
-                else
-                { //backward
-                    if (J.Count > 0)
-                    {
+                } else { //backward
+                    if (J.Count > 0) {
                         //remove trailing unused vertices and go forward again
                         //Lib.WriteLineDebug ("E");
                         p = J[J.Count - 1];
                         J.RemoveAt(J.Count - 1);
                         wJ = J.Sum(i => w[S[i]]);
                         forward = true; p++;
-                    }
-                    else
-                    {
+                    } else {
                         //go backwards to the beginning and terminate algorithm
                         //Lib.WriteLineDebug ("F");
                         p = -1;
                     }
                 }
                 iterationCounter++;
-                if (iterationCounter % CANCELLATION_CHECK_CYCLE == 0 && cancellationToken.HasValue && cancellationToken.Value.IsCancellationRequested){
+                if (iterationCounter % CANCELLATION_CHECK_CYCLE == 0 && cancellationToken.HasValue && cancellationToken.Value.IsCancellationRequested) {
                     cancelled = true;
                     break;
                 }
@@ -2240,16 +1968,14 @@ namespace protein.Libraries
 
         /** Returns inclusion-maximal clique with maximal total w. 
 			Uses branch-and-bound algorithm.*/
-        private static List<int> MaxWeightClique_WithAllowedLists(int nM, Func<int, int, bool> edgesM, double[] w, int maxExpectedSize)
-        {
+        private static List<int> MaxWeightClique_WithAllowedLists(int nM, Func<int, int, bool> edgesM, double[] w, int maxExpectedSize) {
             if (w.Length != nM)
                 throw new Exception("Incorrect size of parameter w.");
 
             int[] S = Enumerable.Range(0, nM).OrderBy(u => -w[u]).TakeWhile(u => w[u] > 0).ToArray(); //vertices ordered by descending weight, vertices with nonpositive weight are removed
             int nS = S.Count();
             Console.WriteLine("MaxWeightClique: {0} eligible vertices.", nS);
-            if (nS == 0)
-            {
+            if (nS == 0) {
                 return new List<int>();
             }
 
@@ -2257,8 +1983,7 @@ namespace protein.Libraries
             int[] numAllowed = new int[maxExpectedSize]; // numAllowed[l] is the number of allowed vertices on level l
             numAllowed[0] = nS;
             int[,] allowed = new int[maxExpectedSize, nS]; // allowed[l, :] is the list of allowed vertices on level l (i.e. |current clique| = l) followed by a sentinel value nS
-            for (int i = 0; i < nS; i++)
-            {
+            for (int i = 0; i < nS; i++) {
                 allowed[0, i] = S[i]; // on 0th level, all the vertices are allowed
             }
             int[] current = new int[maxExpectedSize + 1];
@@ -2271,25 +1996,20 @@ namespace protein.Libraries
             int bestCliqueSize = 0;
             double bestWeight = 0;
 
-            while (level >= 0)
-            {
+            while (level >= 0) {
                 //Console.WriteLine ($"Level {level}, current {current[level]}");
-                if (level < maxExpectedSize && current[level] == -1)
-                {
+                if (level < maxExpectedSize && current[level] == -1) {
                     // I came from down
-                    for (int i = 0; i < numAllowed[level]; i++)
-                    {
+                    for (int i = 0; i < numAllowed[level]; i++) {
                         expWeight[level, i + 1] = expWeight[level, i] + w[allowed[level, i]];
                     }
 
                     int maxExpAdded = Math.Min(numAllowed[level], maxExpectedSize - level);
                     double maxExpWeight = weight[level];
-                    for (int i = 0; i < maxExpAdded; i++)
-                    {
+                    for (int i = 0; i < maxExpAdded; i++) {
                         maxExpWeight += w[allowed[level, i]];
                     }
-                    if (maxExpWeight <= bestWeight)
-                    {
+                    if (maxExpWeight <= bestWeight) {
                         // go backwards
                         level--;
                         continue;
@@ -2298,33 +2018,25 @@ namespace protein.Libraries
 
                 // try extending
                 current[level]++;
-                if (level == maxExpectedSize || current[level] == numAllowed[level])
-                {
+                if (level == maxExpectedSize || current[level] == numAllowed[level]) {
                     // used all allowed vertices on this level ==> not extensible
-                    if (weight[level] > bestWeight)
-                    {
+                    if (weight[level] > bestWeight) {
                         // found new best clique
                         bestCliqueSize = level;
                         bestWeight = weight[level];
-                        for (int lev = 0; lev < level; lev++)
-                        {
+                        for (int lev = 0; lev < level; lev++) {
                             bestClique[lev] = allowed[lev, current[lev]];
                         }
                     }
                     level--;
-                }
-                else
-                {
+                } else {
                     // extensible ==> add vertex current[level]
                     int p = current[level];
                     weight[level + 1] = weight[level] + w[allowed[level, p]];
-                    if (level + 1 < maxExpectedSize)
-                    {
+                    if (level + 1 < maxExpectedSize) {
                         int nal = 0;
-                        for (int i = p + 1; i < numAllowed[level]; i++)
-                        {
-                            if (edgesM(allowed[level, p], allowed[level, i]))
-                            {
+                        for (int i = p + 1; i < numAllowed[level]; i++) {
+                            if (edgesM(allowed[level, p], allowed[level, i])) {
                                 allowed[level + 1, nal++] = allowed[level, i];
                             }
                         }
