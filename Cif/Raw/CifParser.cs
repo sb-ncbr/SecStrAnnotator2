@@ -14,24 +14,30 @@ namespace Cif.Raw
     internal class CifParser
     {
         // Constants
-        private const bool PRINT_TEXT_IN_COLOR = false; //true;
-        private const bool PRINT_TOKENS = false; //true;
-        private static int MAX_DIGITS_INT = (int)Math.Floor(Math.Log10(int.MaxValue));
-        private static int MAX_DIGITS_LONG = (int)Math.Floor(Math.Log10(long.MaxValue));
-        private static int REMOVE_QUOTES = 1; // Value 1 to removed the quotes (' or " or ;) from quoted strings, value 0 to keep them.
+        private const bool PRINT_TEXT_IN_COLOR = false; 
+        private const bool PRINT_TOKENS = false;
+        private static readonly int MAX_DIGITS_INT = (int)Math.Floor(Math.Log10(int.MaxValue));
+        private static readonly int MAX_DIGITS_LONG = (int)Math.Floor(Math.Log10(long.MaxValue));
+        private static readonly int REMOVE_QUOTES = 1; // Value 1 to removed the quotes (' or " or ;) from quoted strings, value 0 to keep them.
 
-        private static char[] ordinaryChars = "!%&()*+,-./0123456789:<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\\^`abcdefghijklmnopqrstuvwxyz{|}~".ToCharArray();
-        private static char[] nonBlankChars = ordinaryChars.Concat("\"#$'_;[]").ToArray();
-        private static char[] textLeadChars = ordinaryChars.Concat("\"#$'_ \t[]").ToArray();
-        private static char[] anyPrintChars = ordinaryChars.Concat("\"#$'_ \t;[]").ToArray();
-        private static char[] whiteSpaceChars = " \t\r\n".ToCharArray();
+        private const string ORDINARY_CHARS = "!%&()*+,-./0123456789:<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\\^`abcdefghijklmnopqrstuvwxyz{|}~";
+        private static readonly bool[] ORDINARY_CHAR_MASK = CharMask(ORDINARY_CHARS);
+        private static readonly bool[] NONBLANK_CHAR_MASK = CharMask(ORDINARY_CHARS, "\"#$'_;[]");
+        private static readonly bool[] TEXT_LEAD_CHAR_MASK = CharMask(ORDINARY_CHARS, "\"#$'_ \t[]");
+        private static readonly bool[] ANY_PRINT_CHAR_MASK = CharMask(ORDINARY_CHARS, "\"#$'_ \t;[]");
+        private static readonly bool[] WHITESPACE_CHAR_MASK = CharMask(" \t\r\n");
 
-        private static bool[] isOrdinaryChar = Enumerable.Range(0, 256).Select(c => ordinaryChars.Contains<char>((char)c)).ToArray();
-        private static bool[] isNonBlankChar = Enumerable.Range(0, 256).Select(c => nonBlankChars.Contains<char>((char)c)).ToArray();
-        private static bool[] isTextLeadChar = Enumerable.Range(0, 256).Select(c => textLeadChars.Contains<char>((char)c)).ToArray();
-        private static bool[] isAnyPrintChar = Enumerable.Range(0, 256).Select(c => anyPrintChars.Contains<char>((char)c)).ToArray();
-        private static bool[] isWhiteSpaceChar = Enumerable.Range(0, 256).Select(c => whiteSpaceChars.Contains<char>((char)c)).ToArray();
-
+        private const char MAX_ASCII = (char)255;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsOrdinaryChar(char c) => c > MAX_ASCII || ORDINARY_CHAR_MASK[c];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsNonblankChar(char c) => c > MAX_ASCII || NONBLANK_CHAR_MASK[c];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsTextLeadChar(char c) => c > MAX_ASCII || TEXT_LEAD_CHAR_MASK[c];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsAnyPrintChar(char c) => c > MAX_ASCII || ANY_PRINT_CHAR_MASK[c];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsWhitespaceChar(char c) => c <= MAX_ASCII && WHITESPACE_CHAR_MASK[c];
 
         // Enum types
         private enum TokenType { 
@@ -115,7 +121,7 @@ namespace Cif.Raw
             Text = text;
             textLength = Text.Length;
 
-            if (textLength == 0 || !isWhiteSpaceChar[Text[textLength-1]]){
+            if (textLength == 0 || !IsWhitespaceChar(Text[textLength-1])){
                 // append a newline to the end of the text to simplify many things
                 Text = Text + "\n";
                 textLength = Text.Length;
@@ -160,9 +166,9 @@ namespace Cif.Raw
                                 }
                                 break;
                             default:
-                                if (isWhiteSpaceChar[c]){
+                                if (IsWhitespaceChar(c)){
                                     // stay in Out
-                                } else if (isOrdinaryChar[c]){
+                                } else if (IsOrdinaryChar(c)){
                                     state = LexicalState.Token;
                                     startList.Add(i);
                                 } else if (c == '_'){
@@ -175,7 +181,7 @@ namespace Cif.Raw
                         }
                         break;
                     case LexicalState.Token:
-                        if (isNonBlankChar[c]){
+                        if (IsNonblankChar(c)){
                             // stay in Token 
                         } else {
                             state = LexicalState.Out;
@@ -230,7 +236,7 @@ namespace Cif.Raw
                         }
                         break;
                     case LexicalState.Tag:
-                        if (isNonBlankChar[c]){
+                        if (IsNonblankChar(c)){
                             // stay in Token 
                         } else {
                             state = LexicalState.Out;
@@ -240,22 +246,22 @@ namespace Cif.Raw
                         }
                         break;
                     case LexicalState.Single:
-                        if (c == '\'' && isWhiteSpaceChar[Text[i+1]]){
+                        if (c == '\'' && IsWhitespaceChar(Text[i+1])){
                             state = LexicalState.Out;
                             typeList.Add(TokenType.Single);
                             stopList.Add(i+1 - REMOVE_QUOTES);
-                        } else if (isAnyPrintChar[c]){
+                        } else if (IsAnyPrintChar(c)){
                             // stay in Single
                         } else {
                             throw NewLexicalCifException(i, state);
                         }
                         break;
                     case LexicalState.Double:
-                        if (c == '"' && isWhiteSpaceChar[Text[i+1]]){
+                        if (c == '"' && IsWhitespaceChar(Text[i+1])){
                             state = LexicalState.Out;
                             typeList.Add(TokenType.Double);
                             stopList.Add(i+1 - REMOVE_QUOTES);
-                        } else if (isAnyPrintChar[c]){
+                        } else if (IsAnyPrintChar(c)){
                             // stay in Double
                         } else {
                             throw NewLexicalCifException(i, state);
@@ -389,8 +395,8 @@ namespace Cif.Raw
             int i = -1;
             char c;
 
-            // implicit goto STATE_OUT;
-            
+            // implicit goto STATE_OUT;  
+
             STATE_OUT: 
                 if (++i >= textLength) goto STATE_FINISH;
                 c = Text[i];
@@ -413,9 +419,9 @@ namespace Cif.Raw
                             goto STATE_TOKEN;
                         }
                     default:
-                        if (isWhiteSpaceChar[c]){
+                        if (IsWhitespaceChar(c)){
                             goto STATE_OUT;
-                        } else if (isOrdinaryChar[c]){
+                        } else if (IsOrdinaryChar(c)){
                             startList.Add(i);
                             goto STATE_TOKEN;
                         } else if (c == '_'){
@@ -439,7 +445,7 @@ namespace Cif.Raw
             STATE_TAG:
                 if (++i >= textLength) throw new CifException("Unexpected end of file");
                 c = Text[i];
-                if (isNonBlankChar[c]){
+                if (IsNonblankChar(c)){
                     goto STATE_TAG;
                 } else {
                     tagIndexList.Add(stopList.Count);
@@ -451,7 +457,7 @@ namespace Cif.Raw
             STATE_TOKEN:
                 if (++i >= textLength) throw new CifException("Unexpected end of file");
                 c = Text[i];
-                if (isNonBlankChar[c]){
+                if (IsNonblankChar(c)){
                     goto STATE_TOKEN; 
                 } else {
                     int s = startList[stopList.Count];
@@ -508,11 +514,11 @@ namespace Cif.Raw
             STATE_SINGLE:
                 if (++i >= textLength) throw new CifException("Unexpected end of file");
                 c = Text[i];
-                if (c == '\'' && isWhiteSpaceChar[Text[i+1]]){
+                if (c == '\'' && IsWhitespaceChar(Text[i+1])){
                     typeList.Add(TokenType.Single);
                     stopList.Add(i+1 - REMOVE_QUOTES);
                     goto STATE_OUT;
-                } else if (isAnyPrintChar[c]){
+                } else if (IsAnyPrintChar(c)){
                     goto STATE_SINGLE;
                 } else {
                     throw NewLexicalCifException(i, LexicalState.Single);
@@ -521,11 +527,11 @@ namespace Cif.Raw
             STATE_DOUBLE:
                 if (++i >= textLength) throw new CifException("Unexpected end of file");
                 c = Text[i];
-                if (c == '"' && isWhiteSpaceChar[Text[i+1]]){
+                if (c == '"' && IsWhitespaceChar(Text[i+1])){
                     typeList.Add(TokenType.Double);
                     stopList.Add(i+1 - REMOVE_QUOTES);
                     goto STATE_OUT;
-                } else if (isAnyPrintChar[c]){
+                } else if (IsAnyPrintChar(c)){
                     goto STATE_DOUBLE;
                 } else {
                     throw NewLexicalCifException(i, LexicalState.Double);
@@ -774,6 +780,17 @@ namespace Cif.Raw
             }
         }
 
+        private static bool[] CharMask(params IEnumerable<char>[] charactersSets){
+            // Create a boolean mask for ASCII characters where chars in any of charactersSets have true, others have false.
+            bool[] result = new bool[MAX_ASCII+1];
+            foreach (IEnumerable<char> charset in charactersSets) {
+                foreach (char c in charset) {
+                    result[c] = true;
+                }
+            }
+            return result;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal int GetValueStartPosition(int iTag, int iValue){
             int iToken = firstValueForTag[iTag] + iValue * stepForTag[iTag];
@@ -856,8 +873,8 @@ namespace Cif.Raw
                 // Lib.WriteLineDebug("    StrEq: " + c1 + " " +c2);
                 if (c1 != c2) {
                     // mismatch => check if both strings have ended
-                    return isWhiteSpaceChar[c1] && isWhiteSpaceChar[c2];
-                } else if (isWhiteSpaceChar[c1]){
+                    return IsWhitespaceChar(c1) && IsWhitespaceChar(c2);
+                } else if (IsWhitespaceChar(c1)){
                     // both strings have ended, followed by the same whitespace character
                     return true;
                 }

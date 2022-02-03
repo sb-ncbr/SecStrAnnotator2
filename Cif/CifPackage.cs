@@ -28,7 +28,7 @@ namespace Cif
         }
         public static CifPackage FromFile(string filename){
             string text;
-            using (StreamReader r = new StreamReader(filename)){
+            using (StreamReader r = new StreamReader(filename, System.Text.Encoding.UTF8)){
                 text = r.ReadToEnd();
             }
             return new CifPackage(text);
