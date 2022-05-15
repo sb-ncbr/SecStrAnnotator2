@@ -12,7 +12,7 @@ namespace protein
     static class Setting
     {
         public const string NAME = "SecStrAnnotator";
-        public const string VERSION_NUMBER = "2.2";
+        public const string VERSION_NUMBER = "2.3";
 #if DEVEL
         public static string VERSION = $"{VERSION_NUMBER}.{Lib.BuildVersion.Build}.{Lib.BuildVersion.Revision} [{Lib.BuildTime:u}]";
 #else

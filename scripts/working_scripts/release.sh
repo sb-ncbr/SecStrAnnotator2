@@ -1,5 +1,8 @@
-RELEASE='SecStrAnnotator_2.2'
-FRAMEWORK='netcoreapp3.0'
+#!/bin/bash
+set -e
+
+RELEASE='SecStrAnnotator_2.3'
+FRAMEWORK='net6.0'
 PLUGIN_RELEASE='secstrapi_plugin-1.4-release.py'
 
 DIR=`dirname $0`
@@ -8,7 +11,7 @@ echo $PWD
 
 mkdir  $RELEASE
 cp  bin/Release/$FRAMEWORK/SecStrAnnotator.dll  $RELEASE/
-cp  bin/Release/netcoreapp3.0/SecStrAnnotator.runtimeconfig.json  $RELEASE/
+cp  bin/Release/$FRAMEWORK/SecStrAnnotator.runtimeconfig.json  $RELEASE/
 cp  SecStrAnnotator_config-for_release.json  $RELEASE/SecStrAnnotator_config.json
 cp  scripts/SecStrAnnotator_batch.py  $RELEASE/
 cp  README.md  $RELEASE/

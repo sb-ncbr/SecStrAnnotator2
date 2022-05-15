@@ -12,7 +12,7 @@ If you found this software helpful, please cite:
 
 For SecStrAnnotator:
 
-- .NET Core Runtime 3.0 or 3.1
+- .NET runtime 6.0 (for SecStrAnnotator<=2.2: .NET Core runtime 3.0 or 3.1)
 - PyMOL
 - SecStrAnnotator_config.json – configuration file (modify according to your system)
 
