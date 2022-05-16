@@ -21,4 +21,4 @@ done;
 
 date --utc +'%F %T' > $DIR/buildtime
 dotnet build $DIR/SecStrAnnotator.csproj -c $CONFIG
-cp $DIR/SecStrAnnotator_config.json $DIR/bin/$CONFIG/net6.0/SecStrAnnotator_config.json
+cp $DIR/SecStrAnnotator_config.json $DIR/bin/$CONFIG/net6.0/SecStrAnnotator_config.json;
