@@ -217,7 +217,11 @@ def pdb_chain_ranges(domain_spec):
     parts = domain_spec.split(',', 2)
     pdb = parts[0] 
     chain = parts[1] if len(parts) >= 2 else None
+    if chain == '':
+        chain = None
     ranges = parts[2] if len(parts) >= 3 else None
+    if ranges == '':
+        ranges = None
     return (pdb, chain, ranges)
 
 
@@ -238,6 +242,7 @@ def create_session(directory, template, query):
     session_file = path.join(directory, query_id + SESSION_EXT)
     template_png_file = path.join(directory, query_id + TEMPLATE_PNG_EXT)
     query_png_file = path.join(directory, query_id + QUERY_PNG_EXT)
+    print('DEBUG', (query_id,query_chain,query_range))
     files.append(query_struct_file)
     files.append(query_annot_file)
     
@@ -273,15 +278,16 @@ def create_session(directory, template, query):
         apply_representations(template_selection, protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS)
     apply_representations(query_selection, protein_reprs=PROTEIN_REPRESENTATIONS, ligand_reprs=LIGAND_REPRESENTATIONS, bonds_reprs=BOND_REPRESENTATIONS)
     cmd.dss()
+    if template is not None:
+        cmd.orient(template_selection)
+    else:
+        cmd.orient(query_selection)
     cmd.zoom('vis')
     cmd.save(session_file)
     if IMAGE_SIZE is not None:
         width, height = IMAGE_SIZE
-        if template is not None:
-            cmd.orient(template_selection)
-        else:
+        if template is None:
             cmd.hide('labels')
-            cmd.orient(query_selection)
         cmd.zoom('vis')
         cmd.ray(width, height)
         cmd.png(query_png_file)
